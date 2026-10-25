@@ -1,11 +1,16 @@
-# 🏋️‍♂️ NeverPaidHealth Mobile (Jetpack Compose)
+# 🏋️‍♂️ NeverPaidHealth Mobile (Compose Multiplatform — Android & iOS)
 
 > **High-performance, privacy-first, enterprise-grade strength training and workout tracking mobile application.**  
-> Designed for **120 FPS buttery-smooth performance**, zero-latency (0ms) offline-first operation, and built in strict accordance with the [Meet-Miyani/compose-skill](https://github.com/Meet-Miyani/compose-skill) standard.
+> Built with **Compose Multiplatform (CMP)** to run natively on **Android (APK)** and **Apple (iOS / iPhone / iPad)** with 120 FPS buttery-smooth performance, zero-latency (0ms) offline boot, and automated **GitHub Actions CI/CD** for 1-click APK downloads and Releases.
 
 ---
 
 ## 🚀 Key Features
+
+* **Cross-Platform Compose (Android & iOS)**:
+  - 100% shared UI, MVI architecture, business logic, and math calculations between Android and Apple iOS.
+  - Native performance with Apple Metal rendering on iOS and hardware acceleration on Android.
+  - Native haptic feedback: **Apple Taptic Engine** (`UIImpactFeedbackGenerator`) on iPhone, **Android Vibrator** on Android.
 
 * **Interactive Hevy/Strong-Style Workout Tracker**:
   - Live set logging with dynamic set types: **Normal** (1, 2, 3), **Warmup** (W), **Drop Set** (D), and **Failure** (F).
@@ -48,16 +53,39 @@
 
 ---
 
-## 🏛 Architecture & Tech Stack
+## 📦 GitHub Actions CI/CD & 1-Click APK Download
 
-Built strictly following the **`compose-skill`** rules:
+The repository includes a ready-to-run GitHub Actions workflow in [`.github/workflows/build-and-release.yml`](.github/workflows/build-and-release.yml):
 
-- **Unidirectional Data Flow (MVI)**: Built on `BaseViewModel<Action, State, Effect>` with a single public entry point `onAction(action)`.
-- **Stateless Screens**: `Route` collects state and effects; `Screen` is 100% stateless (`state in, callbacks out`).
-- **High-Performance Compose**: Clock-driven values (rest timer, workout duration) are passed as timestamps (`Instant` / Epoch ms) and formatted only at the leaf composable scope, completely eliminating whole-screen recompositions.
-- **Dependency Injection**: Koin 4.x (`koin-androidx-compose`).
-- **Networking**: Ktor 3.x (CIO Engine) with JSON Content Negotiation.
-- **Theme**: Athletic OLED Dark (`#0B0E14`) with Emerald Neon (`#10B981`) accents and high-contrast gym ergonomics.
+1. **Automatic APK Build on every push**:
+   - Whenever you push code to `main`, GitHub Actions automatically compiles the application and generates the `.apk`.
+2. **Immediate Download from Artifacts**:
+   - Go to the **Actions** tab in your GitHub repository.
+   - Click on the latest workflow run.
+   - Under **Artifacts**, download `NeverPaidHealth-Android-APK` immediately to your phone or computer.
+3. **Automated GitHub Releases**:
+   - Push a git tag (e.g. `git tag v1.0.0 && git push --tags`) or trigger the workflow manually with the "Run workflow" button.
+   - GitHub Actions creates a formal **GitHub Release** and attaches `NeverPaidHealth-v1.0.0-debug.apk` directly to the release page for 1-click public download.
+4. **iOS Validation**:
+   - Automatically validates compilation of the iOS framework on a macOS runner.
+
+---
+
+## 🌐 Linking to your GitHub Repository
+
+To push this project to your GitHub and trigger the first automated APK build:
+
+```bash
+# 1. Add your GitHub remote repository (replace with your repo URL):
+git remote add origin https://github.com/<YOUR_USERNAME>/<YOUR_REPO_NAME>.git
+
+# 2. Push to GitHub:
+git push -u origin main
+
+# 3. (Optional) Create a version tag to trigger a GitHub Release with the APK attached:
+git tag v1.0.0
+git push --tags
+```
 
 ---
 
@@ -65,65 +93,27 @@ Built strictly following the **`compose-skill`** rules:
 
 ```
 duda-mobile/
-├── .agents/skills/              # Installed Compose Skills (compose, compose-architecture, etc.)
-├── gradle/
-│   ├── libs.versions.toml       # Single source of truth for all dependencies & versions
-│   └── wrapper/                 # Gradle Wrapper distribution
-├── app/
-│   ├── build.gradle.kts         # App module build definition
+├── .agents/skills/              # Installed Compose Skills
+├── .github/workflows/           # CI/CD: Automated APK Build & GitHub Releases
+│   └── build-and-release.yml
+├── composeApp/                  # Compose Multiplatform shared module
+│   ├── build.gradle.kts
 │   └── src/
-│       ├── main/
-│       │   ├── AndroidManifest.xml
-│       │   └── java/dev/neverpaid/health/
-│       │       ├── MainActivity.kt
-│       │       ├── NeverPaidHealthApplication.kt
-│       │       ├── core/
-│       │       │   ├── designsystem/  # Colors, Typography, AthleticCard, SetTypeBadge, Theme
-│       │       │   ├── di/            # Koin AppModule
-│       │       │   ├── error/         # AppError and AppErrorType
-│       │       │   ├── math/          # StrengthCalculator (E1RM, Volume, 7-day Avg, BMI, TDEE)
-│       │       │   └── mvi/           # BaseViewModel, UiAction, UiState, UiEffect, CollectEffect
-│       │       ├── data/
-│       │       │   ├── catalog/       # Standard 870+ exercises & pre-built routines
-│       │       │   └── repository/    # NeverPaidRepositoryImpl (0ms boot offline cache)
-│       │       ├── domain/
-│       │       │   ├── model/         # Domain entities (Workout, Exercise, Set, Coach, Body)
-│       │       │   └── repository/    # Repository interfaces
-│       │       ├── features/
-│       │       │   ├── dashboard/     # Dashboard screen & routines quick-start
-│       │       │   ├── workout/       # Live workout tracker & floating rest timer
-│       │       │   ├── exercises/     # Catalog search & form guides
-│       │       │   ├── history/       # Session logs & 52-week heatmap
-│       │       │   ├── progress/      # Volume charts & PR Hall of Fame
-│       │       │   ├── coach/         # AI Coach & sports science chat
-│       │       │   ├── body/          # Weigh-ins, 7-day avg, BMI & TDEE
-│       │       │   └── profile/       # Units (KG/LB) & preferences
-│       │       └── navigation/        # Type-safe bottom bar & NavHost
-│       └── test/java/dev/neverpaid/health/
-│           ├── core/math/             # Golden calculation vectors tests
-│           ├── features/workout/      # WorkoutViewModel tests
-│           └── data/repository/       # Repository tests
+│       ├── commonMain/          # 100% Shared UI, ViewModels, and Logic
+│       │   └── kotlin/dev/neverpaid/health/
+│       │       ├── core/        # Design system, MVI BaseViewModel, Math Calculators
+│       │       ├── data/        # Catalog (870+ exercises), Offline Repository
+│       │       ├── domain/      # Pure domain models
+│       │       ├── features/    # Dashboard, Workout, Exercises, History, Progress, Coach, Body, Profile
+│       │       └── navigation/  # AppNavigation and bottom bar
+│       ├── androidMain/         # Android runner (MainActivity, Application)
+│       └── iosMain/             # Apple iOS runner (MainViewController)
+├── iosApp/                      # Xcode project wrapper for iOS (SwiftUI)
+│   ├── iosApp/
+│   │   ├── iOSApp.swift
+│   │   └── ContentView.swift
+│   └── Configuration/
+└── gradle/
+    ├── libs.versions.toml       # Single source of truth for all dependencies
+    └── wrapper/                 # Gradle Wrapper
 ```
-
----
-
-## 💻 Running the App
-
-### 1. In Android Studio
-1. Open Android Studio.
-2. Select **File $\rightarrow$ Open** and choose the `duda-mobile` folder.
-3. Allow Gradle to sync.
-4. Select an Android Emulator (API 26+) or a physical device.
-5. Click **Run (`Shift + F10`)**.
-
-### 2. From the Terminal
-Run unit tests verifying the golden calculation vectors and ViewModels:
-```bash
-./gradlew test
-```
-
-Build the debug APK:
-```bash
-./gradlew assembleDebug
-```
-The APK will be generated at: `app/build/outputs/apk/debug/app-debug.apk`.
