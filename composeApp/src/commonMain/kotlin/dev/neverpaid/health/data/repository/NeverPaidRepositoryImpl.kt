@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class NeverPaidRepositoryImpl(
-    private val apiClient: DudaApiClient = DudaApiClient()
+    private val apiClient: DudaApiClient? = null
 ) : NeverPaidRepository {
 
     private val scope = CoroutineScope(Dispatchers.Default)
@@ -90,7 +90,7 @@ class NeverPaidRepositoryImpl(
 
     init {
         // Background sync if online & authenticated
-        if (isAuthenticatedFlow.value) {
+        if (isAuthenticatedFlow.value && apiClient != null) {
             scope.launch {
                 try {
                     val profile = apiClient.getMe()
@@ -111,51 +111,55 @@ class NeverPaidRepositoryImpl(
     override fun getCurrentUser(): Flow<UserProfileDto?> = currentUserFlow.asStateFlow()
 
     override suspend fun login(email: String, password: String): AuthResponseDto {
-        return try {
-            val response = apiClient.login(email, password)
-            isAuthenticatedFlow.value = true
-            currentUserFlow.value = response.user
-            response
-        } catch (e: Exception) {
-            // Local fallback guest mode if network is unreachable
-            if (e.message?.contains("failed", ignoreCase = true) == true) throw e
-            val guestUser = UserProfileDto(
-                id = "guest-${PlatformBridge.currentTimeMillis()}",
-                email = email,
-                name = email.substringBefore("@").replaceFirstChar { it.uppercase() }
-            )
-            val authResp = AuthResponseDto("offline-token", guestUser)
-            DudaLocalStorage.setAccessToken(authResp.accessToken)
-            DudaLocalStorage.setUserProfile(guestUser)
-            isAuthenticatedFlow.value = true
-            currentUserFlow.value = guestUser
-            authResp
+        if (apiClient != null) {
+            try {
+                val response = apiClient.login(email, password)
+                isAuthenticatedFlow.value = true
+                currentUserFlow.value = response.user
+                return response
+            } catch (e: Exception) {
+                if (e.message?.contains("failed", ignoreCase = true) == true) throw e
+            }
         }
+        val guestUser = UserProfileDto(
+            id = "guest-${PlatformBridge.currentTimeMillis()}",
+            email = email,
+            name = email.substringBefore("@").replaceFirstChar { it.uppercase() }
+        )
+        val authResp = AuthResponseDto("offline-token", guestUser)
+        DudaLocalStorage.setAccessToken(authResp.accessToken)
+        DudaLocalStorage.setUserProfile(guestUser)
+        isAuthenticatedFlow.value = true
+        currentUserFlow.value = guestUser
+        return authResp
     }
 
     override suspend fun register(email: String, password: String, name: String): AuthResponseDto {
-        return try {
-            val response = apiClient.register(email, password, name)
-            isAuthenticatedFlow.value = true
-            currentUserFlow.value = response.user
-            response
-        } catch (e: Exception) {
-            val guestUser = UserProfileDto(
-                id = "guest-${PlatformBridge.currentTimeMillis()}",
-                email = email,
-                name = name
-            )
-            val authResp = AuthResponseDto("offline-token", guestUser)
-            DudaLocalStorage.setAccessToken(authResp.accessToken)
-            DudaLocalStorage.setUserProfile(guestUser)
-            isAuthenticatedFlow.value = true
-            currentUserFlow.value = guestUser
-            authResp
+        if (apiClient != null) {
+            try {
+                val response = apiClient.register(email, password, name)
+                isAuthenticatedFlow.value = true
+                currentUserFlow.value = response.user
+                return response
+            } catch (e: Exception) {
+                if (e.message?.contains("failed", ignoreCase = true) == true) throw e
+            }
         }
+        val guestUser = UserProfileDto(
+            id = "guest-${PlatformBridge.currentTimeMillis()}",
+            email = email,
+            name = name
+        )
+        val authResp = AuthResponseDto("offline-token", guestUser)
+        DudaLocalStorage.setAccessToken(authResp.accessToken)
+        DudaLocalStorage.setUserProfile(guestUser)
+        isAuthenticatedFlow.value = true
+        currentUserFlow.value = guestUser
+        return authResp
     }
 
     override suspend fun logout() {
-        apiClient.logout()
+        apiClient?.logout()
         isAuthenticatedFlow.value = false
         currentUserFlow.value = null
     }
@@ -269,7 +273,7 @@ class NeverPaidRepositoryImpl(
         // Sync with backend asynchronously
         scope.launch {
             try {
-                apiClient.saveWorkout(finishedWorkout)
+                apiClient?.saveWorkout(finishedWorkout)
             } catch (_: Exception) {}
         }
 
@@ -343,7 +347,7 @@ class NeverPaidRepositoryImpl(
         }
         programsFlow.value = updated
         scope.launch {
-            try { apiClient.activateProgram(programId) } catch (_: Exception) {}
+            try { apiClient?.activateProgram(programId) } catch (_: Exception) {}
         }
     }
 
@@ -357,7 +361,7 @@ class NeverPaidRepositoryImpl(
         }
         programsFlow.value = updated
         scope.launch {
-            try { apiClient.likeProgram(programId) } catch (_: Exception) {}
+            try { apiClient?.likeProgram(programId) } catch (_: Exception) {}
         }
     }
 
@@ -401,7 +405,7 @@ class NeverPaidRepositoryImpl(
         }
 
         scope.launch {
-            try { apiClient.postProgramComment(programId, content, parentId) } catch (_: Exception) {}
+            try { apiClient?.postProgramComment(programId, content, parentId) } catch (_: Exception) {}
         }
 
         return newComment
@@ -420,7 +424,7 @@ class NeverPaidRepositoryImpl(
         todosFlow.value = updated
         DudaLocalStorage.setCachedTodos(updated)
         scope.launch {
-            try { apiClient.saveTodo(task) } catch (_: Exception) {}
+            try { apiClient?.saveTodo(task) } catch (_: Exception) {}
         }
     }
 
@@ -440,7 +444,7 @@ class NeverPaidRepositoryImpl(
         scope.launch {
             try {
                 val isCompleted = updated.find { it.id == taskId }?.isCompletedOn(date) ?: false
-                apiClient.toggleTodo(taskId, date, isCompleted)
+                apiClient?.toggleTodo(taskId, date, isCompleted)
             } catch (_: Exception) {}
         }
     }
@@ -450,7 +454,7 @@ class NeverPaidRepositoryImpl(
         todosFlow.value = updated
         DudaLocalStorage.setCachedTodos(updated)
         scope.launch {
-            try { apiClient.deleteTodo(taskId) } catch (_: Exception) {}
+            try { apiClient?.deleteTodo(taskId) } catch (_: Exception) {}
         }
     }
 
@@ -466,7 +470,7 @@ class NeverPaidRepositoryImpl(
         mealLogsFlow.value = updated
         DudaLocalStorage.setCachedMeals(updated)
         scope.launch {
-            try { apiClient.saveMealLog(meal) } catch (_: Exception) {}
+            try { apiClient?.saveMealLog(meal) } catch (_: Exception) {}
         }
     }
 
@@ -477,31 +481,32 @@ class NeverPaidRepositoryImpl(
     }
 
     override suspend fun analyzeFood(description: String): MealLog {
-        return try {
-            apiClient.analyzeFood(description)
-        } catch (_: Exception) {
-            // Intelligent fallback heuristic if offline
-            val lower = description.lowercase()
-            val (cals, prot, fat, carb) = when {
-                lower.contains("плов") || lower.contains("osh") -> listOf(650, 24, 28, 75)
-                lower.contains("куриц") || lower.contains("chicken") || lower.contains("tovuq") -> listOf(420, 48, 8, 35)
-                lower.contains("лосось") || lower.contains("salmon") || lower.contains("baliq") -> listOf(480, 40, 22, 10)
-                lower.contains("протеин") || lower.contains("protein") || lower.contains("shake") -> listOf(140, 26, 2, 4)
-                lower.contains("яйц") || lower.contains("egg") || lower.contains("tuxum") -> listOf(240, 18, 16, 2)
-                lower.contains("овсянк") || lower.contains("oats") || lower.contains("suli") -> listOf(350, 14, 6, 60)
-                else -> listOf(380, 22, 12, 45)
-            }
-            MealLog(
-                id = PlatformBridge.generateUuid(),
-                date = PlatformBridge.formatDate(PlatformBridge.currentTimeMillis(), "yyyy-MM-dd"),
-                mealType = "lunch",
-                name = description.take(40),
-                calories = cals,
-                proteinG = prot,
-                fatsG = fat,
-                carbsG = carb
-            )
+        if (apiClient != null) {
+            try {
+                return apiClient.analyzeFood(description)
+            } catch (_: Exception) {}
         }
+        // Intelligent fallback heuristic if offline
+        val lower = description.lowercase()
+        val (cals, prot, fat, carb) = when {
+            lower.contains("плов") || lower.contains("osh") -> listOf(650, 24, 28, 75)
+            lower.contains("куриц") || lower.contains("chicken") || lower.contains("tovuq") -> listOf(420, 48, 8, 35)
+            lower.contains("лосось") || lower.contains("salmon") || lower.contains("baliq") -> listOf(480, 40, 22, 10)
+            lower.contains("протеин") || lower.contains("protein") || lower.contains("shake") -> listOf(140, 26, 2, 4)
+            lower.contains("яйц") || lower.contains("egg") || lower.contains("tuxum") -> listOf(240, 18, 16, 2)
+            lower.contains("овсянк") || lower.contains("oats") || lower.contains("suli") -> listOf(350, 14, 6, 60)
+            else -> listOf(380, 22, 12, 45)
+        }
+        return MealLog(
+            id = PlatformBridge.generateUuid(),
+            date = PlatformBridge.formatDate(PlatformBridge.currentTimeMillis(), "yyyy-MM-dd"),
+            mealType = "lunch",
+            name = description.take(40),
+            calories = cals,
+            proteinG = prot,
+            fatsG = fat,
+            carbsG = carb
+        )
     }
 
     override fun getWaterMl(date: String): Flow<Int> {
@@ -529,9 +534,13 @@ class NeverPaidRepositoryImpl(
         )
         chatMessagesFlow.value = chatMessagesFlow.value + userMsg
 
-        val replyText = try {
-            apiClient.sendCoachChatMessage(text)
-        } catch (_: Exception) {
+        val replyText = if (apiClient != null) {
+            try {
+                apiClient.sendCoachChatMessage(text)
+            } catch (_: Exception) {
+                generateLocalAiCoachReply(text)
+            }
+        } else {
             generateLocalAiCoachReply(text)
         }
 
@@ -563,7 +572,7 @@ class NeverPaidRepositoryImpl(
         DudaLocalStorage.setCachedBodyMeasurements(updated)
 
         scope.launch {
-            try { apiClient.saveBodyMeasurement(measurement) } catch (_: Exception) {}
+            try { apiClient?.saveBodyMeasurement(measurement) } catch (_: Exception) {}
         }
     }
 

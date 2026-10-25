@@ -49,21 +49,38 @@ actual object PlatformBridge {
         }
     }
 
+    private val inMemoryFallback = mutableMapOf<String, String>()
     private fun prefs() = appContext?.getSharedPreferences("duda_storage", Context.MODE_PRIVATE)
 
     actual fun putString(key: String, value: String) {
-        prefs()?.edit()?.putString(key, value)?.apply()
+        val p = prefs()
+        if (p != null) {
+            p.edit().putString(key, value).apply()
+        } else {
+            inMemoryFallback[key] = value
+        }
     }
 
     actual fun getString(key: String): String? {
-        return prefs()?.getString(key, null)
+        val p = prefs()
+        return if (p != null) p.getString(key, null) else inMemoryFallback[key]
     }
 
     actual fun remove(key: String) {
-        prefs()?.edit()?.remove(key)?.apply()
+        val p = prefs()
+        if (p != null) {
+            p.edit().remove(key).apply()
+        } else {
+            inMemoryFallback.remove(key)
+        }
     }
 
     actual fun clear() {
-        prefs()?.edit()?.clear()?.apply()
+        val p = prefs()
+        if (p != null) {
+            p.edit().clear().apply()
+        } else {
+            inMemoryFallback.clear()
+        }
     }
 }

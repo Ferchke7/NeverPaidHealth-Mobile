@@ -1,5 +1,6 @@
 package dev.neverpaid.health.core.di
 
+import dev.neverpaid.health.core.network.DudaApiClient
 import dev.neverpaid.health.data.repository.NeverPaidRepositoryImpl
 import dev.neverpaid.health.domain.repository.NeverPaidRepository
 import dev.neverpaid.health.features.auth.AuthViewModel
@@ -19,7 +20,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
-    single<NeverPaidRepository> { NeverPaidRepositoryImpl() }
+    single<NeverPaidRepository> { NeverPaidRepositoryImpl(apiClient = DudaApiClient()) }
 
     viewModel { AuthViewModel(get()) }
     viewModel { DashboardViewModel(get()) }
