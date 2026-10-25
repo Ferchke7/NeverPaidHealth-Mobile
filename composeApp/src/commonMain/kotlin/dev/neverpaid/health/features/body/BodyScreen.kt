@@ -59,6 +59,7 @@ import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.domain.model.BodyMeasurement
 
@@ -87,6 +88,8 @@ fun BodyScreen(
     onAction: (BodyUiAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalDudaStrings.current
+
     if (state.isLoading) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = EmeraldNeon)
@@ -112,13 +115,13 @@ fun BodyScreen(
         item(key = "header") {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Body & Health Metrics",
+                text = strings.bodyTitle,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
             Text(
-                text = "Weight tracking, 7-day smoothed average & TDEE",
+                text = strings.bodySubtitle,
                 fontSize = 13.sp,
                 color = TextSecondary
             )
@@ -149,7 +152,7 @@ fun BodyScreen(
                             }
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "CURRENT WEIGHT",
+                                text = strings.bodyCurrentWeight,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextMuted,

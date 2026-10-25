@@ -1,10 +1,9 @@
 package dev.neverpaid.health.features.dashboard
 
-import androidx.lifecycle.viewModelScope
 import dev.neverpaid.health.core.mvi.BaseViewModel
+import dev.neverpaid.health.domain.model.Routine
 import dev.neverpaid.health.domain.repository.NeverPaidRepository
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
 
 class DashboardViewModel(
     private val repository: NeverPaidRepository
@@ -40,10 +39,12 @@ class DashboardViewModel(
             combine(
                 repository.getActiveWorkout(),
                 repository.getCoachInsight(),
-                repository.getProgressSummary()
-            ) { active, coach, progress ->
-                Triple(active, coach, progress)
-            }.collect { (active, coach, progress) ->
+                repository.getProgressSummary(),
+                repository.getPrograms()
+            ) { active, coach, progress, programs ->
+                val activeProgram = programs.find { it.isActive } ?: programs.firstOrNull()
+                val activeDay = activeProgram?.days?.find { !it.isRestDay } ?: activeProgram?.days?.firstOrNull()
+
                 updateState {
                     copy(
                         cnsScore = coach.cnsScore,
@@ -56,10 +57,12 @@ class DashboardViewModel(
                         totalWorkouts = progress.totalWorkouts,
                         totalVolumeKg = progress.totalVolumeKg,
                         recentRoutines = repository.getRoutines(),
+                        activeProgramTitle = activeDay?.title ?: "Push Day (Hypertrophy)",
+                        activeProgramExercisesCount = activeDay?.exercises?.size ?: 4,
                         isLoading = false
                     )
                 }
-            }
+            }.collect {}
         }
     }
 }

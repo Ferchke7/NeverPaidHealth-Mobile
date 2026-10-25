@@ -16,6 +16,8 @@ data class DashboardUiState(
     val totalWorkouts: Int = 0,
     val totalVolumeKg: Double = 0.0,
     val recentRoutines: List<Routine> = emptyList(),
+    val activeProgramTitle: String = "Push Day (Hypertrophy)",
+    val activeProgramExercisesCount: Int = 4,
     val isLoading: Boolean = false
 ) : UiState
 

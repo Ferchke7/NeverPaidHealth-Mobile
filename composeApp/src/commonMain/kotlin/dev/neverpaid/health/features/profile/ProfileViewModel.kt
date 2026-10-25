@@ -11,11 +11,14 @@ class ProfileViewModel(
 ) {
 
     init {
-        loadPreferences()
+        loadProfileAndPreferences()
     }
 
     override fun onAction(action: ProfileUiAction) {
         when (action) {
+            is ProfileUiAction.OnSelectLanguage -> {
+                updatePrefs { copy(languageCode = action.languageCode) }
+            }
             is ProfileUiAction.OnToggleUnits -> {
                 updatePrefs { copy(useKilograms = action.useKg) }
             }
@@ -31,14 +34,16 @@ class ProfileViewModel(
             is ProfileUiAction.OnUpdateServerUrl -> {
                 updatePrefs { copy(serverUrl = action.url) }
             }
+            ProfileUiAction.OnLogoutClick -> logout()
         }
     }
 
-    private fun loadPreferences() {
+    private fun loadProfileAndPreferences() {
         launchGuarded {
             repository.getUserPreferences().collectLatest { prefs ->
                 updateState {
                     copy(
+                        languageCode = prefs.languageCode,
                         useKilograms = prefs.useKilograms,
                         defaultRestSeconds = prefs.defaultRestSeconds,
                         soundAlertsEnabled = prefs.soundAlertsEnabled,
@@ -49,13 +54,32 @@ class ProfileViewModel(
                 }
             }
         }
+
+        launchGuarded {
+            repository.getCurrentUser().collectLatest { user ->
+                if (user != null) {
+                    updateState {
+                        copy(
+                            userName = user.name,
+                            userEmail = user.email
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun logout() {
+        launchGuarded {
+            repository.logout()
+            sendEffect(ProfileUiEffect.NavigateToAuth)
+        }
     }
 
     private fun updatePrefs(modify: ProfileUiState.() -> ProfileUiState) {
         val updated = modify(currentState)
         updateState { updated }
         launchGuarded {
-            val currentPrefs = repository.getUserPreferences()
             repository.updatePreferences(
                 dev.neverpaid.health.domain.repository.UserPreferencesData(
                     useKilograms = updated.useKilograms,
@@ -63,7 +87,8 @@ class ProfileViewModel(
                     soundAlertsEnabled = updated.soundAlertsEnabled,
                     vibrationEnabled = updated.vibrationEnabled,
                     serverUrl = updated.serverUrl,
-                    isDevMode = updated.isDevMode
+                    isDevMode = updated.isDevMode,
+                    languageCode = updated.languageCode
                 )
             )
         }

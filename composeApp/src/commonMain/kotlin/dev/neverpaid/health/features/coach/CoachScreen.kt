@@ -52,6 +52,7 @@ import dev.neverpaid.health.core.designsystem.IndigoElectric
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.domain.model.ChatMessage
 
 @Composable
@@ -79,11 +80,12 @@ fun CoachScreen(
     onAction: (CoachUiAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalDudaStrings.current
     val quickPrompts = listOf(
-        "What to hit today?",
-        "Bench overload target?",
-        "Tips for recovery?",
-        "Deadlift form checklist"
+        "Что тренировать сегодня?",
+        "Цель перегрузки на жим?",
+        "Советы по восстановлению",
+        "Техника становой тяги"
     )
 
     Column(
@@ -101,13 +103,13 @@ fun CoachScreen(
         ) {
             Column {
                 Text(
-                    text = "AI Strength Coach",
+                    text = strings.navCoach,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
                 Text(
-                    text = "Real-time CNS readiness & progressive overload",
+                    text = "Индекс готовности ЦНС и прогрессивная перегрузка",
                     fontSize = 13.sp,
                     color = TextSecondary
                 )

@@ -53,6 +53,8 @@ import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
+import dev.neverpaid.health.core.math.StrengthCalculator
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.domain.model.Workout
 
@@ -81,6 +83,8 @@ fun HistoryScreen(
     onAction: (HistoryUiAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalDudaStrings.current
+
     if (state.isLoading) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = EmeraldNeon)
@@ -97,13 +101,13 @@ fun HistoryScreen(
         item(key = "header") {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Training History",
+                text = strings.historyTitle,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
             Text(
-                text = "${state.totalWorkoutsLogged} recorded sessions",
+                text = "${state.totalWorkoutsLogged} завершённых сессий",
                 fontSize = 13.sp,
                 color = TextSecondary
             )
@@ -115,7 +119,7 @@ fun HistoryScreen(
 
         item(key = "log_header") {
             Text(
-                text = "LOGGED SESSIONS",
+                text = strings.historyLoggedSessions,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextMuted,
@@ -143,6 +147,8 @@ fun HistoryScreen(
 
 @Composable
 private fun ConsistencyHeatmapCard(densityMatrix: List<Int>) {
+    val strings = LocalDudaStrings.current
+
     AthleticCard(backgroundColor = DarkSurface) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -159,7 +165,7 @@ private fun ConsistencyHeatmapCard(densityMatrix: List<Int>) {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "12-WEEK TRAINING DENSITY",
+                        text = strings.historyDensity,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextMuted,
@@ -168,7 +174,7 @@ private fun ConsistencyHeatmapCard(densityMatrix: List<Int>) {
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "Less", fontSize = 10.sp, color = TextMuted)
+                    Text(text = strings.historyLess, fontSize = 10.sp, color = TextMuted)
                     Spacer(modifier = Modifier.width(4.dp))
                     Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(DarkSurfaceHigh))
                     Spacer(modifier = Modifier.width(2.dp))
@@ -178,7 +184,7 @@ private fun ConsistencyHeatmapCard(densityMatrix: List<Int>) {
                     Spacer(modifier = Modifier.width(2.dp))
                     Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(EmeraldNeon))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "More", fontSize = 10.sp, color = TextMuted)
+                    Text(text = strings.historyMore, fontSize = 10.sp, color = TextMuted)
                 }
             }
 

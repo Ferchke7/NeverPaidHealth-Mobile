@@ -3,6 +3,21 @@ package dev.neverpaid.health.domain.model
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class UserProfileDto(
+    val id: String,
+    val email: String,
+    val name: String,
+    val avatarUrl: String? = null,
+    val unitPreference: String = "kg"
+)
+
+@Serializable
+data class AuthResponseDto(
+    val accessToken: String,
+    val user: UserProfileDto
+)
+
+@Serializable
 data class Exercise(
     val id: String,
     val name: String,
@@ -56,6 +71,86 @@ data class Routine(
     val title: String,
     val description: String = "",
     val exercises: List<Exercise> = emptyList()
+)
+
+@Serializable
+data class ProgramDay(
+    val dayNumber: Int,
+    val title: String,
+    val splitType: String, // "push", "pull", "legs", "rest", "cardio", "fullbody"
+    val isRestDay: Boolean = false,
+    val exercises: List<Exercise> = emptyList()
+)
+
+@Serializable
+data class TrainingProgram(
+    val id: String,
+    val title: String,
+    val description: String,
+    val level: String = "intermediate", // "beginner", "intermediate", "advanced"
+    val daysPerWeek: Int = 4,
+    val likesCount: Int = 0,
+    val isLiked: Boolean = false,
+    val commentsCount: Int = 0,
+    val isActive: Boolean = false,
+    val days: List<ProgramDay> = emptyList()
+)
+
+@Serializable
+data class ProgramComment(
+    val id: String,
+    val programId: String,
+    val userId: String,
+    val userName: String,
+    val userAvatarUrl: String? = null,
+    val content: String,
+    val createdAtEpochMs: Long,
+    val parentId: String? = null,
+    val likesCount: Int = 0,
+    val isLiked: Boolean = false,
+    val replies: List<ProgramComment> = emptyList()
+)
+
+@Serializable
+data class TodoTask(
+    val id: String,
+    val title: String,
+    val target: String,
+    val category: String = "WORKOUT", // "WORKOUT", "NUTRITION", "RECOVERY", "FOCUS"
+    val priority: String = "NORMAL", // "HIGH", "NORMAL", "LOW"
+    val isRecurringDaily: Boolean = true,
+    val scheduledDate: String? = null, // "YYYY-MM-DD" for single-day tasks
+    val completedDates: Set<String> = emptySet(), // Set of "YYYY-MM-DD"
+    val pomodoroMinutes: Int = 25
+) {
+    fun isCompletedOn(date: String): Boolean = completedDates.contains(date)
+}
+
+@Serializable
+data class MealLog(
+    val id: String,
+    val date: String, // "YYYY-MM-DD"
+    val mealType: String, // "breakfast", "lunch", "dinner", "snack"
+    val name: String,
+    val calories: Int,
+    val proteinG: Int,
+    val fatsG: Int,
+    val carbsG: Int
+)
+
+@Serializable
+data class NutritionSummary(
+    val date: String,
+    val totalCalories: Int = 0,
+    val targetCalories: Int = 2450,
+    val totalProtein: Int = 0,
+    val targetProtein: Int = 180,
+    val totalFats: Int = 0,
+    val targetFats: Int = 70,
+    val totalCarbs: Int = 0,
+    val targetCarbs: Int = 280,
+    val waterMl: Int = 0,
+    val targetWaterMl: Int = 3000
 )
 
 @Serializable

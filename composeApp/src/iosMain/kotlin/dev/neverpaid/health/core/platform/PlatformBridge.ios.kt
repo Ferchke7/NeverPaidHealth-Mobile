@@ -3,6 +3,7 @@ package dev.neverpaid.health.core.platform
 import platform.Foundation.NSDate
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSUUID
+import platform.Foundation.NSUserDefaults
 import platform.Foundation.timeIntervalSince1970
 import platform.UIKit.UIImpactFeedbackGenerator
 import platform.UIKit.UIImpactFeedbackStyle
@@ -16,7 +17,7 @@ actual object PlatformBridge {
     }
 
     actual fun showToast(message: String) {
-        println("[NeverPaidHealth iOS Notification]: $message")
+        println("[duda.uz iOS Notification]: $message")
     }
 
     actual fun currentTimeMillis(): Long {
@@ -33,5 +34,24 @@ actual object PlatformBridge {
             dateFormat = pattern
         }
         return formatter.stringFromDate(date)
+    }
+
+    actual fun putString(key: String, value: String) {
+        NSUserDefaults.standardUserDefaults.setObject(value, forKey = key)
+    }
+
+    actual fun getString(key: String): String? {
+        return NSUserDefaults.standardUserDefaults.stringForKey(key)
+    }
+
+    actual fun remove(key: String) {
+        NSUserDefaults.standardUserDefaults.removeObjectForKey(key)
+    }
+
+    actual fun clear() {
+        val defaults = NSUserDefaults.standardUserDefaults
+        defaults.dictionaryRepresentation().keys.forEach {
+            if (it is String) defaults.removeObjectForKey(it)
+        }
     }
 }

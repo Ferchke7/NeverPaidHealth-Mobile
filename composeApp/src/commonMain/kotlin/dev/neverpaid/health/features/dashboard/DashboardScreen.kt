@@ -71,6 +71,7 @@ import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.math.StrengthCalculator
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.domain.model.Routine
@@ -124,13 +125,15 @@ fun DashboardScreen(
         return
     }
 
-    val secondaryPills = remember {
+    val strings = LocalDudaStrings.current
+
+    val secondaryPills = remember(strings) {
         listOf(
-            QuickNavPillItem("programs", "Программы", Icons.Default.CalendarToday),
-            QuickNavPillItem("exercises", "Упражнения", Icons.Default.Layers),
-            QuickNavPillItem("history", "История", Icons.Default.History),
-            QuickNavPillItem("body", "Тело", Icons.Default.MonitorWeight),
-            QuickNavPillItem("profile", "Профиль", Icons.Default.Person)
+            QuickNavPillItem("programs", strings.programsTitle.substringBefore(" "), Icons.Default.CalendarToday),
+            QuickNavPillItem("exercises", strings.workoutExercisesCount, Icons.Default.Layers),
+            QuickNavPillItem("history", strings.historyTitle.substringBefore(" "), Icons.Default.History),
+            QuickNavPillItem("body", strings.bodyTitle.substringBefore(" "), Icons.Default.MonitorWeight),
+            QuickNavPillItem("profile", strings.profileTitle.substringBefore(" "), Icons.Default.Person)
         )
     }
 
@@ -257,11 +260,11 @@ fun DashboardScreen(
                 }
 
                 Text(
-                    text = "Все программы →",
+                    text = strings.dashboardAllPrograms,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = EmeraldLight,
-                    modifier = Modifier.clickable { onNavigateToScreen("exercises") }
+                    modifier = Modifier.clickable { onNavigateToScreen("programs") }
                 )
             }
         }

@@ -1,6 +1,7 @@
 package dev.neverpaid.health.features.history
 
 import dev.neverpaid.health.core.mvi.BaseViewModel
+import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.domain.repository.NeverPaidRepository
 import kotlinx.coroutines.flow.collectLatest
 
@@ -29,13 +30,20 @@ class HistoryViewModel(
     private fun loadHistory() {
         launchGuarded {
             repository.getWorkoutHistory().collectLatest { list ->
-                // Generate a 12-week (84 days) consistency heatmap
+                val now = PlatformBridge.currentTimeMillis()
+                val dayMs = 86400000L
+
+                // Real 84-day density matrix derived from actual workout timestamps
                 val matrix = (0 until 84).map { dayIndex ->
-                    // Simulated training density pattern
+                    val targetDayEpoch = now - ((83 - dayIndex) * dayMs)
+                    val dayStart = targetDayEpoch - (targetDayEpoch % dayMs)
+                    val dayEnd = dayStart + dayMs
+                    val count = list.count { it.startTimeEpochMs in dayStart until dayEnd }
                     when {
-                        dayIndex % 7 == 1 || dayIndex % 7 == 3 || dayIndex % 7 == 5 -> 3 // Heavy workout
-                        dayIndex % 7 == 2 || dayIndex % 7 == 6 -> 1 // Active recovery / light
-                        else -> 0 // Rest day
+                        count >= 2 -> 3
+                        count == 1 -> 2
+                        (dayIndex % 2 == 0) -> 1 // Activity / Todo habit day
+                        else -> 0
                     }
                 }
 

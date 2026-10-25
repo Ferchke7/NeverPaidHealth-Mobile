@@ -19,18 +19,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,14 +44,13 @@ import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldDark
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.IndigoElectric
-import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
+import dev.neverpaid.health.core.math.StrengthCalculator
 import dev.neverpaid.health.domain.model.PersonalRecord
 
 @Composable
@@ -76,12 +78,20 @@ fun ProgressScreen(
     onAction: (ProgressUiAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalDudaStrings.current
+
     if (state.isLoading) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = EmeraldNeon)
         }
         return
     }
+
+    val tabs = listOf(
+        strings.progressTabVolume,
+        strings.progressTabMuscles,
+        strings.progressTabPRs
+    )
 
     LazyColumn(
         modifier = modifier
@@ -92,66 +102,126 @@ fun ProgressScreen(
         item(key = "header") {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Analytics & Benchmarks",
+                text = strings.progressTitle,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
             Text(
-                text = "Volume trends, hypertrophy load & personal records",
+                text = strings.progressSubtitle,
                 fontSize = 13.sp,
                 color = TextSecondary
             )
         }
 
-        item(key = "volume_chart_card") {
-            VolumeProgressionChartCard(volumeBars = state.weeklyVolumeBars)
-        }
-
-        item(key = "hypertrophy_card") {
-            HypertrophyDistributionCard(muscleSets = state.muscleHypertrophySets)
-        }
-
-        item(key = "prs_header") {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.EmojiEvents,
-                        contentDescription = null,
-                        tint = AmberWarm,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "PERSONAL RECORDS HALL OF FAME",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextMuted,
-                        letterSpacing = 1.sp
-                    )
+        // Single Choice Segmented Button: One Job per Tab!
+        item(key = "tabs_row") {
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                tabs.forEachIndexed { index, label ->
+                    val isSelected = state.selectedTab == index
+                    SegmentedButton(
+                        selected = isSelected,
+                        onClick = { onAction(ProgressUiAction.OnSelectTab(index)) },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = tabs.size),
+                        colors = SegmentedButtonDefaults.colors(
+                            activeContainerColor = EmeraldNeon,
+                            activeContentColor = DarkBackground,
+                            inactiveContainerColor = DarkSurfaceVariant,
+                            inactiveContentColor = TextSecondary
+                        )
+                    ) {
+                        Text(
+                            text = label,
+                            fontSize = 13.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
 
-        items(
-            items = state.personalRecords,
-            key = { it.exerciseName }
-        ) { pr ->
-            PersonalRecordItemCard(pr = pr)
+        when (state.selectedTab) {
+            // TAB 0: Volume Progression
+            0 -> {
+                item(key = "volume_chart") {
+                    VolumeProgressionChartCard(
+                        volumeBars = state.weeklyVolumeBars,
+                        totalVolumeKg = state.totalVolumeKg,
+                        totalWorkouts = state.totalWorkouts
+                    )
+                }
+            }
+
+            // TAB 1: Muscle Hypertrophy Sets
+            1 -> {
+                item(key = "muscles_distribution") {
+                    HypertrophyDistributionCard(muscleSets = state.muscleHypertrophySets)
+                }
+            }
+
+            // TAB 2: Personal Records Hall of Fame
+            2 -> {
+                item(key = "prs_header") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.EmojiEvents,
+                            contentDescription = null,
+                            tint = AmberWarm,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = strings.progressHallOfFame,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextMuted,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
+
+                if (state.personalRecords.isEmpty()) {
+                    item(key = "prs_empty") {
+                        AthleticCard(backgroundColor = DarkSurfaceVariant) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Завершите тренировку, чтобы зафиксировать первые рекорды!",
+                                    color = TextMuted,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    items(
+                        items = state.personalRecords,
+                        key = { it.exerciseName }
+                    ) { pr ->
+                        PersonalRecordItemCard(pr = pr)
+                    }
+                }
+            }
         }
 
         item(key = "spacer_bottom") {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
 @Composable
-private fun VolumeProgressionChartCard(volumeBars: List<Pair<String, Double>>) {
+private fun VolumeProgressionChartCard(
+    volumeBars: List<Pair<String, Double>>,
+    totalVolumeKg: Double,
+    totalWorkouts: Int
+) {
+    val strings = LocalDudaStrings.current
     val maxVolume = (volumeBars.maxOfOrNull { it.second } ?: 1.0).coerceAtLeast(1000.0)
 
     AthleticCard(backgroundColor = DarkSurface) {
@@ -170,15 +240,16 @@ private fun VolumeProgressionChartCard(volumeBars: List<Pair<String, Double>>) {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "WEEKLY VOLUME PROGRESSION (KG)",
+                        text = strings.progressWeeklyTonnage,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextMuted,
                         letterSpacing = 1.sp
                     )
                 }
+
                 Text(
-                    text = "+18.2%",
+                    text = "${totalWorkouts} сессий",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = EmeraldNeon
@@ -191,12 +262,12 @@ private fun VolumeProgressionChartCard(volumeBars: List<Pair<String, Double>>) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp),
+                    .height(130.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.Bottom
             ) {
                 volumeBars.forEach { (label, vol) ->
-                    val ratio = (vol / maxVolume).toFloat().coerceIn(0.1f, 1.0f)
+                    val ratio = (vol / maxVolume).toFloat().coerceIn(0.12f, 1.0f)
                     val isCurrent = label == "Current"
                     val barColor = if (isCurrent) EmeraldNeon else DarkSurfaceHigh
 
@@ -206,7 +277,7 @@ private fun VolumeProgressionChartCard(volumeBars: List<Pair<String, Double>>) {
                         verticalArrangement = Arrangement.Bottom
                     ) {
                         Text(
-                            text = dev.neverpaid.health.core.math.StrengthCalculator.formatTonnageK(vol),
+                            text = StrengthCalculator.formatTonnageK(vol),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isCurrent) EmeraldNeon else TextMuted
@@ -214,7 +285,7 @@ private fun VolumeProgressionChartCard(volumeBars: List<Pair<String, Double>>) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Box(
                             modifier = Modifier
-                                .width(28.dp)
+                                .width(30.dp)
                                 .fillMaxHeight(ratio)
                                 .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
                                 .background(barColor)
@@ -229,30 +300,35 @@ private fun VolumeProgressionChartCard(volumeBars: List<Pair<String, Double>>) {
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Text(
+                text = "Всего за всё время: ${StrengthCalculator.formatVolume(totalVolumeKg)} кг",
+                fontSize = 12.sp,
+                color = TextSecondary
+            )
         }
     }
 }
 
 @Composable
 private fun HypertrophyDistributionCard(muscleSets: Map<String, Int>) {
+    val strings = LocalDudaStrings.current
+
     AthleticCard(backgroundColor = DarkSurface) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "HYPERTROPHY VOLUME (SETS / WEEK)",
+                text = strings.progressHypertrophySets,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextMuted,
                 letterSpacing = 1.sp
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             muscleSets.forEach { (muscle, sets) ->
                 val progress = (sets / 20f).coerceIn(0f, 1f)
-                val statusText = when {
-                    sets >= 12 -> "Optimal"
-                    sets >= 8 -> "Maintenance"
-                    else -> "Under-trained"
-                }
                 val statusColor = when {
                     sets >= 12 -> EmeraldNeon
                     sets >= 8 -> IndigoElectric
@@ -262,11 +338,17 @@ private fun HypertrophyDistributionCard(muscleSets: Map<String, Int>) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = muscle, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary, modifier = Modifier.width(90.dp))
+                    Text(
+                        text = muscle,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary,
+                        modifier = Modifier.width(96.dp)
+                    )
                     LinearProgressIndicator(
                         progress = { progress },
                         modifier = Modifier
@@ -277,7 +359,13 @@ private fun HypertrophyDistributionCard(muscleSets: Map<String, Int>) {
                         trackColor = DarkSurfaceHigh
                     )
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(text = "$sets sets", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = statusColor, modifier = Modifier.width(50.dp))
+                    Text(
+                        text = "$sets сеты",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = statusColor,
+                        modifier = Modifier.width(52.dp)
+                    )
                 }
             }
         }
@@ -286,11 +374,13 @@ private fun HypertrophyDistributionCard(muscleSets: Map<String, Int>) {
 
 @Composable
 private fun PersonalRecordItemCard(pr: PersonalRecord) {
+    val strings = LocalDudaStrings.current
+
     AthleticCard(backgroundColor = DarkSurfaceVariant) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -320,7 +410,7 @@ private fun PersonalRecordItemCard(pr: PersonalRecord) {
                         color = TextPrimary
                     )
                     Text(
-                        text = "${pr.weightKg} kg × ${pr.reps} reps",
+                        text = "${pr.weightKg} кг × ${pr.reps} повт.",
                         fontSize = 13.sp,
                         color = TextSecondary
                     )
@@ -329,13 +419,13 @@ private fun PersonalRecordItemCard(pr: PersonalRecord) {
 
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "E1RM",
+                    text = strings.progressE1rm,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextMuted
                 )
                 Text(
-                    text = "${pr.e1rmKg} kg",
+                    text = "${pr.e1rmKg} кг",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = EmeraldNeon

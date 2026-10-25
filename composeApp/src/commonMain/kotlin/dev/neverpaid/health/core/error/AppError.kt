@@ -9,10 +9,10 @@ enum class AppErrorType {
 }
 
 data class AppError(
-    val message: String,
+    override val message: String,
     val type: AppErrorType = AppErrorType.Unknown,
-    val cause: Throwable? = null
-)
+    override val cause: Throwable? = null
+) : Exception(message, cause)
 
 fun Throwable.toAppError(): AppError {
     return AppError(
