@@ -65,6 +65,7 @@ kotlin {
         }
 
         commonTest.dependencies {
+            implementation(kotlin("test"))
             implementation(libs.junit)
             implementation(libs.kotlinx.coroutines.test)
         }

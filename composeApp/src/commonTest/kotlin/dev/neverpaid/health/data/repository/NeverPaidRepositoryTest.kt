@@ -1,25 +1,26 @@
 package dev.neverpaid.health.data.repository
 
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import kotlinx.coroutines.test.runTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class NeverPaidRepositoryTest {
 
     private lateinit var repository: NeverPaidRepositoryImpl
 
-    @Before
+    @BeforeTest
     fun setup() {
         repository = NeverPaidRepositoryImpl()
     }
 
     @Test
-    fun testExerciseCatalogFiltering() = runBlocking {
+    fun testExerciseCatalogFiltering() = runTest {
         val chestBarbellExercises = repository.searchExercises(
             query = "Bench",
             muscle = "chest",
@@ -31,7 +32,7 @@ class NeverPaidRepositoryTest {
     }
 
     @Test
-    fun testWorkoutLifecycle() = runBlocking {
+    fun testWorkoutLifecycle() = runTest {
         assertNull(repository.getActiveWorkout().first())
 
         val started = repository.startWorkout("Leg Day")
@@ -48,7 +49,7 @@ class NeverPaidRepositoryTest {
     }
 
     @Test
-    fun testCoachChat() = runBlocking {
+    fun testCoachChat() = runTest {
         val reply = repository.sendCoachChatMessage("How is my bench press looking?")
         assertNotNull(reply)
         assertFalse(reply.isUser)

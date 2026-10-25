@@ -1,11 +1,10 @@
 package dev.neverpaid.health.navigation
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarToday
@@ -22,23 +21,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.TextMuted
-import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.features.body.BodyRoute
 import dev.neverpaid.health.features.body.BodyViewModel
 import dev.neverpaid.health.features.coach.CoachRoute
@@ -55,7 +49,7 @@ import dev.neverpaid.health.features.progress.ProgressRoute
 import dev.neverpaid.health.features.progress.ProgressViewModel
 import dev.neverpaid.health.features.workout.WorkoutRoute
 import dev.neverpaid.health.features.workout.WorkoutViewModel
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Dashboard : Screen("dashboard", "Home", Icons.Default.Home)
@@ -80,11 +74,10 @@ val bottomNavItems = listOf(
 
 @Composable
 fun NeverPaidHealthApp() {
-    val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    var currentScreen by remember { mutableStateOf<Screen>(Screen.Dashboard) }
+    var previousScreen by remember { mutableStateOf<Screen>(Screen.Dashboard) }
 
-    val isWorkoutActiveScreen = currentRoute == Screen.ActiveWorkout.route
+    val isWorkoutActiveScreen = currentScreen == Screen.ActiveWorkout
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -96,18 +89,13 @@ fun NeverPaidHealthApp() {
                     modifier = Modifier.height(68.dp)
                 ) {
                     bottomNavItems.forEach { screen ->
-                        val isSelected = currentRoute == screen.route
+                        val isSelected = currentScreen == screen
                         NavigationBarItem(
                             selected = isSelected,
                             onClick = {
-                                if (currentRoute != screen.route) {
-                                    navController.navigate(screen.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
+                                if (currentScreen != screen) {
+                                    previousScreen = currentScreen
+                                    currentScreen = screen
                                 }
                             },
                             icon = {
@@ -137,59 +125,55 @@ fun NeverPaidHealthApp() {
             }
         }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Screen.Dashboard.route,
-            modifier = Modifier.padding(innerPadding)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
         ) {
-            composable(Screen.Dashboard.route) {
-                val viewModel: DashboardViewModel = koinViewModel()
-                DashboardRoute(
-                    viewModel = viewModel,
-                    onNavigateToActiveWorkout = {
-                        navController.navigate(Screen.ActiveWorkout.route)
-                    }
-                )
-            }
-
-            composable(Screen.Exercises.route) {
-                val viewModel: ExercisesViewModel = koinViewModel()
-                ExercisesRoute(viewModel = viewModel)
-            }
-
-            composable(Screen.History.route) {
-                val viewModel: HistoryViewModel = koinViewModel()
-                HistoryRoute(viewModel = viewModel)
-            }
-
-            composable(Screen.Progress.route) {
-                val viewModel: ProgressViewModel = koinViewModel()
-                ProgressRoute(viewModel = viewModel)
-            }
-
-            composable(Screen.Coach.route) {
-                val viewModel: CoachViewModel = koinViewModel()
-                CoachRoute(viewModel = viewModel)
-            }
-
-            composable(Screen.Body.route) {
-                val viewModel: BodyViewModel = koinViewModel()
-                BodyRoute(viewModel = viewModel)
-            }
-
-            composable(Screen.Profile.route) {
-                val viewModel: ProfileViewModel = koinViewModel()
-                ProfileRoute(viewModel = viewModel)
-            }
-
-            composable(Screen.ActiveWorkout.route) {
-                val viewModel: WorkoutViewModel = koinViewModel()
-                WorkoutRoute(
-                    viewModel = viewModel,
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    }
-                )
+            when (currentScreen) {
+                Screen.Dashboard -> {
+                    val viewModel: DashboardViewModel = koinViewModel()
+                    DashboardRoute(
+                        viewModel = viewModel,
+                        onNavigateToActiveWorkout = {
+                            previousScreen = currentScreen
+                            currentScreen = Screen.ActiveWorkout
+                        }
+                    )
+                }
+                Screen.Exercises -> {
+                    val viewModel: ExercisesViewModel = koinViewModel()
+                    ExercisesRoute(viewModel = viewModel)
+                }
+                Screen.History -> {
+                    val viewModel: HistoryViewModel = koinViewModel()
+                    HistoryRoute(viewModel = viewModel)
+                }
+                Screen.Progress -> {
+                    val viewModel: ProgressViewModel = koinViewModel()
+                    ProgressRoute(viewModel = viewModel)
+                }
+                Screen.Coach -> {
+                    val viewModel: CoachViewModel = koinViewModel()
+                    CoachRoute(viewModel = viewModel)
+                }
+                Screen.Body -> {
+                    val viewModel: BodyViewModel = koinViewModel()
+                    BodyRoute(viewModel = viewModel)
+                }
+                Screen.Profile -> {
+                    val viewModel: ProfileViewModel = koinViewModel()
+                    ProfileRoute(viewModel = viewModel)
+                }
+                Screen.ActiveWorkout -> {
+                    val viewModel: WorkoutViewModel = koinViewModel()
+                    WorkoutRoute(
+                        viewModel = viewModel,
+                        onNavigateBack = {
+                            currentScreen = previousScreen
+                        }
+                    )
+                }
             }
         }
     }
