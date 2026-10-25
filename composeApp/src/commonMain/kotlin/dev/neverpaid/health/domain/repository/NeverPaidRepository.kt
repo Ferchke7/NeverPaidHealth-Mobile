@@ -16,8 +16,8 @@ data class UserPreferencesData(
     val defaultRestSeconds: Int = 90,
     val soundAlertsEnabled: Boolean = true,
     val vibrationEnabled: Boolean = true,
-    val serverUrl: String = "http://10.0.2.2:8080/api/v1",
-    val isDevMode: Boolean = true
+    val serverUrl: String = "https://duda.uz/api/v1",
+    val isDevMode: Boolean = false
 )
 
 interface NeverPaidRepository {

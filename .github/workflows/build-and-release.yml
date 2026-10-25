@@ -48,8 +48,9 @@ jobs:
           mkdir -p build-artifacts
           APK_FILE=$(find composeApp/build/outputs/apk/debug -name "*.apk" | head -n 1)
           if [ -f "$APK_FILE" ]; then
+            cp "$APK_FILE" build-artifacts/duda-v1.0.0-debug.apk
             cp "$APK_FILE" build-artifacts/NeverPaidHealth-v1.0.0-debug.apk
-            echo "Copied $APK_FILE to build-artifacts/NeverPaidHealth-v1.0.0-debug.apk"
+            echo "Copied $APK_FILE to build-artifacts/duda-v1.0.0-debug.apk"
           else
             echo "Error: APK file not found!"
             exit 1
@@ -58,8 +59,8 @@ jobs:
       - name: ⬆️ Upload APK to GitHub Actions Artifacts (Immediate Download)
         uses: actions/upload-artifact@v4
         with:
-          name: NeverPaidHealth-Android-APK
-          path: build-artifacts/NeverPaidHealth-v1.0.0-debug.apk
+          name: duda-Android-APK
+          path: build-artifacts/duda-v1.0.0-debug.apk
           retention-days: 30
 
       - name: 🚀 Create GitHub Release & Publish APK
@@ -67,11 +68,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.release_version || (startsWith(github.ref, 'refs/tags/v') && github.ref_name) || 'v1.0.0' }}
-          name: "NeverPaidHealth Mobile Release ${{ github.event.inputs.release_version || (startsWith(github.ref, 'refs/tags/v') && github.ref_name) || 'v1.0.0' }}"
+          name: "duda.uz Mobile Release ${{ github.event.inputs.release_version || (startsWith(github.ref, 'refs/tags/v') && github.ref_name) || 'v1.0.0' }}"
           draft: false
           prerelease: false
           generate_release_notes: true
           files: |
+            build-artifacts/duda-v1.0.0-debug.apk
             build-artifacts/NeverPaidHealth-v1.0.0-debug.apk
 
   build-ios:

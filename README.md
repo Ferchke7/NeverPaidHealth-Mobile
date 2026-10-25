@@ -1,13 +1,13 @@
-# 🏋️‍♂️ NeverPaidHealth Mobile (Compose Multiplatform — Android & iOS)
+# 🏋️‍♂️ duda.uz Mobile (Compose Multiplatform — Android & iOS)
 
-[![GitHub Release](https://img.shields.io/github/v/release/Ferchke7/NeverPaidHealth-Mobile?color=10B981&label=Release&logo=github)](https://github.com/Ferchke7/NeverPaidHealth-Mobile/releases/latest)
+[![GitHub Release](https://img.shields.io/github/v/release/Ferchke7/NeverPaidHealth-Mobile?color=22C55E&label=Release&logo=github)](https://github.com/Ferchke7/NeverPaidHealth-Mobile/releases/latest)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/Ferchke7/NeverPaidHealth-Mobile/build-and-release.yml?branch=main&label=Build%20%26%20Release&logo=githubactions)](https://github.com/Ferchke7/NeverPaidHealth-Mobile/actions)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20(Apple)-3DDC84?logo=android&logoColor=white)](https://github.com/Ferchke7/NeverPaidHealth-Mobile)
 [![Compose Multiplatform](https://img.shields.io/badge/Compose_Multiplatform-1.7.3-blue?logo=kotlin&logoColor=white)](https://www.jetbrains.com/lp/compose-multiplatform/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> **Высокопроизводительное кроссплатформенное мобильное приложение для силовых тренировок и аналитики здоровья (Android & Apple iOS).**  
-> 100% общий Kotlin код (MVI, UI, математика E1RM, offline-хранилище), 120 FPS анимации, мгновенный старт без интернета (0 мс задержки), поддержка тактильной отдачи (Apple Taptic Engine и Android Vibrator) и автоматическая сборка установочных APK через GitHub Actions.
+> **Официальное кроссплатформенное мобильное приложение для платформы duda.uz (Android & Apple iOS).**  
+> Создано 1:1 по веб-интерфейсу duda.uz с учётом мобильной эргономики: Athletic Zinc Dark палитра (`#09090B` / `#121215` / `#18181B`), неоновый изумрудный акцент (`#22C55E`), удобный 5-кнопочный нижний бар (Тренировки, План, Питание, AI Тренер, Прогресс), 0 мс оффлайн-старт и прямая интеграция с `https://duda.uz/api/v1`.
 
 ---
 
@@ -16,9 +16,9 @@
 ### 🤖 Для Android:
 Вы можете сразу скачать готовый установочный `.apk` файл на свой смартфон:
 
-* 📥 **[Скачать NeverPaidHealth-v1.0.0-debug.apk (Прямая ссылка)](https://github.com/Ferchke7/NeverPaidHealth-Mobile/releases/download/v1.0.0/NeverPaidHealth-v1.0.0-debug.apk)**
+* 📥 **[Скачать duda-v1.0.0-debug.apk (Прямая ссылка)](https://github.com/Ferchke7/NeverPaidHealth-Mobile/releases/download/v1.0.0/duda-v1.0.0-debug.apk)**
 * 📦 **[Страница всех релизов GitHub Releases](https://github.com/Ferchke7/NeverPaidHealth-Mobile/releases)**
-* ⚡ **[Свежие ночные сборки из GitHub Actions Artifacts](https://github.com/Ferchke7/NeverPaidHealth-Mobile/actions/runs/40205982968)** (вкладка *Artifacts* $\rightarrow$ `NeverPaidHealth-Android-APK`)
+* ⚡ **[Свежие ночные сборки из GitHub Actions Artifacts](https://github.com/Ferchke7/NeverPaidHealth-Mobile/actions)** (вкладка *Artifacts* $\rightarrow$ `duda-Android-APK`)
 
 ---
 

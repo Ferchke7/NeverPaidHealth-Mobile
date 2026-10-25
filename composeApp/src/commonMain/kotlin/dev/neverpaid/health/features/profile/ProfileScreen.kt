@@ -108,13 +108,13 @@ fun ProfileScreen(
 
                 Column {
                     Text(
-                        text = "Athlete Profile",
+                        text = "Профиль атлета",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     )
                     Text(
-                        text = "NeverPaidHealth • v1.0.0",
+                        text = "duda.uz Athlete • v1.0.0",
                         fontSize = 12.sp,
                         color = TextMuted
                     )
@@ -291,7 +291,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Default emulator: http://10.0.2.2:8080/api/v1\nProduction server: http://54.38.156.226:3002/api/v1",
+                        text = "Production server: https://duda.uz/api/v1\nLocal backend: http://10.0.2.2:8080/api/v1",
                         fontSize = 11.sp,
                         color = TextMuted,
                         lineHeight = 16.sp
