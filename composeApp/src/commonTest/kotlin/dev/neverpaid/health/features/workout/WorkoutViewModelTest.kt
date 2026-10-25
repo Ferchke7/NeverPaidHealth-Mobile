@@ -64,6 +64,7 @@ class WorkoutViewModelTest {
 
         testDispatcher.scheduler.advanceUntilIdle()
 
+        assertFalse(viewModel.state.value.isRestTimerActive)
         val updatedWorkout = viewModel.state.value.workout!!
         // Volume for this set = 100 * 5 = 500.0 kg
         assertEquals(500.0, updatedWorkout.totalVolumeKg)

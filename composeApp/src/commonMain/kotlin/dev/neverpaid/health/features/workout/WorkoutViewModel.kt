@@ -78,6 +78,7 @@ class WorkoutViewModel(
             } else ex
         }
         val updated = currentWorkout.copy(exercises = updatedExercises)
+        updateState { copy(workout = updated) }
         repository.updateActiveWorkout(updated)
     }
 
@@ -91,6 +92,7 @@ class WorkoutViewModel(
             } else ex
         }
         val updated = currentWorkout.copy(exercises = updatedExercises)
+        updateState { copy(workout = updated) }
         repository.updateActiveWorkout(updated)
     }
 
@@ -111,6 +113,7 @@ class WorkoutViewModel(
         }
 
         val updated = currentWorkout.copy(exercises = updatedExercises)
+        updateState { copy(workout = updated) }
         repository.updateActiveWorkout(updated)
 
         if (becomesCompleted) {
@@ -137,6 +140,7 @@ class WorkoutViewModel(
             } else ex
         }
         val updated = currentWorkout.copy(exercises = updatedExercises)
+        updateState { copy(workout = updated) }
         repository.updateActiveWorkout(updated)
     }
 
@@ -160,6 +164,7 @@ class WorkoutViewModel(
             } else ex
         }
         val updated = currentWorkout.copy(exercises = updatedExercises)
+        updateState { copy(workout = updated) }
         repository.updateActiveWorkout(updated)
     }
 
@@ -173,6 +178,7 @@ class WorkoutViewModel(
             } else ex
         }
         val updated = currentWorkout.copy(exercises = updatedExercises)
+        updateState { copy(workout = updated) }
         repository.updateActiveWorkout(updated)
     }
 
@@ -203,13 +209,14 @@ class WorkoutViewModel(
             )
         )
         val updated = currentWorkout.copy(exercises = currentWorkout.exercises + newExercise)
+        updateState { copy(workout = updated, showExercisePicker = false) }
         repository.updateActiveWorkout(updated)
-        updateState { copy(showExercisePicker = false) }
     }
 
     private fun removeExerciseFromWorkout(exerciseId: String) {
         val currentWorkout = currentState.workout ?: return
         val updated = currentWorkout.copy(exercises = currentWorkout.exercises.filter { it.exerciseId != exerciseId })
+        updateState { copy(workout = updated) }
         repository.updateActiveWorkout(updated)
     }
 
