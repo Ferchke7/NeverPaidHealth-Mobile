@@ -74,6 +74,29 @@ object StrengthCalculator {
         return roundToOneDecimal(lbs / 2.20462)
     }
 
+    fun formatTime(minutes: Int, seconds: Int): String {
+        val m = if (minutes < 10) "0$minutes" else "$minutes"
+        val s = if (seconds < 10) "0$seconds" else "$seconds"
+        return "$m:$s"
+    }
+
+    fun formatDuration(hours: Long, minutes: Long, seconds: Long): String {
+        val h = if (hours < 10) "0$hours" else "$hours"
+        val m = if (minutes < 10) "0$minutes" else "$minutes"
+        val s = if (seconds < 10) "0$seconds" else "$seconds"
+        return if (hours > 0) "$h:$m:$s" else "$m:$s"
+    }
+
+    fun formatVolume(volume: Double): String {
+        val rounded = round(volume).toLong()
+        return rounded.toString()
+    }
+
+    fun formatTonnageK(volume: Double): String {
+        val k = (volume / 1000.0).toInt()
+        return "${k}k"
+    }
+
     private fun roundToOneDecimal(value: Double): Double {
         return round(value * 10.0) / 10.0
     }

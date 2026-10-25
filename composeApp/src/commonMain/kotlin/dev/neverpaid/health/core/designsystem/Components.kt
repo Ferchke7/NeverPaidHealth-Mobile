@@ -199,7 +199,7 @@ fun RestTimerFloatingBar(
 ) {
     val minutes = secondsRemaining / 60
     val seconds = secondsRemaining % 60
-    val timeFormatted = String.format("%02d:%02d", minutes, seconds)
+    val timeFormatted = dev.neverpaid.health.core.math.StrengthCalculator.formatTime(minutes, seconds)
 
     AthleticCard(
         modifier = modifier

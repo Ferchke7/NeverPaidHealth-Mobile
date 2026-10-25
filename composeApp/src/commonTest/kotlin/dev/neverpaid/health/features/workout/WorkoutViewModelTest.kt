@@ -58,12 +58,15 @@ class WorkoutViewModelTest {
         viewModel.onAction(WorkoutUiAction.OnUpdateWeight(exercise.exerciseId, firstSet.id, 100.0))
         viewModel.onAction(WorkoutUiAction.OnUpdateReps(exercise.exerciseId, firstSet.id, 5))
         viewModel.onAction(WorkoutUiAction.OnToggleSetComplete(exercise.exerciseId, firstSet.id))
+
+        // Rest timer is started immediately upon completing set
+        assertTrue(viewModel.state.value.isRestTimerActive)
+
         testDispatcher.scheduler.advanceUntilIdle()
 
         val updatedWorkout = viewModel.state.value.workout!!
         // Volume for this set = 100 * 5 = 500.0 kg
-        assertEquals(500.0, updatedWorkout.totalVolumeKg, 0.001)
-        assertTrue(viewModel.state.value.isRestTimerActive)
+        assertEquals(500.0, updatedWorkout.totalVolumeKg)
     }
 
     @Test

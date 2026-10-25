@@ -244,11 +244,7 @@ private fun WorkoutTopBar(
     val hrs = elapsedSeconds / 3600
     val mins = (elapsedSeconds % 3600) / 60
     val secs = elapsedSeconds % 60
-    val timerText = if (hrs > 0) {
-        String.format("%02d:%02d:%02d", hrs, mins, secs)
-    } else {
-        String.format("%02d:%02d", mins, secs)
-    }
+    val timerText = StrengthCalculator.formatDuration(hrs, mins, secs)
 
     Row(
         modifier = Modifier
@@ -334,7 +330,7 @@ private fun WorkoutVolumeHeader(
         ) {
             StatCounter(
                 title = "Total Volume",
-                value = String.format("%,.0f", totalVolumeKg),
+                value = StrengthCalculator.formatVolume(totalVolumeKg),
                 unit = "kg",
                 accentColor = EmeraldNeon
             )
@@ -695,7 +691,7 @@ private fun WorkoutCompletionDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
-                    StatCounter(title = "Volume", value = String.format("%,.0f", workout.totalVolumeKg), unit = "kg", accentColor = EmeraldNeon)
+                    StatCounter(title = "Volume", value = StrengthCalculator.formatVolume(workout.totalVolumeKg), unit = "kg", accentColor = EmeraldNeon)
                     StatCounter(title = "Sets Done", value = "$totalSets", accentColor = IndigoElectric)
                     StatCounter(title = "Duration", value = "${workout.durationSeconds / 60}", unit = "min", accentColor = TextPrimary)
                 }

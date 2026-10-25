@@ -206,7 +206,7 @@ private fun VolumeProgressionChartCard(volumeBars: List<Pair<String, Double>>) {
                         verticalArrangement = Arrangement.Bottom
                     ) {
                         Text(
-                            text = String.format("%.0fk", vol / 1000),
+                            text = dev.neverpaid.health.core.math.StrengthCalculator.formatTonnageK(vol),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isCurrent) EmeraldNeon else TextMuted

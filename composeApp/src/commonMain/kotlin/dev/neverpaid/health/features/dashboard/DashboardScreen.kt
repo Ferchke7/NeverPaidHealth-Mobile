@@ -161,7 +161,7 @@ fun DashboardScreen(
                     )
                     StatCounter(
                         title = "Volume",
-                        value = String.format("%,.0f", state.totalVolumeKg),
+                        value = dev.neverpaid.health.core.math.StrengthCalculator.formatVolume(state.totalVolumeKg),
                         unit = "kg",
                         accentColor = IndigoElectric
                     )

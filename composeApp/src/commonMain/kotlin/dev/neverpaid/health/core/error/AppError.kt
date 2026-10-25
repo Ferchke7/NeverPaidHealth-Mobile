@@ -16,7 +16,7 @@ data class AppError(
 
 fun Throwable.toAppError(): AppError {
     return AppError(
-        message = localizedMessage ?: "An unexpected error occurred",
+        message = message ?: "An unexpected error occurred",
         type = AppErrorType.Unknown,
         cause = this
     )

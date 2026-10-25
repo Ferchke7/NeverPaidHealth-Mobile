@@ -260,7 +260,7 @@ private fun HistoryWorkoutCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatCounter(title = "Volume", value = String.format("%,.0f", workout.totalVolumeKg), unit = "kg", accentColor = EmeraldNeon)
+                StatCounter(title = "Volume", value = dev.neverpaid.health.core.math.StrengthCalculator.formatVolume(workout.totalVolumeKg), unit = "kg", accentColor = EmeraldNeon)
                 StatCounter(title = "Exercises", value = "${workout.exercises.size}", accentColor = IndigoElectric)
                 StatCounter(title = "Duration", value = "$durationMin", unit = "min", accentColor = TextPrimary)
             }
