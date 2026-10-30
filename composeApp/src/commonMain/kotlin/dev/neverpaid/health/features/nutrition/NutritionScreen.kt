@@ -21,8 +21,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocalDrink
 import androidx.compose.material.icons.filled.Restaurant
@@ -36,6 +41,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -56,23 +62,38 @@ import dev.neverpaid.health.core.designsystem.AmberWarm
 import dev.neverpaid.health.core.designsystem.AthleticCard
 import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.BorderSubtle
-import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.DudaTopHeader
 import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.IndigoElectric
+import dev.neverpaid.health.core.designsystem.IndigoSubtle
 import dev.neverpaid.health.core.designsystem.SecondaryAthleticButton
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
-import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
-import dev.neverpaid.health.domain.model.MealLog
+import dev.neverpaid.health.core.platform.PlatformBridge
+import dev.neverpaid.health.core.platform.rememberImagePickerLauncher
+
+private val mealTypeOptions = listOf(
+    "breakfast" to "Завтрак",
+    "lunch" to "Обед",
+    "dinner" to "Ужин",
+    "snack" to "Перекус"
+)
+
+private val quickFoodPrompts = listOf(
+    "Куриная грудка 200г с рисом 150г и овощами",
+    "Овсянка 80г на молоке с бананом и скуп протеина",
+    "Плов с говядиной 300г и салат ачучук",
+    "3 жареных яйца, 2 тоста и авокадо",
+    "Творог 5% 200г с мёдом и орехами",
+    "Протеиновый коктейль на воде + банан"
+)
 
 @Composable
 fun NutritionRoute(
@@ -84,7 +105,7 @@ fun NutritionRoute(
 
     CollectEffect(viewModel.effect) { effect ->
         when (effect) {
-            is NutritionUiEffect.ShowToast -> {}
+            is NutritionUiEffect.ShowToast -> PlatformBridge.showToast(effect.message)
         }
     }
 
@@ -95,7 +116,6 @@ fun NutritionRoute(
         NutritionScreen(
             state = state,
             onAction = viewModel::onAction,
-            onNavigateToProfile = onNavigateToProfile,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -105,11 +125,13 @@ fun NutritionRoute(
 fun NutritionScreen(
     state: NutritionUiState,
     onAction: (NutritionUiAction) -> Unit,
-    onNavigateToProfile: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val strings = LocalDudaStrings.current
-    val caloriesProgress = (state.totalCalories.toFloat() / state.targetCalories.toFloat()).coerceIn(0f, 1f)
+    val pickPhoto = rememberImagePickerLauncher { base64, _ ->
+        onAction(NutritionUiAction.OnPhotoPicked(base64))
+    }
+
+    val caloriesProgress = (state.totalCalories.toFloat() / state.targetCalories.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
 
     if (state.isAddMealSheetOpen) {
         AddMealBottomSheet(
@@ -119,16 +141,12 @@ fun NutritionScreen(
             protein = state.newMealProtein,
             fats = state.newMealFats,
             carbs = state.newMealCarbs,
-            aiDescription = state.aiDescriptionInput,
-            isAiAnalyzing = state.isAiAnalyzing,
             onMealTypeChanged = { onAction(NutritionUiAction.OnMealTypeChanged(it)) },
             onMealNameChanged = { onAction(NutritionUiAction.OnMealNameChanged(it)) },
             onCaloriesChanged = { onAction(NutritionUiAction.OnMealCaloriesChanged(it)) },
             onProteinChanged = { onAction(NutritionUiAction.OnMealProteinChanged(it)) },
             onFatsChanged = { onAction(NutritionUiAction.OnMealFatsChanged(it)) },
             onCarbsChanged = { onAction(NutritionUiAction.OnMealCarbsChanged(it)) },
-            onAiDescChanged = { onAction(NutritionUiAction.OnAiDescriptionChanged(it)) },
-            onRunAi = { onAction(NutritionUiAction.OnRunAiAnalysis) },
             onSave = { onAction(NutritionUiAction.OnSaveMeal) },
             onDismiss = { onAction(NutritionUiAction.OnCloseAddMealSheet) }
         )
@@ -138,37 +156,72 @@ fun NutritionScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item(key = "header") {
-            DudaTopHeader(
-                streakDays = state.streakDays,
-                onProfileClick = onNavigateToProfile,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-
-            Text(
-                text = strings.nutritionTitle,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = EmeraldLight,
-                letterSpacing = 1.5.sp
-            )
-            Text(
-                text = strings.nutritionSubtitle,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Black,
-                color = TextPrimary
-            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Питание и ИИ-Анализ КБЖУ",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Black,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "Сфотографируйте блюдо или опишите текстом для мгновенного расчёта макросов",
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                }
+            }
         }
 
-        // Energy Hero Card
+        // Date Switcher Bar
+        item(key = "date_switcher") {
+            AthleticCard(backgroundColor = DarkSurface) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { onAction(NutritionUiAction.OnShiftDateDays(-1)) }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            contentDescription = "Пред. день",
+                            tint = TextPrimary
+                        )
+                    }
+                    Text(
+                        text = "📅 ${state.selectedDate}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = EmeraldLight
+                    )
+                    IconButton(onClick = { onAction(NutritionUiAction.OnShiftDateDays(1)) }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = "След. день",
+                            tint = TextPrimary
+                        )
+                    }
+                }
+            }
+        }
+
+        // Energy & Macros Card
         item(key = "energy_hero") {
             AthleticCard(
                 backgroundColor = DarkSurfaceVariant,
                 borderColor = BorderHighlight
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -176,7 +229,7 @@ fun NutritionScreen(
                     ) {
                         Column {
                             Text(
-                                text = strings.nutritionEnergyBalance,
+                                text = "КАЛОРИЙНОСТЬ РАЦИОНА",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextMuted,
@@ -191,7 +244,7 @@ fun NutritionScreen(
                                 )
                                 Text(
                                     text = " / ${state.targetCalories} ккал",
-                                    fontSize = 15.sp,
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TextSecondary,
                                     modifier = Modifier.padding(bottom = 3.dp, start = 4.dp)
@@ -216,7 +269,7 @@ fun NutritionScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     LinearProgressIndicator(
                         progress = { caloriesProgress },
                         modifier = Modifier
@@ -226,41 +279,269 @@ fun NutritionScreen(
                         color = EmeraldNeon,
                         trackColor = DarkSurfaceHigh,
                     )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        MacroCard(
+                            title = "Белки",
+                            current = "${state.totalProtein} г",
+                            target = "${state.targetProtein} г",
+                            color = EmeraldNeon,
+                            modifier = Modifier.weight(1f)
+                        )
+                        MacroCard(
+                            title = "Жиры",
+                            current = "${state.totalFats} г",
+                            target = "${state.targetFats} г",
+                            color = AmberWarm,
+                            modifier = Modifier.weight(1f)
+                        )
+                        MacroCard(
+                            title = "Углеводы",
+                            current = "${state.totalCarbs} г",
+                            target = "${state.targetCarbs} г",
+                            color = IndigoElectric,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
 
-        // Macros Row (Protein, Fats, Carbs)
-        item(key = "macros_row") {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+        // AI Photo & Text Food Scanner Card (1:1 with NutritionPage.tsx)
+        item(key = "ai_scanner_card") {
+            AthleticCard(
+                backgroundColor = DarkSurface,
+                borderColor = BorderHighlight
             ) {
-                MacroCard(
-                    title = strings.nutritionProtein,
-                    current = "${state.totalProtein} г",
-                    target = "${state.targetProtein} г",
-                    color = EmeraldNeon,
-                    modifier = Modifier.weight(1f)
-                )
-                MacroCard(
-                    title = strings.nutritionFats,
-                    current = "${state.totalFats} г",
-                    target = "${state.targetFats} г",
-                    color = AmberWarm,
-                    modifier = Modifier.weight(1f)
-                )
-                MacroCard(
-                    title = strings.nutritionCarbs,
-                    current = "${state.totalCarbs} г",
-                    target = "${state.targetCarbs} г",
-                    color = IndigoElectric,
-                    modifier = Modifier.weight(1f)
-                )
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = null,
+                                tint = EmeraldNeon,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "ИИ-Сканер блюда (Фото / Текст)",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Black,
+                                color = TextPrimary
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Meal type selector chips
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(mealTypeOptions, key = { it.first }) { (key, label) ->
+                            FilterChip(
+                                selected = state.selectedMealType == key,
+                                onClick = { onAction(NutritionUiAction.OnSelectAnalyzerMealType(key)) },
+                                label = { Text(label, fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = EmeraldSubtle,
+                                    selectedLabelColor = EmeraldLight,
+                                    containerColor = DarkSurfaceVariant,
+                                    labelColor = TextSecondary
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Photo picker button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = pickPhoto,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CameraAlt,
+                                contentDescription = null,
+                                tint = EmeraldLight,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (state.selectedPhotoBase64 != null) "Фото прикреплено ✓" else "Загрузить фото еды",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = EmeraldLight
+                            )
+                        }
+
+                        if (state.selectedPhotoBase64 != null) {
+                            IconButton(onClick = { onAction(NutritionUiAction.OnClearPhoto) }) {
+                                Icon(Icons.Default.Close, contentDescription = "Убрать фото", tint = TextSecondary)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = state.aiDescriptionInput,
+                        onValueChange = { onAction(NutritionUiAction.OnAiDescriptionChanged(it)) },
+                        placeholder = {
+                            Text(
+                                "Опишите блюдо (напр. «250г плова и салат») или комментарий к фото...",
+                                color = TextMuted,
+                                fontSize = 12.sp
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = DarkSurfaceVariant,
+                            unfocusedContainerColor = DarkSurfaceVariant,
+                            focusedBorderColor = EmeraldNeon,
+                            unfocusedBorderColor = BorderSubtle,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Quick Food Chips
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(quickFoodPrompts) { prompt ->
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(DarkSurfaceVariant)
+                                    .border(1.dp, BorderSubtle, RoundedCornerShape(8.dp))
+                                    .clickable { onAction(NutritionUiAction.OnAiDescriptionChanged(prompt)) }
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                            ) {
+                                Text(prompt, fontSize = 11.sp, color = TextSecondary)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Button(
+                        onClick = { onAction(NutritionUiAction.OnRunAiAnalysis) },
+                        enabled = !state.isAiAnalyzing && (state.aiDescriptionInput.isNotBlank() || state.selectedPhotoBase64 != null),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(46.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = EmeraldNeon,
+                            contentColor = Color.Black
+                        )
+                    ) {
+                        if (state.isAiAnalyzing) {
+                            CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("ИИ рассчитывает КБЖУ...", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        } else {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Рассчитать КБЖУ с помощью ИИ", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                    }
+
+                    // AI Analysis Result Preview Card
+                    if (state.aiAnalysisPreview != null) {
+                        val preview = state.aiAnalysisPreview!!
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(DarkSurfaceVariant)
+                                .border(1.dp, EmeraldNeon, RoundedCornerShape(12.dp))
+                                .padding(14.dp)
+                        ) {
+                            Column {
+                                Text(
+                                    text = "РЕЗУЛЬТАТ ИИ-АНАЛИЗА",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldLight
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = preview.title.ifBlank { preview.name },
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Text(
+                                    text = "${preview.calories} ккал • Б: ${preview.proteinG.toInt()}г • Ж: ${preview.fatsG.toInt()}г • У: ${preview.carbsG.toInt()}г",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldNeon
+                                )
+                                if (preview.foodItems.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    preview.foodItems.forEach { item ->
+                                        Text(
+                                            text = "• ${item.name} (${item.portion}): ${item.calories} ккал",
+                                            fontSize = 11.sp,
+                                            color = TextSecondary
+                                        )
+                                    }
+                                }
+                                if (preview.aiNotes.isNotBlank()) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = preview.aiNotes,
+                                        fontSize = 11.sp,
+                                        color = TextMuted
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    OutlinedButton(
+                                        onClick = { onAction(NutritionUiAction.OnDismissAiPreview) },
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("Отмена", fontSize = 12.sp)
+                                    }
+                                    Button(
+                                        onClick = { onAction(NutritionUiAction.OnConfirmAiPreview) },
+                                        modifier = Modifier.weight(1.4f),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = EmeraldNeon,
+                                            contentColor = Color.Black
+                                        )
+                                    ) {
+                                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Записать в рацион", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        // Water Tracker Card
+        // Water Tracker Card (8 Glasses)
         item(key = "water_card") {
             AthleticCard(backgroundColor = DarkSurface) {
                 Row(
@@ -275,7 +556,7 @@ fun NutritionScreen(
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(CircleShape)
-                                .background(IndigoElectric.copy(alpha = 0.2f)),
+                                .background(IndigoSubtle),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -288,39 +569,38 @@ fun NutritionScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = strings.nutritionWater,
-                                fontSize = 11.sp,
+                                text = "ВОДНЫЙ БАЛАНС",
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextMuted
                             )
                             Text(
-                                text = "${state.waterMl} / ${state.targetWaterMl} мл",
-                                fontSize = 15.sp,
+                                text = "${state.waterMl} / ${state.targetWaterMl} мл (${state.waterMl / 250} ст.)",
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
                             )
                         }
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(DarkSurfaceVariant)
+                                .clickable { onAction(NutritionUiAction.OnAddWater(-250)) }
+                                .padding(horizontal = 9.dp, vertical = 6.dp)
+                        ) {
+                            Text("-250", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(IndigoSubtle)
                                 .clickable { onAction(NutritionUiAction.OnAddWater(250)) }
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
-                            Text(text = "+250 мл", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = IndigoElectric)
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(DarkSurfaceVariant)
-                                .clickable { onAction(NutritionUiAction.OnAddWater(500)) }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
-                        ) {
-                            Text(text = "+500 мл", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = IndigoElectric)
+                            Text("+250 мл", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = IndigoElectric)
                         }
                     }
                 }
@@ -335,87 +615,104 @@ fun NutritionScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = strings.nutritionMealsTitle,
+                    text = "ЗАПИСИ ПИТАНИЯ (${state.meals.size})",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextMuted,
                     letterSpacing = 1.sp
                 )
                 Text(
-                    text = "${state.meals.size} записи",
+                    text = "+ Ввести вручную",
                     fontSize = 12.sp,
-                    color = TextSecondary
+                    fontWeight = FontWeight.Bold,
+                    color = EmeraldLight,
+                    modifier = Modifier.clickable { onAction(NutritionUiAction.OnOpenAddMealSheet) }
                 )
             }
         }
 
-        // Meal list items
-        items(state.meals, key = { it.id }) { meal ->
-            AthleticCard(
-                backgroundColor = DarkSurface,
-                borderColor = BorderSubtle
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+        if (state.meals.isEmpty()) {
+            item(key = "empty_meals") {
+                AthleticCard(backgroundColor = DarkSurface) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Записей за ${state.selectedDate} пока нет", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Используйте ИИ-сканер выше или добавьте приём пищи вручную", fontSize = 12.sp, color = TextSecondary)
+                    }
+                }
+            }
+        } else {
+            items(state.meals, key = { it.id }) { meal ->
+                AthleticCard(
+                    backgroundColor = DarkSurface,
+                    borderColor = BorderSubtle
                 ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(DarkSurfaceVariant),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Restaurant,
-                                contentDescription = null,
-                                tint = EmeraldLight,
-                                modifier = Modifier.size(18.dp)
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(DarkSurfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Restaurant,
+                                    contentDescription = null,
+                                    tint = EmeraldLight,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = meal.name,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                val mealTypeRu = mealTypeOptions.find { it.first == meal.mealType.lowercase() }?.second ?: meal.mealType
+                                Text(
+                                    text = "$mealTypeRu • Б: ${meal.proteinG}г • Ж: ${meal.fatsG}г • У: ${meal.carbsG}г",
+                                    fontSize = 11.sp,
+                                    color = TextSecondary
+                                )
+                            }
                         }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = meal.name,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                            Text(
-                                text = "${meal.mealType.replaceFirstChar { it.uppercase() }} • ${meal.proteinG}г Б, ${meal.fatsG}г Ж, ${meal.carbsG}г У",
-                                fontSize = 11.sp,
-                                color = TextMuted
-                            )
-                        }
-                    }
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(horizontalAlignment = Alignment.End) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "${meal.calories} ккал",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = EmeraldNeon
                             )
-                        }
 
-                        IconButton(
-                            onClick = { onAction(NutritionUiAction.OnDeleteMeal(meal.id)) },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete",
-                                tint = TextMuted,
-                                modifier = Modifier.size(16.dp)
-                            )
+                            IconButton(
+                                onClick = { onAction(NutritionUiAction.OnDeleteMeal(meal.id)) },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete",
+                                    tint = TextMuted,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -424,7 +721,7 @@ fun NutritionScreen(
 
         item(key = "add_meal_button") {
             SecondaryAthleticButton(
-                text = strings.nutritionAddMealBtn,
+                text = "+ Добавить приём пищи вручную",
                 onClick = { onAction(NutritionUiAction.OnOpenAddMealSheet) },
                 icon = Icons.Default.Add
             )
@@ -450,7 +747,7 @@ private fun MacroCard(
         modifier = modifier
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -484,22 +781,16 @@ private fun AddMealBottomSheet(
     protein: String,
     fats: String,
     carbs: String,
-    aiDescription: String,
-    isAiAnalyzing: Boolean,
     onMealTypeChanged: (String) -> Unit,
     onMealNameChanged: (String) -> Unit,
     onCaloriesChanged: (String) -> Unit,
     onProteinChanged: (String) -> Unit,
     onFatsChanged: (String) -> Unit,
     onCarbsChanged: (String) -> Unit,
-    onAiDescChanged: (String) -> Unit,
-    onRunAi: () -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val strings = LocalDudaStrings.current
-    val mealTypes = listOf("breakfast" to "Завтрак", "lunch" to "Обед", "dinner" to "Ужин", "snack" to "Перекус")
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -512,78 +803,16 @@ private fun AddMealBottomSheet(
                 .padding(horizontal = 20.dp, vertical = 10.dp)
         ) {
             Text(
-                text = strings.nutritionAddMealBtn,
+                text = "Добавить приём пищи вручную",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // AI Scanner Box
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(DarkSurfaceVariant)
-                    .border(1.dp, BorderHighlight, RoundedCornerShape(12.dp))
-                    .padding(12.dp)
-            ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = null,
-                            tint = EmeraldNeon,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = strings.nutritionAiScanBtn,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = EmeraldNeon
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = aiDescription,
-                        onValueChange = onAiDescChanged,
-                        placeholder = { Text(strings.nutritionAiScanDesc, color = TextMuted, fontSize = 12.sp) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = DarkSurface,
-                            unfocusedContainerColor = DarkSurface,
-                            focusedBorderColor = EmeraldNeon,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
-                        ),
-                        trailingIcon = {
-                            if (isAiAnalyzing) {
-                                CircularProgressIndicator(color = EmeraldNeon, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                            } else {
-                                Button(
-                                    onClick = onRunAi,
-                                    enabled = aiDescription.isNotBlank(),
-                                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldNeon, contentColor = DarkBackground),
-                                    shape = RoundedCornerShape(6.dp),
-                                    modifier = Modifier.padding(end = 4.dp).height(32.dp)
-                                ) {
-                                    Text(text = "AI", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Meal Type Chips
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(mealTypes) { (type, label) ->
+                items(mealTypeOptions) { (type, label) ->
                     val isSelected = type == mealType
                     FilterChip(
                         selected = isSelected,
@@ -602,7 +831,7 @@ private fun AddMealBottomSheet(
             OutlinedTextField(
                 value = mealName,
                 onValueChange = onMealNameChanged,
-                label = { Text(strings.nutritionMealNameLabel) },
+                label = { Text("Название продукта или блюда") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -617,7 +846,6 @@ private fun AddMealBottomSheet(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Nutrients row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -628,15 +856,7 @@ private fun AddMealBottomSheet(
                     label = { Text("Ккал") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurfaceVariant,
-                        focusedBorderColor = EmeraldNeon,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
-                    )
+                    shape = RoundedCornerShape(10.dp)
                 )
 
                 OutlinedTextField(
@@ -645,15 +865,7 @@ private fun AddMealBottomSheet(
                     label = { Text("Белки (г)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurfaceVariant,
-                        focusedBorderColor = EmeraldNeon,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
-                    )
+                    shape = RoundedCornerShape(10.dp)
                 )
             }
 
@@ -669,15 +881,7 @@ private fun AddMealBottomSheet(
                     label = { Text("Жиры (г)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurfaceVariant,
-                        focusedBorderColor = EmeraldNeon,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
-                    )
+                    shape = RoundedCornerShape(10.dp)
                 )
 
                 OutlinedTextField(
@@ -686,15 +890,7 @@ private fun AddMealBottomSheet(
                     label = { Text("Углеводы (г)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurfaceVariant,
-                        focusedBorderColor = EmeraldNeon,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
-                    )
+                    shape = RoundedCornerShape(10.dp)
                 )
             }
 
@@ -712,7 +908,7 @@ private fun AddMealBottomSheet(
                     .fillMaxWidth()
                     .height(48.dp)
             ) {
-                Text(text = strings.save, fontWeight = FontWeight.Bold)
+                Text(text = "Сохранить", fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(24.dp))

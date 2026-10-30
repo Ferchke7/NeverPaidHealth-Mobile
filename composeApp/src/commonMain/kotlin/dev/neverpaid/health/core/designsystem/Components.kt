@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun DudaBrandLogo(
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     Row(

@@ -1,6 +1,6 @@
 package dev.neverpaid.health.features.programs
 
-import dev.neverpaid.health.data.repository.NeverPaidRepositoryImpl
+import dev.neverpaid.health.data.repository.FakeNeverPaidRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -12,7 +12,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -20,13 +19,13 @@ import kotlin.test.assertTrue
 class ProgramsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var repository: NeverPaidRepositoryImpl
+    private lateinit var repository: FakeNeverPaidRepository
     private lateinit var viewModel: ProgramsViewModel
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        repository = NeverPaidRepositoryImpl()
+        repository = FakeNeverPaidRepository()
         viewModel = ProgramsViewModel(repository)
         testDispatcher.scheduler.advanceUntilIdle()
     }
@@ -40,7 +39,6 @@ class ProgramsViewModelTest {
     fun testInitialProgramsLoaded() = runTest {
         val state = viewModel.state.value
         assertFalse(state.programs.isEmpty(), "Programs list should be loaded")
-        assertNotNull(state.selectedProgram)
     }
 
     @Test

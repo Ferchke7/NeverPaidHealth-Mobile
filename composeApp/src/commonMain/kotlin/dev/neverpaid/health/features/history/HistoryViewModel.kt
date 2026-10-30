@@ -2,6 +2,7 @@ package dev.neverpaid.health.features.history
 
 import dev.neverpaid.health.core.mvi.BaseViewModel
 import dev.neverpaid.health.core.platform.PlatformBridge
+import dev.neverpaid.health.domain.model.Workout
 import dev.neverpaid.health.domain.repository.NeverPaidRepository
 import kotlinx.coroutines.flow.collectLatest
 
@@ -12,6 +13,7 @@ class HistoryViewModel(
 ) {
 
     init {
+        refreshHistory()
         loadHistory()
     }
 
@@ -23,7 +25,15 @@ class HistoryViewModel(
                     copy(expandedWorkoutId = if (current == action.workoutId) null else action.workoutId)
                 }
             }
-            HistoryUiAction.OnRefreshClick -> loadHistory()
+            is HistoryUiAction.OnRepeatWorkout -> repeatWorkout(action.workout)
+            is HistoryUiAction.OnDeleteWorkout -> deleteWorkout(action.workoutId)
+            HistoryUiAction.OnRefreshClick -> refreshHistory()
+        }
+    }
+
+    private fun refreshHistory() {
+        launchGuarded {
+            repository.refreshWorkoutHistory()
         }
     }
 
@@ -33,7 +43,6 @@ class HistoryViewModel(
                 val now = PlatformBridge.currentTimeMillis()
                 val dayMs = 86400000L
 
-                // Real 84-day density matrix derived from actual workout timestamps
                 val matrix = (0 until 84).map { dayIndex ->
                     val targetDayEpoch = now - ((83 - dayIndex) * dayMs)
                     val dayStart = targetDayEpoch - (targetDayEpoch % dayMs)
@@ -42,7 +51,6 @@ class HistoryViewModel(
                     when {
                         count >= 2 -> 3
                         count == 1 -> 2
-                        (dayIndex % 2 == 0) -> 1 // Activity / Todo habit day
                         else -> 0
                     }
                 }
@@ -56,6 +64,39 @@ class HistoryViewModel(
                     )
                 }
             }
+        }
+    }
+
+    private fun repeatWorkout(workout: Workout) {
+        launchGuarded {
+            val resetExercises = workout.exercises.map { ex ->
+                ex.copy(
+                    sets = ex.sets.map { s ->
+                        s.copy(
+                            isCompleted = false,
+                            previousWeightKg = s.weightKg,
+                            previousReps = s.reps
+                        )
+                    }
+                )
+            }
+            repository.startWorkoutWithExercises(
+                title = workout.title,
+                exercises = resetExercises,
+                routineId = workout.routineId
+            )
+            sendEffect(HistoryUiEffect.NavigateToActiveWorkout)
+        }
+    }
+
+    private fun deleteWorkout(workoutId: String) {
+        launchGuarded(
+            onError = { err ->
+                sendEffect(HistoryUiEffect.ShowToast(err.message ?: "Ошибка удаления тренировки"))
+            }
+        ) {
+            repository.deleteWorkoutFromHistory(workoutId)
+            sendEffect(HistoryUiEffect.ShowToast("Тренировка удалена"))
         }
     }
 }

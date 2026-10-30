@@ -3,63 +3,47 @@ package dev.neverpaid.health.features.todo
 import dev.neverpaid.health.core.mvi.UiAction
 import dev.neverpaid.health.core.mvi.UiEffect
 import dev.neverpaid.health.core.mvi.UiState
+import dev.neverpaid.health.domain.model.ActivityLogItem
+import dev.neverpaid.health.domain.model.SaveTodoRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
+import dev.neverpaid.health.domain.model.Workout
 
 data class DayCalendarItem(
     val dateString: String, // "YYYY-MM-DD"
-    val dayName: String,   // "ПН", "ВТ", ...
-    val dayNumber: String, // "25", "26", ...
+    val dayName: String,
+    val dayNumber: String,
     val isToday: Boolean,
     val isSelected: Boolean
 )
 
 data class TodoUiState(
+    val viewMode: String = "list", // "list" | "calendar" | "log"
     val selectedDate: String = "",
     val calendarDays: List<DayCalendarItem> = emptyList(),
-    val tasks: List<TodoTask> = emptyList(),
+    val allTasks: List<TodoTask> = emptyList(),
+    val tasksForSelectedDate: List<TodoTask> = emptyList(),
+    val selectedCategoryFilter: String = "all",
+    val activityLogs: List<ActivityLogItem> = emptyList(),
+    val workouts: List<Workout> = emptyList(),
     val completedCount: Int = 0,
     val totalCount: Int = 0,
-    val streakDays: Int = 4,
-
-    // Task Creation Sheet
-    val isAddTaskSheetOpen: Boolean = false,
-    val newTaskTitle: String = "",
-    val newTaskTarget: String = "",
-    val newTaskCategory: String = "WORKOUT",
-    val newTaskPriority: String = "NORMAL",
-    val newTaskRecurring: Boolean = true,
-
-    // Pomodoro Timer Sheet
-    val isPomodoroSheetOpen: Boolean = false,
-    val activePomodoroTaskId: String? = null,
-    val pomodoroSecondsRemaining: Int = 25 * 60,
-    val isPomodoroRunning: Boolean = false,
-    val isBreakMode: Boolean = false,
-
+    val highPriorityRemaining: Int = 0,
+    val isTaskModalOpen: Boolean = false,
+    val editingTask: TodoTask? = null,
     val isLoading: Boolean = false
 ) : UiState
 
 sealed interface TodoUiAction : UiAction {
+    data class OnSetViewMode(val mode: String) : TodoUiAction
     data class OnSelectDate(val date: String) : TodoUiAction
+    data class OnSelectCategoryFilter(val category: String) : TodoUiAction
     data class OnToggleTask(val taskId: String) : TodoUiAction
     data class OnDeleteTask(val taskId: String) : TodoUiAction
-
-    // Add Task
-    data object OnOpenAddTaskSheet : TodoUiAction
-    data object OnCloseAddTaskSheet : TodoUiAction
-    data class OnNewTaskTitleChanged(val title: String) : TodoUiAction
-    data class OnNewTaskTargetChanged(val target: String) : TodoUiAction
-    data class OnNewTaskCategoryChanged(val category: String) : TodoUiAction
-    data class OnNewTaskPriorityChanged(val priority: String) : TodoUiAction
-    data class OnNewTaskRecurringChanged(val recurring: Boolean) : TodoUiAction
-    data object OnSaveNewTask : TodoUiAction
-
-    // Pomodoro Timer
-    data class OnOpenPomodoro(val taskId: String?) : TodoUiAction
-    data object OnClosePomodoro : TodoUiAction
-    data object OnTogglePomodoroPlayPause : TodoUiAction
-    data object OnResetPomodoro : TodoUiAction
-    data class OnSetPomodoroMode(val isBreak: Boolean) : TodoUiAction
+    data class OnOpenTaskModal(val task: TodoTask? = null) : TodoUiAction
+    data object OnCloseTaskModal : TodoUiAction
+    data class OnSaveTask(val request: SaveTodoRequestDto, val editingId: String? = null) : TodoUiAction
+    data class OnStartFocusTimer(val task: TodoTask?) : TodoUiAction
+    data object OnRefresh : TodoUiAction
 }
 
 sealed interface TodoUiEffect : UiEffect {

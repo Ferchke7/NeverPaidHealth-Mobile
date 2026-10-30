@@ -1,6 +1,6 @@
 package dev.neverpaid.health.features.nutrition
 
-import dev.neverpaid.health.data.repository.NeverPaidRepositoryImpl
+import dev.neverpaid.health.data.repository.FakeNeverPaidRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -12,19 +12,20 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NutritionViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var repository: NeverPaidRepositoryImpl
+    private lateinit var repository: FakeNeverPaidRepository
     private lateinit var viewModel: NutritionViewModel
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        repository = NeverPaidRepositoryImpl()
+        repository = FakeNeverPaidRepository()
         viewModel = NutritionViewModel(repository)
         testDispatcher.scheduler.advanceUntilIdle()
     }
@@ -81,15 +82,14 @@ class NutritionViewModelTest {
     }
 
     @Test
-    fun testAiFoodAnalysisFillsFields() = runTest {
-        viewModel.onAction(NutritionUiAction.OnOpenAddMealSheet)
+    fun testAiFoodAnalysisFillsPreview() = runTest {
         viewModel.onAction(NutritionUiAction.OnAiDescriptionChanged("3 eggs and 2 toasts"))
         viewModel.onAction(NutritionUiAction.OnRunAiAnalysis)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.state.value
         assertFalse(state.isAiAnalyzing)
-        assertTrue(state.newMealName.isNotEmpty())
-        assertTrue((state.newMealCalories.toIntOrNull() ?: 0) > 0)
+        assertNotNull(state.aiAnalysisPreview)
+        assertTrue(state.aiAnalysisPreview!!.totalCalories > 0)
     }
 }

@@ -16,16 +16,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,30 +43,40 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.neverpaid.health.core.designsystem.AthleticCard
 import dev.neverpaid.health.core.designsystem.BorderSubtle
+import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.EmeraldDark
+import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.IndigoElectric
-import dev.neverpaid.health.core.designsystem.SetTypeBadge
 import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.math.StrengthCalculator
+import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.domain.model.Workout
 
 @Composable
 fun HistoryRoute(
     viewModel: HistoryViewModel,
+    onNavigateToActiveWorkout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    CollectEffect(viewModel.effect) { effect ->
+        when (effect) {
+            HistoryUiEffect.NavigateToActiveWorkout -> onNavigateToActiveWorkout()
+            is HistoryUiEffect.ShowToast -> PlatformBridge.showToast(effect.message)
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -85,7 +98,7 @@ fun HistoryScreen(
 ) {
     val strings = LocalDudaStrings.current
 
-    if (state.isLoading) {
+    if (state.isLoading && state.workouts.isEmpty()) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = EmeraldNeon)
         }
@@ -96,19 +109,19 @@ fun HistoryScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item(key = "header") {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = strings.historyTitle,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Black,
                 color = TextPrimary
             )
             Text(
-                text = "${state.totalWorkoutsLogged} завершённых сессий",
-                fontSize = 13.sp,
+                text = "${state.totalWorkoutsLogged} завершённых тренировок в архиве",
+                fontSize = 12.sp,
                 color = TextSecondary
             )
         }
@@ -127,16 +140,35 @@ fun HistoryScreen(
             )
         }
 
-        items(
-            items = state.workouts,
-            key = { it.id }
-        ) { workout ->
-            val isExpanded = state.expandedWorkoutId == workout.id
-            HistoryWorkoutCard(
-                workout = workout,
-                isExpanded = isExpanded,
-                onToggleExpand = { onAction(HistoryUiAction.OnToggleWorkoutExpand(workout.id)) }
-            )
+        if (state.workouts.isEmpty()) {
+            item(key = "empty_history") {
+                AthleticCard(backgroundColor = DarkSurface) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("История тренировок пока пуста", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Завершите первую тренировку, чтобы видеть полный архив подходов и весов.", fontSize = 12.sp, color = TextSecondary)
+                    }
+                }
+            }
+        } else {
+            items(
+                items = state.workouts,
+                key = { it.id }
+            ) { workout ->
+                val isExpanded = state.expandedWorkoutId == workout.id
+                HistoryWorkoutCard(
+                    workout = workout,
+                    isExpanded = isExpanded,
+                    onToggleExpand = { onAction(HistoryUiAction.OnToggleWorkoutExpand(workout.id)) },
+                    onRepeatWorkout = { onAction(HistoryUiAction.OnRepeatWorkout(workout)) },
+                    onDeleteWorkout = { onAction(HistoryUiAction.OnDeleteWorkout(workout.id)) }
+                )
+            }
         }
 
         item(key = "bottom_spacer") {
@@ -190,7 +222,6 @@ private fun ConsistencyHeatmapCard(densityMatrix: List<Int>) {
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 7 rows x 12 columns grid
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 for (row in 0 until 7) {
                     Row(
@@ -224,10 +255,12 @@ private fun ConsistencyHeatmapCard(densityMatrix: List<Int>) {
 private fun HistoryWorkoutCard(
     workout: Workout,
     isExpanded: Boolean,
-    onToggleExpand: () -> Unit
+    onToggleExpand: () -> Unit,
+    onRepeatWorkout: () -> Unit,
+    onDeleteWorkout: () -> Unit
 ) {
     val dateStr = PlatformBridge.formatDate(workout.startTimeEpochMs, "EEE, dd MMM yyyy • HH:mm")
-    val durationMin = workout.durationSeconds / 60
+    val durationMin = (workout.durationSeconds / 60).coerceAtLeast(1)
 
     AthleticCard(
         modifier = Modifier.clickable { onToggleExpand() },
@@ -239,7 +272,7 @@ private fun HistoryWorkoutCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = workout.title,
                         fontSize = 16.sp,
@@ -266,26 +299,40 @@ private fun HistoryWorkoutCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatCounter(title = "Volume", value = dev.neverpaid.health.core.math.StrengthCalculator.formatVolume(workout.totalVolumeKg), unit = "kg", accentColor = EmeraldNeon)
-                StatCounter(title = "Exercises", value = "${workout.exercises.size}", accentColor = IndigoElectric)
-                StatCounter(title = "Duration", value = "$durationMin", unit = "min", accentColor = TextPrimary)
+                StatCounter(
+                    title = "Тоннаж",
+                    value = StrengthCalculator.formatVolume(workout.totalVolumeKg),
+                    unit = "кг",
+                    accentColor = EmeraldNeon
+                )
+                StatCounter(
+                    title = "Упражнения",
+                    value = "${workout.exercises.size}",
+                    accentColor = IndigoElectric
+                )
+                StatCounter(
+                    title = "Время",
+                    value = "$durationMin",
+                    unit = "мин",
+                    accentColor = TextPrimary
+                )
             }
 
             AnimatedVisibility(visible = isExpanded) {
-                Column(modifier = Modifier.padding(top = 16.dp)) {
-                    Divider(color = BorderSubtle, thickness = 1.dp)
-                    Spacer(modifier = Modifier.height(12.dp))
+                Column(modifier = Modifier.padding(top = 14.dp)) {
+                    HorizontalDivider(color = BorderSubtle, thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     workout.exercises.forEach { ex ->
                         Text(
                             text = ex.exerciseName,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = EmeraldLight
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
 
-                        ex.sets.filter { it.isCompleted }.forEach { s ->
+                        ex.sets.forEach { s ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -293,19 +340,54 @@ private fun HistoryWorkoutCard(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Set ${s.setNumber} (${s.type.uppercase()})",
+                                    text = "Сет ${s.setNumber} (${if (s.isWarmup) "Разминка" else "Рабочий"})",
                                     fontSize = 12.sp,
                                     color = TextMuted
                                 )
                                 Text(
-                                    text = "${s.weightKg} kg × ${s.reps} reps",
+                                    text = "${s.weightKg.toInt()} кг × ${s.reps} повт.",
                                     fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = TextSecondary
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
                                 )
                             }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onDeleteWorkout,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = null, tint = CrimsonRed, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Удалить", color = CrimsonRed, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Button(
+                            onClick = onRepeatWorkout,
+                            modifier = Modifier
+                                .weight(1.4f)
+                                .height(40.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = EmeraldNeon,
+                                contentColor = Color.Black
+                            )
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Повторить тренировку", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }

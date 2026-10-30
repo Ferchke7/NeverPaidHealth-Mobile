@@ -1,7 +1,11 @@
 package dev.neverpaid.health.features.auth
 
+import androidx.lifecycle.viewModelScope
 import dev.neverpaid.health.core.mvi.BaseViewModel
 import dev.neverpaid.health.domain.repository.NeverPaidRepository
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 class AuthViewModel(
     private val repository: NeverPaidRepository
@@ -9,60 +13,90 @@ class AuthViewModel(
     initialState = AuthUiState()
 ) {
 
+    init {
+        repository.getUserPreferences()
+            .onEach { prefs ->
+                updateState { copy(selectedLanguage = prefs.languageCode) }
+            }
+            .launchIn(viewModelScope)
+    }
+
     override fun onAction(action: AuthUiAction) {
         when (action) {
-            is AuthUiAction.OnToggleTab -> {
-                updateState { copy(isLoginTab = action.isLogin, errorMessage = null) }
+            AuthUiAction.OnOpenGoogleSignIn -> {
+                updateState { copy(isWebViewOpen = true, errorMessage = null) }
             }
-            is AuthUiAction.OnEmailChanged -> {
-                updateState { copy(email = action.email, errorMessage = null) }
+            AuthUiAction.OnDismissGoogleWebView -> {
+                updateState { copy(isWebViewOpen = false) }
             }
-            is AuthUiAction.OnPasswordChanged -> {
-                updateState { copy(password = action.password, errorMessage = null) }
+            is AuthUiAction.OnGoogleWebViewSuccess -> {
+                handleWebViewToken(action.accessToken, action.userJson)
             }
-            is AuthUiAction.OnNameChanged -> {
-                updateState { copy(name = action.name, errorMessage = null) }
+            AuthUiAction.OnToggleTokenFallback -> {
+                updateState { copy(showTokenFallback = !showTokenFallback, errorMessage = null) }
             }
-            AuthUiAction.OnSubmitClick -> submitAuth()
-            AuthUiAction.OnGuestModeClick -> continueGuestMode()
+            is AuthUiAction.OnTokenInputChanged -> {
+                updateState { copy(tokenInput = action.value, errorMessage = null) }
+            }
+            AuthUiAction.OnSubmitTokenClick -> {
+                submitManualToken()
+            }
+            is AuthUiAction.OnSelectLanguage -> {
+                launchGuarded {
+                    val current = repository.getUserPreferences().first()
+                    repository.updatePreferences(current.copy(languageCode = action.languageCode))
+                }
+            }
         }
     }
 
-    private fun submitAuth() {
-        val email = currentState.email.trim()
-        val password = currentState.password.trim()
-        val name = currentState.name.trim()
-
-        if (email.isEmpty() || password.isEmpty()) {
-            updateState { copy(errorMessage = "Please enter email and password") }
-            return
-        }
-
-        updateState { copy(isLoading = true, errorMessage = null) }
-
+    private fun handleWebViewToken(accessToken: String, userJson: String?) {
+        updateState { copy(isWebViewOpen = false, isLoading = true, errorMessage = null) }
         launchGuarded(
             onError = { error ->
-                updateState { copy(isLoading = false, errorMessage = error.message) }
+                updateState { copy(isLoading = false, errorMessage = error.message ?: "Ошибка авторизации через Google") }
             }
         ) {
-            if (currentState.isLoginTab) {
-                repository.login(email, password)
-            } else {
-                repository.register(email, password, name.ifEmpty { "Athlete" })
-            }
+            repository.authenticateWithAccessToken(accessToken, userJson)
             updateState { copy(isLoading = false) }
             sendEffect(AuthUiEffect.NavigateToHome)
         }
     }
 
-    private fun continueGuestMode() {
+    private fun submitManualToken() {
+        val raw = currentState.tokenInput.trim()
+        if (raw.isEmpty()) {
+            updateState { copy(errorMessage = "Введите токен авторизации") }
+            return
+        }
+        updateState { copy(isLoading = true, errorMessage = null) }
         launchGuarded(
             onError = { error ->
-                updateState { copy(errorMessage = error.message) }
+                updateState { copy(isLoading = false, errorMessage = error.message ?: "Ошибка проверки токена") }
             }
         ) {
-            repository.login("athlete@duda.uz", "offline-athlete")
-            sendEffect(AuthUiEffect.NavigateToHome)
+            val accessResult = runCatching { repository.authenticateWithAccessToken(raw) }
+            if (accessResult.isSuccess) {
+                updateState { copy(isLoading = false, tokenInput = "") }
+                sendEffect(AuthUiEffect.NavigateToHome)
+                return@launchGuarded
+            }
+
+            val googleResult = runCatching { repository.authenticateWithGoogleIdToken(raw) }
+            googleResult.fold(
+                onSuccess = {
+                    updateState { copy(isLoading = false, tokenInput = "") }
+                    sendEffect(AuthUiEffect.NavigateToHome)
+                },
+                onFailure = { err ->
+                    updateState {
+                        copy(
+                            isLoading = false,
+                            errorMessage = err.message ?: "Неверный токен. Войдите через кнопку Google выше."
+                        )
+                    }
+                }
+            )
         }
     }
 }

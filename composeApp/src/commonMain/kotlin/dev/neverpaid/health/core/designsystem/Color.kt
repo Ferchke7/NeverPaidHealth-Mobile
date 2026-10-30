@@ -21,8 +21,12 @@ val IndigoDark = Color(0xFF4338CA)
 val IndigoSubtle = Color(0x266366F1)
 
 val AmberWarm = Color(0xFFF59E0B)
+val AmberGold = Color(0xFFFBBF24)
 val AmberDark = Color(0xFFB45309)
 val AmberSubtle = Color(0x26F59E0B)
+
+val CyanElectric = Color(0xFF06B6D4)
+val PurpleAccent = Color(0xFFA855F7)
 
 val CrimsonRed = Color(0xFFEF4444)
 val CrimsonDark = Color(0xFFB91C1C)

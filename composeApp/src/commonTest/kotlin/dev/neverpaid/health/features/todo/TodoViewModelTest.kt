@@ -1,8 +1,10 @@
 package dev.neverpaid.health.features.todo
 
-import dev.neverpaid.health.data.repository.NeverPaidRepositoryImpl
+import dev.neverpaid.health.data.repository.FakeNeverPaidRepository
+import dev.neverpaid.health.domain.model.SaveTodoRequestDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -18,13 +20,13 @@ import kotlin.test.assertTrue
 class TodoViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var repository: NeverPaidRepositoryImpl
+    private lateinit var repository: FakeNeverPaidRepository
     private lateinit var viewModel: TodoViewModel
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        repository = NeverPaidRepositoryImpl()
+        repository = FakeNeverPaidRepository()
         viewModel = TodoViewModel(repository)
         testDispatcher.scheduler.advanceUntilIdle()
     }
@@ -38,30 +40,27 @@ class TodoViewModelTest {
     fun testInitialTasksLoaded() = runTest {
         val state = viewModel.state.value
         assertFalse(state.selectedDate.isEmpty())
-        assertTrue(state.tasks.isNotEmpty(), "Should load seeded tasks")
-        assertEquals(state.tasks.size, state.totalCount)
+        assertTrue(state.tasksForSelectedDate.isNotEmpty(), "Should load tasks for selected date")
+        assertEquals(state.tasksForSelectedDate.size, state.totalCount)
     }
 
     @Test
     fun testDateIsolatedTaskCompletion() = runTest {
         val today = viewModel.state.value.selectedDate
-        val task = viewModel.state.value.tasks.first()
+        val task = viewModel.state.value.tasksForSelectedDate.first()
         val initialCompleted = task.isCompletedOn(today)
 
-        // Toggle task today
         viewModel.onAction(TodoUiAction.OnToggleTask(task.id))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        val updatedTaskToday = viewModel.state.value.tasks.first { it.id == task.id }
+        val updatedTaskToday = viewModel.state.value.tasksForSelectedDate.first { it.id == task.id }
         assertEquals(!initialCompleted, updatedTaskToday.isCompletedOn(today))
 
-        // Switch to tomorrow: "2026-10-26" (or another date)
         val tomorrow = "2026-10-26"
         viewModel.onAction(TodoUiAction.OnSelectDate(tomorrow))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Verify date isolation: task completion on `today` does NOT leak into `tomorrow`
-        val updatedTaskTomorrow = viewModel.state.value.tasks.first { it.id == task.id }
+        val updatedTaskTomorrow = viewModel.state.value.tasksForSelectedDate.first { it.id == task.id }
         assertFalse(
             updatedTaskTomorrow.isCompletedOn(tomorrow),
             "Task should NOT be completed on tomorrow because it was only completed today"
@@ -70,36 +69,41 @@ class TodoViewModelTest {
 
     @Test
     fun testAddNewTask() = runTest {
-        val initialSize = viewModel.state.value.tasks.size
+        val today = viewModel.state.value.selectedDate
+        val initialSize = viewModel.state.value.tasksForSelectedDate.size
 
-        viewModel.onAction(TodoUiAction.OnOpenAddTaskSheet)
-        assertTrue(viewModel.state.value.isAddTaskSheetOpen)
+        viewModel.onAction(TodoUiAction.OnOpenTaskModal(null))
+        assertTrue(viewModel.state.value.isTaskModalOpen)
 
-        viewModel.onAction(TodoUiAction.OnNewTaskTitleChanged("Drink 3L of water"))
-        viewModel.onAction(TodoUiAction.OnNewTaskTargetChanged("3000 ml"))
-        viewModel.onAction(TodoUiAction.OnSaveNewTask)
+        viewModel.onAction(
+            TodoUiAction.OnSaveTask(
+                request = SaveTodoRequestDto(
+                    title = "Drink 3L of water",
+                    description = "3000 ml",
+                    category = "nutrition",
+                    priority = "high",
+                    scheduledDate = today,
+                    durationMinutes = 15
+                ),
+                editingId = null
+            )
+        )
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertFalse(viewModel.state.value.isAddTaskSheetOpen)
-        val newTasks = viewModel.state.value.tasks
+        assertFalse(viewModel.state.value.isTaskModalOpen)
+        val newTasks = viewModel.state.value.tasksForSelectedDate
         assertEquals(initialSize + 1, newTasks.size)
         assertTrue(newTasks.any { it.title == "Drink 3L of water" })
     }
 
     @Test
-    fun testPomodoroTimerToggle() = runTest {
-        viewModel.onAction(TodoUiAction.OnOpenPomodoro("test-task"))
-        assertTrue(viewModel.state.value.isPomodoroSheetOpen)
-        assertEquals("test-task", viewModel.state.value.activePomodoroTaskId)
-        assertFalse(viewModel.state.value.isPomodoroRunning)
+    fun testStartFocusTimerForTask() = runTest {
+        val task = viewModel.state.value.tasksForSelectedDate.first()
+        viewModel.onAction(TodoUiAction.OnStartFocusTimer(task))
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onAction(TodoUiAction.OnTogglePomodoroPlayPause)
-        assertTrue(viewModel.state.value.isPomodoroRunning)
-
-        viewModel.onAction(TodoUiAction.OnTogglePomodoroPlayPause)
-        assertFalse(viewModel.state.value.isPomodoroRunning)
-
-        viewModel.onAction(TodoUiAction.OnClosePomodoro)
-        assertFalse(viewModel.state.value.isPomodoroSheetOpen)
+        val focusState = repository.getFocusTimerState().first()
+        assertTrue(focusState.isActive)
+        assertEquals(task.id, focusState.todoId)
     }
 }

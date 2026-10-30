@@ -3,21 +3,17 @@ package dev.neverpaid.health.features.todo
 import androidx.lifecycle.viewModelScope
 import dev.neverpaid.health.core.mvi.BaseViewModel
 import dev.neverpaid.health.core.platform.PlatformBridge
+import dev.neverpaid.health.domain.model.SaveTodoRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
 import dev.neverpaid.health.domain.repository.NeverPaidRepository
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
 
 class TodoViewModel(
     private val repository: NeverPaidRepository
 ) : BaseViewModel<TodoUiAction, TodoUiState, TodoUiEffect>(
-    initialState = TodoUiState()
+    initialState = TodoUiState(isLoading = true)
 ) {
-
-    private var pomodoroJob: Job? = null
 
     init {
         val todayStr = PlatformBridge.formatDate(PlatformBridge.currentTimeMillis(), "yyyy-MM-dd")
@@ -28,40 +24,112 @@ class TodoViewModel(
                 calendarDays = days
             )
         }
-        loadTasksForDate(todayStr)
+        observeTodoStreams()
+        refreshRemoteTodos()
     }
 
     override fun onAction(action: TodoUiAction) {
         when (action) {
+            is TodoUiAction.OnSetViewMode -> {
+                updateState { copy(viewMode = action.mode) }
+                if (action.mode == "log") {
+                    launchGuarded { repository.getActivityLogs() }
+                }
+            }
             is TodoUiAction.OnSelectDate -> selectDate(action.date)
+            is TodoUiAction.OnSelectCategoryFilter -> {
+                updateState { copy(selectedCategoryFilter = action.category) }
+                recomputeFilteredTasks()
+            }
             is TodoUiAction.OnToggleTask -> toggleTask(action.taskId)
             is TodoUiAction.OnDeleteTask -> deleteTask(action.taskId)
-
-            // Add Task
-            TodoUiAction.OnOpenAddTaskSheet -> updateState { copy(isAddTaskSheetOpen = true) }
-            TodoUiAction.OnCloseAddTaskSheet -> updateState { copy(isAddTaskSheetOpen = false) }
-            is TodoUiAction.OnNewTaskTitleChanged -> updateState { copy(newTaskTitle = action.title) }
-            is TodoUiAction.OnNewTaskTargetChanged -> updateState { copy(newTaskTarget = action.target) }
-            is TodoUiAction.OnNewTaskCategoryChanged -> updateState { copy(newTaskCategory = action.category) }
-            is TodoUiAction.OnNewTaskPriorityChanged -> updateState { copy(newTaskPriority = action.priority) }
-            is TodoUiAction.OnNewTaskRecurringChanged -> updateState { copy(newTaskRecurring = action.recurring) }
-            TodoUiAction.OnSaveNewTask -> saveNewTask()
-
-            // Pomodoro
-            is TodoUiAction.OnOpenPomodoro -> {
-                updateState {
-                    copy(
-                        isPomodoroSheetOpen = true,
-                        activePomodoroTaskId = action.taskId
+            is TodoUiAction.OnOpenTaskModal -> {
+                updateState { copy(isTaskModalOpen = true, editingTask = action.task) }
+            }
+            TodoUiAction.OnCloseTaskModal -> {
+                updateState { copy(isTaskModalOpen = false, editingTask = null) }
+            }
+            is TodoUiAction.OnSaveTask -> saveTask(action.request, action.editingId)
+            is TodoUiAction.OnStartFocusTimer -> {
+                val task = action.task
+                if (task != null) {
+                    repository.startFocusForTodo(task)
+                } else {
+                    repository.startQuickFocusSession(
+                        title = "Фокус-сессия атлета",
+                        targetMinutes = 25
                     )
                 }
             }
-            TodoUiAction.OnClosePomodoro -> {
-                updateState { copy(isPomodoroSheetOpen = false) }
-            }
-            TodoUiAction.OnTogglePomodoroPlayPause -> togglePomodoro()
-            TodoUiAction.OnResetPomodoro -> resetPomodoro()
-            is TodoUiAction.OnSetPomodoroMode -> setPomodoroMode(action.isBreak)
+            TodoUiAction.OnRefresh -> refreshRemoteTodos()
+        }
+    }
+
+    private fun observeTodoStreams() {
+        combine(
+            repository.observeAllTodos(),
+            repository.observeActivityLogs(),
+            repository.getWorkoutHistory()
+        ) { allTodos, logs, workouts ->
+            Triple(allTodos, logs, workouts)
+        }.also { flow ->
+            flow.combine(state) { (allTodos, logs, workouts), s ->
+                val date = s.selectedDate
+                val forDate = allTodos.filter { t ->
+                    t.repeatDaily || t.scheduledDate.isBlank() || t.scheduledDate.take(10) == date
+                }
+                val filtered = if (s.selectedCategoryFilter == "all") {
+                    forDate
+                } else {
+                    forDate.filter { it.category.equals(s.selectedCategoryFilter, ignoreCase = true) }
+                }
+                val completed = forDate.count { it.isCompletedOn(date) }
+                val highRemaining = forDate.count {
+                    !it.isCompletedOn(date) && it.priority.equals("high", ignoreCase = true)
+                }
+                updateState {
+                    copy(
+                        allTasks = allTodos,
+                        tasksForSelectedDate = filtered,
+                        activityLogs = logs,
+                        workouts = workouts,
+                        completedCount = completed,
+                        totalCount = forDate.size,
+                        highPriorityRemaining = highRemaining,
+                        isLoading = false
+                    )
+                }
+            }.launchIn(viewModelScope)
+        }
+    }
+
+    private fun recomputeFilteredTasks() {
+        val date = currentState.selectedDate
+        val forDate = currentState.allTasks.filter { t ->
+            t.repeatDaily || t.scheduledDate.isBlank() || t.scheduledDate.take(10) == date
+        }
+        val filtered = if (currentState.selectedCategoryFilter == "all") {
+            forDate
+        } else {
+            forDate.filter { it.category.equals(currentState.selectedCategoryFilter, ignoreCase = true) }
+        }
+        updateState {
+            copy(
+                tasksForSelectedDate = filtered,
+                completedCount = forDate.count { it.isCompletedOn(date) },
+                totalCount = forDate.size,
+                highPriorityRemaining = forDate.count { !it.isCompletedOn(date) && it.priority.equals("high", ignoreCase = true) }
+            )
+        }
+    }
+
+    private fun refreshRemoteTodos() {
+        launchGuarded(
+            onError = { updateState { copy(isLoading = false) } }
+        ) {
+            repository.refreshTodos()
+            repository.getActivityLogs()
+            updateState { copy(isLoading = false) }
         }
     }
 
@@ -74,28 +142,12 @@ class TodoViewModel(
                 calendarDays = days
             )
         }
-        loadTasksForDate(date)
-    }
-
-    private fun loadTasksForDate(date: String) {
-        launchGuarded {
-            repository.getTodos(date).collectLatest { taskList ->
-                val completed = taskList.count { it.isCompletedOn(date) }
-                updateState {
-                    copy(
-                        tasks = taskList,
-                        completedCount = completed,
-                        totalCount = taskList.size,
-                        isLoading = false
-                    )
-                }
-            }
-        }
+        recomputeFilteredTasks()
     }
 
     private fun toggleTask(taskId: String) {
         val date = currentState.selectedDate
-        val task = currentState.tasks.find { it.id == taskId } ?: return
+        val task = currentState.allTasks.find { it.id == taskId } ?: return
         val willBeCompleted = !task.isCompletedOn(date)
 
         launchGuarded {
@@ -112,84 +164,27 @@ class TodoViewModel(
         }
     }
 
-    private fun saveNewTask() {
-        val title = currentState.newTaskTitle.trim()
-        val target = currentState.newTaskTarget.trim()
-        if (title.isEmpty()) return
-
-        val newTask = TodoTask(
-            id = PlatformBridge.generateUuid(),
-            title = title,
-            target = target.ifEmpty { "Target completed" },
-            category = currentState.newTaskCategory,
-            priority = currentState.newTaskPriority,
-            isRecurringDaily = currentState.newTaskRecurring,
-            scheduledDate = if (currentState.newTaskRecurring) null else currentState.selectedDate
-        )
-
-        updateState {
-            copy(
-                isAddTaskSheetOpen = false,
-                newTaskTitle = "",
-                newTaskTarget = ""
-            )
-        }
-
+    private fun saveTask(request: SaveTodoRequestDto, editingId: String?) {
+        updateState { copy(isTaskModalOpen = false, editingTask = null) }
         launchGuarded {
-            repository.addTodo(newTask)
-        }
-    }
-
-    private fun togglePomodoro() {
-        if (currentState.isPomodoroRunning) {
-            pomodoroJob?.cancel()
-            updateState { copy(isPomodoroRunning = false) }
-        } else {
-            updateState { copy(isPomodoroRunning = true) }
-            pomodoroJob = viewModelScope.launch {
-                while (isActive && currentState.pomodoroSecondsRemaining > 0) {
-                    delay(1000)
-                    updateState {
-                        val remaining = pomodoroSecondsRemaining - 1
-                        copy(
-                            pomodoroSecondsRemaining = remaining,
-                            isPomodoroRunning = remaining > 0
-                        )
-                    }
-                }
-                if (currentState.pomodoroSecondsRemaining <= 0) {
-                    sendEffect(TodoUiEffect.TriggerHaptic)
-                    sendEffect(TodoUiEffect.ShowToast("Focus session completed! Great work!"))
-                    // Auto-complete task if selected
-                    val taskId = currentState.activePomodoroTaskId
-                    if (taskId != null) {
-                        repository.toggleTodo(taskId, currentState.selectedDate)
-                    }
-                }
+            if (!editingId.isNullOrBlank()) {
+                repository.updateTodo(editingId, request)
+                sendEffect(TodoUiEffect.ShowToast("Задача обновлена"))
+            } else {
+                val task = TodoTask(
+                    id = PlatformBridge.generateUuid(),
+                    title = request.title,
+                    description = request.notes,
+                    category = request.category,
+                    priority = request.priority,
+                    scheduledDate = request.scheduledDate,
+                    startTime = request.scheduledTime.ifBlank { null },
+                    isRecurring = request.repeatDaily,
+                    recurrencePattern = if (request.repeatDaily) "daily" else "none"
+                )
+                repository.addTodo(task)
+                sendEffect(TodoUiEffect.ShowToast("Задача добавлена"))
             }
-        }
-    }
-
-    private fun resetPomodoro() {
-        pomodoroJob?.cancel()
-        val defaultSecs = if (currentState.isBreakMode) 5 * 60 else 25 * 60
-        updateState {
-            copy(
-                pomodoroSecondsRemaining = defaultSecs,
-                isPomodoroRunning = false
-            )
-        }
-    }
-
-    private fun setPomodoroMode(isBreak: Boolean) {
-        pomodoroJob?.cancel()
-        val defaultSecs = if (isBreak) 5 * 60 else 25 * 60
-        updateState {
-            copy(
-                isBreakMode = isBreak,
-                pomodoroSecondsRemaining = defaultSecs,
-                isPomodoroRunning = false
-            )
         }
     }
 
@@ -198,7 +193,6 @@ class TodoViewModel(
         val dayMs = 86400000L
         val result = mutableListOf<DayCalendarItem>()
 
-        // 3 days before today up to 3 days after today (7 days window)
         for (offset in -3..3) {
             val dateEpoch = now + (offset * dayMs)
             val dateStr = PlatformBridge.formatDate(dateEpoch, "yyyy-MM-dd")
@@ -216,10 +210,5 @@ class TodoViewModel(
             )
         }
         return result
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        pomodoroJob?.cancel()
     }
 }

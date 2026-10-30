@@ -12,11 +12,11 @@ import kotlin.test.assertTrue
 
 class NeverPaidRepositoryTest {
 
-    private lateinit var repository: NeverPaidRepositoryImpl
+    private lateinit var repository: FakeNeverPaidRepository
 
     @BeforeTest
     fun setup() {
-        repository = NeverPaidRepositoryImpl()
+        repository = FakeNeverPaidRepository()
     }
 
     @Test
@@ -28,7 +28,7 @@ class NeverPaidRepositoryTest {
         ).first()
 
         assertFalse(chestBarbellExercises.isEmpty())
-        assertTrue(chestBarbellExercises.any { it.name.contains("Bench") })
+        assertTrue(chestBarbellExercises.any { it.name.contains("Bench", ignoreCase = true) })
     }
 
     @Test

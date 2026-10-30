@@ -2,18 +2,21 @@ package dev.neverpaid.health.data.catalog
 
 import dev.neverpaid.health.domain.model.Exercise
 import dev.neverpaid.health.domain.model.Routine
+import dev.neverpaid.health.domain.model.RoutineExercise
 
 object StandardExerciseCatalog {
 
     val standardExercises: List<Exercise> = listOf(
-        // CHEST
         Exercise(
             id = "10000000-0000-0000-0000-000000000001",
             name = "Barbell Bench Press",
             primaryMuscleGroup = "chest",
             secondaryMuscleGroups = listOf("triceps", "shoulders"),
             equipment = "barbell",
-            instructions = "Lie flat on the bench, grip barbell slightly wider than shoulder-width. Lower bar to mid-chest with elbows tucked at 45 degrees, then press up forcefully."
+            instructionsList = listOf(
+                "Лягте на горизонтальную скамью, возьмите гриф чуть шире плеч.",
+                "Опустите штангу к середине груди под контролем, затем мощно выжмите вверх."
+            )
         ),
         Exercise(
             id = "10000000-0000-0000-0000-000000000002",
@@ -21,49 +24,21 @@ object StandardExerciseCatalog {
             primaryMuscleGroup = "chest",
             secondaryMuscleGroups = listOf("shoulders", "triceps"),
             equipment = "barbell",
-            instructions = "Set bench at 30 degrees incline. Lower barbell controlled to upper chest, drive up locking out shoulders."
+            instructionsList = listOf(
+                "Установите наклон скамьи 30 градусов.",
+                "Опустите гриф к верхней части груди и выжмите вверх."
+            )
         ),
-        Exercise(
-            id = "10000000-0000-0000-0000-000000000004",
-            name = "Dumbbell Bench Press",
-            primaryMuscleGroup = "chest",
-            secondaryMuscleGroups = listOf("triceps", "shoulders"),
-            equipment = "dumbbell",
-            instructions = "Lower dumbbells with neutral or slight angle grip until deep chest stretch, press upwards converging at the top."
-        ),
-        Exercise(
-            id = "10000000-0000-0000-0000-000000000005",
-            name = "Incline Dumbbell Press",
-            primaryMuscleGroup = "chest",
-            secondaryMuscleGroups = listOf("shoulders", "triceps"),
-            equipment = "dumbbell",
-            instructions = "Incline at 30-45 degrees, press dumbbells overhead maintaining core engagement."
-        ),
-        Exercise(
-            id = "10000000-0000-0000-0000-000000000007",
-            name = "Cable Crossover",
-            primaryMuscleGroup = "chest",
-            secondaryMuscleGroups = emptyList(),
-            equipment = "cable",
-            instructions = "Set pulleys high, bring hands down and forward in a hugging arc with slight bend in elbows."
-        ),
-        Exercise(
-            id = "10000000-0000-0000-0000-000000000008",
-            name = "Chest Dip",
-            primaryMuscleGroup = "chest",
-            secondaryMuscleGroups = listOf("triceps", "shoulders"),
-            equipment = "bodyweight",
-            instructions = "Lean torso forward 30 degrees, flare elbows slightly, lower until 90 degree arm angle, press up."
-        ),
-
-        // BACK
         Exercise(
             id = "20000000-0000-0000-0000-000000000001",
             name = "Deadlift",
             primaryMuscleGroup = "back",
             secondaryMuscleGroups = listOf("hamstrings", "core", "quads"),
             equipment = "barbell",
-            instructions = "Stand hip-width, grip bar outside legs. Hinge at hips, brace core, pull bar close to shins and lock hips out at top."
+            instructionsList = listOf(
+                "Поставьте стопы на ширине таза, гриф над серединой стопы.",
+                "Напрягите кор и широчайшие, вытяните штангу вдоль голеней до полного выпрямления."
+            )
         ),
         Exercise(
             id = "20000000-0000-0000-0000-000000000002",
@@ -71,7 +46,10 @@ object StandardExerciseCatalog {
             primaryMuscleGroup = "back",
             secondaryMuscleGroups = listOf("biceps"),
             equipment = "barbell",
-            instructions = "Hinge forward 45 degrees, pull barbell to sternum driving elbows back, squeeze scapulae."
+            instructionsList = listOf(
+                "Наклоните корпус под углом 45 градусов с прямой спиной.",
+                "Тяните штангу к низу живота, сводя лопатки в верхней точке."
+            )
         ),
         Exercise(
             id = "20000000-0000-0000-0000-000000000003",
@@ -79,49 +57,21 @@ object StandardExerciseCatalog {
             primaryMuscleGroup = "back",
             secondaryMuscleGroups = listOf("biceps"),
             equipment = "bodyweight",
-            instructions = "Pronated grip wider than shoulders, pull chin above bar depressing shoulder blades down."
+            instructionsList = listOf(
+                "Возьмитесь за перекладину хватом чуть шире плеч.",
+                "Подтянитесь грудью к перекладине, опуская лопатки вниз."
+            )
         ),
-        Exercise(
-            id = "20000000-0000-0000-0000-000000000005",
-            name = "Lat Pulldown",
-            primaryMuscleGroup = "back",
-            secondaryMuscleGroups = listOf("biceps"),
-            equipment = "cable",
-            instructions = "Pull bar smoothly to clavicle, arch upper spine slightly, control the eccentric stretch."
-        ),
-        Exercise(
-            id = "20000000-0000-0000-0000-000000000006",
-            name = "Seated Cable Row",
-            primaryMuscleGroup = "back",
-            secondaryMuscleGroups = listOf("biceps"),
-            equipment = "cable",
-            instructions = "Keep upright posture, pull handle to belly button while driving elbows backwards."
-        ),
-        Exercise(
-            id = "20000000-0000-0000-0000-000000000007",
-            name = "One-Arm Dumbbell Row",
-            primaryMuscleGroup = "back",
-            secondaryMuscleGroups = listOf("biceps"),
-            equipment = "dumbbell",
-            instructions = "Support knee and hand on flat bench, pull dumbbell to hip pocket keeping elbow tucked."
-        ),
-
-        // LEGS (QUADS & GLUTES)
         Exercise(
             id = "30000000-0000-0000-0000-000000000001",
             name = "Barbell Squat",
             primaryMuscleGroup = "quads",
             secondaryMuscleGroups = listOf("hamstrings", "core", "glutes"),
             equipment = "barbell",
-            instructions = "Bar rested on upper traps, brace core, break at hips and knees simultaneously to parallel depth or below."
-        ),
-        Exercise(
-            id = "30000000-0000-0000-0000-000000000002",
-            name = "Front Squat",
-            primaryMuscleGroup = "quads",
-            secondaryMuscleGroups = listOf("core"),
-            equipment = "barbell",
-            instructions = "Clean grip or cross-arm with bar on clavicles, maintain vertical torso throughout squatting motion."
+            instructionsList = listOf(
+                "Расположите штангу на трапециях, напрягите пресс.",
+                "Присядьте до параллели бедра с полом или ниже и мощно встаньте."
+            )
         ),
         Exercise(
             id = "30000000-0000-0000-0000-000000000003",
@@ -129,59 +79,32 @@ object StandardExerciseCatalog {
             primaryMuscleGroup = "quads",
             secondaryMuscleGroups = listOf("glutes"),
             equipment = "machine",
-            instructions = "Feet shoulder-width on sled, lower knees to 90 degrees without rounding lower back, press up."
+            instructionsList = listOf(
+                "Поставьте стопы на ширине плеч на платформу.",
+                "Опустите платформу до угла 90 градусов в коленях, не отрывая таз."
+            )
         ),
-        Exercise(
-            id = "30000000-0000-0000-0000-000000000005",
-            name = "Bulgarian Split Squat",
-            primaryMuscleGroup = "quads",
-            secondaryMuscleGroups = listOf("glutes"),
-            equipment = "dumbbell",
-            instructions = "Rear foot elevated on bench, descend front thigh parallel to ground, drive through front heel."
-        ),
-
-        // HAMSTRINGS & POSTERIOR CHAIN
         Exercise(
             id = "40000000-0000-0000-0000-000000000001",
             name = "Romanian Deadlift",
             primaryMuscleGroup = "hamstrings",
             secondaryMuscleGroups = listOf("back", "glutes"),
             equipment = "barbell",
-            instructions = "Slight knee bend, hinge hips backwards keeping bar glued to legs until deep hamstring tension."
+            instructionsList = listOf(
+                "Слегка согните колени и отводите таз назад, ведя гриф вдоль бёдер.",
+                "Почувствуйте растяжение бицепса бедра и вернитесь в исходное положение."
+            )
         ),
-        Exercise(
-            id = "40000000-0000-0000-0000-000000000003",
-            name = "Lying Leg Curl",
-            primaryMuscleGroup = "hamstrings",
-            secondaryMuscleGroups = emptyList(),
-            equipment = "machine",
-            instructions = "Pad behind ankles, curl heels towards glutes smoothly without hyperextending lower spine."
-        ),
-        Exercise(
-            id = "40000000-0000-0000-0000-000000000005",
-            name = "Barbell Hip Thrust",
-            primaryMuscleGroup = "glutes",
-            secondaryMuscleGroups = listOf("hamstrings"),
-            equipment = "barbell",
-            instructions = "Upper back against bench, barbell cushioned on hips. Drive through heels to full hip extension."
-        ),
-
-        // SHOULDERS
         Exercise(
             id = "50000000-0000-0000-0000-000000000001",
             name = "Overhead Press",
             primaryMuscleGroup = "shoulders",
             secondaryMuscleGroups = listOf("triceps", "core"),
             equipment = "barbell",
-            instructions = "Standing, press barbell straight overhead, push head through window at top lockout."
-        ),
-        Exercise(
-            id = "50000000-0000-0000-0000-000000000002",
-            name = "Seated Dumbbell Shoulder Press",
-            primaryMuscleGroup = "shoulders",
-            secondaryMuscleGroups = listOf("triceps"),
-            equipment = "dumbbell",
-            instructions = "Seated on 90 degree upright bench, press dumbbells in a slight arch to touch at top."
+            instructionsList = listOf(
+                "Стоя ровно, выжмите штангу с груди строго вертикально над головой.",
+                "Полностью зафиксируйте локти в верхней точке."
+            )
         ),
         Exercise(
             id = "50000000-0000-0000-0000-000000000003",
@@ -189,33 +112,19 @@ object StandardExerciseCatalog {
             primaryMuscleGroup = "shoulders",
             secondaryMuscleGroups = emptyList(),
             equipment = "dumbbell",
-            instructions = "Raise dumbbells out to side up to shoulder height, leading with elbows and pinkies."
+            instructionsList = listOf(
+                "Поднимайте гантели через стороны до уровня плеч, ведя движение локтями."
+            )
         ),
-        Exercise(
-            id = "20000000-0000-0000-0000-000000000009",
-            name = "Face Pull",
-            primaryMuscleGroup = "shoulders",
-            secondaryMuscleGroups = listOf("back"),
-            equipment = "cable",
-            instructions = "Rope attachment at eye level, pull to forehead flaring elbows high and externally rotating."
-        ),
-
-        // ARMS (BICEPS & TRICEPS)
         Exercise(
             id = "60000000-0000-0000-0000-000000000001",
             name = "Barbell Bicep Curl",
             primaryMuscleGroup = "biceps",
             secondaryMuscleGroups = emptyList(),
             equipment = "barbell",
-            instructions = "Elbows pinned to sides, curl barbell in smooth arc contracting biceps fully."
-        ),
-        Exercise(
-            id = "60000000-0000-0000-0000-000000000002",
-            name = "Incline Dumbbell Curl",
-            primaryMuscleGroup = "biceps",
-            secondaryMuscleGroups = emptyList(),
-            equipment = "dumbbell",
-            instructions = "Seated incline bench, maximize long head stretch, curl with supinated palms."
+            instructionsList = listOf(
+                "Прижмите локти к корпусу и поднимите штангу на бицепс без раскачки."
+            )
         ),
         Exercise(
             id = "70000000-0000-0000-0000-000000000001",
@@ -223,80 +132,78 @@ object StandardExerciseCatalog {
             primaryMuscleGroup = "triceps",
             secondaryMuscleGroups = emptyList(),
             equipment = "cable",
-            instructions = "Push rope down extending elbows fully and spreading rope tips apart at bottom lockout."
-        ),
-        Exercise(
-            id = "70000000-0000-0000-0000-000000000002",
-            name = "Skull Crusher (Lying Tricep Ext)",
-            primaryMuscleGroup = "triceps",
-            secondaryMuscleGroups = emptyList(),
-            equipment = "barbell",
-            instructions = "Lie on flat bench, lower EZ-bar to forehead, press up isolating triceps."
-        ),
-
-        // CORE
-        Exercise(
-            id = "80000000-0000-0000-0000-000000000001",
-            name = "Hanging Knee / Leg Raise",
-            primaryMuscleGroup = "core",
-            secondaryMuscleGroups = emptyList(),
-            equipment = "bodyweight",
-            instructions = "Hang from pull-up bar, tuck pelvis and raise knees/toes to 90 degrees or chest."
-        ),
-        Exercise(
-            id = "80000000-0000-0000-0000-000000000002",
-            name = "Cable Woodchopper",
-            primaryMuscleGroup = "core",
-            secondaryMuscleGroups = emptyList(),
-            equipment = "cable",
-            instructions = "Diagonal rotational drive across body engaging obliques, pivoting on back foot."
+            instructionsList = listOf(
+                "Разгибайте руки с канатной рукоятью вниз до полного сокращения трицепса."
+            )
         )
     )
 
+    // Matches PREBUILT_ROUTINES from frontend/src/pages/workouts/ui/WorkoutsPage.tsx
     val prebuiltRoutines: List<Routine> = listOf(
         Routine(
-            id = "routine-push-a",
-            title = "Push Day (Hypertrophy)",
-            description = "Chest, Shoulders & Triceps focus with high mechanical tension",
+            id = "prebuilt-push",
+            name = "Жим (Грудь, Плечи, Трицепс)",
+            notes = "Классическая жимовая тренировка для развития грудных, дельт и трицепса.",
+            isPrebuilt = true,
+            category = "Push/Pull/Legs",
             exercises = listOf(
-                standardExercises.first { it.name == "Barbell Bench Press" },
-                standardExercises.first { it.name == "Incline Dumbbell Press" },
-                standardExercises.first { it.name == "Dumbbell Lateral Raise" },
-                standardExercises.first { it.name == "Tricep Rope Pushdown" }
+                RoutineExercise("10000000-0000-0000-0000-000000000001", "Barbell Bench Press", 0, 4, 6, 8),
+                RoutineExercise("10000000-0000-0000-0000-000000000002", "Incline Barbell Bench Press", 1, 3, 8, 10),
+                RoutineExercise("50000000-0000-0000-0000-000000000001", "Overhead Press", 2, 3, 8, 10),
+                RoutineExercise("50000000-0000-0000-0000-000000000003", "Dumbbell Lateral Raise", 3, 4, 12, 15),
+                RoutineExercise("70000000-0000-0000-0000-000000000001", "Tricep Rope Pushdown", 4, 3, 12, 15)
             )
         ),
         Routine(
-            id = "routine-pull-a",
-            title = "Pull Day (Hypertrophy)",
-            description = "Back width, thickness, rear delts and biceps volume",
+            id = "prebuilt-pull",
+            name = "Тяга (Спина, Бицепс, Задняя дельта)",
+            notes = "Тяговая тренировка на ширину и толщину спины + прокачка бицепса.",
+            isPrebuilt = true,
+            category = "Push/Pull/Legs",
             exercises = listOf(
-                standardExercises.first { it.name == "Deadlift" },
-                standardExercises.first { it.name == "Pull Up" },
-                standardExercises.first { it.name == "Barbell Bent Over Row" },
-                standardExercises.first { it.name == "Face Pull" },
-                standardExercises.first { it.name == "Barbell Bicep Curl" }
+                RoutineExercise("20000000-0000-0000-0000-000000000001", "Deadlift", 0, 3, 5, 5),
+                RoutineExercise("20000000-0000-0000-0000-000000000003", "Pull Up", 1, 4, 8, 12),
+                RoutineExercise("20000000-0000-0000-0000-000000000002", "Barbell Bent Over Row", 2, 3, 8, 10),
+                RoutineExercise("60000000-0000-0000-0000-000000000001", "Barbell Bicep Curl", 3, 3, 10, 12)
             )
         ),
         Routine(
-            id = "routine-legs-a",
-            title = "Leg Day (Quad & Chain)",
-            description = "Squat variations, Bulgarian split squats and posterior chain",
+            id = "prebuilt-legs",
+            name = "Ноги (Квадрицепс, Бицепс бедра, Икры)",
+            notes = "Полноценный день ног с акцентом на базовый присед и румынскую тягу.",
+            isPrebuilt = true,
+            category = "Push/Pull/Legs",
             exercises = listOf(
-                standardExercises.first { it.name == "Barbell Squat" },
-                standardExercises.first { it.name == "Romanian Deadlift" },
-                standardExercises.first { it.name == "Leg Press" },
-                standardExercises.first { it.name == "Lying Leg Curl" }
+                RoutineExercise("30000000-0000-0000-0000-000000000001", "Barbell Squat", 0, 4, 6, 8),
+                RoutineExercise("40000000-0000-0000-0000-000000000001", "Romanian Deadlift", 1, 3, 8, 10),
+                RoutineExercise("30000000-0000-0000-0000-000000000003", "Leg Press", 2, 3, 10, 12)
             )
         ),
         Routine(
-            id = "routine-full-body",
-            title = "Full Body Power",
-            description = "Heavy compound movements for maximum athletic strength",
+            id = "prebuilt-upper",
+            name = "Верх тела (Сила и Масса)",
+            notes = "Интенсивная проработка всего плечевого пояса, груди и спины за одну сессию.",
+            isPrebuilt = true,
+            category = "Upper/Lower",
             exercises = listOf(
-                standardExercises.first { it.name == "Barbell Squat" },
-                standardExercises.first { it.name == "Barbell Bench Press" },
-                standardExercises.first { it.name == "Barbell Bent Over Row" },
-                standardExercises.first { it.name == "Overhead Press" }
+                RoutineExercise("10000000-0000-0000-0000-000000000001", "Barbell Bench Press", 0, 4, 6, 8),
+                RoutineExercise("20000000-0000-0000-0000-000000000002", "Barbell Bent Over Row", 1, 4, 8, 10),
+                RoutineExercise("50000000-0000-0000-0000-000000000001", "Overhead Press", 2, 3, 8, 10),
+                RoutineExercise("20000000-0000-0000-0000-000000000003", "Pull Up", 3, 3, 8, 12),
+                RoutineExercise("60000000-0000-0000-0000-000000000001", "Barbell Bicep Curl", 4, 3, 10, 12)
+            )
+        ),
+        Routine(
+            id = "prebuilt-fullbody",
+            name = "Фулбоди (Базовая тренировка)",
+            notes = "Тяжёлые базовые многосуставные движения на всё тело в одной тренировке.",
+            isPrebuilt = true,
+            category = "Full Body",
+            exercises = listOf(
+                RoutineExercise("30000000-0000-0000-0000-000000000001", "Barbell Squat", 0, 3, 5, 5),
+                RoutineExercise("10000000-0000-0000-0000-000000000001", "Barbell Bench Press", 1, 3, 5, 5),
+                RoutineExercise("20000000-0000-0000-0000-000000000002", "Barbell Bent Over Row", 2, 3, 8, 8),
+                RoutineExercise("50000000-0000-0000-0000-000000000001", "Overhead Press", 3, 3, 8, 8)
             )
         )
     )

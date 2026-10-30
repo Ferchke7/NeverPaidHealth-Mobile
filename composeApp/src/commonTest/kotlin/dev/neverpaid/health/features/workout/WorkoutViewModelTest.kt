@@ -1,7 +1,7 @@
 package dev.neverpaid.health.features.workout
 
 import dev.neverpaid.health.data.catalog.StandardExerciseCatalog
-import dev.neverpaid.health.data.repository.NeverPaidRepositoryImpl
+import dev.neverpaid.health.data.repository.FakeNeverPaidRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -20,14 +20,13 @@ import kotlin.test.assertTrue
 class WorkoutViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var repository: NeverPaidRepositoryImpl
+    private lateinit var repository: FakeNeverPaidRepository
     private lateinit var viewModel: WorkoutViewModel
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        repository = NeverPaidRepositoryImpl()
-        // Start a workout with the first routine
+        repository = FakeNeverPaidRepository()
         val routine = StandardExerciseCatalog.prebuiltRoutines.first()
         repository.startWorkout("Push Day", routine)
 
@@ -54,19 +53,16 @@ class WorkoutViewModelTest {
         val exercise = workout.exercises.first()
         val firstSet = exercise.sets.first()
 
-        // Complete the first set with 100 kg x 5 reps
         viewModel.onAction(WorkoutUiAction.OnUpdateWeight(exercise.exerciseId, firstSet.id, 100.0))
         viewModel.onAction(WorkoutUiAction.OnUpdateReps(exercise.exerciseId, firstSet.id, 5))
         viewModel.onAction(WorkoutUiAction.OnToggleSetComplete(exercise.exerciseId, firstSet.id))
 
-        // Rest timer is started immediately upon completing set
         assertTrue(viewModel.state.value.isRestTimerActive)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(viewModel.state.value.isRestTimerActive)
         val updatedWorkout = viewModel.state.value.workout!!
-        // Volume for this set = 100 * 5 = 500.0 kg
         assertEquals(500.0, updatedWorkout.totalVolumeKg)
     }
 

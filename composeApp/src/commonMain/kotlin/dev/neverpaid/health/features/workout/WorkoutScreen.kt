@@ -26,25 +26,25 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,9 +58,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.neverpaid.health.core.designsystem.AmberWarm
 import dev.neverpaid.health.core.designsystem.AthleticCard
 import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.BorderSubtle
@@ -70,22 +72,23 @@ import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.EmeraldDark
+import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
+import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
+import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
 import dev.neverpaid.health.core.designsystem.IndigoElectric
-import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
-import dev.neverpaid.health.core.designsystem.RestTimerFloatingBar
 import dev.neverpaid.health.core.designsystem.SecondaryAthleticButton
 import dev.neverpaid.health.core.designsystem.SetTypeBadge
 import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.designsystem.localizeEquipmentName
+import dev.neverpaid.health.core.designsystem.localizeMuscleName
 import dev.neverpaid.health.core.math.StrengthCalculator
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.core.platform.PlatformBridge
-import dev.neverpaid.health.domain.model.Exercise
-import dev.neverpaid.health.domain.model.Workout
 import dev.neverpaid.health.domain.model.WorkoutExercise
 import dev.neverpaid.health.domain.model.WorkoutSet
 import kotlinx.coroutines.delay
@@ -97,30 +100,60 @@ fun WorkoutRoute(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var finishedWorkoutSummary by remember { mutableStateOf<Workout?>(null) }
+    var showDiscardDialog by remember { mutableStateOf(false) }
 
     CollectEffect(viewModel.effect) { effect ->
         when (effect) {
-            is WorkoutUiEffect.WorkoutFinishedSummary -> {
-                finishedWorkoutSummary = effect.workout
-            }
+            is WorkoutUiEffect.WorkoutFinishedSummary -> onNavigateBack()
             WorkoutUiEffect.NavigateBack -> onNavigateBack()
-            WorkoutUiEffect.TriggerHaptic -> {
-                PlatformBridge.vibrate()
-            }
-            is WorkoutUiEffect.ShowToast -> {
-                PlatformBridge.showToast(effect.message)
-            }
+            WorkoutUiEffect.TriggerHaptic -> PlatformBridge.vibrate()
+            is WorkoutUiEffect.ShowToast -> PlatformBridge.showToast(effect.message)
         }
     }
 
-    if (finishedWorkoutSummary != null) {
-        WorkoutCompletionDialog(
-            workout = finishedWorkoutSummary!!,
-            onDismiss = {
-                finishedWorkoutSummary = null
-                onNavigateBack()
-            }
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = { Text("Отменить тренировку?", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "Все записанные подходы в текущей сессии будут удалены без сохранения.",
+                    color = TextSecondary
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDiscardDialog = false
+                        viewModel.onAction(WorkoutUiAction.OnDiscardWorkoutClick)
+                    }
+                ) {
+                    Text("Сбросить", color = CrimsonRed, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardDialog = false }) {
+                    Text("Отмена", color = TextSecondary)
+                }
+            },
+            containerColor = DarkSurfaceVariant
+        )
+    }
+
+    if (state.showExercisePicker) {
+        ExercisePickerBottomSheet(
+            exercises = state.availableExercises,
+            title = if (state.swappingExerciseId != null) "Заменить упражнение" else "Добавить упражнение",
+            onSelectExercise = { viewModel.onAction(WorkoutUiAction.OnSelectExerciseToAdd(it)) },
+            onInspectExercise = { viewModel.onAction(WorkoutUiAction.OnInspectExercise(it)) },
+            onDismiss = { viewModel.onAction(WorkoutUiAction.OnCloseExercisePicker) }
+        )
+    }
+
+    if (state.inspectedExercise != null) {
+        ExerciseInfoBottomSheet(
+            exercise = state.inspectedExercise!!,
+            onDismiss = { viewModel.onAction(WorkoutUiAction.OnInspectExercise(null)) }
         )
     }
 
@@ -128,11 +161,12 @@ fun WorkoutRoute(
         modifier = modifier.fillMaxSize(),
         containerColor = DarkBackground,
         topBar = {
-            WorkoutTopBar(
-                title = state.workout?.title ?: "Workout",
+            ActiveWorkoutTopBar(
+                title = state.workout?.title ?: "Тренировка",
                 startTimeEpochMs = state.workoutStartTimeEpochMs,
+                onMinimizeClick = onNavigateBack,
                 onFinishClick = { viewModel.onAction(WorkoutUiAction.OnFinishWorkoutClick) },
-                onDiscardClick = { viewModel.onAction(WorkoutUiAction.OnDiscardWorkoutClick) }
+                onStartRestTimer = { viewModel.onAction(WorkoutUiAction.OnStartManualRestTimer(90)) }
             )
         },
         bottomBar = {
@@ -141,7 +175,7 @@ fun WorkoutRoute(
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
             ) {
-                RestTimerFloatingBar(
+                EnhancedRestTimerBar(
                     secondsRemaining = state.restTimerSecondsRemaining,
                     onAddSeconds = { viewModel.onAction(WorkoutUiAction.OnRestTimerAddSeconds(it)) },
                     onSkip = { viewModel.onAction(WorkoutUiAction.OnRestTimerSkip) }
@@ -152,6 +186,7 @@ fun WorkoutRoute(
         WorkoutScreen(
             state = state,
             onAction = viewModel::onAction,
+            onRequestDiscard = { showDiscardDialog = true },
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -161,77 +196,139 @@ fun WorkoutRoute(
 fun WorkoutScreen(
     state: WorkoutUiState,
     onAction: (WorkoutUiAction) -> Unit,
+    onRequestDiscard: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val workout = state.workout
 
     if (workout == null) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(text = "No active workout", color = TextSecondary)
+            Text(text = "Нет активной тренировки", color = TextSecondary)
         }
         return
     }
 
-    if (state.showExercisePicker) {
-        ExercisePickerBottomSheet(
-            exercises = state.availableExercises,
-            onSelectExercise = { onAction(WorkoutUiAction.OnSelectExerciseToAdd(it)) },
-            onDismiss = { onAction(WorkoutUiAction.OnCloseExercisePicker) }
-        )
-    }
+    val completedSetsCount = workout.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
 
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item(key = "volume_banner") {
-            Spacer(modifier = Modifier.height(8.dp))
-            WorkoutVolumeHeader(
-                totalVolumeKg = workout.totalVolumeKg,
-                totalExercises = workout.exercises.size
-            )
+            Spacer(modifier = Modifier.height(6.dp))
+            AthleticCard(
+                backgroundColor = DarkSurfaceVariant,
+                borderColor = BorderHighlight
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp, horizontal = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    StatCounter(
+                        title = "Объём",
+                        value = StrengthCalculator.formatVolume(workout.totalVolumeKg),
+                        unit = if (state.isKgUnit) "кг" else "lb",
+                        accentColor = EmeraldNeon
+                    )
+                    StatCounter(
+                        title = "Упражнения",
+                        value = "${workout.exercises.size}",
+                        accentColor = IndigoElectric
+                    )
+                    StatCounter(
+                        title = "Подходы",
+                        value = "$completedSetsCount",
+                        unit = "вып.",
+                        accentColor = AmberWarm
+                    )
+                }
+            }
         }
 
         items(
             items = workout.exercises,
-            key = { it.exerciseId }
-        ) { exercise ->
+            key = { it.id.ifBlank { it.exerciseId } }
+        ) { exerciseItem ->
             WorkoutExerciseCard(
-                exercise = exercise,
-                onUpdateWeight = { setId, w -> onAction(WorkoutUiAction.OnUpdateWeight(exercise.exerciseId, setId, w)) },
-                onUpdateReps = { setId, r -> onAction(WorkoutUiAction.OnUpdateReps(exercise.exerciseId, setId, r)) },
-                onToggleComplete = { setId -> onAction(WorkoutUiAction.OnToggleSetComplete(exercise.exerciseId, setId)) },
-                onToggleSetType = { setId -> onAction(WorkoutUiAction.OnToggleSetType(exercise.exerciseId, setId)) },
-                onAddSet = { onAction(WorkoutUiAction.OnAddSet(exercise.exerciseId)) },
-                onDeleteSet = { setId -> onAction(WorkoutUiAction.OnDeleteSet(exercise.exerciseId, setId)) },
-                onRemoveExercise = { onAction(WorkoutUiAction.OnRemoveExercise(exercise.exerciseId)) }
+                exercise = exerciseItem,
+                unitLabel = if (state.isKgUnit) "КГ" else "LB",
+                onUpdateWeight = { setId, w ->
+                    onAction(WorkoutUiAction.OnUpdateWeight(exerciseItem.exerciseId, setId, w))
+                },
+                onUpdateReps = { setId, r ->
+                    onAction(WorkoutUiAction.OnUpdateReps(exerciseItem.exerciseId, setId, r))
+                },
+                onApplyPrevious = { setId ->
+                    onAction(WorkoutUiAction.OnApplyPreviousSet(exerciseItem.exerciseId, setId))
+                },
+                onToggleComplete = { setId ->
+                    onAction(WorkoutUiAction.OnToggleSetComplete(exerciseItem.exerciseId, setId))
+                },
+                onToggleSetType = { setId ->
+                    onAction(WorkoutUiAction.OnToggleSetType(exerciseItem.exerciseId, setId))
+                },
+                onAddSet = { onAction(WorkoutUiAction.OnAddSet(exerciseItem.exerciseId)) },
+                onDeleteSet = { setId ->
+                    onAction(WorkoutUiAction.OnDeleteSet(exerciseItem.exerciseId, setId))
+                },
+                onUpdateNotes = { notes ->
+                    onAction(WorkoutUiAction.OnUpdateExerciseNotes(exerciseItem.exerciseId, notes))
+                },
+                onInspectExercise = {
+                    onAction(WorkoutUiAction.OnInspectExercise(exerciseItem.exercise))
+                },
+                onSwapExercise = {
+                    onAction(WorkoutUiAction.OnOpenSwapExercisePicker(exerciseItem.exerciseId))
+                },
+                onRemoveExercise = {
+                    onAction(WorkoutUiAction.OnRemoveExercise(exerciseItem.exerciseId))
+                }
             )
         }
 
         item(key = "add_exercise_button") {
             SecondaryAthleticButton(
-                text = "+ Add Exercise",
+                text = "+ Добавить упражнение",
                 onClick = { onAction(WorkoutUiAction.OnOpenExercisePicker) }
             )
         }
 
+        item(key = "discard_workout_button") {
+            OutlinedButton(
+                onClick = onRequestDiscard,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Отменить тренировку",
+                    color = CrimsonRed,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
         item(key = "spacer_bottom") {
-            Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(96.dp))
         }
     }
 }
 
 @Composable
-private fun WorkoutTopBar(
+private fun ActiveWorkoutTopBar(
     title: String,
     startTimeEpochMs: Long,
+    onMinimizeClick: () -> Unit,
     onFinishClick: () -> Unit,
-    onDiscardClick: () -> Unit
+    onStartRestTimer: () -> Unit
 ) {
     var elapsedSeconds by remember { mutableStateOf(0L) }
-    var showMenu by remember { mutableStateOf(false) }
 
     LaunchedEffect(startTimeEpochMs) {
         while (true) {
@@ -250,95 +347,157 @@ private fun WorkoutTopBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(DarkSurface)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
-            Text(
-                text = title,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-            Text(
-                text = timerText,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = EmeraldNeon
-            )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            IconButton(
+                onClick = onMinimizeClick,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Свернуть",
+                    tint = TextPrimary
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = timerText,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = EmeraldNeon
+                )
+            }
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(EmeraldNeon)
-                    .clickable { onFinishClick() }
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            IconButton(
+                onClick = onStartRestTimer,
+                modifier = Modifier.size(36.dp)
             ) {
-                Text(
-                    text = "Finish",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkBackground
+                Icon(
+                    imageVector = Icons.Default.Timer,
+                    contentDescription = "Таймер отдыха",
+                    tint = EmeraldLight,
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
 
-            IconButton(onClick = { showMenu = !showMenu }) {
-                Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Menu", tint = TextSecondary)
-            }
-
-            if (showMenu) {
-                AlertDialog(
-                    onDismissRequest = { showMenu = false },
-                    title = { Text(text = "Discard Workout?", color = TextPrimary) },
-                    text = { Text(text = "Are you sure you want to discard this workout session? Logged sets will not be saved.", color = TextSecondary) },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            showMenu = false
-                            onDiscardClick()
-                        }) {
-                            Text(text = "Discard", color = CrimsonRed, fontWeight = FontWeight.Bold)
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showMenu = false }) {
-                            Text(text = "Cancel", color = TextSecondary)
-                        }
-                    },
-                    containerColor = DarkSurfaceVariant
-                )
+            Button(
+                onClick = onFinishClick,
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = EmeraldNeon,
+                    contentColor = Color.Black
+                ),
+                modifier = Modifier.height(38.dp)
+            ) {
+                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Завершить", fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
 }
 
 @Composable
-private fun WorkoutVolumeHeader(
-    totalVolumeKg: Double,
-    totalExercises: Int
+private fun EnhancedRestTimerBar(
+    secondsRemaining: Int,
+    onAddSeconds: (Int) -> Unit,
+    onSkip: () -> Unit
 ) {
-    AthleticCard(backgroundColor = DarkSurfaceVariant) {
+    val minutes = secondsRemaining / 60
+    val seconds = secondsRemaining % 60
+    val timeFormatted = StrengthCalculator.formatTime(minutes, seconds)
+
+    AthleticCard(
+        modifier = Modifier.padding(12.dp),
+        backgroundColor = DarkSurfaceVariant,
+        borderColor = EmeraldNeon
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceAround
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            StatCounter(
-                title = "Total Volume",
-                value = StrengthCalculator.formatVolume(totalVolumeKg),
-                unit = "kg",
-                accentColor = EmeraldNeon
-            )
-            StatCounter(
-                title = "Exercises",
-                value = "$totalExercises",
-                accentColor = IndigoElectric
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(EmeraldSubtle),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Timer,
+                        contentDescription = null,
+                        tint = EmeraldNeon,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = "ОТДЫХ",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextMuted
+                    )
+                    Text(
+                        text = timeFormatted,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Black,
+                        color = EmeraldNeon
+                    )
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(DarkSurfaceHigh)
+                        .clickable { onAddSeconds(-15) }
+                        .padding(horizontal = 9.dp, vertical = 6.dp)
+                ) {
+                    Text("-15с", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(DarkSurfaceHigh)
+                        .clickable { onAddSeconds(30) }
+                        .padding(horizontal = 9.dp, vertical = 6.dp)
+                ) {
+                    Text("+30с", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                }
+
+                IconButton(onClick = onSkip, modifier = Modifier.size(30.dp)) {
+                    Icon(Icons.Default.Close, contentDescription = "Пропустить", tint = TextSecondary)
+                }
+            }
         }
     }
 }
@@ -346,74 +505,128 @@ private fun WorkoutVolumeHeader(
 @Composable
 private fun WorkoutExerciseCard(
     exercise: WorkoutExercise,
+    unitLabel: String,
     onUpdateWeight: (String, Double) -> Unit,
     onUpdateReps: (String, Int) -> Unit,
+    onApplyPrevious: (String) -> Unit,
     onToggleComplete: (String) -> Unit,
     onToggleSetType: (String) -> Unit,
     onAddSet: () -> Unit,
     onDeleteSet: (String) -> Unit,
+    onUpdateNotes: (String) -> Unit,
+    onInspectExercise: () -> Unit,
+    onSwapExercise: () -> Unit,
     onRemoveExercise: () -> Unit
 ) {
+    var showNotes by remember(exercise.notes) { mutableStateOf(exercise.notes.isNotBlank()) }
+
     AthleticCard(backgroundColor = DarkSurface) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Exercise Header
+        Column(modifier = Modifier.padding(14.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onInspectExercise() }
+                ) {
                     Text(
                         text = exercise.exerciseName,
-                        fontSize = 17.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = EmeraldLight
                     )
                     Text(
-                        text = "${exercise.primaryMuscleGroup.replaceFirstChar { it.uppercase() }} • ${exercise.equipment}",
-                        fontSize = 12.sp,
-                        color = TextMuted
+                        text = "${localizeMuscleName(exercise.primaryMuscleGroup)} • ${localizeEquipmentName(exercise.equipment)}",
+                        fontSize = 11.sp,
+                        color = TextSecondary
                     )
                 }
 
-                IconButton(
-                    onClick = onRemoveExercise,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Remove Exercise",
-                        tint = TextMuted,
-                        modifier = Modifier.size(18.dp)
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onInspectExercise, modifier = Modifier.size(30.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Техника",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
+                    IconButton(onClick = { showNotes = !showNotes }, modifier = Modifier.size(30.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.EditNote,
+                            contentDescription = "Заметка",
+                            tint = if (showNotes) EmeraldLight else TextSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(onClick = onSwapExercise, modifier = Modifier.size(30.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.SwapHoriz,
+                            contentDescription = "Заменить упражнение",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(onClick = onRemoveExercise, modifier = Modifier.size(30.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Удалить",
+                            tint = CrimsonRed.copy(alpha = 0.8f),
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            if (showNotes) {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = exercise.notes,
+                    onValueChange = onUpdateNotes,
+                    placeholder = { Text("Заметка к упражнению (напр. пауза внизу)...", fontSize = 12.sp) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = DarkSurfaceVariant,
+                        unfocusedContainerColor = DarkSurfaceVariant,
+                        focusedBorderColor = EmeraldNeon,
+                        unfocusedBorderColor = BorderSubtle,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Set Table Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
+                    .padding(horizontal = 2.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "SET", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(36.dp), textAlign = TextAlign.Center)
-                Text(text = "PREV", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(60.dp), textAlign = TextAlign.Center)
-                Text(text = "KG", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(64.dp), textAlign = TextAlign.Center)
-                Text(text = "REPS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(52.dp), textAlign = TextAlign.Center)
-                Text(text = "✓", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(40.dp), textAlign = TextAlign.Center)
+                Text("СЕТ", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(32.dp), textAlign = TextAlign.Center)
+                Text("ПРЕД.", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(68.dp), textAlign = TextAlign.Center)
+                Text(unitLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(64.dp), textAlign = TextAlign.Center)
+                Text("ПОВТ", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(54.dp), textAlign = TextAlign.Center)
+                Text("✓", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(34.dp), textAlign = TextAlign.Center)
+                Spacer(modifier = Modifier.width(24.dp))
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // Set Rows
             exercise.sets.forEach { set ->
                 WorkoutSetRow(
                     set = set,
                     onUpdateWeight = { onUpdateWeight(set.id, it) },
                     onUpdateReps = { onUpdateReps(set.id, it) },
+                    onApplyPrevious = { onApplyPrevious(set.id) },
                     onToggleComplete = { onToggleComplete(set.id) },
                     onToggleSetType = { onToggleSetType(set.id) },
                     onDelete = { onDeleteSet(set.id) }
@@ -421,9 +634,8 @@ private fun WorkoutExerciseCard(
                 Spacer(modifier = Modifier.height(6.dp))
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // Add Set Button
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -436,7 +648,7 @@ private fun WorkoutExerciseCard(
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = EmeraldNeon, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "Add Set", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = EmeraldNeon)
+                Text(text = "+ Добавить подход", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = EmeraldNeon)
             }
         }
     }
@@ -447,42 +659,54 @@ private fun WorkoutSetRow(
     set: WorkoutSet,
     onUpdateWeight: (Double) -> Unit,
     onUpdateReps: (Int) -> Unit,
+    onApplyPrevious: () -> Unit,
     onToggleComplete: () -> Unit,
     onToggleSetType: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val rowBackground = if (set.isCompleted) EmeraldDark.copy(alpha = 0.15f) else Color.Transparent
+    val rowBackground = if (set.isCompleted) EmeraldDark.copy(alpha = 0.16f) else Color.Transparent
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
             .background(rowBackground)
-            .padding(horizontal = 4.dp, vertical = 4.dp),
+            .padding(horizontal = 2.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Set type badge
         SetTypeBadge(
             type = set.type,
             setIndex = set.setNumber,
             onClick = onToggleSetType,
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(30.dp)
         )
 
-        // Previous performance
-        Text(
-            text = if (set.previousWeightKg != null && set.previousReps != null) {
-                "${set.previousWeightKg.toInt()}k × ${set.previousReps}"
-            } else "-",
-            fontSize = 12.sp,
-            color = TextMuted,
-            modifier = Modifier.width(60.dp),
-            textAlign = TextAlign.Center
-        )
+        // Tappable Previous Performance Pill (autofills weight & reps on tap!)
+        val hasPrev = set.previousWeightKg != null && set.previousReps != null
+        Box(
+            modifier = Modifier
+                .width(68.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .clickable(enabled = hasPrev) { onApplyPrevious() }
+                .padding(vertical = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = if (hasPrev) {
+                    "${set.previousWeightKg!!.toInt()}×${set.previousReps}"
+                } else "—",
+                fontSize = 11.sp,
+                fontWeight = if (hasPrev) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (hasPrev) EmeraldLight else TextMuted,
+                textAlign = TextAlign.Center
+            )
+        }
 
         // Weight Input
-        var weightText by remember(set.weightKg) { mutableStateOf(set.weightKg.toString().removeSuffix(".0")) }
+        var weightText by remember(set.weightKg) {
+            mutableStateOf(set.weightKg.toString().removeSuffix(".0"))
+        }
         Box(
             modifier = Modifier
                 .width(64.dp)
@@ -502,7 +726,7 @@ private fun WorkoutSetRow(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
                 textStyle = androidx.compose.ui.text.TextStyle(
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,
                     textAlign = TextAlign.Center
@@ -518,7 +742,7 @@ private fun WorkoutSetRow(
         var repsText by remember(set.reps) { mutableStateOf(set.reps.toString()) }
         Box(
             modifier = Modifier
-                .width(52.dp)
+                .width(54.dp)
                 .height(36.dp)
                 .clip(RoundedCornerShape(6.dp))
                 .background(DarkSurfaceVariant)
@@ -535,7 +759,7 @@ private fun WorkoutSetRow(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 textStyle = androidx.compose.ui.text.TextStyle(
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,
                     textAlign = TextAlign.Center
@@ -550,7 +774,7 @@ private fun WorkoutSetRow(
         // Completion checkbox
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .size(34.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(if (set.isCompleted) EmeraldNeon else DarkSurfaceHigh)
                 .clickable { onToggleComplete() },
@@ -558,155 +782,22 @@ private fun WorkoutSetRow(
         ) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = "Complete Set",
-                tint = if (set.isCompleted) DarkBackground else TextMuted,
-                modifier = Modifier.size(20.dp)
+                contentDescription = "Выполнено",
+                tint = if (set.isCompleted) Color.Black else TextMuted,
+                modifier = Modifier.size(18.dp)
             )
         }
-    }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ExercisePickerBottomSheet(
-    exercises: List<Exercise>,
-    onSelectExercise: (Exercise) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedMuscle by remember { mutableStateOf("All") }
-
-    val muscles = listOf("All", "chest", "back", "quads", "hamstrings", "shoulders", "biceps", "triceps", "core")
-
-    val filtered = exercises.filter { ex ->
-        val matchesQuery = searchQuery.isBlank() || ex.name.contains(searchQuery, ignoreCase = true)
-        val matchesMuscle = selectedMuscle == "All" || ex.primaryMuscleGroup.equals(selectedMuscle, ignoreCase = true)
-        matchesQuery && matchesMuscle
-    }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = DarkSurface
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+        IconButton(
+            onClick = onDelete,
+            modifier = Modifier.size(24.dp)
         ) {
-            Text(
-                text = "Add Exercise",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Удалить сет",
+                tint = TextMuted,
+                modifier = Modifier.size(14.dp)
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = { Text(text = "Search exercises...", color = TextMuted) },
-                leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = TextMuted) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = DarkSurfaceVariant,
-                    unfocusedContainerColor = DarkSurfaceVariant,
-                    focusedBorderColor = EmeraldNeon,
-                    unfocusedBorderColor = BorderSubtle
-                )
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(400.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(
-                    items = filtered,
-                    key = { it.id }
-                ) { ex ->
-                    AthleticCard(
-                        modifier = Modifier.clickable { onSelectExercise(ex) },
-                        backgroundColor = DarkSurfaceVariant
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = ex.name,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = "${ex.primaryMuscleGroup.replaceFirstChar { it.uppercase() }} • ${ex.equipment}",
-                                    fontSize = 12.sp,
-                                    color = TextMuted
-                                )
-                            }
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Add",
-                                tint = EmeraldNeon,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
-}
-
-@Composable
-private fun WorkoutCompletionDialog(
-    workout: Workout,
-    onDismiss: () -> Unit
-) {
-    val totalSets = workout.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                Text(text = "🏆 WORKOUT COMPLETE!", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = EmeraldNeon)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(text = workout.title, fontSize = 15.sp, color = TextSecondary)
-            }
-        },
-        text = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    StatCounter(title = "Volume", value = StrengthCalculator.formatVolume(workout.totalVolumeKg), unit = "kg", accentColor = EmeraldNeon)
-                    StatCounter(title = "Sets Done", value = "$totalSets", accentColor = IndigoElectric)
-                    StatCounter(title = "Duration", value = "${workout.durationSeconds / 60}", unit = "min", accentColor = TextPrimary)
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = EmeraldNeon, contentColor = DarkBackground)
-            ) {
-                Text(text = "Awesome!", fontWeight = FontWeight.Bold)
-            }
-        },
-        containerColor = DarkSurface
-    )
 }

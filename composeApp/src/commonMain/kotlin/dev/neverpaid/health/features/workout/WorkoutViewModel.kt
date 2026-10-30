@@ -29,19 +29,33 @@ class WorkoutViewModel(
 
     override fun onAction(action: WorkoutUiAction) {
         when (action) {
+            is WorkoutUiAction.OnUpdateWorkoutTitle -> updateWorkoutTitle(action.title)
             is WorkoutUiAction.OnUpdateWeight -> updateWeight(action.exerciseId, action.setId, action.weight)
             is WorkoutUiAction.OnUpdateReps -> updateReps(action.exerciseId, action.setId, action.reps)
+            is WorkoutUiAction.OnApplyPreviousSet -> applyPreviousSet(action.exerciseId, action.setId)
             is WorkoutUiAction.OnToggleSetComplete -> toggleSetComplete(action.exerciseId, action.setId)
             is WorkoutUiAction.OnToggleSetType -> cycleSetType(action.exerciseId, action.setId)
             is WorkoutUiAction.OnAddSet -> addSetToExercise(action.exerciseId)
             is WorkoutUiAction.OnDeleteSet -> deleteSet(action.exerciseId, action.setId)
-            WorkoutUiAction.OnOpenExercisePicker -> updateState { copy(showExercisePicker = true) }
-            WorkoutUiAction.OnCloseExercisePicker -> updateState { copy(showExercisePicker = false) }
-            is WorkoutUiAction.OnSelectExerciseToAdd -> addExerciseToWorkout(action.exercise)
+            is WorkoutUiAction.OnUpdateExerciseNotes -> updateExerciseNotes(action.exerciseId, action.notes)
+            WorkoutUiAction.OnOpenExercisePicker -> {
+                updateState { copy(showExercisePicker = true, swappingExerciseId = null) }
+            }
+            is WorkoutUiAction.OnOpenSwapExercisePicker -> {
+                updateState { copy(showExercisePicker = true, swappingExerciseId = action.exerciseIdToSwap) }
+            }
+            WorkoutUiAction.OnCloseExercisePicker -> {
+                updateState { copy(showExercisePicker = false, swappingExerciseId = null) }
+            }
+            is WorkoutUiAction.OnSelectExerciseToAdd -> addOrSwapExercise(action.exercise)
+            is WorkoutUiAction.OnInspectExercise -> {
+                updateState { copy(inspectedExercise = action.exercise) }
+            }
             is WorkoutUiAction.OnRemoveExercise -> removeExerciseFromWorkout(action.exerciseId)
             WorkoutUiAction.OnFinishWorkoutClick -> finishWorkout()
             WorkoutUiAction.OnDiscardWorkoutClick -> discardWorkout()
             is WorkoutUiAction.OnRestTimerAddSeconds -> addSecondsToRestTimer(action.seconds)
+            is WorkoutUiAction.OnStartManualRestTimer -> startRestTimer(action.seconds)
             WorkoutUiAction.OnRestTimerSkip -> stopRestTimer()
         }
     }
@@ -68,6 +82,13 @@ class WorkoutViewModel(
         }
     }
 
+    private fun updateWorkoutTitle(title: String) {
+        val currentWorkout = currentState.workout ?: return
+        val updated = currentWorkout.copy(name = title)
+        updateState { copy(workout = updated) }
+        repository.updateActiveWorkout(updated)
+    }
+
     private fun updateWeight(exerciseId: String, setId: String, weight: Double) {
         val currentWorkout = currentState.workout ?: return
         val updatedExercises = currentWorkout.exercises.map { ex ->
@@ -90,6 +111,33 @@ class WorkoutViewModel(
                     if (s.id == setId) s.copy(reps = reps.coerceAtLeast(0)) else s
                 })
             } else ex
+        }
+        val updated = currentWorkout.copy(exercises = updatedExercises)
+        updateState { copy(workout = updated) }
+        repository.updateActiveWorkout(updated)
+    }
+
+    private fun applyPreviousSet(exerciseId: String, setId: String) {
+        val currentWorkout = currentState.workout ?: return
+        val updatedExercises = currentWorkout.exercises.map { ex ->
+            if (ex.exerciseId == exerciseId) {
+                ex.copy(sets = ex.sets.map { s ->
+                    if (s.id == setId && s.previousWeightKg != null && s.previousReps != null) {
+                        s.copy(weightKg = s.previousWeightKg, reps = s.previousReps)
+                    } else s
+                })
+            } else ex
+        }
+        val updated = currentWorkout.copy(exercises = updatedExercises)
+        updateState { copy(workout = updated) }
+        repository.updateActiveWorkout(updated)
+        sendEffect(WorkoutUiEffect.TriggerHaptic)
+    }
+
+    private fun updateExerciseNotes(exerciseId: String, notes: String) {
+        val currentWorkout = currentState.workout ?: return
+        val updatedExercises = currentWorkout.exercises.map { ex ->
+            if (ex.exerciseId == exerciseId) ex.copy(notes = notes) else ex
         }
         val updated = currentWorkout.copy(exercises = updatedExercises)
         updateState { copy(workout = updated) }
@@ -134,7 +182,7 @@ class WorkoutViewModel(
                             "drop" -> "failure"
                             else -> "normal"
                         }
-                        s.copy(type = nextType)
+                        s.copy(setType = nextType)
                     } else s
                 })
             } else ex
@@ -153,12 +201,12 @@ class WorkoutViewModel(
                 val newSet = WorkoutSet(
                     id = PlatformBridge.generateUuid(),
                     setNumber = nextSetNumber,
-                    weightKg = lastSet?.weightKg ?: 60.0,
+                    weightKg = lastSet?.weightKg ?: 40.0,
                     reps = lastSet?.reps ?: 10,
-                    type = "normal",
+                    setType = "normal",
                     isCompleted = false,
-                    previousWeightKg = lastSet?.weightKg,
-                    previousReps = lastSet?.reps
+                    previousWeightKg = lastSet?.previousWeightKg ?: lastSet?.weightKg,
+                    previousReps = lastSet?.previousReps ?: lastSet?.reps
                 )
                 ex.copy(sets = ex.sets + newSet)
             } else ex
@@ -182,35 +230,89 @@ class WorkoutViewModel(
         repository.updateActiveWorkout(updated)
     }
 
-    private fun addExerciseToWorkout(exercise: Exercise) {
+    private fun addOrSwapExercise(exercise: Exercise) {
         val currentWorkout = currentState.workout ?: return
+        val swappingId = currentState.swappingExerciseId
+
         val newExercise = WorkoutExercise(
+            instanceId = PlatformBridge.generateUuid(),
             exerciseId = exercise.id,
             exerciseName = exercise.name,
-            primaryMuscleGroup = exercise.primaryMuscleGroup,
+            measurementType = exercise.measurementType,
+            primaryMuscleGroup = exercise.effectiveMuscle,
             equipment = exercise.equipment,
+            orderIndex = currentWorkout.exercises.size + 1,
             sets = listOf(
                 WorkoutSet(
                     id = PlatformBridge.generateUuid(),
                     setNumber = 1,
-                    weightKg = 60.0,
+                    weightKg = 40.0,
                     reps = 10,
-                    type = "warmup",
+                    setType = "normal",
                     isCompleted = false
                 ),
                 WorkoutSet(
                     id = PlatformBridge.generateUuid(),
                     setNumber = 2,
-                    weightKg = 80.0,
-                    reps = 8,
-                    type = "normal",
+                    weightKg = 40.0,
+                    reps = 10,
+                    setType = "normal",
+                    isCompleted = false
+                ),
+                WorkoutSet(
+                    id = PlatformBridge.generateUuid(),
+                    setNumber = 3,
+                    weightKg = 40.0,
+                    reps = 10,
+                    setType = "normal",
                     isCompleted = false
                 )
             )
         )
-        val updated = currentWorkout.copy(exercises = currentWorkout.exercises + newExercise)
-        updateState { copy(workout = updated, showExercisePicker = false) }
+
+        val updatedList = if (swappingId != null) {
+            currentWorkout.exercises.map { existing ->
+                if (existing.exerciseId == swappingId) {
+                    newExercise.copy(orderIndex = existing.orderIndex)
+                } else existing
+            }
+        } else {
+            currentWorkout.exercises + newExercise
+        }
+
+        val updated = currentWorkout.copy(exercises = updatedList)
+        updateState { copy(workout = updated, showExercisePicker = false, swappingExerciseId = null) }
         repository.updateActiveWorkout(updated)
+
+        // Fetch previous performance for this exercise from backend
+        launchGuarded {
+            val prevMap = repository.getPreviousPerformance(listOf(exercise.id))
+            val prevSets = prevMap[exercise.id].orEmpty()
+            if (prevSets.isNotEmpty()) {
+                val latestWorkout = currentState.workout ?: return@launchGuarded
+                val enriched = latestWorkout.copy(
+                    exercises = latestWorkout.exercises.map { ex ->
+                        if (ex.exerciseId == exercise.id) {
+                            ex.copy(
+                                sets = ex.sets.mapIndexed { idx, s ->
+                                    val prev = prevSets.find { it.setNumber == idx + 1 } ?: prevSets.lastOrNull()
+                                    if (prev != null) {
+                                        s.copy(
+                                            weightKg = prev.weightKg,
+                                            reps = prev.reps,
+                                            previousWeightKg = prev.weightKg,
+                                            previousReps = prev.reps
+                                        )
+                                    } else s
+                                }
+                            )
+                        } else ex
+                    }
+                )
+                updateState { copy(workout = enriched) }
+                repository.updateActiveWorkout(enriched)
+            }
+        }
     }
 
     private fun removeExerciseFromWorkout(exerciseId: String) {
@@ -224,7 +326,7 @@ class WorkoutViewModel(
         val finished = repository.finishActiveWorkout()
         stopRestTimer()
         if (finished != null) {
-            sendEffect(WorkoutUiEffect.WorkoutFinishedSummary(finished))
+            sendEffect(WorkoutUiEffect.NavigateBack)
         } else {
             sendEffect(WorkoutUiEffect.NavigateBack)
         }
@@ -257,7 +359,7 @@ class WorkoutViewModel(
             }
             if (currentState.restTimerSecondsRemaining <= 0) {
                 sendEffect(WorkoutUiEffect.TriggerHaptic)
-                sendEffect(WorkoutUiEffect.ShowToast("Rest time is up! Next set ready."))
+                sendEffect(WorkoutUiEffect.ShowToast("Отдых завершён! Пора на следующий подход."))
             }
         }
     }

@@ -5,21 +5,22 @@ import dev.neverpaid.health.core.mvi.UiEffect
 import dev.neverpaid.health.core.mvi.UiState
 
 data class AuthUiState(
-    val isLoginTab: Boolean = true,
-    val email: String = "",
-    val password: String = "",
-    val name: String = "",
+    val isWebViewOpen: Boolean = false,
+    val showTokenFallback: Boolean = false,
+    val tokenInput: String = "",
+    val selectedLanguage: String = "ru",
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) : UiState
 
 sealed interface AuthUiAction : UiAction {
-    data class OnToggleTab(val isLogin: Boolean) : AuthUiAction
-    data class OnEmailChanged(val email: String) : AuthUiAction
-    data class OnPasswordChanged(val password: String) : AuthUiAction
-    data class OnNameChanged(val name: String) : AuthUiAction
-    data object OnSubmitClick : AuthUiAction
-    data object OnGuestModeClick : AuthUiAction
+    data object OnOpenGoogleSignIn : AuthUiAction
+    data object OnDismissGoogleWebView : AuthUiAction
+    data class OnGoogleWebViewSuccess(val accessToken: String, val userJson: String?) : AuthUiAction
+    data object OnToggleTokenFallback : AuthUiAction
+    data class OnTokenInputChanged(val value: String) : AuthUiAction
+    data object OnSubmitTokenClick : AuthUiAction
+    data class OnSelectLanguage(val languageCode: String) : AuthUiAction
 }
 
 sealed interface AuthUiEffect : UiEffect {

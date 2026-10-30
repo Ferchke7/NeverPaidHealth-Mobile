@@ -1,6 +1,6 @@
 package dev.neverpaid.health.features.progress
 
-import dev.neverpaid.health.data.repository.NeverPaidRepositoryImpl
+import dev.neverpaid.health.data.repository.FakeNeverPaidRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -18,13 +18,13 @@ import kotlin.test.assertTrue
 class ProgressViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var repository: NeverPaidRepositoryImpl
+    private lateinit var repository: FakeNeverPaidRepository
     private lateinit var viewModel: ProgressViewModel
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        repository = NeverPaidRepositoryImpl()
+        repository = FakeNeverPaidRepository()
         viewModel = ProgressViewModel(repository)
         testDispatcher.scheduler.advanceUntilIdle()
     }
