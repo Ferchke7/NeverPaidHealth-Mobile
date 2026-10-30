@@ -57,6 +57,7 @@ import dev.neverpaid.health.core.designsystem.HeatmapDayEntry
 import dev.neverpaid.health.core.designsystem.InteractiveAnatomyHeatmap
 import dev.neverpaid.health.core.designsystem.InteractiveVolumeChart
 import dev.neverpaid.health.core.designsystem.VolumeDataPoint
+import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.domain.model.PersonalRecord
 
 @Composable
@@ -149,40 +150,100 @@ fun ProgressScreen(
         when (state.selectedTab) {
             // TAB 0: Volume Progression & 84-Day Athletic Discipline Matrix
             0 -> {
-                item(key = "interactive_volume_chart") {
-                    val volumePoints = remember(state.weeklyVolumeBars) {
-                        state.weeklyVolumeBars.map { (dateLabel, vol) ->
-                            VolumeDataPoint(
-                                date = dateLabel,
-                                volumeKg = vol,
-                                sessionTitle = "Недельный объём"
-                            )
+                val hasAnyVolume = state.weeklyVolumeBars.any { it.second > 0.0 } || state.totalWorkouts > 0
+
+                if (hasAnyVolume) {
+                    item(key = "interactive_volume_chart") {
+                        val volumePoints = remember(state.weeklyVolumeBars) {
+                            state.weeklyVolumeBars.map { (dateLabel, vol) ->
+                                VolumeDataPoint(
+                                    date = dateLabel,
+                                    volumeKg = vol,
+                                    sessionTitle = "Недельный объём"
+                                )
+                            }
+                        }
+                        InteractiveVolumeChart(dataPoints = volumePoints)
+                    }
+
+                    item(key = "consistency_heatmap_84") {
+                        val heatmapData = remember(state.workoutHistory) {
+                            val dayMs = 86_400_000L
+                            val now = PlatformBridge.currentTimeMillis()
+                            (83 downTo 0).map { daysAgo ->
+                                val startOfDay = now - ((daysAgo + 1) * dayMs)
+                                val endOfDay = now - (daysAgo * dayMs)
+                                val dayWorkouts = state.workoutHistory.filter {
+                                    it.startTimeEpochMs in startOfDay..endOfDay
+                                }
+                                val dayVol = dayWorkouts.sumOf { it.totalVolumeKg }
+                                val tier = when {
+                                    dayVol > 8000.0 -> 4
+                                    dayVol > 5000.0 -> 3
+                                    dayVol > 2000.0 -> 2
+                                    dayVol > 0.0 -> 1
+                                    else -> 0
+                                }
+                                HeatmapDayEntry(
+                                    date = "D-$daysAgo",
+                                    tier = tier,
+                                    volumeKg = dayVol,
+                                    workoutCount = dayWorkouts.size
+                                )
+                            }
+                        }
+                        ConsistencyHeatmap84Day(days = heatmapData)
+                    }
+
+                    item(key = "volume_metrics_summary") {
+                        VolumeSummaryMetricsCard(
+                            totalVolumeKg = state.totalVolumeKg,
+                            totalWorkouts = state.totalWorkouts,
+                            totalReps = state.totalReps,
+                            currentStreakDays = state.currentStreakDays
+                        )
+                    }
+                } else {
+                    item(key = "empty_volume_state") {
+                        AthleticCard(backgroundColor = DarkSurface) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(CircleShape)
+                                        .background(DarkSurfaceVariant),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.FitnessCenter,
+                                        contentDescription = null,
+                                        tint = EmeraldNeon,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "Нет завершённых тренировок",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Завершите тренировку во вкладке «Тренировка», чтобы увидеть реальный недельный тоннаж, прогресс нагрузок и 84-дневную тепловую карту дисциплины.",
+                                    fontSize = 13.sp,
+                                    color = TextSecondary,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    lineHeight = 18.sp
+                                )
+                            }
                         }
                     }
-                    InteractiveVolumeChart(dataPoints = volumePoints)
-                }
-
-                item(key = "consistency_heatmap_84") {
-                    val heatmapData = remember(state.weeklyVolumeBars) {
-                        (0 until 84).map { dayOffset ->
-                            val isTrained = dayOffset % 2 == 0 || dayOffset % 3 == 0
-                            HeatmapDayEntry(
-                                date = "2026-10-${(dayOffset % 28 + 1).toString().padStart(2, '0')}",
-                                tier = if (isTrained) (dayOffset % 4 + 1) else 0,
-                                volumeKg = if (isTrained) (4500.0 + (dayOffset % 5) * 1200.0) else 0.0,
-                                workoutCount = if (isTrained) 1 else 0
-                            )
-                        }
-                    }
-                    ConsistencyHeatmap84Day(days = heatmapData)
-                }
-
-                item(key = "volume_chart_summary") {
-                    VolumeProgressionChartCard(
-                        volumeBars = state.weeklyVolumeBars,
-                        totalVolumeKg = state.totalVolumeKg,
-                        totalWorkouts = state.totalWorkouts
-                    )
                 }
             }
 
@@ -225,13 +286,14 @@ fun ProgressScreen(
                     item(key = "prs_empty") {
                         AthleticCard(backgroundColor = DarkSurfaceVariant) {
                             Box(
-                                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                                modifier = Modifier.fillMaxWidth().padding(28.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "Завершите тренировку, чтобы зафиксировать первые рекорды!",
+                                    text = "Завершите тренировку с максимальными весами, чтобы зафиксировать первые рекорды!",
                                     color = TextMuted,
-                                    fontSize = 13.sp
+                                    fontSize = 13.sp,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                             }
                         }
@@ -254,13 +316,13 @@ fun ProgressScreen(
 }
 
 @Composable
-private fun VolumeProgressionChartCard(
-    volumeBars: List<Pair<String, Double>>,
+private fun VolumeSummaryMetricsCard(
     totalVolumeKg: Double,
-    totalWorkouts: Int
+    totalWorkouts: Int,
+    totalReps: Int,
+    currentStreakDays: Int
 ) {
     val strings = LocalDudaStrings.current
-    val maxVolume = (volumeBars.maxOfOrNull { it.second } ?: 1.0).coerceAtLeast(1000.0)
 
     AthleticCard(backgroundColor = DarkSurface) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -287,65 +349,64 @@ private fun VolumeProgressionChartCard(
                 }
 
                 Text(
-                    text = "${totalWorkouts} сессий",
+                    text = "$totalWorkouts сессий",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = EmeraldNeon
                 )
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Bar chart representation
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(130.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.Bottom
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                volumeBars.forEach { (label, vol) ->
-                    val ratio = (vol / maxVolume).toFloat().coerceIn(0.12f, 1.0f)
-                    val isCurrent = label == "Current"
-                    val barColor = if (isCurrent) EmeraldNeon else DarkSurfaceHigh
+                Column {
+                    Text(
+                        text = "Общий тоннаж",
+                        fontSize = 11.sp,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${StrengthCalculator.formatVolume(totalVolumeKg)} кг",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                }
 
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxHeight(),
-                        verticalArrangement = Arrangement.Bottom
-                    ) {
-                        Text(
-                            text = StrengthCalculator.formatTonnageK(vol),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isCurrent) EmeraldNeon else TextMuted
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Box(
-                            modifier = Modifier
-                                .width(30.dp)
-                                .fillMaxHeight(ratio)
-                                .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
-                                .background(barColor)
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = label,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextSecondary
-                        )
-                    }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Повторений",
+                        fontSize = 11.sp,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "$totalReps",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = EmeraldNeon
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "Дисциплина",
+                        fontSize = 11.sp,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "$currentStreakDays дн.",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AmberWarm
+                    )
                 }
             }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Text(
-                text = "Всего за всё время: ${StrengthCalculator.formatVolume(totalVolumeKg)} кг",
-                fontSize = 12.sp,
-                color = TextSecondary
-            )
         }
     }
 }
@@ -365,7 +426,14 @@ private fun HypertrophyDistributionCard(muscleSets: Map<String, Int>) {
             )
             Spacer(modifier = Modifier.height(14.dp))
 
-            muscleSets.forEach { (muscle, sets) ->
+            if (muscleSets.values.all { it == 0 }) {
+                Text(
+                    text = "Нет завершённых подходов за последние 7 дней. Выполните тренировку, чтобы наполнить мышечные объёмы.",
+                    fontSize = 13.sp,
+                    color = TextMuted
+                )
+            } else {
+                muscleSets.forEach { (muscle, sets) ->
                 val progress = (sets / 20f).coerceIn(0f, 1f)
                 val statusColor = when {
                     sets >= 12 -> EmeraldNeon
@@ -405,6 +473,7 @@ private fun HypertrophyDistributionCard(muscleSets: Map<String, Int>) {
                         modifier = Modifier.width(52.dp)
                     )
                 }
+            }
             }
         }
     }

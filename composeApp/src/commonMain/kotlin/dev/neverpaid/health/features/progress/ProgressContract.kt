@@ -14,6 +14,7 @@ data class ProgressUiState(
     val personalRecords: List<PersonalRecord> = emptyList(),
     val weeklyVolumeBars: List<Pair<String, Double>> = emptyList(),
     val muscleHypertrophySets: Map<String, Int> = emptyMap(),
+    val workoutHistory: List<dev.neverpaid.health.domain.model.Workout> = emptyList(),
     val isLoading: Boolean = false
 ) : UiState
 

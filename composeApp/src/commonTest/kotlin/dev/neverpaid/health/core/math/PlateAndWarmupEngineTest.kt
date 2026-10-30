@@ -34,7 +34,7 @@ class PlateAndWarmupEngineTest {
             targetWeightKg = 140.0,
             barbell = BarbellType.OLYMPIC_MENS,
             useCollars = true, // 2.5kg collars pair = 5kg total
-            collarWeightPairKg = 5.0
+            collarPairWeightKg = 5.0
         )
 
         assertEquals(140.0, result.targetWeightKg)
