@@ -58,6 +58,10 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.ktor.client.cio)
             implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.play.services)
+            implementation(libs.googleid)
+            implementation(libs.androidx.browser)
         }
 
         iosMain.dependencies {

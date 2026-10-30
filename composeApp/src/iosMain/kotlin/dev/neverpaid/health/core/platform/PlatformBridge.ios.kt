@@ -84,6 +84,25 @@ actual object PlatformBridge {
 }
 
 @Composable
+actual fun rememberNativeGoogleAuthLauncher(
+    onSuccess: (idToken: String) -> Unit,
+    onError: (errorMessage: String) -> Unit
+): NativeGoogleAuthHandler {
+    return remember {
+        object : NativeGoogleAuthHandler {
+            override fun signIn() {
+                val url = NSURL.URLWithString("https://duda.uz/login?mobile=1")
+                if (url != null) {
+                    UIApplication.sharedApplication.openURL(url)
+                } else {
+                    onError("Не удалось открыть браузер для входа")
+                }
+            }
+        }
+    }
+}
+
+@Composable
 actual fun GoogleOAuthWebViewModal(
     isOpen: Boolean,
     authUrl: String,

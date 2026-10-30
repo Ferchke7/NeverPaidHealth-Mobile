@@ -26,6 +26,12 @@ class AuthViewModel(
             AuthUiAction.OnOpenGoogleSignIn -> {
                 updateState { copy(isWebViewOpen = true, errorMessage = null) }
             }
+            is AuthUiAction.OnGoogleTokenCaptured -> {
+                handleGoogleIdToken(action.idToken)
+            }
+            is AuthUiAction.OnGoogleAuthError -> {
+                updateState { copy(isLoading = false, errorMessage = action.message) }
+            }
             AuthUiAction.OnDismissGoogleWebView -> {
                 updateState { copy(isWebViewOpen = false) }
             }
@@ -47,6 +53,24 @@ class AuthViewModel(
                     repository.updatePreferences(current.copy(languageCode = action.languageCode))
                 }
             }
+        }
+    }
+
+    private fun handleGoogleIdToken(idToken: String) {
+        updateState { copy(isLoading = true, errorMessage = null) }
+        launchGuarded(
+            onError = { error ->
+                updateState {
+                    copy(
+                        isLoading = false,
+                        errorMessage = error.message ?: "Ошибка авторизации через Google"
+                    )
+                }
+            }
+        ) {
+            repository.authenticateWithGoogleIdToken(idToken)
+            updateState { copy(isLoading = false) }
+            sendEffect(AuthUiEffect.NavigateToHome)
         }
     }
 

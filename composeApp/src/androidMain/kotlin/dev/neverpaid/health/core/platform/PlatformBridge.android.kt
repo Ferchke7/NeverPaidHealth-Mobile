@@ -1,9 +1,13 @@
 package dev.neverpaid.health.core.platform
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -20,6 +24,8 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.browser.customtabs.CustomTabColorSchemeParams
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +44,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.platform.LocalContext
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import dev.neverpaid.health.core.network.DudaApiClient
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -130,6 +147,94 @@ actual object PlatformBridge {
             p.edit().clear().apply()
         } else {
             inMemoryFallback.clear()
+        }
+    }
+}
+
+internal fun Context.findActivity(): Activity? {
+    var current = this
+    while (current is ContextWrapper) {
+        if (current is Activity) return current
+        current = current.baseContext
+    }
+    return null
+}
+
+@Composable
+actual fun rememberNativeGoogleAuthLauncher(
+    onSuccess: (idToken: String) -> Unit,
+    onError: (errorMessage: String) -> Unit
+): NativeGoogleAuthHandler {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val currentOnSuccess by rememberUpdatedState(onSuccess)
+    val currentOnError by rememberUpdatedState(onError)
+
+    return remember(context, coroutineScope) {
+        object : NativeGoogleAuthHandler {
+            override fun signIn() {
+                val activity = context.findActivity()
+                if (activity == null) {
+                    currentOnError("Контекст Activity недоступен")
+                    return
+                }
+
+                coroutineScope.launch {
+                    try {
+                        val credentialManager = CredentialManager.create(activity)
+                        val googleIdOption = GetGoogleIdOption.Builder()
+                            .setFilterByAuthorizedAccounts(false)
+                            .setServerClientId(DudaApiClient.PRODUCTION_GOOGLE_CLIENT_ID)
+                            .setAutoSelectEnabled(false)
+                            .build()
+
+                        val request = GetCredentialRequest.Builder()
+                            .addCredentialOption(googleIdOption)
+                            .build()
+
+                        val result = credentialManager.getCredential(
+                            request = request,
+                            context = activity
+                        )
+
+                        val credential = result.credential
+                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                        val idToken = googleIdTokenCredential.idToken
+                        if (idToken.isNotBlank()) {
+                            currentOnSuccess(idToken)
+                        } else {
+                            currentOnError("Не удалось получить Google ID Token")
+                        }
+                    } catch (e: GetCredentialCancellationException) {
+                        // User cancelled the prompt, do not show error
+                    } catch (e: Exception) {
+                        // Fallback to Chrome Custom Tabs
+                        launchCustomTabFallback(activity, currentOnError)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun launchCustomTabFallback(activity: Activity, onError: (String) -> Unit) {
+    try {
+        val authUrl = "https://duda.uz/login?mobile=1"
+        val customTabsIntent = CustomTabsIntent.Builder()
+            .setShowTitle(true)
+            .setDefaultColorSchemeParams(
+                CustomTabColorSchemeParams.Builder()
+                    .setToolbarColor(0xFF09090B.toInt())
+                    .build()
+            )
+            .build()
+        customTabsIntent.launchUrl(activity, Uri.parse(authUrl))
+    } catch (e: Exception) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://duda.uz/login?mobile=1"))
+            activity.startActivity(intent)
+        } catch (e2: Exception) {
+            onError("Не удалось открыть браузер для авторизации")
         }
     }
 }

@@ -15,6 +15,24 @@ expect object PlatformBridge {
     fun clear()
 }
 
+/**
+ * Handle for triggering native Google Sign-In.
+ */
+interface NativeGoogleAuthHandler {
+    fun signIn()
+}
+
+/**
+ * Platform-native Google Sign-In launcher.
+ * - Android: Android Credential Manager (Native Google One-Tap BottomSheet) + Chrome Custom Tabs fallback.
+ * - iOS: System Safari Authentication Session with deep-link return.
+ */
+@Composable
+expect fun rememberNativeGoogleAuthLauncher(
+    onSuccess: (idToken: String) -> Unit,
+    onError: (errorMessage: String) -> Unit
+): NativeGoogleAuthHandler
+
 @Composable
 expect fun GoogleOAuthWebViewModal(
     isOpen: Boolean,

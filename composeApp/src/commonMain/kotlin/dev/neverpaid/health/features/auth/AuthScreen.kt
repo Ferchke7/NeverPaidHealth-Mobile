@@ -66,6 +66,74 @@ import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.core.platform.GoogleOAuthWebViewModal
+import dev.neverpaid.health.core.platform.rememberNativeGoogleAuthLauncher
+
+@Composable
+fun GoogleLogoIcon(modifier: Modifier = Modifier) {
+    androidx.compose.foundation.Canvas(modifier = modifier.size(22.dp)) {
+        val w = size.width
+        val h = size.height
+        val cx = w / 2f
+        val cy = h / 2f
+        val stroke = w * 0.18f
+
+        // Blue horizontal crossbar
+        drawLine(
+            color = Color(0xFF4285F4),
+            start = androidx.compose.ui.geometry.Offset(cx, cy),
+            end = androidx.compose.ui.geometry.Offset(w, cy),
+            strokeWidth = stroke,
+            cap = androidx.compose.ui.graphics.StrokeCap.Round
+        )
+
+        val strokeStyle = androidx.compose.ui.graphics.drawscope.Stroke(width = stroke)
+        val arcRect = androidx.compose.ui.geometry.Rect(stroke / 2f, stroke / 2f, w - stroke / 2f, h - stroke / 2f)
+
+        // Red top arc
+        drawArc(
+            color = Color(0xFFEA4335),
+            startAngle = 205f,
+            sweepAngle = 110f,
+            useCenter = false,
+            topLeft = arcRect.topLeft,
+            size = arcRect.size,
+            style = strokeStyle
+        )
+
+        // Yellow bottom-left arc
+        drawArc(
+            color = Color(0xFFFBBC05),
+            startAngle = 125f,
+            sweepAngle = 80f,
+            useCenter = false,
+            topLeft = arcRect.topLeft,
+            size = arcRect.size,
+            style = strokeStyle
+        )
+
+        // Green bottom arc
+        drawArc(
+            color = Color(0xFF34A853),
+            startAngle = 40f,
+            sweepAngle = 85f,
+            useCenter = false,
+            topLeft = arcRect.topLeft,
+            size = arcRect.size,
+            style = strokeStyle
+        )
+
+        // Blue upper-right hook
+        drawArc(
+            color = Color(0xFF4285F4),
+            startAngle = 315f,
+            sweepAngle = 55f,
+            useCenter = false,
+            topLeft = arcRect.topLeft,
+            size = arcRect.size,
+            style = strokeStyle
+        )
+    }
+}
 
 @Composable
 fun AuthRoute(
@@ -81,6 +149,15 @@ fun AuthRoute(
             is AuthUiEffect.ShowToast -> {}
         }
     }
+
+    val googleAuthLauncher = rememberNativeGoogleAuthLauncher(
+        onSuccess = { idToken ->
+            viewModel.onAction(AuthUiAction.OnGoogleTokenCaptured(idToken))
+        },
+        onError = { error ->
+            viewModel.onAction(AuthUiAction.OnGoogleAuthError(error))
+        }
+    )
 
     if (state.isWebViewOpen) {
         GoogleOAuthWebViewModal(
@@ -102,6 +179,7 @@ fun AuthRoute(
         AuthScreen(
             state = state,
             onAction = viewModel::onAction,
+            onTriggerGoogleSignIn = { googleAuthLauncher.signIn() },
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -111,6 +189,7 @@ fun AuthRoute(
 fun AuthScreen(
     state: AuthUiState,
     onAction: (AuthUiAction) -> Unit,
+    onTriggerGoogleSignIn: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val strings = LocalDudaStrings.current
@@ -277,18 +356,18 @@ fun AuthScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // Primary Google Sign-In Button
+                // Primary Google Sign-In Button with Native One-Tap & Custom Tabs fallback
                 Button(
-                    onClick = { onAction(AuthUiAction.OnOpenGoogleSignIn) },
+                    onClick = onTriggerGoogleSignIn,
                     enabled = !state.isLoading,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
                         contentColor = Color(0xFF18181B)
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
+                        .height(54.dp)
                 ) {
                     if (state.isLoading) {
                         CircularProgressIndicator(
@@ -296,22 +375,15 @@ fun AuthScreen(
                             modifier = Modifier.size(20.dp),
                             strokeWidth = 2.dp
                         )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF4285F4)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "G",
-                                color = Color.White,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 14.sp
-                            )
-                        }
                         Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Подключение...",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    } else {
+                        GoogleLogoIcon()
+                        Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             text = when (lang) {
                                 "uz" -> "Google orqali kirish"
