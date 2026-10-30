@@ -179,6 +179,7 @@ class FakeNeverPaidRepository : NeverPaidRepository {
                     priority = "high",
                     status = "pending",
                     scheduledDate = date,
+                    isRecurring = true,
                     durationMinutes = 20
                 )
             )
@@ -564,12 +565,14 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     override suspend fun toggleTodo(taskId: String, date: String) {
         val list = ensureTodosForDate(date).map { task ->
             if (task.id == taskId) {
-                val nextStatus = if (task.status == "completed") "pending" else "completed"
-                task.copy(status = nextStatus)
+                val willBeCompleted = !task.isCompletedOn(date)
+                val nextDates = if (willBeCompleted) task.completedDates + date else task.completedDates - date
+                val nextStatus = if (willBeCompleted) "completed" else "pending"
+                task.copy(status = nextStatus, completedDates = nextDates)
             } else task
         }
         todosByDate[date] = list
-        fetchDailySchedule(date)
+        scheduleFlow.value = DailyScheduleResponseDto(date = date, todos = list)
     }
 
     override suspend fun deleteTodo(taskId: String) {

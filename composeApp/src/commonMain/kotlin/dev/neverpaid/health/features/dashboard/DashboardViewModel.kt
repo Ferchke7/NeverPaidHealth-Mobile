@@ -216,8 +216,8 @@ class DashboardViewModel(
             return
         }
         val req = SaveRoutineRequestDto(
-            title = title,
-            description = currentState.editorDescription.trim(),
+            name = title,
+            notes = currentState.editorDescription.trim(),
             exercises = currentState.editorExercises
         )
         val editingId = currentState.editingRoutineId

@@ -117,8 +117,8 @@ class CoachViewModel(
     private fun saveSuggestedRoutine(plan: SuggestedWorkoutPlan) {
         launchGuarded {
             val req = SaveRoutineRequestDto(
-                title = plan.title,
-                description = plan.rationale,
+                name = plan.title,
+                notes = plan.rationale,
                 exercises = plan.exercises.mapIndexed { idx, ex ->
                     RoutineExercise(
                         exerciseId = ex.exerciseId.ifBlank { ex.exerciseName },

@@ -63,7 +63,7 @@ class WorkoutViewModelTest {
 
         assertFalse(viewModel.state.value.isRestTimerActive)
         val updatedWorkout = viewModel.state.value.workout!!
-        assertEquals(500.0, updatedWorkout.totalVolumeKg)
+        assertEquals(500.0, updatedWorkout.totalVolume)
     }
 
     @Test

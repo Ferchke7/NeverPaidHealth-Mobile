@@ -133,12 +133,6 @@ data class SaveRoutineRequestDto(
     @SerialName("notes") val notes: String? = null,
     @SerialName("exercises") val exercises: List<RoutineExercise> = emptyList()
 ) {
-    constructor(
-        title: String,
-        description: String = "",
-        exercises: List<RoutineExercise> = emptyList()
-    ) : this(name = title, notes = description, exercises = exercises)
-
     val title: String get() = name
     val description: String get() = notes ?: ""
 }
@@ -633,7 +627,8 @@ data class TodoTask(
     @SerialName("is_recurring") val isRecurring: Boolean = false,
     @SerialName("recurrence_pattern") val recurrencePattern: String = "none", // "none", "daily", "weekdays", "weekends", "weekly"
     @SerialName("completed_at") val completedAt: String? = null,
-    @SerialName("created_at") val createdAt: String? = null
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("completed_dates") val completedDates: List<String> = emptyList()
 ) {
     val isCompleted: Boolean get() = status == "completed"
     val notes: String get() = description
@@ -647,7 +642,8 @@ data class TodoTask(
             else -> "$durationMinutes мин"
         }
     val pomodoroMinutes: Int get() = durationMinutes.coerceAtLeast(5)
-    fun isCompletedOn(date: String): Boolean = status == "completed"
+    fun isCompletedOn(date: String): Boolean =
+        if (repeatDaily) date in completedDates else status == "completed"
 }
 
 @Serializable
