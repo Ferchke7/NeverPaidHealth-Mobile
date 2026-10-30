@@ -40,3 +40,6 @@ val TextMuted = Color(0xFF71717A)            // --field-placeholder: #71717a (Zi
 // Borders
 val BorderSubtle = Color(0xFF27272A)         // --border: #27272a
 val BorderHighlight = Color(0x4D22C55E)      // border-brand-500/30
+val DarkBorder = BorderSubtle
+val AmberWarning = AmberWarm
+val BlueAccent = CyanElectric

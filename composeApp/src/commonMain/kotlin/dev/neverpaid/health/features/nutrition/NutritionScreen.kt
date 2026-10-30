@@ -49,6 +49,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +65,7 @@ import dev.neverpaid.health.core.designsystem.AmberWarm
 import dev.neverpaid.health.core.designsystem.AthleticCard
 import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.BorderSubtle
+import dev.neverpaid.health.core.designsystem.CyanElectric
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
@@ -76,6 +80,11 @@ import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.mvi.CollectEffect
+import dev.neverpaid.health.core.designsystem.MacronutrientDonutGauge
+import dev.neverpaid.health.core.designsystem.MacroTargetProgress
+import dev.neverpaid.health.core.designsystem.WaterHydrationWave
+import dev.neverpaid.health.domain.model.FastingProtocol
+import dev.neverpaid.health.domain.model.FastingSession
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.core.platform.rememberImagePickerLauncher
 
@@ -131,7 +140,36 @@ fun NutritionScreen(
         onAction(NutritionUiAction.OnPhotoPicked(base64))
     }
 
+    var isFoodCatalogSheetOpen by remember { mutableStateOf(false) }
+    var activeFastingSession by remember {
+        mutableStateOf<FastingSession?>(
+            FastingSession(
+                id = "fasting_active",
+                protocol = FastingProtocol.LEAN_GAINS_16_8,
+                startTimeEpochMs = PlatformBridge.currentTimeMillis() - (14 * 3600 * 1000L),
+                targetDurationHours = 16.0
+            )
+        )
+    }
+
     val caloriesProgress = (state.totalCalories.toFloat() / state.targetCalories.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
+
+    if (isFoodCatalogSheetOpen) {
+        FoodDatabaseBottomSheet(
+            isOpen = true,
+            onDismiss = { isFoodCatalogSheetOpen = false },
+            onFoodSelected = { name, cal, prot, carb, fat ->
+                onAction(NutritionUiAction.OnMealTypeChanged(state.selectedMealType.ifBlank { "lunch" }))
+                onAction(NutritionUiAction.OnMealNameChanged(name))
+                onAction(NutritionUiAction.OnMealCaloriesChanged(cal.toInt().toString()))
+                onAction(NutritionUiAction.OnMealProteinChanged(prot.toInt().toString()))
+                onAction(NutritionUiAction.OnMealFatsChanged(fat.toInt().toString()))
+                onAction(NutritionUiAction.OnMealCarbsChanged(carb.toInt().toString()))
+                onAction(NutritionUiAction.OnSaveMeal)
+                isFoodCatalogSheetOpen = false
+            }
+        )
+    }
 
     if (state.isAddMealSheetOpen) {
         AddMealBottomSheet(
@@ -213,6 +251,22 @@ fun NutritionScreen(
                     }
                 }
             }
+        }
+
+        // Concentric Macronutrient Donut Gauge
+        item(key = "energy_donut_gauge") {
+            MacronutrientDonutGauge(
+                progress = MacroTargetProgress(
+                    currentCalories = state.totalCalories.toDouble(),
+                    targetCalories = state.targetCalories.toDouble(),
+                    currentProteinGrams = state.totalProtein.toDouble(),
+                    targetProteinGrams = state.targetProtein.toDouble(),
+                    currentCarbsGrams = state.totalCarbs.toDouble(),
+                    targetCarbsGrams = state.targetCarbs.toDouble(),
+                    currentFatsGrams = state.totalFats.toDouble(),
+                    targetFatsGrams = state.targetFats.toDouble()
+                )
+            )
         }
 
         // Energy & Macros Card
@@ -541,70 +595,31 @@ fun NutritionScreen(
             }
         }
 
-        // Water Tracker Card (8 Glasses)
-        item(key = "water_card") {
-            AthleticCard(backgroundColor = DarkSurface) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(IndigoSubtle),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.LocalDrink,
-                                contentDescription = null,
-                                tint = IndigoElectric,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "ВОДНЫЙ БАЛАНС",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextMuted
-                            )
-                            Text(
-                                text = "${state.waterMl} / ${state.targetWaterMl} мл (${state.waterMl / 250} ст.)",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                        }
-                    }
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(DarkSurfaceVariant)
-                                .clickable { onAction(NutritionUiAction.OnAddWater(-250)) }
-                                .padding(horizontal = 9.dp, vertical = 6.dp)
-                        ) {
-                            Text("-250", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
-                        }
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(IndigoSubtle)
-                                .clickable { onAction(NutritionUiAction.OnAddWater(250)) }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
-                        ) {
-                            Text("+250 мл", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = IndigoElectric)
-                        }
-                    }
+        // Intermittent Fasting Tracker
+        item(key = "fasting_tracker") {
+            FastingTrackerView(
+                activeSession = activeFastingSession,
+                onStartFast = { protocol ->
+                    activeFastingSession = FastingSession(
+                        id = PlatformBridge.generateUuid(),
+                        protocol = protocol,
+                        startTimeEpochMs = PlatformBridge.currentTimeMillis(),
+                        targetDurationHours = protocol.fastHours.toDouble()
+                    )
+                },
+                onEndFast = {
+                    activeFastingSession = null
                 }
-            }
+            )
+        }
+
+        // Hydration Animated Wave Vessel
+        item(key = "water_wave_card") {
+            WaterHydrationWave(
+                currentMl = state.waterMl,
+                targetMl = state.targetWaterMl,
+                onAddWater = { ml -> onAction(NutritionUiAction.OnAddWater(ml)) }
+            )
         }
 
         // Meals Header
@@ -621,13 +636,22 @@ fun NutritionScreen(
                     color = TextMuted,
                     letterSpacing = 1.sp
                 )
-                Text(
-                    text = "+ Ввести вручную",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = EmeraldLight,
-                    modifier = Modifier.clickable { onAction(NutritionUiAction.OnOpenAddMealSheet) }
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "+ База продуктов (150+)",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = CyanElectric,
+                        modifier = Modifier.clickable { isFoodCatalogSheetOpen = true }
+                    )
+                    Text(
+                        text = "+ Ввести вручную",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = EmeraldLight,
+                        modifier = Modifier.clickable { onAction(NutritionUiAction.OnOpenAddMealSheet) }
+                    )
+                }
             }
         }
 

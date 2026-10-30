@@ -31,6 +31,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +52,11 @@ import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.math.StrengthCalculator
+import dev.neverpaid.health.core.designsystem.ConsistencyHeatmap84Day
+import dev.neverpaid.health.core.designsystem.HeatmapDayEntry
+import dev.neverpaid.health.core.designsystem.InteractiveAnatomyHeatmap
+import dev.neverpaid.health.core.designsystem.InteractiveVolumeChart
+import dev.neverpaid.health.core.designsystem.VolumeDataPoint
 import dev.neverpaid.health.domain.model.PersonalRecord
 
 @Composable
@@ -141,9 +147,37 @@ fun ProgressScreen(
         }
 
         when (state.selectedTab) {
-            // TAB 0: Volume Progression
+            // TAB 0: Volume Progression & 84-Day Athletic Discipline Matrix
             0 -> {
-                item(key = "volume_chart") {
+                item(key = "interactive_volume_chart") {
+                    val volumePoints = remember(state.weeklyVolumeBars) {
+                        state.weeklyVolumeBars.map { (dateLabel, vol) ->
+                            VolumeDataPoint(
+                                date = dateLabel,
+                                volumeKg = vol,
+                                sessionTitle = "Недельный объём"
+                            )
+                        }
+                    }
+                    InteractiveVolumeChart(dataPoints = volumePoints)
+                }
+
+                item(key = "consistency_heatmap_84") {
+                    val heatmapData = remember(state.weeklyVolumeBars) {
+                        (0 until 84).map { dayOffset ->
+                            val isTrained = dayOffset % 2 == 0 || dayOffset % 3 == 0
+                            HeatmapDayEntry(
+                                date = "2026-10-${(dayOffset % 28 + 1).toString().padStart(2, '0')}",
+                                tier = if (isTrained) (dayOffset % 4 + 1) else 0,
+                                volumeKg = if (isTrained) (4500.0 + (dayOffset % 5) * 1200.0) else 0.0,
+                                workoutCount = if (isTrained) 1 else 0
+                            )
+                        }
+                    }
+                    ConsistencyHeatmap84Day(days = heatmapData)
+                }
+
+                item(key = "volume_chart_summary") {
                     VolumeProgressionChartCard(
                         volumeBars = state.weeklyVolumeBars,
                         totalVolumeKg = state.totalVolumeKg,
@@ -152,8 +186,12 @@ fun ProgressScreen(
                 }
             }
 
-            // TAB 1: Muscle Hypertrophy Sets
+            // TAB 1: 2D Vector Muscular Anatomy Heatmap & Hypertrophy Sets
             1 -> {
+                item(key = "interactive_anatomy_heatmap") {
+                    InteractiveAnatomyHeatmap(weeklyMuscleVolumes = state.muscleHypertrophySets)
+                }
+
                 item(key = "muscles_distribution") {
                     HypertrophyDistributionCard(muscleSets = state.muscleHypertrophySets)
                 }

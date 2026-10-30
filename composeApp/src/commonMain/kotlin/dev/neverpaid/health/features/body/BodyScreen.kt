@@ -122,6 +122,29 @@ fun BodyScreen(
         return
     }
 
+    var isAnthropometrySheetOpen by remember { mutableStateOf(false) }
+
+    if (isAnthropometrySheetOpen) {
+        AnthropometryCalculatorBottomSheet(
+            isOpen = true,
+            currentHeightCm = state.heightCm,
+            currentWeightKg = state.latestWeightKg,
+            onDismiss = { isAnthropometrySheetOpen = false },
+            onSaveMetrics = { bf, adonis ->
+                onAction(BodyUiAction.OnSaveFullMeasurement(
+                    weightKg = state.latestWeightKg,
+                    heightCm = state.heightCm,
+                    bodyFatPct = bf,
+                    waistCm = null,
+                    chestCm = null,
+                    bicepsCm = null,
+                    notes = "Индекс Адониса: ${((adonis * 100).toInt() / 100.0)}"
+                ))
+                isAnthropometrySheetOpen = false
+            }
+        )
+    }
+
     if (state.isAddDialogOpen) {
         AddMeasurementBottomSheet(
             defaultWeight = state.latestWeightKg,
@@ -169,14 +192,24 @@ fun BodyScreen(
                     )
                 }
 
-                OutlinedButton(
-                    onClick = { onAction(BodyUiAction.OnToggleBmiCalculator) },
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.height(38.dp)
-                ) {
-                    Icon(Icons.Default.Calculate, contentDescription = null, tint = EmeraldLight, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Калькулятор", fontSize = 12.sp, color = EmeraldLight, fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OutlinedButton(
+                        onClick = { isAnthropometrySheetOpen = true },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.height(38.dp)
+                    ) {
+                        Text("Антропометрия", fontSize = 12.sp, color = EmeraldNeon, fontWeight = FontWeight.Bold)
+                    }
+
+                    OutlinedButton(
+                        onClick = { onAction(BodyUiAction.OnToggleBmiCalculator) },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.height(38.dp)
+                    ) {
+                        Icon(Icons.Default.Calculate, contentDescription = null, tint = EmeraldLight, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("TDEE", fontSize = 12.sp, color = EmeraldLight, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

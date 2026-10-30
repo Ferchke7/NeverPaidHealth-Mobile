@@ -85,6 +85,8 @@ import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.core.platform.PlatformBridge
+import dev.neverpaid.health.data.catalog.StandardHabitsCatalog
+import dev.neverpaid.health.domain.model.AthleteHabit
 import dev.neverpaid.health.domain.model.SaveTodoRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
 
@@ -143,6 +145,10 @@ fun TodoScreen(
             },
             onDismiss = { onAction(TodoUiAction.OnCloseTaskModal) }
         )
+    }
+
+    var habits by remember {
+        mutableStateOf(StandardHabitsCatalog.standardPresets.take(4))
     }
 
     val progressFraction = if (state.totalCount > 0) {
@@ -251,6 +257,28 @@ fun TodoScreen(
                     )
                 }
             }
+        }
+
+        // Athlete Habits Tracker Card
+        item(key = "athlete_habits_card") {
+            HabitTrackerView(
+                habits = habits,
+                currentDateIso = state.selectedDate,
+                onToggleHabitToday = { habitId ->
+                    val today = state.selectedDate
+                    habits = habits.map { h ->
+                        if (h.id == habitId) {
+                            val newDates = if (h.isCompletedOn(today)) h.completedDates - today else h.completedDates + today
+                            h.copy(completedDates = newDates)
+                        } else h
+                    }
+                },
+                onAddHabitPreset = { preset ->
+                    if (habits.none { it.id == preset.id }) {
+                        habits = habits + preset
+                    }
+                }
+            )
         }
 
         // View Mode Switcher: Список задач / Календарь месяца / Журнал активности

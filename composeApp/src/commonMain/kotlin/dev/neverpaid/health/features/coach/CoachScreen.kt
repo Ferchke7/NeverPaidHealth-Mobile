@@ -41,7 +41,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -122,6 +124,21 @@ fun CoachScreen(
     onAction: (CoachUiAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var isReadinessSurveyOpen by remember { mutableStateOf(false) }
+
+    if (isReadinessSurveyOpen) {
+        ReadinessSurveyModal(
+            isOpen = true,
+            onDismiss = { isReadinessSurveyOpen = false },
+            onSubmitAssessment = { assessment ->
+                val promptText = "Результаты утреннего опроса готовности ЦНС: Индекс ${assessment.score}/100 (${assessment.tier.name}), Сон: ${assessment.sleepHours}ч (качество ${assessment.sleepQuality}/5), Крепатура: ${assessment.muscleSoreness}/5, Стресс: ${assessment.stressLevel}/5. Рекомендованный объём: ${assessment.volumeModifierPercentage}%. Скорректируй сегодняшнюю тренировку."
+                onAction(CoachUiAction.OnInputMessageChanged(promptText))
+                onAction(CoachUiAction.OnSendMessage)
+                isReadinessSurveyOpen = false
+            }
+        )
+    }
+
     val pickPhoto = rememberImagePickerLauncher { base64, _ ->
         onAction(CoachUiAction.OnAttachPhoto(base64))
     }
@@ -215,6 +232,22 @@ fun CoachScreen(
                                 color = TextPrimary
                             )
                         }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(EmeraldDark.copy(alpha = 0.3f))
+                            .border(1.dp, EmeraldNeon, RoundedCornerShape(8.dp))
+                            .clickable { isReadinessSurveyOpen = true }
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "Опрос ЦНС",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = EmeraldNeon
+                        )
                     }
                 }
             }

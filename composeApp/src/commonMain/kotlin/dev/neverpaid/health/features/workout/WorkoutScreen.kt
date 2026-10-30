@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -62,6 +63,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.neverpaid.health.core.audio.AthleteSoundManager
 import dev.neverpaid.health.core.designsystem.AmberWarm
 import dev.neverpaid.health.core.designsystem.AthleticCard
 import dev.neverpaid.health.core.designsystem.BorderHighlight
@@ -101,6 +103,7 @@ fun WorkoutRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showDiscardDialog by remember { mutableStateOf(false) }
+    var warmupExercise by remember { mutableStateOf<WorkoutExercise?>(null) }
 
     CollectEffect(viewModel.effect) { effect ->
         when (effect) {
@@ -157,6 +160,22 @@ fun WorkoutRoute(
         )
     }
 
+    if (warmupExercise != null) {
+        WarmupCalculatorBottomSheet(
+            isOpen = true,
+            workingWeightKg = warmupExercise?.sets?.lastOrNull { it.weightKg > 0 }?.weightKg ?: 80.0,
+            exerciseName = warmupExercise?.exerciseName ?: "",
+            onDismiss = { warmupExercise = null },
+            onApplyWarmupSets = { sets ->
+                val exId = warmupExercise?.exerciseId ?: ""
+                sets.forEach { (w, r) ->
+                    viewModel.onAction(WorkoutUiAction.OnAddSet(exId))
+                }
+                warmupExercise = null
+            }
+        )
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = DarkBackground,
@@ -187,6 +206,7 @@ fun WorkoutRoute(
             state = state,
             onAction = viewModel::onAction,
             onRequestDiscard = { showDiscardDialog = true },
+            onOpenWarmup = { warmupExercise = it },
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -197,6 +217,7 @@ fun WorkoutScreen(
     state: WorkoutUiState,
     onAction: (WorkoutUiAction) -> Unit,
     onRequestDiscard: () -> Unit = {},
+    onOpenWarmup: (WorkoutExercise) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val workout = state.workout
@@ -256,6 +277,7 @@ fun WorkoutScreen(
             WorkoutExerciseCard(
                 exercise = exerciseItem,
                 unitLabel = if (state.isKgUnit) "КГ" else "LB",
+                onOpenWarmup = { onOpenWarmup(exerciseItem) },
                 onUpdateWeight = { setId, w ->
                     onAction(WorkoutUiAction.OnUpdateWeight(exerciseItem.exerciseId, setId, w))
                 },
@@ -506,6 +528,7 @@ private fun EnhancedRestTimerBar(
 private fun WorkoutExerciseCard(
     exercise: WorkoutExercise,
     unitLabel: String,
+    onOpenWarmup: () -> Unit = {},
     onUpdateWeight: (String, Double) -> Unit,
     onUpdateReps: (String, Int) -> Unit,
     onApplyPrevious: (String) -> Unit,
@@ -546,6 +569,14 @@ private fun WorkoutExerciseCard(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onOpenWarmup, modifier = Modifier.size(30.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.FitnessCenter,
+                            contentDescription = "Калькулятор блинов и разминки",
+                            tint = EmeraldNeon,
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
                     IconButton(onClick = onInspectExercise, modifier = Modifier.size(30.dp)) {
                         Icon(
                             imageVector = Icons.Default.Info,
@@ -777,7 +808,12 @@ private fun WorkoutSetRow(
                 .size(34.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(if (set.isCompleted) EmeraldNeon else DarkSurfaceHigh)
-                .clickable { onToggleComplete() },
+                .clickable {
+                    if (!set.isCompleted) {
+                        AthleteSoundManager.playSetComplete()
+                    }
+                    onToggleComplete()
+                },
             contentAlignment = Alignment.Center
         ) {
             Icon(
