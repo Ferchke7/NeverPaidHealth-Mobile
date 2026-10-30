@@ -6,6 +6,8 @@ import dev.neverpaid.health.domain.model.RoutineExercise
 
 object StandardExerciseCatalog {
 
+    val exercises: List<Exercise> get() = standardExercises
+
     val standardExercises: List<Exercise> = listOf(
         Exercise(
             id = "10000000-0000-0000-0000-000000000001",
