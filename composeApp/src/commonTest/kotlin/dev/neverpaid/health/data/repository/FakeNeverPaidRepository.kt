@@ -150,7 +150,7 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     private val todosByDate = mutableMapOf<String, List<TodoTask>>()
     private val scheduleFlow = MutableStateFlow<DailyScheduleResponseDto?>(null)
     private val focusTimerFlow = MutableStateFlow(FocusTimerState())
-    private val mealsByDate = mutableMapOf<String, MutableList<MealLog>>()
+    private val mealsByDate = mutableMapOf<String, MutableStateFlow<List<MealLog>>>()
     private val nutritionSummaryFlow = MutableStateFlow<DailyNutritionSummaryDto?>(
         DailyNutritionSummaryDto(
             date = "2026-10-30",
@@ -649,8 +649,7 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     }
 
     override fun getMealLogs(date: String): Flow<List<MealLog>> {
-        val list = mealsByDate.getOrPut(date) { mutableListOf() }
-        return MutableStateFlow(list.toList())
+        return mealsByDate.getOrPut(date) { MutableStateFlow(emptyList()) }.asStateFlow()
     }
 
     override fun getNutritionTodaySummary(): Flow<DailyNutritionSummaryDto?> = nutritionSummaryFlow.asStateFlow()
@@ -660,6 +659,8 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     }
 
     override suspend fun addMealLog(meal: MealLog) {
+        val dateFlow = mealsByDate.getOrPut(meal.date) { MutableStateFlow(emptyList()) }
+        dateFlow.value = dateFlow.value + meal
         val current = nutritionSummaryFlow.value ?: DailyNutritionSummaryDto(date = meal.date)
         val updatedMeals = current.meals + meal
         nutritionSummaryFlow.value = current.copy(
@@ -672,6 +673,9 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     }
 
     override suspend fun deleteMealLog(mealId: String) {
+        mealsByDate.values.forEach { flow ->
+            flow.value = flow.value.filterNot { it.id == mealId }
+        }
         val current = nutritionSummaryFlow.value ?: return
         val updatedMeals = current.meals.filterNot { it.id == mealId }
         nutritionSummaryFlow.value = current.copy(
