@@ -82,12 +82,18 @@ actual object PlatformBridge {
         }
     }
 
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     actual fun decodeBase64ToString(base64: String): String? {
         return try {
-            val nsdata = platform.Foundation.NSData.create(base64Encoding = base64) ?: return null
-            platform.Foundation.NSString.create(data = nsdata, encoding = platform.Foundation.NSUTF8StringEncoding)?.toString()
+            val bytes = kotlin.io.encoding.Base64.UrlSafe.decode(base64)
+            bytes.decodeToString()
         } catch (_: Exception) {
-            null
+            try {
+                val bytes = kotlin.io.encoding.Base64.Default.decode(base64)
+                bytes.decodeToString()
+            } catch (_: Exception) {
+                null
+            }
         }
     }
 }
