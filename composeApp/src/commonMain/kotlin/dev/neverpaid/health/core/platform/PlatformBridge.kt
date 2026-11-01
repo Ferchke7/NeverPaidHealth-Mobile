@@ -13,6 +13,7 @@ expect object PlatformBridge {
     fun getString(key: String): String?
     fun remove(key: String)
     fun clear()
+    fun decodeBase64ToString(base64: String): String?
 }
 
 /**

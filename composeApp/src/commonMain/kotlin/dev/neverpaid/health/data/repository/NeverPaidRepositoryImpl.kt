@@ -81,16 +81,16 @@ class NeverPaidRepositoryImpl(
     private val currentUserFlow = MutableStateFlow(DudaLocalStorage.getUserProfile())
     private val preferencesFlow = MutableStateFlow(DudaLocalStorage.getUserPreferences())
 
-    // --- Live API State Flows (Standard fallback catalog guarantees offline-first readiness) ---
+    // --- Live API State Flows (Offline-first persistent storage guarantees zero data loss) ---
     private val exercisesFlow = MutableStateFlow<List<Exercise>>(StandardExerciseCatalog.standardExercises)
-    private val userRoutinesFlow = MutableStateFlow<List<Routine>>(emptyList())
+    private val userRoutinesFlow = MutableStateFlow<List<Routine>>(DudaLocalStorage.getUserRoutines())
     private val activeWorkoutFlow = MutableStateFlow<Workout?>(DudaLocalStorage.getActiveWorkoutDraft())
     private val isActiveWorkoutSheetOpenFlow = MutableStateFlow(false)
     private val lastFinishedWorkoutSummaryFlow = MutableStateFlow<Workout?>(null)
     private val previousSetsMapFlow = MutableStateFlow<Map<String, List<PreviousSetData>>>(emptyMap())
     private val previousNotesMapFlow = MutableStateFlow<Map<String, PreviousExerciseNote>>(emptyMap())
 
-    private val workoutHistoryFlow = MutableStateFlow<List<Workout>>(emptyList())
+    private val workoutHistoryFlow = MutableStateFlow<List<Workout>>(DudaLocalStorage.getWorkoutHistory())
     private val recordGroupsFlow = MutableStateFlow<List<ExerciseRecordGroupDto>>(emptyList())
 
     private val programsFlow = MutableStateFlow<List<TrainingProgram>>(emptyList())
@@ -103,23 +103,25 @@ class NeverPaidRepositoryImpl(
     private val focusTimerFlow = MutableStateFlow(DudaLocalStorage.getFocusTimerState())
 
     private val nutritionSummaryFlow = MutableStateFlow<DailyNutritionSummaryDto?>(null)
-    private val mealLogsFlow = MutableStateFlow<List<MealLog>>(emptyList())
+    private val mealLogsFlow = MutableStateFlow<List<MealLog>>(DudaLocalStorage.getMealLogs())
     private val waterFlowsMap = mutableMapOf<String, MutableStateFlow<Int>>()
 
     private val coachInsightFlow = MutableStateFlow(CoachInsight())
     private val chatMessagesFlow = MutableStateFlow<List<ChatMessage>>(emptyList())
     private val coachSuggestionsFlow = MutableStateFlow<List<String>>(emptyList())
 
-    private val bodyMeasurementsFlow = MutableStateFlow<List<BodyMeasurement>>(emptyList())
+    private val bodyMeasurementsFlow = MutableStateFlow<List<BodyMeasurement>>(DudaLocalStorage.getBodyMeasurements())
     private val bodyTrendFlow = MutableStateFlow<BodyTrendResponseDto?>(null)
 
     init {
         apiClient?.onUnauthorized = {
-            isAuthenticatedFlow.value = false
-            currentUserFlow.value = null
+            if (!isGuestUser()) {
+                isAuthenticatedFlow.value = false
+                currentUserFlow.value = null
+            }
         }
 
-        if (isAuthenticatedFlow.value && apiClient != null) {
+        if (isAuthenticatedFlow.value && apiClient != null && !isGuestUser()) {
             scope.launch {
                 try {
                     val me = apiClient.getMe()
@@ -131,7 +133,7 @@ class NeverPaidRepositoryImpl(
                     }
                     refreshInitialAuthenticatedData()
                 } catch (_: Exception) {
-                    if (DudaLocalStorage.getAccessToken() == null) {
+                    if (DudaLocalStorage.getAccessToken() == null && !isGuestUser()) {
                         isAuthenticatedFlow.value = false
                         currentUserFlow.value = null
                     }
@@ -176,9 +178,43 @@ class NeverPaidRepositoryImpl(
         return response
     }
 
+    private fun tryParseJwtClaims(token: String): UserProfileDto? {
+        return try {
+            val parts = token.trim().split(".")
+            if (parts.size < 2) return null
+            var normalized = parts[1].replace('-', '+').replace('_', '/')
+            while (normalized.length % 4 != 0) {
+                normalized += "="
+            }
+            val jsonString = PlatformBridge.decodeBase64ToString(normalized) ?: return null
+            val element = json.parseToJsonElement(jsonString)
+            val obj = element as? kotlinx.serialization.json.JsonObject ?: return null
+
+            val email = obj["email"]?.toString()?.trim('"')
+                ?: obj["sub"]?.toString()?.trim('"')
+                ?: "athlete@duda.uz"
+            val name = obj["name"]?.toString()?.trim('"')
+                ?: obj["displayName"]?.toString()?.trim('"')
+                ?: email.substringBefore("@").replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+            val picture = obj["picture"]?.toString()?.trim('"')
+            val id = obj["user_id"]?.toString()?.trim('"')
+                ?: obj["sub"]?.toString()?.trim('"')
+                ?: PlatformBridge.generateUuid()
+
+            UserProfileDto(
+                id = id,
+                email = email,
+                displayName = name,
+                avatarUrl = picture
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     override suspend fun authenticateWithAccessToken(accessToken: String, userJson: String?): UserProfileDto {
-        // Check if user pasted a Google ID Token (3-part JWT with accounts.google.com or Google OAuth) vs np_access_token
-        DudaLocalStorage.setAccessToken(accessToken)
+        val cleanToken = accessToken.trim().trim('"', '\'')
+        DudaLocalStorage.setAccessToken(cleanToken)
         if (!userJson.isNullOrBlank()) {
             try {
                 val parsed = json.decodeFromString<UserProfileDto>(userJson)
@@ -191,20 +227,41 @@ class NeverPaidRepositoryImpl(
         if (client != null) {
             return try {
                 val profile = client.getMe()
+                DudaLocalStorage.setUserProfile(profile)
                 isAuthenticatedFlow.value = true
                 currentUserFlow.value = profile
                 scope.launch { refreshInitialAuthenticatedData() }
                 profile
-            } catch (_: Exception) {
+            } catch (eMe: Exception) {
                 // If /me rejected the token, try exchanging it via POST /auth/google in case it is a Google id_token
-                val authResp = client.authenticateGoogle(accessToken)
-                isAuthenticatedFlow.value = true
-                currentUserFlow.value = authResp.user
-                scope.launch { refreshInitialAuthenticatedData() }
-                authResp.user
+                try {
+                    val authResp = client.authenticateGoogle(cleanToken)
+                    DudaLocalStorage.setUserProfile(authResp.user)
+                    isAuthenticatedFlow.value = true
+                    currentUserFlow.value = authResp.user
+                    scope.launch { refreshInitialAuthenticatedData() }
+                    authResp.user
+                } catch (_: Exception) {
+                    // Fall back to offline JWT claim decoding so the athlete is never locked out
+                    val jwtProfile = tryParseJwtClaims(cleanToken)
+                    if (jwtProfile != null) {
+                        DudaLocalStorage.setUserProfile(jwtProfile)
+                        currentUserFlow.value = jwtProfile
+                        isAuthenticatedFlow.value = true
+                        jwtProfile
+                    } else {
+                        throw eMe
+                    }
+                }
             }
         } else {
-            val fallback = currentUserFlow.value ?: UserProfileDto(id = "user-1", email = "athlete@duda.uz", displayName = "Athlete")
+            val jwtProfile = tryParseJwtClaims(cleanToken)
+            val fallback = jwtProfile ?: currentUserFlow.value ?: UserProfileDto(
+                id = "user-1",
+                email = "athlete@duda.uz",
+                displayName = "Athlete"
+            )
+            DudaLocalStorage.setUserProfile(fallback)
             isAuthenticatedFlow.value = true
             currentUserFlow.value = fallback
             return fallback
@@ -393,6 +450,7 @@ class NeverPaidRepositoryImpl(
         val client = apiClient ?: return userRoutinesFlow.value
         val list = client.getRoutines()
         userRoutinesFlow.value = list
+        DudaLocalStorage.setUserRoutines(list)
         return list
     }
 
@@ -436,17 +494,21 @@ class NeverPaidRepositoryImpl(
             )
         }
         val exists = userRoutinesFlow.value.any { it.id == saved.id }
-        userRoutinesFlow.value = if (exists) {
+        val updated = if (exists) {
             userRoutinesFlow.value.map { if (it.id == saved.id) saved else it }
         } else {
             listOf(saved) + userRoutinesFlow.value
         }
+        userRoutinesFlow.value = updated
+        DudaLocalStorage.setUserRoutines(updated)
         return saved
     }
 
     override suspend fun deleteRoutine(routineId: String) {
         apiClient?.deleteRoutine(routineId)
-        userRoutinesFlow.value = userRoutinesFlow.value.filter { it.id != routineId }
+        val filtered = userRoutinesFlow.value.filter { it.id != routineId }
+        userRoutinesFlow.value = filtered
+        DudaLocalStorage.setUserRoutines(filtered)
     }
 
     // ========================================================================
@@ -640,7 +702,9 @@ class NeverPaidRepositoryImpl(
             isFinished = true
         )
 
-        workoutHistoryFlow.value = listOf(finishedWorkout) + workoutHistoryFlow.value
+        val updatedHistory = listOf(finishedWorkout) + workoutHistoryFlow.value
+        workoutHistoryFlow.value = updatedHistory
+        DudaLocalStorage.setWorkoutHistory(updatedHistory)
         lastFinishedWorkoutSummaryFlow.value = finishedWorkout
         activeWorkoutFlow.value = null
         isActiveWorkoutSheetOpenFlow.value = false
@@ -717,12 +781,15 @@ class NeverPaidRepositoryImpl(
         val client = apiClient ?: return workoutHistoryFlow.value
         val list = client.getWorkouts(limit = 50)
         workoutHistoryFlow.value = list
+        DudaLocalStorage.setWorkoutHistory(list)
         return list
     }
 
     override suspend fun deleteWorkoutFromHistory(workoutId: String) {
         apiClient?.deleteWorkout(workoutId)
-        workoutHistoryFlow.value = workoutHistoryFlow.value.filter { it.id != workoutId }
+        val filtered = workoutHistoryFlow.value.filter { it.id != workoutId }
+        workoutHistoryFlow.value = filtered
+        DudaLocalStorage.setWorkoutHistory(filtered)
     }
 
     override fun getRecordGroups(): Flow<List<ExerciseRecordGroupDto>> = recordGroupsFlow.asStateFlow()
@@ -1016,8 +1083,10 @@ class NeverPaidRepositoryImpl(
     override fun getDailyScheduleFlow(): Flow<DailyScheduleResponseDto?> = dailyScheduleFlow.asStateFlow()
 
     override fun getTodos(date: String): Flow<List<TodoTask>> {
-        val flow = todosMapByDate.getOrPut(date) { MutableStateFlow(emptyList()) }
-        if (apiClient != null) {
+        val flow = todosMapByDate.getOrPut(date) {
+            MutableStateFlow(DudaLocalStorage.getTodos(date).orEmpty())
+        }
+        if (apiClient != null && !isGuestUser()) {
             scope.launch {
                 try {
                     fetchDailySchedule(date)
@@ -1029,14 +1098,15 @@ class NeverPaidRepositoryImpl(
 
     override suspend fun fetchDailySchedule(date: String): DailyScheduleResponseDto {
         val client = apiClient
-        if (client != null) {
+        if (client != null && !isGuestUser()) {
             val schedule = client.getDailySchedule(date)
             dailyScheduleFlow.value = schedule
             val flow = todosMapByDate.getOrPut(date) { MutableStateFlow(emptyList()) }
             flow.value = schedule.todos
+            DudaLocalStorage.setTodos(date, schedule.todos)
             return schedule
         } else {
-            val tasks = todosMapByDate[date]?.value ?: emptyList()
+            val tasks = todosMapByDate[date]?.value ?: DudaLocalStorage.getTodos(date).orEmpty()
             val completed = tasks.count { it.isCompleted }
             return DailyScheduleResponseDto(
                 date = date,
@@ -1061,7 +1131,7 @@ class NeverPaidRepositoryImpl(
         val date = task.scheduledDate.ifBlank {
             PlatformBridge.formatDate(PlatformBridge.currentTimeMillis(), "yyyy-MM-dd")
         }
-        if (apiClient != null) {
+        if (apiClient != null && !isGuestUser()) {
             apiClient.createTodo(
                 SaveTodoRequestDto(
                     title = task.title,
@@ -1078,8 +1148,10 @@ class NeverPaidRepositoryImpl(
             )
             fetchDailySchedule(date)
         } else {
-            val flow = todosMapByDate.getOrPut(date) { MutableStateFlow(emptyList()) }
-            flow.value = flow.value + task.copy(scheduledDate = date)
+            val flow = todosMapByDate.getOrPut(date) { MutableStateFlow(DudaLocalStorage.getTodos(date).orEmpty()) }
+            val updated = flow.value + task.copy(scheduledDate = date)
+            flow.value = updated
+            DudaLocalStorage.setTodos(date, updated)
         }
     }
 
@@ -1089,7 +1161,7 @@ class NeverPaidRepositoryImpl(
         refreshDate: String
     ): TodoTask {
         val client = apiClient
-        if (client != null) {
+        if (client != null && !isGuestUser()) {
             val saved = if (!todoId.isNullOrBlank()) {
                 client.updateTodo(todoId, request)
             } else {
@@ -1111,36 +1183,42 @@ class NeverPaidRepositoryImpl(
                 isRecurring = request.isRecurring,
                 recurrencePattern = request.recurrencePattern
             )
-            val flow = todosMapByDate.getOrPut(refreshDate) { MutableStateFlow(emptyList()) }
-            flow.value = flow.value.filter { it.id != item.id } + item
+            val flow = todosMapByDate.getOrPut(refreshDate) { MutableStateFlow(DudaLocalStorage.getTodos(refreshDate).orEmpty()) }
+            val updated = flow.value.filter { it.id != item.id } + item
+            flow.value = updated
+            DudaLocalStorage.setTodos(refreshDate, updated)
             return item
         }
     }
 
     override suspend fun toggleTodo(taskId: String, date: String) {
-        if (apiClient != null) {
+        if (apiClient != null && !isGuestUser()) {
             apiClient.toggleTodo(taskId, date)
             fetchDailySchedule(date)
         } else {
-            val flow = todosMapByDate.getOrPut(date) { MutableStateFlow(emptyList()) }
-            flow.value = flow.value.map { t ->
+            val flow = todosMapByDate.getOrPut(date) { MutableStateFlow(DudaLocalStorage.getTodos(date).orEmpty()) }
+            val updated = flow.value.map { t ->
                 if (t.id == taskId) {
                     val nextStatus = if (t.status == "completed") "pending" else "completed"
                     t.copy(status = nextStatus)
                 } else t
             }
+            flow.value = updated
+            DudaLocalStorage.setTodos(date, updated)
         }
     }
 
     override suspend fun deleteTodo(taskId: String) {
         val currentDate = dailyScheduleFlow.value?.date
             ?: PlatformBridge.formatDate(PlatformBridge.currentTimeMillis(), "yyyy-MM-dd")
-        if (apiClient != null) {
+        if (apiClient != null && !isGuestUser()) {
             apiClient.deleteTodo(taskId)
             fetchDailySchedule(currentDate)
         } else {
-            todosMapByDate.values.forEach { flow ->
-                flow.value = flow.value.filter { it.id != taskId }
+            todosMapByDate.forEach { (d, flow) ->
+                val filtered = flow.value.filter { it.id != taskId }
+                flow.value = filtered
+                DudaLocalStorage.setTodos(d, filtered)
             }
         }
     }
@@ -1457,7 +1535,7 @@ class NeverPaidRepositoryImpl(
     override suspend fun refreshNutritionToday(): DailyNutritionSummaryDto {
         val client = apiClient
         val user = currentUserFlow.value
-        if (client != null) {
+        if (client != null && !isGuestUser()) {
             val remote = client.getNutritionToday()
             val merged = remote.copy(
                 targetCalories = user?.targetCalories ?: remote.targetCalories,
@@ -1467,6 +1545,7 @@ class NeverPaidRepositoryImpl(
             )
             nutritionSummaryFlow.value = merged
             mealLogsFlow.value = merged.meals
+            DudaLocalStorage.setMealLogs(merged.meals)
             return merged
         } else {
             val meals = mealLogsFlow.value
@@ -1484,7 +1563,7 @@ class NeverPaidRepositoryImpl(
     }
 
     override suspend fun addMealLog(meal: MealLog) {
-        if (apiClient != null) {
+        if (apiClient != null && !isGuestUser()) {
             apiClient.saveMealLog(
                 SaveMealRequestDto(
                     mealType = meal.mealType,
@@ -1498,16 +1577,22 @@ class NeverPaidRepositoryImpl(
             )
             refreshNutritionToday()
         } else {
-            mealLogsFlow.value = mealLogsFlow.value + meal
+            val updated = mealLogsFlow.value + meal
+            mealLogsFlow.value = updated
+            DudaLocalStorage.setMealLogs(updated)
+            refreshNutritionToday()
         }
     }
 
     override suspend fun deleteMealLog(mealId: String) {
-        if (apiClient != null) {
+        if (apiClient != null && !isGuestUser()) {
             apiClient.deleteMealLog(mealId)
             refreshNutritionToday()
         } else {
-            mealLogsFlow.value = mealLogsFlow.value.filter { it.id != mealId }
+            val filtered = mealLogsFlow.value.filter { it.id != mealId }
+            mealLogsFlow.value = filtered
+            DudaLocalStorage.setMealLogs(filtered)
+            refreshNutritionToday()
         }
     }
 
@@ -1653,7 +1738,9 @@ class NeverPaidRepositoryImpl(
             bodyTrendFlow.value = client.getBodyTrend()
         } catch (_: Exception) {}
         try {
-            bodyMeasurementsFlow.value = client.getBodyLogs()
+            val logs = client.getBodyLogs()
+            bodyMeasurementsFlow.value = logs
+            DudaLocalStorage.setBodyMeasurements(logs)
         } catch (_: Exception) {}
     }
 
@@ -1677,7 +1764,7 @@ class NeverPaidRepositoryImpl(
             )
         }
         val client = apiClient
-        return if (client != null) {
+        return if (client != null && !isGuestUser()) {
             val saved = client.saveBodyLog(request)
             refreshBodyData()
             saved
@@ -1694,15 +1781,19 @@ class NeverPaidRepositoryImpl(
                 neckCm = request.neckCm,
                 dateEpochMs = PlatformBridge.currentTimeMillis()
             )
-            bodyMeasurementsFlow.value = bodyMeasurementsFlow.value + m
+            val updated = bodyMeasurementsFlow.value + m
+            bodyMeasurementsFlow.value = updated
+            DudaLocalStorage.setBodyMeasurements(updated)
             m
         }
     }
 
     override suspend fun deleteBodyLog(date: String) {
         apiClient?.deleteBodyLog(date)
-        bodyMeasurementsFlow.value = bodyMeasurementsFlow.value.filter { it.logDate != date }
-        if (apiClient != null) {
+        val filtered = bodyMeasurementsFlow.value.filter { it.logDate != date }
+        bodyMeasurementsFlow.value = filtered
+        DudaLocalStorage.setBodyMeasurements(filtered)
+        if (apiClient != null && !isGuestUser()) {
             refreshBodyData()
         }
     }

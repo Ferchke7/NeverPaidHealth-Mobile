@@ -1,0 +1,28 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.6"
+        android:scaleY="0.6"
+        android:translateX="21.6"
+        android:translateY="21.6">
+        <!-- Dumbbell Left Plate -->
+        <path
+            android:fillColor="#22C55E"
+            android:pathData="M24,36 L30,36 C32.2,36 34,37.8 34,40 L34,68 C34,70.2 32.2,72 30,72 L24,72 C21.8,72 20,70.2 20,68 L20,40 C20,37.8 21.8,36 24,36 Z" />
+        <!-- Dumbbell Right Plate -->
+        <path
+            android:fillColor="#22C55E"
+            android:pathData="M78,36 L84,36 C86.2,36 88,37.8 88,40 L88,68 C88,70.2 86.2,72 84,72 L78,72 C75.8,72 74,70.2 74,68 L74,40 C74,37.8 75.8,36 78,36 Z" />
+        <!-- Dumbbell Bar -->
+        <path
+            android:fillColor="#22C55E"
+            android:pathData="M34,51 L74,51 L74,57 L34,57 Z" />
+        <!-- Lightning Bolt Emblem in Center -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M56,28 L46,52 L54,52 L50,80 L62,56 L54,56 Z" />
+    </group>
+</vector>

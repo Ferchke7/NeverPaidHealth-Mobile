@@ -15,18 +15,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.ElectricBolt
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.Button
@@ -39,7 +36,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -60,7 +56,6 @@ import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.CrimsonSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
-import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.DudaBrandLogo
 import dev.neverpaid.health.core.designsystem.EmeraldLight
@@ -69,9 +64,7 @@ import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
-import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
-import dev.neverpaid.health.core.platform.GoogleOAuthWebViewModal
 import dev.neverpaid.health.core.platform.rememberNativeGoogleAuthLauncher
 
 @Composable
@@ -165,19 +158,6 @@ fun AuthRoute(
         }
     )
 
-    if (state.isWebViewOpen) {
-        GoogleOAuthWebViewModal(
-            isOpen = state.isWebViewOpen,
-            authUrl = "https://duda.uz/login",
-            onDismiss = {
-                viewModel.onAction(AuthUiAction.OnDismissGoogleWebView)
-            },
-            onTokenCaptured = { accessToken, userJson ->
-                viewModel.onAction(AuthUiAction.OnGoogleWebViewSuccess(accessToken, userJson))
-            }
-        )
-    }
-
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = DarkBackground
@@ -246,7 +226,7 @@ fun AuthScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(26.dp))
 
         // Hero Sparkle Badge
         Box(
@@ -281,11 +261,11 @@ fun AuthScreen(
                 "en" -> "Your Smart Strength & Nutrition Training Log"
                 else -> "Твой умный дневник силовых тренировок и питания"
             },
-            fontSize = 25.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Black,
             color = TextPrimary,
             textAlign = TextAlign.Center,
-            lineHeight = 31.sp
+            lineHeight = 30.sp
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -304,7 +284,7 @@ fun AuthScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Main Authentication Card
+        // Main Permanent Authentication Card
         AthleticCard(
             backgroundColor = DarkSurface,
             borderColor = BorderHighlight
@@ -315,31 +295,51 @@ fun AuthScreen(
                     .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = when (lang) {
-                        "uz" -> "Kirish usulini tanlang"
-                        "en" -> "Choose Sign-in Method"
-                        else -> "Вход в аккаунт"
-                    },
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
+                // Section 1: ALWAYS VISIBLE Credentials / Token Input
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(EmeraldSubtle)
+                            .border(1.dp, BorderHighlight, RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Key,
+                            contentDescription = null,
+                            tint = EmeraldNeon,
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Kirish uchun token / Credentials"
+                                "en" -> "Session Token / Credentials"
+                                else -> "Вход по токену сессии / Credentials"
+                            },
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "duda.uz saytidagi np_access_token yoki Google ID token"
+                                "en" -> "np_access_token from duda.uz or Google ID token"
+                                else -> "np_access_token из duda.uz или Google ID токен"
+                            },
+                            fontSize = 11.sp,
+                            color = TextMuted
+                        )
+                    }
+                }
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = when (lang) {
-                        "uz" -> "Sinxronlash yoki darhol mashg'ulotni boshlash"
-                        "en" -> "Sync with cloud or start working out right away"
-                        else -> "Для синхронизации или быстрого старта тренировок"
-                    },
-                    fontSize = 12.sp,
-                    color = TextSecondary,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Error Notice
                 if (state.errorMessage != null) {
@@ -360,90 +360,116 @@ fun AuthScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                // 1. Google One-Tap Native Button
-                Button(
-                    onClick = onTriggerGoogleSignIn,
-                    enabled = !state.isLoading,
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = Color(0xFF18181B)
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                ) {
-                    if (state.isLoading) {
-                        CircularProgressIndicator(
-                            color = Color(0xFF18181B),
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
+                OutlinedTextField(
+                    value = state.tokenInput,
+                    onValueChange = { onAction(AuthUiAction.OnTokenInputChanged(it)) },
+                    placeholder = {
                         Text(
-                            text = when (lang) {
-                                "uz" -> "Ulanmoqda..."
-                                "en" -> "Connecting..."
-                                else -> "Подключение..."
-                            },
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold
+                            text = "np_access_token или токен Google...",
+                            fontSize = 12.sp,
+                            color = TextMuted
                         )
-                    } else {
-                        GoogleLogoIcon()
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Google orqali kirish"
-                                "en" -> "Continue with Google"
-                                else -> "Войти через Google"
-                            },
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = DarkSurfaceVariant,
+                        unfocusedContainerColor = DarkSurfaceVariant,
+                        focusedBorderColor = EmeraldNeon,
+                        unfocusedBorderColor = BorderSubtle,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    )
+                )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // 2. In-App Web Browser Sign-In (duda.uz)
-                OutlinedButton(
-                    onClick = { onAction(AuthUiAction.OnOpenBrowserSignIn) },
-                    enabled = !state.isLoading,
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = DarkSurfaceVariant,
-                        contentColor = TextPrimary
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Language,
-                        contentDescription = null,
-                        tint = EmeraldNeon,
-                        modifier = Modifier.size(19.dp)
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = when (lang) {
-                            "uz" -> "Brauzer orqali kirish (duda.uz)"
-                            "en" -> "Sign in via Browser (duda.uz)"
-                            else -> "Войти через браузер (duda.uz)"
+                    OutlinedButton(
+                        onClick = {
+                            val clip = clipboardManager.getText()?.text.orEmpty()
+                            if (clip.isNotBlank()) {
+                                onAction(AuthUiAction.OnPasteTokenFromClipboard(clip))
+                            }
                         },
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
-                    )
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = DarkSurfaceVariant,
+                            contentColor = EmeraldLight
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentPaste,
+                            contentDescription = null,
+                            tint = EmeraldNeon,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Qo'yish"
+                                "en" -> "Paste"
+                                else -> "Из буфера"
+                            },
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = EmeraldLight
+                        )
+                    }
+
+                    Button(
+                        onClick = { onAction(AuthUiAction.OnSubmitTokenClick) },
+                        enabled = !state.isLoading,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = EmeraldNeon,
+                            contentColor = Color.Black
+                        ),
+                        modifier = Modifier
+                            .weight(1.2f)
+                            .height(48.dp)
+                    ) {
+                        if (state.isLoading) {
+                            CircularProgressIndicator(
+                                color = Color.Black,
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Login,
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = Modifier.size(17.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = when (lang) {
+                                    "uz" -> "Token orqali kirish"
+                                    "en" -> "Sign in"
+                                    else -> "Войти по токену"
+                                },
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color.Black
+                            )
+                        }
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
-                // Divider with text "ИЛИ БЕЗ РЕГИСТРАЦИИ"
+                // Divider
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -451,8 +477,59 @@ fun AuthScreen(
                     HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtle)
                     Text(
                         text = when (lang) {
-                            "uz" -> "YOKI RO'YXATDAN O'TMASDAN"
-                            "en" -> "OR CONTINUE AS GUEST"
+                            "uz" -> "YOKI GOOGLE ORQALI"
+                            "en" -> "OR VIA GOOGLE"
+                            else -> "ИЛИ ЧЕРЕЗ GOOGLE"
+                        },
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextMuted,
+                        modifier = Modifier.padding(horizontal = 10.dp)
+                    )
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtle)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 2. Google One-Tap Native Button
+                Button(
+                    onClick = onTriggerGoogleSignIn,
+                    enabled = !state.isLoading,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color(0xFF18181B)
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    GoogleLogoIcon()
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Google orqali kirish"
+                            "en" -> "Continue with Google"
+                            else -> "Войти через Google"
+                        },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF18181B)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Divider
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtle)
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "YOKI OFLAYN REJIMDA"
+                            "en" -> "OR OFFLINE MODE"
                             else -> "ИЛИ БЕЗ РЕГИСТРАЦИИ"
                         },
                         fontSize = 10.sp,
@@ -469,144 +546,47 @@ fun AuthScreen(
                 Button(
                     onClick = { onAction(AuthUiAction.OnContinueAsGuest) },
                     enabled = !state.isLoading,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = EmeraldNeon,
-                        contentColor = Color.Black
+                        containerColor = DarkSurfaceVariant,
+                        contentColor = TextPrimary
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
+                        .height(50.dp)
+                        .border(1.dp, BorderHighlight, RoundedCornerShape(12.dp))
                 ) {
                     Icon(
                         imageVector = Icons.Default.ElectricBolt,
                         contentDescription = null,
-                        tint = Color.Black,
-                        modifier = Modifier.size(20.dp)
+                        tint = EmeraldNeon,
+                        modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = when (lang) {
-                            "uz" -> "Mehmon sifatida davom etish (Oflayn)"
-                            "en" -> "Continue as Guest (Offline)"
-                            else -> "Продолжить как гость (Оффлайн)"
+                            "uz" -> "Mehmon sifatida davom etish (100% Oflayn)"
+                            "en" -> "Continue as Guest (100% Offline)"
+                            else -> "Продолжить как гость (100% Оффлайн)"
                         },
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color.Black
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
                     )
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = when (lang) {
-                        "uz" -> "Barcha funksiyalar ochiq • Ma'lumotlar telefonda saqlanadi"
+                        "uz" -> "Barcha funksiyalar ochiq • Ma'lumotlar qurilmada saqlanadi"
                         "en" -> "All features unlocked • 100% offline-ready"
-                        else -> "Все функции активны • Данные хранятся на устройстве"
+                        else -> "Все функции активны • Локальное хранилище без ограничений"
                     },
                     fontSize = 11.sp,
                     color = EmeraldLight.copy(alpha = 0.85f),
                     textAlign = TextAlign.Center
                 )
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // 4. Token Fallback / Clipboard Paste Toggle
-                TextButton(
-                    onClick = { onAction(AuthUiAction.OnToggleTokenFallback) }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Key,
-                        contentDescription = null,
-                        tint = TextSecondary,
-                        modifier = Modifier.size(15.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = when (lang) {
-                            "uz" -> "Token orqali kirish (ixtiyoriy)"
-                            "en" -> "Sign in with Session Token"
-                            else -> "Вход по токену сессии"
-                        },
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-                }
-
-                if (state.showTokenFallback) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = state.tokenInput,
-                        onValueChange = { onAction(AuthUiAction.OnTokenInputChanged(it)) },
-                        placeholder = {
-                            Text(
-                                when (lang) {
-                                    "uz" -> "np_access_token yoki Google ID token"
-                                    "en" -> "np_access_token or Google ID token"
-                                    else -> "np_access_token или Google ID токен"
-                                },
-                                fontSize = 12.sp,
-                                color = TextMuted
-                            )
-                        },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = DarkSurfaceVariant,
-                            unfocusedContainerColor = DarkSurfaceVariant,
-                            focusedBorderColor = EmeraldNeon,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                val clip = clipboardManager.getText()?.text.orEmpty()
-                                onAction(AuthUiAction.OnPasteTokenFromClipboard(clip))
-                            },
-                            modifier = Modifier.weight(1f).height(44.dp),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text(
-                                text = when (lang) {
-                                    "uz" -> "Buferdan qo'yish"
-                                    "en" -> "Paste"
-                                    else -> "Из буфера"
-                                },
-                                fontSize = 12.sp,
-                                color = TextSecondary
-                            )
-                        }
-
-                        Button(
-                            onClick = { onAction(AuthUiAction.OnSubmitTokenClick) },
-                            enabled = !state.isLoading,
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldNeon),
-                            modifier = Modifier.weight(1f).height(44.dp)
-                        ) {
-                            Text(
-                                text = when (lang) {
-                                    "uz" -> "Tasdiqlash"
-                                    "en" -> "Verify"
-                                    else -> "Войти"
-                                },
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
             }
         }
 
@@ -663,7 +643,7 @@ fun AuthScreen(
                 when (lang) {
                     "uz" -> "Internet bo'lmasa ham to'liq ishlaydi"
                     "en" -> "Works 100% locally with instant sync"
-                    else -> "Работает без интернета с авто-синхронизацией"
+                    else -> "Работает без интернета с авто-сохранением"
                 }
             )
         )

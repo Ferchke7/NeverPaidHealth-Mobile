@@ -26,9 +26,6 @@ class AuthViewModel(
             AuthUiAction.OnOpenGoogleSignIn -> {
                 updateState { copy(errorMessage = null) }
             }
-            AuthUiAction.OnOpenBrowserSignIn -> {
-                updateState { copy(isWebViewOpen = true, errorMessage = null) }
-            }
             AuthUiAction.OnContinueAsGuest -> {
                 repository.continueAsGuest()
                 sendEffect(AuthUiEffect.NavigateToHome)
@@ -36,7 +33,7 @@ class AuthViewModel(
             is AuthUiAction.OnPasteTokenFromClipboard -> {
                 val clean = action.text.trim().trim('"', '\'')
                 if (clean.isNotBlank()) {
-                    updateState { copy(tokenInput = clean) }
+                    updateState { copy(tokenInput = clean, errorMessage = null) }
                     submitManualToken(clean)
                 }
             }
@@ -45,15 +42,6 @@ class AuthViewModel(
             }
             is AuthUiAction.OnGoogleAuthError -> {
                 updateState { copy(isLoading = false, errorMessage = action.message) }
-            }
-            AuthUiAction.OnDismissGoogleWebView -> {
-                updateState { copy(isWebViewOpen = false) }
-            }
-            is AuthUiAction.OnGoogleWebViewSuccess -> {
-                handleWebViewToken(action.accessToken, action.userJson)
-            }
-            AuthUiAction.OnToggleTokenFallback -> {
-                updateState { copy(showTokenFallback = !showTokenFallback, errorMessage = null) }
             }
             is AuthUiAction.OnTokenInputChanged -> {
                 updateState { copy(tokenInput = action.value, errorMessage = null) }
@@ -88,29 +76,16 @@ class AuthViewModel(
         }
     }
 
-    private fun handleWebViewToken(accessToken: String, userJson: String?) {
-        updateState { copy(isWebViewOpen = false, isLoading = true, errorMessage = null) }
-        launchGuarded(
-            onError = { error ->
-                updateState { copy(isLoading = false, errorMessage = error.message ?: "Ошибка авторизации через Google") }
-            }
-        ) {
-            repository.authenticateWithAccessToken(accessToken, userJson)
-            updateState { copy(isLoading = false) }
-            sendEffect(AuthUiEffect.NavigateToHome)
-        }
-    }
-
     private fun submitManualToken(overrideToken: String? = null) {
         val raw = (overrideToken ?: currentState.tokenInput).trim().trim('"', '\'')
         if (raw.isEmpty()) {
-            updateState { copy(errorMessage = "Введите токен авторизации") }
+            updateState { copy(errorMessage = "Введите токен или учетные данные") }
             return
         }
         updateState { copy(isLoading = true, errorMessage = null) }
         launchGuarded(
             onError = { error ->
-                updateState { copy(isLoading = false, errorMessage = error.message ?: "Ошибка проверки токена") }
+                updateState { copy(isLoading = false, errorMessage = error.message ?: "Ошибка авторизации по токену") }
             }
         ) {
             val accessResult = runCatching { repository.authenticateWithAccessToken(raw) }
@@ -130,7 +105,7 @@ class AuthViewModel(
                     updateState {
                         copy(
                             isLoading = false,
-                            errorMessage = err.message ?: "Неверный токен. Войдите через Google или как гость."
+                            errorMessage = err.message ?: "Неверный токен. Скопируйте np_access_token из duda.uz или войдите через Google."
                         )
                     }
                 }

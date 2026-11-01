@@ -81,6 +81,15 @@ actual object PlatformBridge {
             if (it is String) defaults.removeObjectForKey(it)
         }
     }
+
+    actual fun decodeBase64ToString(base64: String): String? {
+        return try {
+            val nsdata = platform.Foundation.NSData.create(base64Encoding = base64) ?: return null
+            platform.Foundation.NSString.create(data = nsdata, encoding = platform.Foundation.NSUTF8StringEncoding)?.toString()
+        } catch (_: Exception) {
+            null
+        }
+    }
 }
 
 @Composable

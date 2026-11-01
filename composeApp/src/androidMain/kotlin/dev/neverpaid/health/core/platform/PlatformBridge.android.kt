@@ -152,6 +152,15 @@ actual object PlatformBridge {
             inMemoryFallback.clear()
         }
     }
+
+    actual fun decodeBase64ToString(base64: String): String? {
+        return try {
+            val bytes = android.util.Base64.decode(base64, android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP)
+            String(bytes, Charsets.UTF_8)
+        } catch (_: Exception) {
+            null
+        }
+    }
 }
 
 internal fun Context.findActivity(): Activity? {
