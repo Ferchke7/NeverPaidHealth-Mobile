@@ -26,6 +26,10 @@ class AuthViewModel(
             AuthUiAction.OnOpenGoogleSignIn -> {
                 updateState { copy(errorMessage = null) }
             }
+            AuthUiAction.OnOpenBrowserLogin -> {
+                updateState { copy(errorMessage = null) }
+                dev.neverpaid.health.core.platform.PlatformBridge.openUrl("https://duda.uz/login?mobile=1")
+            }
             AuthUiAction.OnContinueAsGuest -> {
                 repository.continueAsGuest()
                 sendEffect(AuthUiEffect.NavigateToHome)

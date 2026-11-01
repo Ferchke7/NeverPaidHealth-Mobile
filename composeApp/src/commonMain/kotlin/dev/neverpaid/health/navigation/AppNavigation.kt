@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -365,7 +366,8 @@ fun DudaMobileApp() {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(DarkBackground)
+                            .background(DarkSurface)
+                            .windowInsetsPadding(WindowInsets.navigationBars)
                     ) {
                         // Global Minimized Focus Timer Pill
                         if (focusTimerState.isOpen && focusTimerState.isMinimized) {
@@ -400,7 +402,7 @@ fun DudaMobileApp() {
                             containerColor = DarkSurface,
                             contentColor = TextPrimary,
                             tonalElevation = 8.dp,
-                            windowInsets = WindowInsets.navigationBars
+                            windowInsets = WindowInsets(0, 0, 0, 0)
                         ) {
                             mobileBottomNavItems.forEach { screen ->
                                 val isSelected = currentScreen == screen

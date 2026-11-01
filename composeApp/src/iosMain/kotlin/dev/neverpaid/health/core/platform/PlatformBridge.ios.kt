@@ -96,6 +96,11 @@ actual object PlatformBridge {
             }
         }
     }
+
+    actual fun openUrl(url: String) {
+        val nsUrl = platform.Foundation.NSURL.URLWithString(url) ?: return
+        platform.UIKit.UIApplication.sharedApplication.openURL(nsUrl)
+    }
 }
 
 @Composable
@@ -111,81 +116,6 @@ actual fun rememberNativeGoogleAuthLauncher(
                     UIApplication.sharedApplication.openURL(url)
                 } else {
                     onError("Не удалось открыть браузер для входа")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-actual fun GoogleOAuthWebViewModal(
-    isOpen: Boolean,
-    authUrl: String,
-    onDismiss: () -> Unit,
-    onTokenCaptured: (accessToken: String, userJson: String?) -> Unit
-) {
-    if (!isOpen) return
-    var pastedToken by remember { mutableStateOf("") }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = Color(0xFF121215)
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text(
-                    text = "Вход через Google — duda.uz",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Нажмите «Открыть duda.uz в Safari», войдите через Google и вставьте полученный токен сессии (np_access_token):",
-                    color = Color(0xFFA1A1AA),
-                    fontSize = 12.sp
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                OutlinedButton(
-                    onClick = {
-                        NSURL.URLWithString(authUrl)?.let { url ->
-                            UIApplication.sharedApplication.openURL(url)
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Открыть duda.uz в Safari", color = Color(0xFF4ADE80))
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                OutlinedTextField(
-                    value = pastedToken,
-                    onValueChange = { pastedToken = it },
-                    label = { Text("JWT Access Token или Google ID Token") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    OutlinedButton(onClick = onDismiss) {
-                        Text("Отмена")
-                    }
-                    Spacer(modifier = Modifier.padding(4.dp))
-                    Button(
-                        onClick = {
-                            if (pastedToken.isNotBlank()) {
-                                onTokenCaptured(pastedToken.trim(), null)
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF22C55E),
-                            contentColor = Color.Black
-                        )
-                    ) {
-                        Text("Войти", fontWeight = FontWeight.Bold)
-                    }
                 }
             }
         }

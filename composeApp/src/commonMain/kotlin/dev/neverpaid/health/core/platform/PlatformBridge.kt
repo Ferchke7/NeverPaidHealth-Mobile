@@ -14,6 +14,7 @@ expect object PlatformBridge {
     fun remove(key: String)
     fun clear()
     fun decodeBase64ToString(base64: String): String?
+    fun openUrl(url: String)
 }
 
 /**
@@ -33,14 +34,6 @@ expect fun rememberNativeGoogleAuthLauncher(
     onSuccess: (idToken: String) -> Unit,
     onError: (errorMessage: String) -> Unit
 ): NativeGoogleAuthHandler
-
-@Composable
-expect fun GoogleOAuthWebViewModal(
-    isOpen: Boolean,
-    authUrl: String = "https://duda.uz/login",
-    onDismiss: () -> Unit,
-    onTokenCaptured: (accessToken: String, userJson: String?) -> Unit
-)
 
 @Composable
 expect fun rememberImagePickerLauncher(

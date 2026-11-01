@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.ElectricBolt
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShowChart
@@ -515,6 +516,40 @@ fun AuthScreen(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF18181B)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // 2b. Browser Sign-In (duda.uz)
+                OutlinedButton(
+                    onClick = { onAction(AuthUiAction.OnOpenBrowserLogin) },
+                    enabled = !state.isLoading,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = DarkSurfaceVariant,
+                        contentColor = TextPrimary
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Language,
+                        contentDescription = null,
+                        tint = EmeraldNeon,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Brauzerda kirish (duda.uz)"
+                            "en" -> "Sign in via Browser (duda.uz)"
+                            else -> "Войти через браузер (duda.uz)"
+                        },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
                     )
                 }
 
