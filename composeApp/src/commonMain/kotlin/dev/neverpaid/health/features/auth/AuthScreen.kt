@@ -21,13 +21,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ElectricBolt
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -42,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,7 +57,7 @@ import dev.neverpaid.health.core.designsystem.AthleticCard
 import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.CrimsonRed
-import dev.neverpaid.health.core.designsystem. CrimsonSubtle
+import dev.neverpaid.health.core.designsystem.CrimsonSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
@@ -192,18 +198,18 @@ fun AuthScreen(
     onTriggerGoogleSignIn: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val strings = LocalDudaStrings.current
     val scrollState = rememberScrollState()
+    val clipboardManager = LocalClipboardManager.current
     val lang = state.selectedLanguage.lowercase()
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = 20.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Top Header: Brand Logo + Inline Language Switcher (RU / UZ / EN) matching LoginPage.tsx
+        // Top Bar: Duda Brand Logo + Language Switcher
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -242,7 +248,7 @@ fun AuthScreen(
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        // Badge pill
+        // Hero Sparkle Badge
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(20.dp))
@@ -267,38 +273,38 @@ fun AuthScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         Text(
             text = when (lang) {
                 "uz" -> "Kuch mashg'ulotlari va ovqatlanishning aqlli kundaligi"
                 "en" -> "Your Smart Strength & Nutrition Training Log"
-                else -> "Твой умный дневник силовых тренировок"
+                else -> "Твой умный дневник силовых тренировок и питания"
             },
-            fontSize = 26.sp,
+            fontSize = 25.sp,
             fontWeight = FontWeight.Black,
             color = TextPrimary,
             textAlign = TextAlign.Center,
-            lineHeight = 32.sp
+            lineHeight = 31.sp
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = when (lang) {
-                "uz" -> "Mashg'ulotlarni yozib boring, 1RM rekordlarni kuzating, AI yordamida kaloriyalarni hisoblang va duda.uz bilan sinxronlang."
-                "en" -> "Log workouts with automatic rest timers, track 1RM & tonnage, analyze meals with AI, and sync seamlessly with duda.uz."
-                else -> "Логируй подходы и веса, отслеживай прогресс 1ПМ и тоннаж, считай КБЖУ по фото с ИИ и синхронизируй все данные с duda.uz."
+                "uz" -> "Mashg'ulotlarni yozib boring, 1RM rekordlarni kuzating, AI yordamida ovqatlanishni tahlil qiling."
+                "en" -> "Log workouts with auto rest timers, track 1RM & tonnage, and analyze meals with AI."
+                else -> "Логируй подходы и веса, отслеживай 1ПМ и тоннаж, считай КБЖУ с ИИ."
             },
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             color = TextSecondary,
             textAlign = TextAlign.Center,
-            lineHeight = 20.sp
+            lineHeight = 18.sp
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Main Login Card (1:1 with LoginPage.tsx right-hand auth card)
+        // Main Authentication Card
         AthleticCard(
             backgroundColor = DarkSurface,
             borderColor = BorderHighlight
@@ -311,30 +317,31 @@ fun AuthScreen(
             ) {
                 Text(
                     text = when (lang) {
-                        "uz" -> "duda.uz hisobiga kirish"
-                        "en" -> "Sign in to duda.uz"
-                        else -> "Вход в аккаунт duda.uz"
+                        "uz" -> "Kirish usulini tanlang"
+                        "en" -> "Choose Sign-in Method"
+                        else -> "Вход в аккаунт"
                     },
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = when (lang) {
-                        "uz" -> "Barcha mashg'ulotlaringiz va dasturlaringiz bulutda saqlanadi"
-                        "en" -> "All your workouts, routines, and AI logs sync with your cloud profile"
-                        else -> "Все ваши тренировки, программы и дневник питания синхронизируются с облаком"
+                        "uz" -> "Sinxronlash yoki darhol mashg'ulotni boshlash"
+                        "en" -> "Sync with cloud or start working out right away"
+                        else -> "Для синхронизации или быстрого старта тренировок"
                     },
                     fontSize = 12.sp,
                     color = TextSecondary,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
+                // Error Notice
                 if (state.errorMessage != null) {
                     Box(
                         modifier = Modifier
@@ -353,10 +360,10 @@ fun AuthScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                 }
 
-                // Primary Google Sign-In Button with Native One-Tap & Custom Tabs fallback
+                // 1. Google One-Tap Native Button
                 Button(
                     onClick = onTriggerGoogleSignIn,
                     enabled = !state.isLoading,
@@ -367,7 +374,7 @@ fun AuthScreen(
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp)
+                        .height(52.dp)
                 ) {
                     if (state.isLoading) {
                         CircularProgressIndicator(
@@ -377,13 +384,17 @@ fun AuthScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "Подключение...",
+                            text = when (lang) {
+                                "uz" -> "Ulanmoqda..."
+                                "en" -> "Connecting..."
+                                else -> "Подключение..."
+                            },
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
                         )
                     } else {
                         GoogleLogoIcon()
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = when (lang) {
                                 "uz" -> "Google orqali kirish"
@@ -396,8 +407,112 @@ fun AuthScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
+                // 2. In-App Web Browser Sign-In (duda.uz)
+                OutlinedButton(
+                    onClick = { onAction(AuthUiAction.OnOpenBrowserSignIn) },
+                    enabled = !state.isLoading,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = DarkSurfaceVariant,
+                        contentColor = TextPrimary
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Language,
+                        contentDescription = null,
+                        tint = EmeraldNeon,
+                        modifier = Modifier.size(19.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Brauzer orqali kirish (duda.uz)"
+                            "en" -> "Sign in via Browser (duda.uz)"
+                            else -> "Войти через браузер (duda.uz)"
+                        },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Divider with text "ИЛИ БЕЗ РЕГИСТРАЦИИ"
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtle)
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "YOKI RO'YXATDAN O'TMASDAN"
+                            "en" -> "OR CONTINUE AS GUEST"
+                            else -> "ИЛИ БЕЗ РЕГИСТРАЦИИ"
+                        },
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextMuted,
+                        modifier = Modifier.padding(horizontal = 10.dp)
+                    )
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtle)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 3. Instant Guest Mode (Emerald Neon)
+                Button(
+                    onClick = { onAction(AuthUiAction.OnContinueAsGuest) },
+                    enabled = !state.isLoading,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = EmeraldNeon,
+                        contentColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ElectricBolt,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Mehmon sifatida davom etish (Oflayn)"
+                            "en" -> "Continue as Guest (Offline)"
+                            else -> "Продолжить как гость (Оффлайн)"
+                        },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.Black
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Barcha funksiyalar ochiq • Ma'lumotlar telefonda saqlanadi"
+                        "en" -> "All features unlocked • 100% offline-ready"
+                        else -> "Все функции активны • Данные хранятся на устройстве"
+                    },
+                    fontSize = 11.sp,
+                    color = EmeraldLight.copy(alpha = 0.85f),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // 4. Token Fallback / Clipboard Paste Toggle
                 TextButton(
                     onClick = { onAction(AuthUiAction.OnToggleTokenFallback) }
                 ) {
@@ -411,8 +526,8 @@ fun AuthScreen(
                     Text(
                         text = when (lang) {
                             "uz" -> "Token orqali kirish (ixtiyoriy)"
-                            "en" -> "Sign in with Session / Google Token"
-                            else -> "Войти по токену сессии (если браузер закрыт)"
+                            "en" -> "Sign in with Session Token"
+                            else -> "Вход по токену сессии"
                         },
                         fontSize = 12.sp,
                         color = TextSecondary
@@ -424,14 +539,15 @@ fun AuthScreen(
                     OutlinedTextField(
                         value = state.tokenInput,
                         onValueChange = { onAction(AuthUiAction.OnTokenInputChanged(it)) },
-                        label = {
+                        placeholder = {
                             Text(
                                 when (lang) {
-                                    "uz" -> "duda.uz Access Token yoki Google ID Token"
-                                    "en" -> "duda.uz Access Token or Google ID Token"
-                                    else -> "Токен сессии (np_access_token) или Google ID Token"
+                                    "uz" -> "np_access_token yoki Google ID token"
+                                    "en" -> "np_access_token or Google ID token"
+                                    else -> "np_access_token или Google ID токен"
                                 },
-                                fontSize = 12.sp
+                                fontSize = 12.sp,
+                                color = TextMuted
                             )
                         },
                         singleLine = true,
@@ -446,24 +562,49 @@ fun AuthScreen(
                             unfocusedTextColor = TextPrimary
                         )
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedButton(
-                        onClick = { onAction(AuthUiAction.OnSubmitTokenClick) },
-                        enabled = !state.isLoading,
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(44.dp)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Tokenni tasdiqlash"
-                                "en" -> "Verify & Sign In"
-                                else -> "Подтвердить и войти"
+                        OutlinedButton(
+                            onClick = {
+                                val clip = clipboardManager.getText()?.text.orEmpty()
+                                onAction(AuthUiAction.OnPasteTokenFromClipboard(clip))
                             },
-                            fontWeight = FontWeight.Bold,
-                            color = EmeraldLight
-                        )
+                            modifier = Modifier.weight(1f).height(44.dp),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text(
+                                text = when (lang) {
+                                    "uz" -> "Buferdan qo'yish"
+                                    "en" -> "Paste"
+                                    else -> "Из буфера"
+                                },
+                                fontSize = 12.sp,
+                                color = TextSecondary
+                            )
+                        }
+
+                        Button(
+                            onClick = { onAction(AuthUiAction.OnSubmitTokenClick) },
+                            enabled = !state.isLoading,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldNeon),
+                            modifier = Modifier.weight(1f).height(44.dp)
+                        ) {
+                            Text(
+                                text = when (lang) {
+                                    "uz" -> "Tasdiqlash"
+                                    "en" -> "Verify"
+                                    else -> "Войти"
+                                },
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
+                        }
                     }
                 }
             }
@@ -471,74 +612,88 @@ fun AuthScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 4 Feature Cards matching LoginPage.tsx
+        // Feature Highlights Matrix (2x2 athletic cards)
         val features = listOf(
             Triple(
                 Icons.Default.FitnessCenter,
                 when (lang) {
-                    "uz" -> "Aqlli mashg'ulot kundaligi"
-                    "en" -> "Smart Workout Logger"
+                    "uz" -> "Aqlli mashg'ulot"
+                    "en" -> "Smart Workout Log"
                     else -> "Умный лог тренировок"
                 },
                 when (lang) {
-                    "uz" -> "Oldingi natijalar, dam olish taymeri va 1RM hisobi"
-                    "en" -> "Previous set autofill, rest timer & live 1RM calculation"
-                    else -> "Автоподстановка прошлых весов, таймер отдыха и расчёт 1ПМ"
+                    "uz" -> "Dam olish taymeri, 1RM va o'tgan og'irliklar"
+                    "en" -> "Rest timer, 1RM calculator & past sets"
+                    else -> "Авто-таймер отдыха, 1ПМ и прошлые веса"
                 }
             ),
             Triple(
-                Icons.Default.Layers,
+                Icons.Default.ShowChart,
                 when (lang) {
-                    "uz" -> "Mashg'ulot dasturlari va splitlar"
-                    "en" -> "Training Programs & Splits"
-                    else -> "Готовые программы и сплиты"
+                    "uz" -> "Haqiqiy tahlil"
+                    "en" -> "Real Analytics"
+                    else -> "Аналитика и тоннаж"
                 },
                 when (lang) {
-                    "uz" -> "PPL, Upper/Lower, Full Body va hamjamiyat dasturlari"
-                    "en" -> "PPL, Upper/Lower, Full Body & community templates"
-                    else -> "PPL, Upper/Lower, Full Body, отзывы атлетов и свои шаблоны"
+                    "uz" -> "Haftalik tonnaj va 84 kunlik faollik xaritasi"
+                    "en" -> "Weekly tonnage & 84-day consistency matrix"
+                    else -> "Недельный тоннаж и 84-дневный стрик"
                 }
             ),
             Triple(
-                Icons.Default.AutoAwesome,
+                Icons.Default.Restaurant,
                 when (lang) {
-                    "uz" -> "AI Murabbiy va Foto-tahlil"
-                    "en" -> "AI Coach & Photo Macro Scan"
-                    else -> "ИИ-Тренер и анализ еды по фото"
+                    "uz" -> "AI Ovqatlanish"
+                    "en" -> "AI Nutrition"
+                    else -> "ИИ-Дневник питания"
                 },
                 when (lang) {
-                    "uz" -> "Taom rasmidan kaloriyalarni aniqlash va shaxsiy AI murabbiy"
-                    "en" -> "Instant meal photo calorie estimation & personal AI coach"
-                    else -> "Оценка КБЖУ блюда по фотографии и персональный ИИ-коуч"
+                    "uz" -> "Taom rasmidan KBJU hisoblash va maqsadlar"
+                    "en" -> "Photo macro scan & daily target balance"
+                    else -> "Оценка КБЖУ по фото и баланс макросов"
                 }
             ),
             Triple(
-                Icons.Default.CalendarToday,
+                Icons.Default.ElectricBolt,
                 when (lang) {
-                    "uz" -> "Kunlik reja va Fokus taymeri"
-                    "en" -> "Daily Plan & Focus Timer"
-                    else -> "План дня и Фокус-таймер"
+                    "uz" -> "Oflayn rejim"
+                    "en" -> "Offline-Ready"
+                    else -> "Оффлайн-доступ"
                 },
                 when (lang) {
-                    "uz" -> "Kunlik vazifalar, Pomodoro taymeri va faollik jurnali"
-                    "en" -> "Athlete checklist, Pomodoro focus timer & activity log"
-                    else -> "Чек-лист атлета, Помодоро таймер и календарь активности"
+                    "uz" -> "Internet bo'lmasa ham to'liq ishlaydi"
+                    "en" -> "Works 100% locally with instant sync"
+                    else -> "Работает без интернета с авто-синхронизацией"
                 }
             )
         )
 
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            features.forEach { (icon, title, desc) ->
-                FeatureShowcaseCard(icon = icon, title = title, description = desc)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            for (i in features.indices step 2) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val f1 = features[i]
+                    Box(modifier = Modifier.weight(1f)) {
+                        FeatureHighlightTile(icon = f1.first, title = f1.second, description = f1.third)
+                    }
+                    if (i + 1 < features.size) {
+                        val f2 = features[i + 1]
+                        Box(modifier = Modifier.weight(1f)) {
+                            FeatureHighlightTile(icon = f2.first, title = f2.second, description = f2.third)
+                        }
+                    }
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
 @Composable
-private fun FeatureShowcaseCard(
+private fun FeatureHighlightTile(
     icon: ImageVector,
     title: String,
     description: String
@@ -547,43 +702,42 @@ private fun FeatureShowcaseCard(
         backgroundColor = DarkSurfaceVariant,
         borderColor = BorderSubtle
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(12.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(8.dp))
                     .background(EmeraldSubtle)
-                    .border(1.dp, BorderHighlight, RoundedCornerShape(10.dp)),
+                    .border(1.dp, BorderHighlight, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = EmeraldLight,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(17.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = description,
-                    fontSize = 12.sp,
-                    color = TextSecondary,
-                    lineHeight = 16.sp
-                )
-            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                maxLines = 1
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = description,
+                fontSize = 11.sp,
+                color = TextSecondary,
+                lineHeight = 14.sp,
+                maxLines = 2
+            )
         }
     }
 }

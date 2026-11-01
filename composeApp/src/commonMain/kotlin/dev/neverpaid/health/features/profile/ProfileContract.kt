@@ -29,6 +29,7 @@ data class ProfileUiState(
     val feedbackRating: Int = 5,
     val feedbackMessage: String = "",
     val isSubmittingFeedback: Boolean = false,
+    val isGuest: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null

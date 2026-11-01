@@ -34,7 +34,10 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ElectricBolt
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.Visibility
@@ -218,6 +221,11 @@ fun DashboardScreen(
                 onStartEmpty = { onAction(DashboardUiAction.OnStartEmptyWorkoutClick) },
                 onCreateRoutine = { onAction(DashboardUiAction.OnOpenRoutineEditor(null)) }
             )
+        }
+
+        // 2.5 Quick Hub Navigation (Programs, Exercises, History, Body)
+        item(key = "training_hub_actions") {
+            TrainingHubQuickActions(onNavigateToScreen = onNavigateToScreen)
         }
 
         // 3. Active Program Schedule Card (GET /api/v1/programs/user/active)
@@ -1290,6 +1298,59 @@ private fun RoutineEditorBottomSheet(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+fun TrainingHubQuickActions(
+    onNavigateToScreen: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val items = listOf(
+        Triple("programs", "Программы", Icons.Default.Layers),
+        Triple("exercises", "Упражнения", Icons.Default.FitnessCenter),
+        Triple("history", "История", Icons.Default.History),
+        Triple("body", "Замеры тела", Icons.Default.MonitorWeight)
+    )
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items.forEach { (route, title, icon) ->
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(DarkSurfaceVariant)
+                    .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
+                    .clickable { onNavigateToScreen(route) }
+                    .padding(vertical = 10.dp, horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = title,
+                        tint = EmeraldNeon,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = title,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
     }
 }

@@ -80,6 +80,8 @@ interface NeverPaidRepository {
     suspend fun login(email: String, password: String): AuthResponseDto
     suspend fun register(email: String, password: String, name: String): AuthResponseDto
     suspend fun logout()
+    fun continueAsGuest()
+    fun isGuestUser(): Boolean
 
     // --- 2. EXERCISES ---
     fun getExercises(): Flow<List<Exercise>>

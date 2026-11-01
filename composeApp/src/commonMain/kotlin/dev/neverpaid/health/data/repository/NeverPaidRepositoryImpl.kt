@@ -77,14 +77,12 @@ class NeverPaidRepositoryImpl(
     }
 
     // --- Auth & User ---
-    private val isAuthenticatedFlow = MutableStateFlow(DudaLocalStorage.getAccessToken() != null)
+    private val isAuthenticatedFlow = MutableStateFlow(DudaLocalStorage.getAccessToken() != null || DudaLocalStorage.getUserProfile() != null)
     private val currentUserFlow = MutableStateFlow(DudaLocalStorage.getUserProfile())
     private val preferencesFlow = MutableStateFlow(DudaLocalStorage.getUserPreferences())
 
-    // --- Live API State Flows (No fake data in production!) ---
-    private val exercisesFlow = MutableStateFlow<List<Exercise>>(
-        if (apiClient == null) StandardExerciseCatalog.standardExercises else emptyList()
-    )
+    // --- Live API State Flows (Standard fallback catalog guarantees offline-first readiness) ---
+    private val exercisesFlow = MutableStateFlow<List<Exercise>>(StandardExerciseCatalog.standardExercises)
     private val userRoutinesFlow = MutableStateFlow<List<Routine>>(emptyList())
     private val activeWorkoutFlow = MutableStateFlow<Workout?>(DudaLocalStorage.getActiveWorkoutDraft())
     private val isActiveWorkoutSheetOpenFlow = MutableStateFlow(false)
@@ -239,6 +237,22 @@ class NeverPaidRepositoryImpl(
         val prefs = preferencesFlow.value.copy(useKilograms = unit.lowercase() != "lb")
         updatePreferences(prefs)
         return updated
+    }
+
+    override fun continueAsGuest() {
+        val guest = UserProfileDto(
+            id = "guest_athlete",
+            email = "athlete@duda.uz",
+            displayName = "Гость",
+            unitPreference = if (preferencesFlow.value.useKilograms) "kg" else "lb"
+        )
+        DudaLocalStorage.setUserProfile(guest)
+        currentUserFlow.value = guest
+        isAuthenticatedFlow.value = true
+    }
+
+    override fun isGuestUser(): Boolean {
+        return currentUserFlow.value?.id == "guest_athlete" || DudaLocalStorage.getAccessToken() == null
     }
 
     override suspend fun login(email: String, password: String): AuthResponseDto {

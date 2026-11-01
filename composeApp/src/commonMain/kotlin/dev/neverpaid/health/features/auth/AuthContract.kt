@@ -17,8 +17,11 @@ sealed interface AuthUiAction : UiAction {
     data object OnOpenGoogleSignIn : AuthUiAction
     data class OnGoogleTokenCaptured(val idToken: String) : AuthUiAction
     data class OnGoogleAuthError(val message: String) : AuthUiAction
+    data object OnOpenBrowserSignIn : AuthUiAction
     data object OnDismissGoogleWebView : AuthUiAction
     data class OnGoogleWebViewSuccess(val accessToken: String, val userJson: String?) : AuthUiAction
+    data object OnContinueAsGuest : AuthUiAction
+    data class OnPasteTokenFromClipboard(val text: String) : AuthUiAction
     data object OnToggleTokenFallback : AuthUiAction
     data class OnTokenInputChanged(val value: String) : AuthUiAction
     data object OnSubmitTokenClick : AuthUiAction

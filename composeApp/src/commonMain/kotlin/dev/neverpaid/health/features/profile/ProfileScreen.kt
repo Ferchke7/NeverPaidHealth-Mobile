@@ -180,7 +180,7 @@ fun ProfileScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Text(
-                                    text = state.userName,
+                                    text = if (state.isGuest) "Гость" else state.userName,
                                     fontSize = 19.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = TextPrimary
@@ -188,14 +188,14 @@ fun ProfileScreen(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(6.dp))
-                                        .background(EmeraldSubtle)
+                                        .background(if (state.isGuest) dev.neverpaid.health.core.designsystem.AmberWarm.copy(alpha = 0.2f) else EmeraldSubtle)
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
-                                        text = "PRO",
+                                        text = if (state.isGuest) "ГОСТЬ" else "PRO",
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Black,
-                                        color = EmeraldNeon
+                                        color = if (state.isGuest) dev.neverpaid.health.core.designsystem.AmberWarm else EmeraldNeon
                                     )
                                 }
                             }
@@ -218,16 +218,71 @@ fun ProfileScreen(
                         Icon(
                             imageVector = Icons.Default.ExitToApp,
                             contentDescription = null,
-                            tint = CrimsonRed,
+                            tint = if (state.isGuest) EmeraldNeon else CrimsonRed,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = strings.profileLogout,
+                            text = if (state.isGuest) "Войти" else strings.profileLogout,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = CrimsonRed
+                            color = if (state.isGuest) EmeraldNeon else CrimsonRed
                         )
+                    }
+                }
+            }
+        }
+
+        // Guest Mode Sync Banner
+        if (state.isGuest) {
+            item(key = "guest_mode_banner") {
+                AthleticCard(
+                    backgroundColor = DarkSurfaceVariant,
+                    borderColor = dev.neverpaid.health.core.designsystem.BorderHighlight
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = EmeraldNeon,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "Локальный режим (Гость)",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Все ваши тренировки, программы и питание сохраняются локально. Войдите через Google, чтобы синхронизировать прогресс с duda.uz.",
+                            fontSize = 12.sp,
+                            color = TextSecondary,
+                            lineHeight = 16.sp
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Button(
+                            onClick = { onAction(ProfileUiAction.OnLogoutClick) },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldNeon),
+                            modifier = Modifier.fillMaxWidth().height(38.dp)
+                        ) {
+                            Text(
+                                text = "Войти через Google для синхронизации",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DarkBackground
+                            )
+                        }
                     }
                 }
             }

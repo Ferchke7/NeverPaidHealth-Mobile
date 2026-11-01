@@ -225,215 +225,133 @@ fun DudaMobileApp() {
                             .background(DarkSurface)
                             .statusBarsPadding()
                     ) {
-                        // Top Row: Brand Logo + Active Workout indicator + Language/Unit toggles + Focus Timer + Avatar
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        if (isSecondaryScreen) {
+                            // Secondary Screen Header: Back Arrow + Page Title
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.clickable { navigateTo(Screen.Workouts) }
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                if (isSecondaryScreen) {
-                                    IconButton(
-                                        onClick = { currentScreen = previousScreen },
-                                        modifier = Modifier.size(32.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                            contentDescription = strings.back,
-                                            tint = TextPrimary,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(6.dp))
+                                IconButton(
+                                    onClick = { currentScreen = previousScreen },
+                                    modifier = Modifier.size(40.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = strings.back,
+                                        tint = TextPrimary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
                                 }
-                                DudaBrandLogo(compact = true)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = getScreenTitle(currentScreen),
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
                             }
-
+                        } else {
+                            // Primary Screen Header: Brand Logo + Status Pills (LIVE, Focus) + Profile
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Active Workout pulsing header chip
-                                if (activeWorkout != null) {
-                                    Row(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(EmeraldNeon)
-                                            .clickable { navigateTo(Screen.ActiveWorkout) }
-                                            .padding(horizontal = 8.dp, vertical = 5.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
+                                Box(
+                                    modifier = Modifier.clickable { navigateTo(Screen.Workouts) }
+                                ) {
+                                    DudaBrandLogo(compact = false)
+                                }
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    // Active Workout pulsing header chip
+                                    if (activeWorkout != null) {
+                                        Row(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(EmeraldNeon)
+                                                .clickable { navigateTo(Screen.ActiveWorkout) }
+                                                .padding(horizontal = 8.dp, vertical = 5.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(6.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color.Black)
+                                            )
+                                            Text(
+                                                text = "LIVE",
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = Color.Black
+                                            )
+                                        }
+                                    }
+
+                                    // Focus Timer quick launcher button
+                                    if (focusTimerState.isOpen) {
                                         Box(
                                             modifier = Modifier
-                                                .size(6.dp)
-                                                .clip(CircleShape)
-                                                .background(Color.Black)
-                                        )
-                                        Text(
-                                            text = "LIVE",
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Black,
-                                            color = Color.Black
-                                        )
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(IndigoSubtle)
+                                                .clickable {
+                                                    repository.setFocusModalOpen(!focusTimerState.isModalOpen)
+                                                }
+                                                .padding(horizontal = 8.dp, vertical = 5.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Timer,
+                                                contentDescription = "Фокус-таймер",
+                                                tint = IndigoElectric,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
                                     }
-                                }
 
-                                // Focus Timer quick launcher button
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (focusTimerState.isOpen) IndigoSubtle else DarkSurfaceHigh)
-                                        .clickable {
-                                            if (focusTimerState.isOpen) {
-                                                repository.setFocusModalOpen(!focusTimerState.isModalOpen)
-                                            } else {
-                                                repository.startQuickFocusSession(
-                                                    title = "Фокус-сессия",
-                                                    category = "work",
-                                                    targetMinutes = 25,
-                                                    strategy = "25m",
-                                                    mode = "pomodoro"
-                                                )
-                                            }
+                                    // User Profile Avatar Button
+                                    val isGuest = repository.isGuestUser()
+                                    val userInitials = if (isGuest) "G" else currentUser?.name?.trim()?.take(1)?.uppercase().orEmpty()
+                                    Box(
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                if (currentScreen == Screen.Profile) EmeraldNeon else DarkSurfaceHigh
+                                            )
+                                            .border(
+                                                1.dp,
+                                                if (isGuest) dev.neverpaid.health.core.designsystem.AmberWarm.copy(alpha = 0.6f) else EmeraldNeon.copy(alpha = 0.4f),
+                                                CircleShape
+                                            )
+                                            .clickable { navigateTo(Screen.Profile) },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (userInitials.isNotEmpty()) {
+                                            Text(
+                                                text = userInitials,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = if (currentScreen == Screen.Profile) Color.Black else if (isGuest) dev.neverpaid.health.core.designsystem.AmberWarm else EmeraldNeon
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = Icons.Default.Person,
+                                                contentDescription = strings.profileTitle,
+                                                tint = if (currentScreen == Screen.Profile) Color.Black else EmeraldNeon,
+                                                modifier = Modifier.size(18.dp)
+                                            )
                                         }
-                                        .padding(horizontal = 8.dp, vertical = 5.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Timer,
-                                        contentDescription = "Фокус-таймер",
-                                        tint = if (focusTimerState.isOpen) IndigoElectric else TextSecondary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-
-                                // Language Switcher Pill (RU -> UZ -> EN)
-                                val nextLang = when (preferences.languageCode.lowercase()) {
-                                    "ru" -> "uz"
-                                    "uz" -> "en"
-                                    else -> "ru"
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(DarkSurfaceHigh)
-                                        .clickable {
-                                            scope.launch {
-                                                repository.updatePreferences(
-                                                    preferences.copy(languageCode = nextLang)
-                                                )
-                                            }
-                                        }
-                                        .padding(horizontal = 8.dp, vertical = 5.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = preferences.languageCode.uppercase(),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = EmeraldLight
-                                    )
-                                }
-
-                                // KG / LB Switcher Pill
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(DarkSurfaceHigh)
-                                        .clickable {
-                                            scope.launch {
-                                                repository.updatePreferences(
-                                                    preferences.copy(useKilograms = !preferences.useKilograms)
-                                                )
-                                            }
-                                        }
-                                        .padding(horizontal = 8.dp, vertical = 5.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = if (preferences.useKilograms) "KG" else "LB",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = TextSecondary
-                                    )
-                                }
-
-                                // User Profile Avatar Button
-                                val userInitials = currentUser?.name?.trim()?.take(1)?.uppercase().orEmpty()
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (currentScreen == Screen.Profile) EmeraldNeon else EmeraldSubtle
-                                        )
-                                        .border(1.dp, EmeraldNeon.copy(alpha = 0.5f), CircleShape)
-                                        .clickable { navigateTo(Screen.Profile) },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (userInitials.isNotEmpty()) {
-                                        Text(
-                                            text = userInitials,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Black,
-                                            color = if (currentScreen == Screen.Profile) Color.Black else EmeraldNeon
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Default.Person,
-                                            contentDescription = strings.profileTitle,
-                                            tint = if (currentScreen == Screen.Profile) Color.Black else EmeraldNeon,
-                                            modifier = Modifier.size(18.dp)
-                                        )
                                     }
-                                }
-                            }
-                        }
-
-                        // Quick Navigation Horizontal Strip (Workouts, Programs, History, Exercises, Body, Profile)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            quickTopNavPills.forEach { pillScreen ->
-                                val isSelected = currentScreen == pillScreen
-                                val label = getScreenTitle(pillScreen)
-                                Row(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(if (isSelected) EmeraldSubtle else DarkSurfaceHigh)
-                                        .border(
-                                            width = 1.dp,
-                                            color = if (isSelected) EmeraldNeon.copy(alpha = 0.5f) else BorderSubtle,
-                                            shape = RoundedCornerShape(10.dp)
-                                        )
-                                        .clickable { navigateTo(pillScreen) }
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = pillScreen.icon,
-                                        contentDescription = null,
-                                        tint = if (isSelected) EmeraldNeon else TextSecondary,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Text(
-                                        text = label,
-                                        fontSize = 11.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) EmeraldLight else TextSecondary
-                                    )
                                 }
                             }
                         }
@@ -482,8 +400,7 @@ fun DudaMobileApp() {
                             containerColor = DarkSurface,
                             contentColor = TextPrimary,
                             tonalElevation = 8.dp,
-                            windowInsets = WindowInsets.navigationBars,
-                            modifier = Modifier.height(64.dp)
+                            windowInsets = WindowInsets.navigationBars
                         ) {
                             mobileBottomNavItems.forEach { screen ->
                                 val isSelected = currentScreen == screen

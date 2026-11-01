@@ -86,6 +86,8 @@ class ProfileViewModel(
     }
 
     private fun observeProfileAndPreferences() {
+        updateState { copy(isGuest = repository.isGuestUser()) }
+
         launchGuarded {
             repository.getUserPreferences().collectLatest { prefs ->
                 updateState {

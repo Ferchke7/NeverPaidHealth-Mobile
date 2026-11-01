@@ -226,6 +226,18 @@ class FakeNeverPaidRepository : NeverPaidRepository {
         authenticatedFlow.value = false
     }
 
+    override fun continueAsGuest() {
+        authenticatedFlow.value = true
+        currentUserFlow.value = UserProfileDto(
+            id = "guest_athlete",
+            email = "guest@duda.uz",
+            displayName = "Гость",
+            unitPreference = "kg"
+        )
+    }
+
+    override fun isGuestUser(): Boolean = currentUserFlow.value?.id == "guest_athlete"
+
     override fun getExercises(): Flow<List<Exercise>> = exercisesFlow.asStateFlow()
     override fun getExerciseById(id: String): Exercise? = exercisesFlow.value.find { it.id == id }
 

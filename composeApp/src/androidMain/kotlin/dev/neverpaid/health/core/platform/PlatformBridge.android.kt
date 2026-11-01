@@ -208,8 +208,7 @@ actual fun rememberNativeGoogleAuthLauncher(
                     } catch (e: GetCredentialCancellationException) {
                         // User cancelled the prompt, do not show error
                     } catch (e: Exception) {
-                        // Fallback to Chrome Custom Tabs
-                        launchCustomTabFallback(activity, currentOnError)
+                        currentOnError(e.message ?: "Ошибка Google Sign-In. Используйте «Войти через браузер» или «Войти как гость».")
                     }
                 }
             }
@@ -251,6 +250,7 @@ actual fun GoogleOAuthWebViewModal(
 
     val currentOnTokenCaptured by rememberUpdatedState(onTokenCaptured)
     var hasCaptured by remember { mutableStateOf(false) }
+    var pageProgress by remember { mutableStateOf(0) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -259,8 +259,8 @@ actual fun GoogleOAuthWebViewModal(
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
-            shape = RoundedCornerShape(24.dp),
+                .padding(8.dp),
+            shape = RoundedCornerShape(20.dp),
             color = Color(0xFF09090B)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -268,23 +268,45 @@ actual fun GoogleOAuthWebViewModal(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFF121215))
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Вход через Google — duda.uz",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    IconButton(onClick = onDismiss) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF22C55E))
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Вход в аккаунт duda.uz",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(32.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Закрыть",
-                            tint = Color(0xFFA1A1AA)
+                            tint = Color(0xFFA1A1AA),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
+                }
+
+                if (pageProgress in 1..99) {
+                    androidx.compose.material3.LinearProgressIndicator(
+                        progress = { pageProgress / 100f },
+                        modifier = Modifier.fillMaxWidth().height(3.dp),
+                        color = Color(0xFF22C55E),
+                        trackColor = Color(0xFF18181B)
+                    )
                 }
 
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -317,8 +339,7 @@ actual fun GoogleOAuthWebViewModal(
                                                         userJson.takeIf { it.isNotBlank() && it != "null" }
                                                     )
                                                 }
-                                            } catch (_: Exception) {
-                                            }
+                                            } catch (_: Exception) {}
                                         }
                                     }
 
@@ -334,11 +355,11 @@ actual fun GoogleOAuthWebViewModal(
                                     }
                                 }
                                 if (!hasCaptured) {
-                                    handler.postDelayed(this, 600L)
+                                    handler.postDelayed(this, 350L)
                                 }
                             }
                         }
-                        handler.postDelayed(runnable, 600L)
+                        handler.postDelayed(runnable, 350L)
                         onDispose {
                             handler.removeCallbacks(runnable)
                         }
@@ -356,24 +377,61 @@ actual fun GoogleOAuthWebViewModal(
                                 settings.domStorageEnabled = true
                                 settings.databaseEnabled = true
                                 settings.javaScriptCanOpenWindowsAutomatically = true
-                                settings.setSupportMultipleWindows(false)
+                                settings.setSupportMultipleWindows(true)
                                 settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
-                                // Strip "; wv" so Google OAuth / GIS allows authentication inside WebView
-                                val defaultUa = settings.userAgentString ?: ""
-                                settings.userAgentString = defaultUa
-                                    .replace("; wv", "")
-                                    .replace("Version/4.0 ", "")
+                                // Use standard clean Chrome Mobile User-Agent so Google allows login
+                                settings.userAgentString =
+                                    "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.107 Mobile Safari/537.36"
 
                                 CookieManager.getInstance().setAcceptCookie(true)
                                 CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
 
-                                webChromeClient = WebChromeClient()
+                                webChromeClient = object : WebChromeClient() {
+                                    override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                                        pageProgress = newProgress
+                                    }
+
+                                    override fun onCreateWindow(
+                                        view: WebView?,
+                                        isDialog: Boolean,
+                                        isUserGesture: Boolean,
+                                        resultMsg: android.os.Message?
+                                    ): Boolean {
+                                        val transport = resultMsg?.obj as? WebView.WebViewTransport
+                                        transport?.webView = view
+                                        resultMsg?.sendToTarget()
+                                        return true
+                                    }
+                                }
+
                                 webViewClient = object : WebViewClient() {
                                     override fun shouldOverrideUrlLoading(
                                         view: WebView?,
                                         request: WebResourceRequest?
                                     ): Boolean {
+                                        val uri = request?.url ?: return false
+                                        val urlStr = uri.toString()
+
+                                        if (uri.scheme == "duda") {
+                                            val token = uri.getQueryParameter("token")
+                                                ?: uri.getQueryParameter("access_token")
+                                            if (!token.isNullOrBlank()) {
+                                                hasCaptured = true
+                                                currentOnTokenCaptured(token, null)
+                                                return true
+                                            }
+                                        }
+
+                                        if (urlStr.contains("access_token=") || urlStr.contains("token=")) {
+                                            val match = Regex("[?&#](?:access_)?token=([^&#]+)").find(urlStr)
+                                            val extracted = match?.groupValues?.getOrNull(1)
+                                            if (!extracted.isNullOrBlank()) {
+                                                hasCaptured = true
+                                                currentOnTokenCaptured(extracted, null)
+                                                return true
+                                            }
+                                        }
                                         return false
                                     }
                                 }

@@ -24,7 +24,21 @@ class AuthViewModel(
     override fun onAction(action: AuthUiAction) {
         when (action) {
             AuthUiAction.OnOpenGoogleSignIn -> {
+                updateState { copy(errorMessage = null) }
+            }
+            AuthUiAction.OnOpenBrowserSignIn -> {
                 updateState { copy(isWebViewOpen = true, errorMessage = null) }
+            }
+            AuthUiAction.OnContinueAsGuest -> {
+                repository.continueAsGuest()
+                sendEffect(AuthUiEffect.NavigateToHome)
+            }
+            is AuthUiAction.OnPasteTokenFromClipboard -> {
+                val clean = action.text.trim().trim('"', '\'')
+                if (clean.isNotBlank()) {
+                    updateState { copy(tokenInput = clean) }
+                    submitManualToken(clean)
+                }
             }
             is AuthUiAction.OnGoogleTokenCaptured -> {
                 handleGoogleIdToken(action.idToken)
@@ -87,8 +101,8 @@ class AuthViewModel(
         }
     }
 
-    private fun submitManualToken() {
-        val raw = currentState.tokenInput.trim()
+    private fun submitManualToken(overrideToken: String? = null) {
+        val raw = (overrideToken ?: currentState.tokenInput).trim().trim('"', '\'')
         if (raw.isEmpty()) {
             updateState { copy(errorMessage = "Введите токен авторизации") }
             return
@@ -116,7 +130,7 @@ class AuthViewModel(
                     updateState {
                         copy(
                             isLoading = false,
-                            errorMessage = err.message ?: "Неверный токен. Войдите через кнопку Google выше."
+                            errorMessage = err.message ?: "Неверный токен. Войдите через Google или как гость."
                         )
                     }
                 }
