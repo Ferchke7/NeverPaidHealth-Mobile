@@ -909,9 +909,9 @@ private fun WorkoutSetRow(
     var isExpanded by remember { mutableStateOf(false) }
     var appliedKey by remember { mutableStateOf<String?>(null) }
 
-    // Top 3 best records for this specific set number
+    // Last 3 recent performances for this specific set number
     val (topRecords, isFallback) = remember(allExerciseHistory, set.setNumber) {
-        SetHistoryCalculator.getTop3BestForSet(allExerciseHistory, set.setNumber)
+        SetHistoryCalculator.getLast3RecentForSet(allExerciseHistory, set.setNumber)
     }
 
     val hasPrev = set.previousWeightKg != null && set.previousReps != null

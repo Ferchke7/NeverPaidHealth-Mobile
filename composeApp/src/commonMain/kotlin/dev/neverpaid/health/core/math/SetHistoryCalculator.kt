@@ -80,6 +80,49 @@ object SetHistoryCalculator {
         return records
     }
 
+    /**
+     * Returns the 3 most recent sessions for a specific set number (sorted by recency descending).
+     */
+    fun getLast3RecentForSet(
+        allRecords: List<HistoricalSetRecord>,
+        setNumber: Int
+    ): Pair<List<HistoricalSetRecord>, Boolean> {
+        if (allRecords.isEmpty()) return Pair(emptyList(), false)
+
+        val exact = allRecords.filter { it.setNumber == setNumber }
+            .sortedByDescending { it.dateEpochMs }
+
+        val uniqueExact = mutableListOf<HistoricalSetRecord>()
+        val seenWorkouts = mutableSetOf<String>()
+
+        for (r in exact) {
+            if (!seenWorkouts.contains(r.workoutId)) {
+                seenWorkouts.add(r.workoutId)
+                uniqueExact.add(r)
+                if (uniqueExact.size >= 3) break
+            }
+        }
+
+        if (uniqueExact.isNotEmpty()) {
+            return Pair(uniqueExact, false)
+        }
+
+        // Fallback to recent performances for this exercise across any set
+        val allSorted = allRecords.sortedByDescending { it.dateEpochMs }
+        val fallback = mutableListOf<HistoricalSetRecord>()
+        val seenAll = mutableSetOf<String>()
+
+        for (r in allSorted) {
+            if (!seenAll.contains(r.workoutId)) {
+                seenAll.add(r.workoutId)
+                fallback.add(r)
+                if (fallback.size >= 3) break
+            }
+        }
+
+        return Pair(fallback, fallback.isNotEmpty())
+    }
+
     fun getTop3BestForSet(
         allRecords: List<HistoricalSetRecord>,
         setNumber: Int
