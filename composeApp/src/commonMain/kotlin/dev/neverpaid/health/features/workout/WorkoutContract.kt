@@ -16,7 +16,12 @@ data class WorkoutUiState(
     val swappingExerciseId: String? = null,
     val inspectedExercise: Exercise? = null,
     val availableExercises: List<Exercise> = emptyList(),
-    val isKgUnit: Boolean = true
+    val isKgUnit: Boolean = true,
+    val workoutHistory: List<Workout> = emptyList(),
+    val historySheetExerciseId: String? = null,
+    val historySheetExerciseName: String? = null,
+    val historySheetSetNumber: Int? = null,
+    val historySheetActiveSetId: String? = null
 ) : UiState
 
 sealed interface WorkoutUiAction : UiAction {
@@ -24,6 +29,9 @@ sealed interface WorkoutUiAction : UiAction {
     data class OnUpdateWeight(val exerciseId: String, val setId: String, val weight: Double) : WorkoutUiAction
     data class OnUpdateReps(val exerciseId: String, val setId: String, val reps: Int) : WorkoutUiAction
     data class OnApplyPreviousSet(val exerciseId: String, val setId: String) : WorkoutUiAction
+    data class OnApplySetValues(val exerciseId: String, val setId: String, val weightKg: Double, val reps: Int) : WorkoutUiAction
+    data class OnOpenSetHistorySheet(val exerciseId: String, val exerciseName: String, val setNumber: Int, val setId: String) : WorkoutUiAction
+    data object OnCloseSetHistorySheet : WorkoutUiAction
     data class OnToggleSetComplete(val exerciseId: String, val setId: String) : WorkoutUiAction
     data class OnToggleSetType(val exerciseId: String, val setId: String) : WorkoutUiAction
     data class OnAddSet(val exerciseId: String) : WorkoutUiAction

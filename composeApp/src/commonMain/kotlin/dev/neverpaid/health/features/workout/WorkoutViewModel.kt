@@ -8,6 +8,7 @@ import dev.neverpaid.health.domain.model.Workout
 import dev.neverpaid.health.domain.model.WorkoutExercise
 import dev.neverpaid.health.domain.model.WorkoutSet
 import dev.neverpaid.health.domain.repository.NeverPaidRepository
+import dev.neverpaid.health.domain.repository.UserPreferencesData
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
@@ -33,6 +34,31 @@ class WorkoutViewModel(
             is WorkoutUiAction.OnUpdateWeight -> updateWeight(action.exerciseId, action.setId, action.weight)
             is WorkoutUiAction.OnUpdateReps -> updateReps(action.exerciseId, action.setId, action.reps)
             is WorkoutUiAction.OnApplyPreviousSet -> applyPreviousSet(action.exerciseId, action.setId)
+            is WorkoutUiAction.OnApplySetValues -> {
+                updateWeight(action.exerciseId, action.setId, action.weightKg)
+                updateReps(action.exerciseId, action.setId, action.reps)
+                sendEffect(WorkoutUiEffect.TriggerHaptic)
+            }
+            is WorkoutUiAction.OnOpenSetHistorySheet -> {
+                updateState {
+                    copy(
+                        historySheetExerciseId = action.exerciseId,
+                        historySheetExerciseName = action.exerciseName,
+                        historySheetSetNumber = action.setNumber,
+                        historySheetActiveSetId = action.setId
+                    )
+                }
+            }
+            WorkoutUiAction.OnCloseSetHistorySheet -> {
+                updateState {
+                    copy(
+                        historySheetExerciseId = null,
+                        historySheetExerciseName = null,
+                        historySheetSetNumber = null,
+                        historySheetActiveSetId = null
+                    )
+                }
+            }
             is WorkoutUiAction.OnToggleSetComplete -> toggleSetComplete(action.exerciseId, action.setId)
             is WorkoutUiAction.OnToggleSetType -> cycleSetType(action.exerciseId, action.setId)
             is WorkoutUiAction.OnAddSet -> addSetToExercise(action.exerciseId)
@@ -65,17 +91,19 @@ class WorkoutViewModel(
             combine(
                 repository.getActiveWorkout(),
                 repository.getExercises(),
-                repository.getUserPreferences()
-            ) { active, exercises, prefs ->
-                Triple(active, exercises, prefs)
-            }.collect { (active, exercises, prefs) ->
+                repository.getUserPreferences(),
+                repository.getWorkoutHistory()
+            ) { active, exercises, prefs, history ->
+                WorkoutInitData(active, exercises, prefs, history)
+            }.collect { (active, exercises, prefs, history) ->
                 defaultRestSeconds = prefs.defaultRestSeconds
                 updateState {
                     copy(
                         workout = active,
                         workoutStartTimeEpochMs = active?.startTimeEpochMs ?: PlatformBridge.currentTimeMillis(),
                         availableExercises = exercises,
-                        isKgUnit = prefs.useKilograms
+                        isKgUnit = prefs.useKilograms,
+                        workoutHistory = history
                     )
                 }
             }
@@ -390,3 +418,10 @@ class WorkoutViewModel(
         restTimerJob?.cancel()
     }
 }
+
+private data class WorkoutInitData(
+    val active: Workout?,
+    val exercises: List<Exercise>,
+    val prefs: UserPreferencesData,
+    val history: List<Workout>
+)

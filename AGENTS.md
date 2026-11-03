@@ -56,3 +56,9 @@ This file defines the mandatory engineering, architectural, UI/UX, and localizat
 3. **Date-Isolated Daily Logs (`YYYY-MM-DD`):**
    - Daily Todo tasks and Nutrition logs are strictly isolated by date string (`YYYY-MM-DD`).
    - Completing a recurring task today marks it completed **only** for today's date in the activity log (`completedDates`), so tomorrow starts fresh while preserving full historical logs and streak calculations.
+
+---
+
+## 6. Mandatory 1-to-1 Web & Mobile Synchronization (Cross-Repo Law)
+- **Universal Feature Parity:** Whenever ANY feature, user flow, UX interaction, record calculation, or improvement is added or modified in the web frontend (`NeverPaidHealth/frontend`), the EXACT same feature MUST be simultaneously and mandatory mirrored in this Kotlin Compose Multiplatform mobile version (`duda-mobile`).
+- **Zero Missing Capabilities:** Set record expansions, top-3 best performance tracking, separate history bottom sheets, plate calculation hints, date-isolated todos, Pomodoro timers, nutrition tracking with AI, program comments with Instagram-style bottom sheets, and trilingual i18n (`RU`/`UZ`/`EN`) must remain 100% identical in functionality and feel across both web and mobile. Both clients represent the exact same product: **`duda.uz`**.
