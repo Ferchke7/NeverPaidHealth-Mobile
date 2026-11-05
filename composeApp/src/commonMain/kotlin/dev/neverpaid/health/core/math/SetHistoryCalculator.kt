@@ -92,35 +92,32 @@ object SetHistoryCalculator {
         val exact = allRecords.filter { it.setNumber == setNumber }
             .sortedByDescending { it.dateEpochMs }
 
-        val uniqueExact = mutableListOf<HistoricalSetRecord>()
-        val seenWorkouts = mutableSetOf<String>()
+        val result = mutableListOf<HistoricalSetRecord>()
+        val seenKeys = mutableSetOf<String>()
 
         for (r in exact) {
-            if (!seenWorkouts.contains(r.workoutId)) {
-                seenWorkouts.add(r.workoutId)
-                uniqueExact.add(r)
-                if (uniqueExact.size >= 3) break
+            val key = "${r.workoutId}-${r.setNumber}"
+            if (!seenKeys.contains(key)) {
+                seenKeys.add(key)
+                result.add(r)
+                if (result.size >= 3) break
             }
         }
 
-        if (uniqueExact.isNotEmpty()) {
-            return Pair(uniqueExact, false)
-        }
-
-        // Fallback to recent performances for this exercise across any set
-        val allSorted = allRecords.sortedByDescending { it.dateEpochMs }
-        val fallback = mutableListOf<HistoricalSetRecord>()
-        val seenAll = mutableSetOf<String>()
-
-        for (r in allSorted) {
-            if (!seenAll.contains(r.workoutId)) {
-                seenAll.add(r.workoutId)
-                fallback.add(r)
-                if (fallback.size >= 3) break
+        // If fewer than 3, pull from other sets of this exercise
+        if (result.size < 3) {
+            val allSorted = allRecords.sortedByDescending { it.dateEpochMs }
+            for (r in allSorted) {
+                val key = "${r.workoutId}-${r.setNumber}"
+                if (!seenKeys.contains(key)) {
+                    seenKeys.add(key)
+                    result.add(r)
+                    if (result.size >= 3) break
+                }
             }
         }
 
-        return Pair(fallback, fallback.isNotEmpty())
+        return Pair(result, result.size > exact.size)
     }
 
     fun getTop3BestForSet(

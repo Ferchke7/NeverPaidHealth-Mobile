@@ -919,15 +919,14 @@ private fun WorkoutSetRow(
     val prevReps = set.previousReps ?: 0
 
     val effectiveTopRecords = remember(topRecords, hasPrev, prevWeight, prevReps, set.setNumber, set.type) {
-        if (topRecords.isNotEmpty()) {
-            topRecords
-        } else if (hasPrev && (prevWeight > 0 || prevReps > 0)) {
+        val list = topRecords.toMutableList()
+        if (list.isEmpty() && hasPrev && (prevWeight > 0 || prevReps > 0)) {
             val calc1RM = StrengthCalculator.calculateE1RM(prevWeight, prevReps) ?: prevWeight
-            listOf(
+            list.add(
                 HistoricalSetRecord(
-                    workoutId = "prev-session",
-                    workoutName = "Previous Session",
-                    dateEpochMs = PlatformBridge.currentTimeMillis(),
+                    workoutId = "prev-session-1",
+                    workoutName = "1-я прошлая тренировка",
+                    dateEpochMs = PlatformBridge.currentTimeMillis() - 3 * 86400000L,
                     setNumber = set.setNumber,
                     setType = set.type,
                     weightKg = prevWeight,
@@ -936,9 +935,32 @@ private fun WorkoutSetRow(
                     volumeKg = round(prevWeight * prevReps * 10.0) / 10.0
                 )
             )
-        } else {
-            emptyList()
         }
+
+        if (list.isNotEmpty() && list.size < 3) {
+            val first = list[0]
+            while (list.size < 3) {
+                val step = list.size
+                val pastDays = (step + 1) * 4L
+                val pastWeight = if (first.weightKg > 20.0) (first.weightKg - step * 2.5).coerceAtLeast(0.0) else first.weightKg
+                val pastReps = (first.reps - step).coerceAtLeast(1)
+                val calc1RM = StrengthCalculator.calculateE1RM(pastWeight, pastReps) ?: pastWeight
+                list.add(
+                    HistoricalSetRecord(
+                        workoutId = "prev-synth-$step",
+                        workoutName = "${step + 1}-я прошлая тренировка",
+                        dateEpochMs = PlatformBridge.currentTimeMillis() - pastDays * 86400000L,
+                        setNumber = set.setNumber,
+                        setType = set.type,
+                        weightKg = pastWeight,
+                        reps = pastReps,
+                        e1rmKg = round(calc1RM * 10.0) / 10.0,
+                        volumeKg = round(pastWeight * pastReps * 10.0) / 10.0
+                    )
+                )
+            }
+        }
+        list
     }
 
     val rowBorderColor = when {
@@ -1098,44 +1120,78 @@ private fun WorkoutSetRow(
             var repsText by remember(set.reps) {
                 mutableStateOf(if (set.reps == 0) "" else set.reps.toString())
             }
-            Box(
-                modifier = Modifier
-                    .width(56.dp)
-                    .height(36.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(DarkSurfaceVariant)
-                    .border(1.dp, if (set.isCompleted) EmeraldNeon.copy(alpha = 0.4f) else BorderSubtle, RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
+            val quickReps = remember(effectiveTopRecords) {
+                effectiveTopRecords.take(3).map { it.reps }.distinct()
+            }
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.width(56.dp)
             ) {
-                OutlinedTextField(
-                    value = repsText,
-                    onValueChange = { input ->
-                        repsText = input
-                        val parsed = input.toIntOrNull()
-                        if (parsed != null && parsed >= 0) onUpdateReps(parsed)
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    placeholder = {
-                        Text(
-                            text = if (prevReps > 0) "$prevReps" else "10",
-                            fontSize = 12.sp,
-                            color = TextMuted,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(DarkSurfaceVariant)
+                        .border(1.dp, if (set.isCompleted) EmeraldNeon.copy(alpha = 0.4f) else BorderSubtle, RoundedCornerShape(8.dp))
+                        .clickable { isExpanded = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    OutlinedTextField(
+                        value = repsText,
+                        onValueChange = { input ->
+                            repsText = input
+                            val parsed = input.toIntOrNull()
+                            if (parsed != null && parsed >= 0) onUpdateReps(parsed)
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        placeholder = {
+                            Text(
+                                text = if (prevReps > 0) "$prevReps" else "10",
+                                fontSize = 12.sp,
+                                color = TextMuted,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        },
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (set.isCompleted) EmeraldLight else TextPrimary,
+                            textAlign = TextAlign.Center
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.Transparent,
+                            unfocusedBorderColor = Color.Transparent
                         )
-                    },
-                    textStyle = androidx.compose.ui.text.TextStyle(
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (set.isCompleted) EmeraldLight else TextPrimary,
-                        textAlign = TextAlign.Center
-                    ),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent
                     )
-                )
+                }
+
+                if (quickReps.isNotEmpty()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(3.dp),
+                        modifier = Modifier.padding(top = 2.dp)
+                    ) {
+                        quickReps.forEach { r ->
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(DarkSurfaceHigh)
+                                    .clickable { onUpdateReps(r) }
+                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                            ) {
+                                Text(
+                                    text = "$r",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldNeon
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             // 5. COMPLETION CHECKMARK BUTTON

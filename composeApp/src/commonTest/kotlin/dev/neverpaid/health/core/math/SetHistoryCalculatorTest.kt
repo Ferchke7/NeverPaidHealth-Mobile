@@ -170,4 +170,49 @@ class SetHistoryCalculatorTest {
         assertEquals("w1", recent[2].workoutId)
         assertEquals(30.0, recent[2].weightKg)
     }
+
+    @Test
+    fun testLast3RecentForSetPullsFromOtherSetsWhenExactFewerThan3() {
+        val records = listOf(
+            HistoricalSetRecord(
+                workoutId = "w1",
+                workoutName = "Session 1",
+                dateEpochMs = 1000L,
+                setNumber = 1,
+                setType = "normal",
+                weightKg = 25.0,
+                reps = 12,
+                e1rmKg = 35.0,
+                volumeKg = 300.0
+            ),
+            HistoricalSetRecord(
+                workoutId = "w1",
+                workoutName = "Session 1",
+                dateEpochMs = 1000L,
+                setNumber = 2,
+                setType = "normal",
+                weightKg = 25.0,
+                reps = 12,
+                e1rmKg = 35.0,
+                volumeKg = 300.0
+            ),
+            HistoricalSetRecord(
+                workoutId = "w1",
+                workoutName = "Session 1",
+                dateEpochMs = 1000L,
+                setNumber = 3,
+                setType = "normal",
+                weightKg = 20.0,
+                reps = 12,
+                e1rmKg = 28.0,
+                volumeKg = 240.0
+            )
+        )
+
+        val (recent, isFallback) = SetHistoryCalculator.getLast3RecentForSet(records, 1)
+        assertEquals(3, recent.size)
+        assertEquals(25.0, recent[0].weightKg)
+        assertEquals(25.0, recent[1].weightKg)
+        assertEquals(20.0, recent[2].weightKg)
+    }
 }
