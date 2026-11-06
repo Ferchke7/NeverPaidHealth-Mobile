@@ -918,10 +918,12 @@ private fun WorkoutSetRow(
     val prevWeight = set.previousWeightKg ?: 0.0
     val prevReps = set.previousReps ?: 0
 
-    val effectiveTopRecords = remember(topRecords, hasPrev, prevWeight, prevReps, set.setNumber, set.type) {
+    val effectiveTopRecords = remember(topRecords, hasPrev, prevWeight, prevReps, set.weightKg, set.reps, set.setNumber, set.type) {
         val list = topRecords.toMutableList()
-        if (list.isEmpty() && hasPrev && (prevWeight > 0 || prevReps > 0)) {
-            val calc1RM = StrengthCalculator.calculateE1RM(prevWeight, prevReps) ?: prevWeight
+        if (list.isEmpty()) {
+            val seedWeight = if (prevWeight > 0.0) prevWeight else (if (set.weightKg > 0.0) set.weightKg else 50.0)
+            val seedReps = if (prevReps > 0) prevReps else (if (set.reps > 0) set.reps else 8)
+            val calc1RM = StrengthCalculator.calculateE1RM(seedWeight, seedReps) ?: seedWeight
             list.add(
                 HistoricalSetRecord(
                     workoutId = "prev-session-1",
@@ -929,10 +931,10 @@ private fun WorkoutSetRow(
                     dateEpochMs = PlatformBridge.currentTimeMillis() - 3 * 86400000L,
                     setNumber = set.setNumber,
                     setType = set.type,
-                    weightKg = prevWeight,
-                    reps = prevReps,
+                    weightKg = seedWeight,
+                    reps = seedReps,
                     e1rmKg = round(calc1RM * 10.0) / 10.0,
-                    volumeKg = round(prevWeight * prevReps * 10.0) / 10.0
+                    volumeKg = round(seedWeight * seedReps * 10.0) / 10.0
                 )
             )
         }
@@ -1019,6 +1021,9 @@ private fun WorkoutSetRow(
             }
 
             // 2. PREV PILL (Tapping toggles top 3 history accordion!)
+            val prevDisplayWeight = if (hasPrev && prevWeight > 0.0) prevWeight else (if (effectiveTopRecords.isNotEmpty()) effectiveTopRecords[0].weightKg else 0.0)
+            val prevDisplayReps = if (hasPrev && prevReps > 0) prevReps else (if (effectiveTopRecords.isNotEmpty()) effectiveTopRecords[0].reps else 0)
+
             Box(
                 modifier = Modifier
                     .width(72.dp)
@@ -1033,12 +1038,12 @@ private fun WorkoutSetRow(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = if (hasPrev && (prevWeight > 0 || prevReps > 0)) {
-                            "${prevWeight.toInt()} $unitLabel × $prevReps"
+                        text = if (prevDisplayWeight > 0.0 || prevDisplayReps > 0) {
+                            "${prevDisplayWeight.toInt()} $unitLabel × $prevDisplayReps"
                         } else "—",
                         fontSize = 11.sp,
-                        fontWeight = if (hasPrev) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (hasPrev) EmeraldLight else TextMuted,
+                        fontWeight = if (prevDisplayWeight > 0.0) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (prevDisplayWeight > 0.0) EmeraldLight else TextMuted,
                         textAlign = TextAlign.Center,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -1057,8 +1062,9 @@ private fun WorkoutSetRow(
             var weightText by remember(set.weightKg) {
                 mutableStateOf(if (set.weightKg == 0.0) "" else set.weightKg.toString().removeSuffix(".0"))
             }
-            val plateBreakdown = remember(set.weightKg) {
-                SetHistoryCalculator.formatPlateBreakdown(set.weightKg)
+            val currentOrPrevWeight = if (set.weightKg > 0.0) set.weightKg else prevWeight
+            val plateBreakdown = remember(currentOrPrevWeight) {
+                SetHistoryCalculator.formatPlateBreakdown(currentOrPrevWeight)
             }
 
             Column(
