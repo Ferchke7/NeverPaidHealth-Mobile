@@ -83,6 +83,8 @@ import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
+import dev.neverpaid.health.core.i18n.DudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.data.catalog.StandardHabitsCatalog
@@ -90,14 +92,14 @@ import dev.neverpaid.health.domain.model.AthleteHabit
 import dev.neverpaid.health.domain.model.SaveTodoRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
 
-private val todoCategories = listOf(
-    "all" to "Все",
-    "workout" to "Тренировка",
-    "nutrition" to "Питание",
-    "supplement" to "Добавки",
-    "cardio" to "Кардио",
-    "recovery" to "Восстановление",
-    "general" to "Общее"
+private fun getTodoCategories(strings: DudaStrings): List<Pair<String, String>> = listOf(
+    "all" to (if (strings.languageCode == "uz") "Barchasi" else if (strings.languageCode == "en") "All" else "Все"),
+    "workout" to (if (strings.languageCode == "uz") "Mashg‘ulot" else if (strings.languageCode == "en") "Workout" else "Тренировка"),
+    "nutrition" to (if (strings.languageCode == "uz") "Oziqlanish" else if (strings.languageCode == "en") "Nutrition" else "Питание"),
+    "supplement" to (if (strings.languageCode == "uz") "Qo‘shimchalar" else if (strings.languageCode == "en") "Supplements" else "Добавки"),
+    "cardio" to (if (strings.languageCode == "uz") "Kardio" else if (strings.languageCode == "en") "Cardio" else "Кардио"),
+    "recovery" to (if (strings.languageCode == "uz") "Tiklanish" else if (strings.languageCode == "en") "Recovery" else "Восстановление"),
+    "general" to (if (strings.languageCode == "uz") "Umumiy" else if (strings.languageCode == "en") "General" else "Общее")
 )
 
 @Composable
@@ -136,6 +138,9 @@ fun TodoScreen(
     onAction: (TodoUiAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalDudaStrings.current
+    val todoCategories = remember(strings) { getTodoCategories(strings) }
+
     if (state.isTaskModalOpen) {
         CreateOrEditTaskBottomSheet(
             existingTask = state.editingTask,
@@ -170,13 +175,13 @@ fun TodoScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "План дня и Календарь",
+                        text = strings.todoTitle,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Black,
                         color = TextPrimary
                     )
                     Text(
-                        text = "Чек-лист атлета, Помодоро таймер и лог дисциплины",
+                        text = strings.todoSubtitle,
                         fontSize = 12.sp,
                         color = TextSecondary
                     )
@@ -194,12 +199,12 @@ fun TodoScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.Timer,
-                                contentDescription = "Фокус",
+                                contentDescription = strings.todoPomodoroFocus,
                                 tint = IndigoElectric,
                                 modifier = Modifier.size(15.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Фокус", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Text(strings.todoPomodoroFocus, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                         }
                     }
 
@@ -214,7 +219,7 @@ fun TodoScreen(
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Задача", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(strings.todoAddTask, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -292,9 +297,9 @@ fun TodoScreen(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 listOf(
-                    Triple("list", "Список", Icons.Default.List),
-                    Triple("calendar", "Календарь", Icons.Default.CalendarMonth),
-                    Triple("log", "Журнал (${state.activityLogs.size})", Icons.Default.History)
+                    Triple("list", if (strings.languageCode == "uz") "Ro‘yxat" else if (strings.languageCode == "en") "List" else "Список", Icons.Default.List),
+                    Triple("calendar", if (strings.languageCode == "uz") "Taqvim" else if (strings.languageCode == "en") "Calendar" else "Календарь", Icons.Default.CalendarMonth),
+                    Triple("log", "${if (strings.languageCode == "uz") "Jurnal" else if (strings.languageCode == "en") "Log" else "Журнал"} (${state.activityLogs.size})", Icons.Default.History)
                 ).forEach { (modeKey, label, icon) ->
                     val selected = state.viewMode == modeKey
                     Box(
@@ -541,6 +546,15 @@ private fun TodoTaskItemCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val strings = LocalDudaStrings.current
+    val categoryLabel = when (task.category.lowercase()) {
+        "workout" -> if (strings.languageCode == "uz") "Mashg‘ulot" else if (strings.languageCode == "en") "Workout" else "Тренировка"
+        "nutrition" -> if (strings.languageCode == "uz") "Oziqlanish" else if (strings.languageCode == "en") "Nutrition" else "Питание"
+        "supplement" -> if (strings.languageCode == "uz") "Qo‘shimchalar" else if (strings.languageCode == "en") "Supplements" else "Добавки"
+        "cardio" -> if (strings.languageCode == "uz") "Kardio" else if (strings.languageCode == "en") "Cardio" else "Кардио"
+        "recovery" -> if (strings.languageCode == "uz") "Tiklanish" else if (strings.languageCode == "en") "Recovery" else "Восстановление"
+        else -> if (strings.languageCode == "uz") "Umumiy" else if (strings.languageCode == "en") "General" else "Общее"
+    }
     val priorityColor = when (task.priority.lowercase()) {
         "high" -> CrimsonRed
         "low" -> TextMuted
@@ -604,7 +618,7 @@ private fun TodoTaskItemCard(
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = todoCategories.find { it.first == task.category.lowercase() }?.second ?: task.category,
+                                text = categoryLabel,
                                 fontSize = 10.sp,
                                 color = EmeraldLight
                             )
@@ -752,6 +766,8 @@ private fun CreateOrEditTaskBottomSheet(
     onSave: (SaveTodoRequestDto) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val strings = LocalDudaStrings.current
+    val todoCategories = remember(strings) { getTodoCategories(strings) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var title by remember { mutableStateOf(existingTask?.title ?: "") }
     var notes by remember { mutableStateOf(existingTask?.notes ?: "") }
@@ -784,7 +800,7 @@ private fun CreateOrEditTaskBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (existingTask != null) "Редактировать задачу" else "Новая задача атлета",
+                    text = if (existingTask != null) strings.save else strings.todoNewTaskTitle,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Black,
                     color = TextPrimary
@@ -796,7 +812,12 @@ private fun CreateOrEditTaskBottomSheet(
 
             if (existingTask == null) {
                 Spacer(modifier = Modifier.height(6.dp))
-                Text("БЫСТРЫЕ ШАБЛОНЫ", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted)
+                Text(
+                    text = if (strings.languageCode == "uz") "TEZKOR SHABLONLAR" else if (strings.languageCode == "en") "QUICK TEMPLATES" else "БЫСТРЫЕ ШАБЛОНЫ",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextMuted
+                )
                 Spacer(modifier = Modifier.height(6.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(quickTemplates) { (tplTitle, tplNotes, tplCat) ->
@@ -823,7 +844,7 @@ private fun CreateOrEditTaskBottomSheet(
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = { Text("Название задачи") },
+                label = { Text(strings.todoTaskTitleLabel) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -842,7 +863,7 @@ private fun CreateOrEditTaskBottomSheet(
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("Заметка / целевое значение (напр. 5г, 2.5л)") },
+                label = { Text(strings.todoTargetLabel) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -861,7 +882,13 @@ private fun CreateOrEditTaskBottomSheet(
             OutlinedTextField(
                 value = scheduledTime,
                 onValueChange = { scheduledTime = it },
-                label = { Text("Время напоминания (напр. 18:00)") },
+                label = {
+                    Text(
+                        if (strings.languageCode == "uz") "Eslatma vaqti (masalan: 18:00)"
+                        else if (strings.languageCode == "en") "Reminder time (e.g. 18:00)"
+                        else "Время напоминания (напр. 18:00)"
+                    )
+                },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -877,7 +904,7 @@ private fun CreateOrEditTaskBottomSheet(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text("Категория", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMuted)
+            Text(strings.todoCategoryLabel, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMuted)
             Spacer(modifier = Modifier.height(6.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(todoCategories.filter { it.first != "all" }, key = { it.first }) { (catKey, catLabel) ->
@@ -895,10 +922,15 @@ private fun CreateOrEditTaskBottomSheet(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            Text("Приоритет", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMuted)
+            Text(strings.todoPriorityLabel, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMuted)
             Spacer(modifier = Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("high" to "Высокий", "medium" to "Средний", "low" to "Низкий").forEach { (pKey, pLabel) ->
+                val priorities = listOf(
+                    "high" to (if (strings.languageCode == "uz") "Yuqori" else if (strings.languageCode == "en") "High" else "Высокий"),
+                    "medium" to (if (strings.languageCode == "uz") "O‘rtacha" else if (strings.languageCode == "en") "Medium" else "Средний"),
+                    "low" to (if (strings.languageCode == "uz") "Past" else if (strings.languageCode == "en") "Low" else "Низкий")
+                )
+                priorities.forEach { (pKey, pLabel) ->
                     FilterChip(
                         selected = priority == pKey,
                         onClick = { priority = pKey },
@@ -918,7 +950,7 @@ private fun CreateOrEditTaskBottomSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Повторять ежедневно", fontSize = 14.sp, color = TextPrimary)
+                Text(strings.todoRecurringDaily, fontSize = 14.sp, color = TextPrimary)
                 Switch(
                     checked = repeatDaily,
                     onCheckedChange = { repeatDaily = it },
@@ -956,7 +988,7 @@ private fun CreateOrEditTaskBottomSheet(
                     .fillMaxWidth()
                     .height(48.dp)
             ) {
-                Text("Сохранить задачу", fontWeight = FontWeight.Bold)
+                Text(strings.save, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(22.dp))
