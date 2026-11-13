@@ -74,6 +74,12 @@ object StrengthCalculator {
         return roundToOneDecimal(lbs / 2.20462)
     }
 
+    fun formatWeight(weightKg: Double, isKgUnit: Boolean): String {
+        val value = if (isKgUnit) roundToOneDecimal(weightKg) else kgToLbs(weightKg)
+        val number = value.toString().removeSuffix(".0")
+        return "$number ${if (isKgUnit) "kg" else "lb"}"
+    }
+
     fun formatTime(minutes: Int, seconds: Int): String {
         val m = if (minutes < 10) "0$minutes" else "$minutes"
         val s = if (seconds < 10) "0$seconds" else "$seconds"

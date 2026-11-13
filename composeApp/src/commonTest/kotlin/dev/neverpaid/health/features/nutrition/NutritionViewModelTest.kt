@@ -92,4 +92,45 @@ class NutritionViewModelTest {
         assertNotNull(state.aiAnalysisPreview)
         assertTrue(state.aiAnalysisPreview!!.totalCalories > 0)
     }
+    @Test
+    fun switchingDatesStopsUpdatesFromThePreviousDay() = runTest {
+        val firstDay = viewModel.state.value.selectedDate
+        viewModel.onAction(NutritionUiAction.OnSelectDate("2026-01-01"))
+        testDispatcher.scheduler.advanceUntilIdle()
+        repository.addMealLog(dev.neverpaid.health.domain.model.MealLog(
+            id = "old-day", date = firstDay, name = "Previous day", calories = 500
+        ))
+        repository.addWater(firstDay, 500)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals("2026-01-01", viewModel.state.value.selectedDate)
+        assertTrue(viewModel.state.value.meals.isEmpty())
+        assertEquals(0, viewModel.state.value.waterMl)
+    }
+
+    @Test
+    fun correctedZeroMacrosAreSavedInsteadOfAiEstimates() = runTest {
+        viewModel.onAction(NutritionUiAction.OnAiDescriptionChanged("Eggs"))
+        viewModel.onAction(NutritionUiAction.OnRunAiAnalysis)
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.onAction(NutritionUiAction.OnMealProteinChanged("0"))
+        viewModel.onAction(NutritionUiAction.OnMealFatsChanged("0"))
+        viewModel.onAction(NutritionUiAction.OnMealCarbsChanged("12,5"))
+        viewModel.onAction(NutritionUiAction.OnConfirmAiPreview)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(0.0, viewModel.state.value.meals.last().proteinG)
+        assertEquals(0.0, viewModel.state.value.meals.last().fatG)
+        assertEquals(12.5, viewModel.state.value.meals.last().carbsG)
+    }
+
+    @Test
+    fun repeatedSaveActionsCreateOneMeal() = runTest {
+        viewModel.onAction(NutritionUiAction.OnMealNameChanged("Lunch"))
+        viewModel.onAction(NutritionUiAction.OnMealCaloriesChanged("500"))
+        viewModel.onAction(NutritionUiAction.OnSaveMeal)
+        viewModel.onAction(NutritionUiAction.OnSaveMeal)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, viewModel.state.value.meals.count { it.name == "Lunch" })
+        assertFalse(viewModel.state.value.isSavingMeal)
+    }
+
 }

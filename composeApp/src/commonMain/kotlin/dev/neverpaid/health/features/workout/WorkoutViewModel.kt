@@ -274,23 +274,7 @@ class WorkoutViewModel(
                 WorkoutSet(
                     id = PlatformBridge.generateUuid(),
                     setNumber = 1,
-                    weightKg = 40.0,
-                    reps = 10,
-                    setType = "normal",
-                    isCompleted = false
-                ),
-                WorkoutSet(
-                    id = PlatformBridge.generateUuid(),
-                    setNumber = 2,
-                    weightKg = 40.0,
-                    reps = 10,
-                    setType = "normal",
-                    isCompleted = false
-                ),
-                WorkoutSet(
-                    id = PlatformBridge.generateUuid(),
-                    setNumber = 3,
-                    weightKg = 40.0,
+                    weightKg = 0.0,
                     reps = 10,
                     setType = "normal",
                     isCompleted = false
@@ -301,7 +285,19 @@ class WorkoutViewModel(
         val updatedList = if (swappingId != null) {
             currentWorkout.exercises.map { existing ->
                 if (existing.exerciseId == swappingId) {
-                    newExercise.copy(orderIndex = existing.orderIndex)
+                    newExercise.copy(
+                        orderIndex = existing.orderIndex,
+                        sets = existing.sets.mapIndexed { index, set ->
+                            WorkoutSet(
+                                id = PlatformBridge.generateUuid(),
+                                setNumber = index + 1,
+                                setType = set.setType,
+                                weightKg = 0.0,
+                                reps = 10,
+                                isCompleted = false
+                            )
+                        }.ifEmpty { newExercise.sets }
+                    )
                 } else existing
             }
         } else {
@@ -318,16 +314,15 @@ class WorkoutViewModel(
             val prevSets = prevMap[exercise.id].orEmpty()
             if (prevSets.isNotEmpty()) {
                 val latestWorkout = currentState.workout ?: return@launchGuarded
+                if (latestWorkout.id != currentWorkout.id) return@launchGuarded
                 val enriched = latestWorkout.copy(
                     exercises = latestWorkout.exercises.map { ex ->
-                        if (ex.exerciseId == exercise.id) {
+                        if (ex.instanceId == newExercise.instanceId) {
                             ex.copy(
                                 sets = ex.sets.mapIndexed { idx, s ->
                                     val prev = prevSets.find { it.setNumber == idx + 1 } ?: prevSets.lastOrNull()
                                     if (prev != null) {
                                         s.copy(
-                                            weightKg = prev.weightKg,
-                                            reps = prev.reps,
                                             previousWeightKg = prev.weightKg,
                                             previousReps = prev.reps
                                         )

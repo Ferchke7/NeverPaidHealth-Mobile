@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -17,6 +18,10 @@ class NutritionViewModel(
 ) : BaseViewModel<NutritionUiAction, NutritionUiState, NutritionUiEffect>(
     initialState = NutritionUiState(isLoading = true)
 ) {
+
+    private var mealsJob: kotlinx.coroutines.Job? = null
+    private var waterJob: kotlinx.coroutines.Job? = null
+    private var refreshJob: kotlinx.coroutines.Job? = null
 
     init {
         val today = PlatformBridge.formatDate(PlatformBridge.currentTimeMillis(), "yyyy-MM-dd")
@@ -86,13 +91,17 @@ class NutritionViewModel(
     }
 
     private fun loadNutritionData(date: String) {
-        launchGuarded(
+        mealsJob?.cancel()
+        waterJob?.cancel()
+        refreshJob?.cancel()
+        updateState { copy(isLoading = true, meals = emptyList(), totalCalories = 0, totalProtein = 0, totalFats = 0, totalCarbs = 0, waterMl = 0) }
+        refreshJob = launchGuarded(
             onError = { updateState { copy(isLoading = false) } }
         ) {
             repository.refreshDailyNutrition(date)
         }
 
-        launchGuarded {
+        mealsJob = launchGuarded {
             repository.getMealLogs(date).collectLatest { logs ->
                 val cals = logs.sumOf { it.calories }
                 val prot = logs.sumOf { it.proteinG }.toInt()
@@ -112,7 +121,7 @@ class NutritionViewModel(
             }
         }
 
-        launchGuarded {
+        waterJob = launchGuarded {
             repository.getWaterMl(date).collectLatest { ml ->
                 updateState { copy(waterMl = ml) }
             }
@@ -156,50 +165,46 @@ class NutritionViewModel(
                     aiAnalysisPreview = result,
                     newMealName = result.mealName,
                     newMealCalories = result.totalCalories.toString(),
-                    newMealProtein = result.proteinG.toInt().toString(),
-                    newMealFats = result.fatG.toInt().toString(),
-                    newMealCarbs = result.carbsG.toInt().toString()
+                    newMealProtein = result.proteinG.toString(),
+                    newMealFats = result.fatG.toString(),
+                    newMealCarbs = result.carbsG.toString()
                 )
             }
         }
     }
 
+    private fun readNutritionNumber(input: String, fallback: Double = 0.0): Double {
+        val value = if (input.isBlank()) fallback else input.trim().replace(',', '.').toDoubleOrNull() ?: 0.0
+        return if (value.isFinite()) value.coerceAtLeast(0.0) else 0.0
+    }
+
     private fun confirmAiPreviewMeal() {
+        if (currentState.isSavingMeal) return
         val preview = currentState.aiAnalysisPreview ?: return
         val newMeal = MealLog(
             id = PlatformBridge.generateUuid(),
             date = currentState.selectedDate,
             mealType = currentState.selectedMealType,
-            name = preview.title.ifBlank { preview.name },
-            calories = preview.calories,
-            proteinG = preview.proteinG,
-            fatG = preview.fatsG,
-            carbsG = preview.carbsG,
+            name = currentState.newMealName.trim().ifBlank { preview.mealName },
+            calories = readNutritionNumber(currentState.newMealCalories, preview.calories.toDouble()).roundToInt(),
+            proteinG = readNutritionNumber(currentState.newMealProtein, preview.proteinG),
+            fatG = readNutritionNumber(currentState.newMealFats, preview.fatG),
+            carbsG = readNutritionNumber(currentState.newMealCarbs, preview.carbsG),
             items = preview.foodItems
         )
 
-        updateState {
-            copy(
-                aiAnalysisPreview = null,
-                aiDescriptionInput = "",
-                selectedPhotoBase64 = null
-            )
-        }
-
-        launchGuarded {
-            repository.addMealLog(newMeal)
-            sendEffect(NutritionUiEffect.ShowToast("Приём пищи добавлен в дневник"))
-        }
+        persistMeal(newMeal, fromAi = true)
     }
 
     private fun saveMeal() {
+        if (currentState.isSavingMeal) return
         val name = currentState.newMealName.trim()
-        val cals = currentState.newMealCalories.toIntOrNull() ?: 0
-        val prot = currentState.newMealProtein.toDoubleOrNull() ?: 0.0
-        val fats = currentState.newMealFats.toDoubleOrNull() ?: 0.0
-        val carbs = currentState.newMealCarbs.toDoubleOrNull() ?: 0.0
+        val cals = readNutritionNumber(currentState.newMealCalories).roundToInt()
+        val prot = readNutritionNumber(currentState.newMealProtein)
+        val fats = readNutritionNumber(currentState.newMealFats)
+        val carbs = readNutritionNumber(currentState.newMealCarbs)
 
-        if (name.isEmpty() || cals <= 0) return
+        if (name.isEmpty() || cals < 0 || listOf(prot, fats, carbs).any { !it.isFinite() || it < 0 }) return
 
         val newMeal = MealLog(
             id = PlatformBridge.generateUuid(),
@@ -212,20 +217,27 @@ class NutritionViewModel(
             carbsG = carbs
         )
 
-        updateState {
-            copy(
-                isAddMealSheetOpen = false,
-                newMealName = "",
-                newMealCalories = "",
-                newMealProtein = "",
-                newMealFats = "",
-                newMealCarbs = ""
-            )
-        }
+        persistMeal(newMeal, fromAi = false)
+    }
 
-        launchGuarded {
-            repository.addMealLog(newMeal)
-            sendEffect(NutritionUiEffect.ShowToast("Запись сохранена"))
+    private fun persistMeal(meal: MealLog, fromAi: Boolean) {
+        updateState { copy(isSavingMeal = true) }
+        launchGuarded(onError = { error ->
+            updateState { copy(isSavingMeal = false) }
+            sendError(error)
+        }) {
+            repository.addMealLog(meal)
+            updateState {
+                copy(
+                    isSavingMeal = false,
+                    isAddMealSheetOpen = false,
+                    aiAnalysisPreview = if (fromAi) null else aiAnalysisPreview,
+                    aiDescriptionInput = if (fromAi) "" else aiDescriptionInput,
+                    selectedPhotoBase64 = if (fromAi) null else selectedPhotoBase64,
+                    newMealName = "", newMealCalories = "", newMealProtein = "",
+                    newMealFats = "", newMealCarbs = ""
+                )
+            }
         }
     }
 

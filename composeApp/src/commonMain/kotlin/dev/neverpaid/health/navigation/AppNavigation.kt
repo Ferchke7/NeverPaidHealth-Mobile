@@ -135,12 +135,10 @@ val mobileBottomNavItems = listOf(
 )
 
 val quickTopNavPills = listOf(
-    Screen.Workouts,
     Screen.Programs,
-    Screen.History,
     Screen.Exercises,
-    Screen.Body,
-    Screen.Profile
+    Screen.History,
+    Screen.Body
 )
 
 @Composable

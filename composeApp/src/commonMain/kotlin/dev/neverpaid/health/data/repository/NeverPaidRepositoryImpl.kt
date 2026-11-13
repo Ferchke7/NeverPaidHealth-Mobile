@@ -1,5 +1,8 @@
 package dev.neverpaid.health.data.repository
 
+import kotlinx.datetime.atTime
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import dev.neverpaid.health.core.math.SetCalculationInput
 import dev.neverpaid.health.core.math.StrengthCalculator
 import dev.neverpaid.health.core.network.DudaApiClient
@@ -1521,51 +1524,73 @@ class NeverPaidRepositoryImpl(
 
     override fun getNutritionTodaySummary(): Flow<DailyNutritionSummaryDto?> = nutritionSummaryFlow.asStateFlow()
 
-    override fun getMealLogs(date: String): Flow<List<MealLog>> {
-        if (apiClient != null) {
-            scope.launch {
-                try {
-                    refreshNutritionToday()
-                } catch (_: Exception) {}
-            }
-        }
-        return mealLogsFlow.asStateFlow()
+    private fun mealDate(meal: MealLog): String = meal.date.ifBlank {
+        runCatching {
+            kotlinx.datetime.Instant.parse(meal.loggedAt)
+                .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date.toString()
+        }.getOrDefault("")
     }
 
-    override suspend fun refreshNutritionToday(): DailyNutritionSummaryDto {
+    override fun getMealLogs(date: String): Flow<List<MealLog>> =
+        mealLogsFlow.map { meals -> meals.filter { mealDate(it) == date } }
+
+    private fun cachedNutritionSummary(date: String): DailyNutritionSummaryDto {
+        val meals = mealLogsFlow.value.filter { mealDate(it) == date }
+        val user = currentUserFlow.value
+        return DailyNutritionSummaryDto(
+            date = date,
+            totalCalories = meals.sumOf { it.calories },
+            totalProteinG = meals.sumOf { it.proteinG },
+            totalCarbsG = meals.sumOf { it.carbsG },
+            totalFatG = meals.sumOf { it.fatG },
+            meals = meals
+        ).let { summary ->
+            summary.copy(
+                targetCalories = user?.targetCalories ?: summary.targetCalories,
+                targetProteinG = user?.targetProteinG?.toDouble() ?: summary.targetProteinG,
+                targetCarbsG = user?.targetCarbsG?.toDouble() ?: summary.targetCarbsG,
+                targetFatG = user?.targetFatG?.toDouble() ?: summary.targetFatG
+            )
+        }
+    }
+
+    override suspend fun refreshNutritionToday(): DailyNutritionSummaryDto =
+        refreshDailyNutrition(PlatformBridge.formatDate(PlatformBridge.currentTimeMillis(), "yyyy-MM-dd"))
+
+    override suspend fun refreshDailyNutrition(date: String): DailyNutritionSummaryDto {
         val client = apiClient
         val user = currentUserFlow.value
-        if (client != null && !isGuestUser()) {
-            val remote = client.getNutritionToday()
-            val merged = remote.copy(
+        val summary = if (client != null && !isGuestUser()) {
+            val remote = client.getNutritionToday(date)
+            val datedMeals = remote.meals.map { it.copy(date = remote.date) }
+            val receivedIds = datedMeals.map { it.id }.toSet()
+            val updated = mealLogsFlow.value.filter { mealDate(it) != date && it.id !in receivedIds } + datedMeals
+            mealLogsFlow.value = updated
+            DudaLocalStorage.setMealLogs(updated)
+            remote.copy(
+                meals = datedMeals,
                 targetCalories = user?.targetCalories ?: remote.targetCalories,
                 targetProteinG = (user?.targetProteinG ?: remote.targetProteinG.toInt()).toDouble(),
                 targetCarbsG = (user?.targetCarbsG ?: remote.targetCarbsG.toInt()).toDouble(),
                 targetFatG = (user?.targetFatG ?: remote.targetFatG.toInt()).toDouble()
             )
-            nutritionSummaryFlow.value = merged
-            mealLogsFlow.value = merged.meals
-            DudaLocalStorage.setMealLogs(merged.meals)
-            return merged
         } else {
-            val meals = mealLogsFlow.value
-            val summary = DailyNutritionSummaryDto(
-                date = PlatformBridge.formatDate(PlatformBridge.currentTimeMillis(), "yyyy-MM-dd"),
-                totalCalories = meals.sumOf { it.calories },
-                totalProteinG = meals.sumOf { it.proteinG },
-                totalCarbsG = meals.sumOf { it.carbsG },
-                totalFatG = meals.sumOf { it.fatG },
-                meals = meals
-            )
-            nutritionSummaryFlow.value = summary
-            return summary
+            cachedNutritionSummary(date)
         }
+        nutritionSummaryFlow.value = summary
+        return summary
     }
 
     override suspend fun addMealLog(meal: MealLog) {
-        if (apiClient != null && !isGuestUser()) {
+        val savedMeal = if (apiClient != null && !isGuestUser()) {
             apiClient.saveMealLog(
                 SaveMealRequestDto(
+                    loggedAt = if (meal.date == PlatformBridge.formatDate(PlatformBridge.currentTimeMillis(), "yyyy-MM-dd")) {
+                        kotlinx.datetime.Instant.fromEpochMilliseconds(PlatformBridge.currentTimeMillis()).toString()
+                    } else {
+                        kotlinx.datetime.LocalDate.parse(meal.date).atTime(12, 0)
+                            .toInstant(kotlinx.datetime.TimeZone.currentSystemDefault()).toString()
+                    },
                     mealType = meal.mealType,
                     name = meal.name,
                     calories = meal.calories,
@@ -1574,26 +1599,28 @@ class NeverPaidRepositoryImpl(
                     fatG = meal.fatG,
                     items = meal.items
                 )
-            )
-            refreshNutritionToday()
+            ).copy(date = meal.date)
         } else {
-            val updated = mealLogsFlow.value + meal
-            mealLogsFlow.value = updated
-            DudaLocalStorage.setMealLogs(updated)
-            refreshNutritionToday()
+            meal
         }
+        // The POST response is authoritative. A failed follow-up GET must not
+        // make a successful save look failed and invite a duplicate submission.
+        val updated = mealLogsFlow.value.filterNot { it.id == savedMeal.id } + savedMeal
+        mealLogsFlow.value = updated
+        DudaLocalStorage.setMealLogs(updated)
+        nutritionSummaryFlow.value = cachedNutritionSummary(meal.date)
     }
 
     override suspend fun deleteMealLog(mealId: String) {
+        val date = mealLogsFlow.value.find { it.id == mealId }?.let { mealDate(it) }
+            ?: PlatformBridge.formatDate(PlatformBridge.currentTimeMillis(), "yyyy-MM-dd")
         if (apiClient != null && !isGuestUser()) {
             apiClient.deleteMealLog(mealId)
-            refreshNutritionToday()
-        } else {
-            val filtered = mealLogsFlow.value.filter { it.id != mealId }
-            mealLogsFlow.value = filtered
-            DudaLocalStorage.setMealLogs(filtered)
-            refreshNutritionToday()
         }
+        val filtered = mealLogsFlow.value.filter { it.id != mealId }
+        mealLogsFlow.value = filtered
+        DudaLocalStorage.setMealLogs(filtered)
+        nutritionSummaryFlow.value = cachedNutritionSummary(date)
     }
 
     override suspend fun estimateFoodTextFull(description: String): MealAnalysisResult {

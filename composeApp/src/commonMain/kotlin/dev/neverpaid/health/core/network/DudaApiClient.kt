@@ -650,8 +650,10 @@ class DudaApiClient(
     // 7. NUTRITION (/nutrition/today, /nutrition/analyze-photo, /nutrition/estimate-text, /nutrition/meals)
     // ========================================================================
 
-    suspend fun getNutritionToday(): DailyNutritionSummaryDto {
+    suspend fun getNutritionToday(date: String = ""): DailyNutritionSummaryDto {
         val response = client.get("${baseUrl()}/nutrition/today") {
+            if (date.isNotBlank()) parameter("date", date)
+            parameter("timezone", kotlinx.datetime.TimeZone.currentSystemDefault().id)
             header("Accept-Language", language())
             token()?.let { header("Authorization", "Bearer $it") }
         }

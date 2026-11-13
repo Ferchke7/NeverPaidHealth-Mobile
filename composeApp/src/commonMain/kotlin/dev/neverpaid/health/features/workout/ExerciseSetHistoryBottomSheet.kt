@@ -209,7 +209,7 @@ fun ExerciseSetHistoryBottomSheet(
                     }
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = if (prSummary.best1RMKg > 0) "${prSummary.best1RMKg.toInt()} кг" else "—",
+                        text = if (prSummary.best1RMKg > 0) dev.neverpaid.health.core.math.StrengthCalculator.formatWeight(prSummary.best1RMKg, isKgUnit) else "—",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Black,
                         color = Color(0xFFFFD54F)
@@ -422,7 +422,7 @@ fun ExerciseSetHistoryBottomSheet(
                                     Column {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
-                                                text = "${record.weightKg.toInt()} кг × ${record.reps}",
+                                                text = "${dev.neverpaid.health.core.math.StrengthCalculator.formatWeight(record.weightKg, isKgUnit)} × ${record.reps}",
                                                 fontSize = 15.sp,
                                                 fontWeight = FontWeight.Black,
                                                 color = TextPrimary
@@ -436,7 +436,7 @@ fun ExerciseSetHistoryBottomSheet(
                                                         .padding(horizontal = 4.dp, vertical = 2.dp)
                                                 ) {
                                                     Text(
-                                                        text = "1RM: ${record.e1rmKg.toInt()} кг",
+                                                        text = "1RM: ${dev.neverpaid.health.core.math.StrengthCalculator.formatWeight(record.e1rmKg, isKgUnit)}",
                                                         fontSize = 9.sp,
                                                         fontWeight = FontWeight.Bold,
                                                         color = EmeraldLight
