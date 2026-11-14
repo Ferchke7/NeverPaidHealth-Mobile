@@ -157,10 +157,10 @@ fun ExercisePickerBottomSheet(
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = DarkSurfaceVariant,
-                    unfocusedContainerColor = DarkSurfaceVariant,
+                    focusedContainerColor = ObsidianWell,
+                    unfocusedContainerColor = ObsidianWell,
                     focusedBorderColor = EmeraldNeon,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,
@@ -368,14 +368,15 @@ fun ExerciseInfoBottomSheet(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(IndigoSubtle)
+                                .background(EmeraldSubtle)
+                                .border(1.dp, BorderHighlight, RoundedCornerShape(6.dp))
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
                                 text = if (exercise.category == "isolation") "Изолирующее" else "Базовое",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = IndigoElectric
+                                color = EmeraldLight
                             )
                         }
                     }
@@ -619,7 +620,8 @@ fun WorkoutSummaryBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
-                            .background(DarkSurfaceVariant)
+                            .background(ObsidianWell)
+                            .border(1.dp, BorderDivider, RoundedCornerShape(10.dp))
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically

@@ -46,7 +46,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -117,10 +116,10 @@ enum class VolumeStatus(
     val titleEn: String,
     val color: Color
 ) {
-    UNTRAINED("Не тренировалась", "Shug'ullanilmagan", "Untrained", Color(0xFF27272A)),
-    UNDER_TRAINED("Ниже оптимального", "Optimaldan past", "Maintenance / Low", Color(0xFFF59E0B)),
-    OPTIMAL("Оптимальный рост (Hypertrophy)", "Optimal o'sish", "Optimal Hypertrophy", Color(0xFF22C55E)),
-    OVER_REACHED("Высокое утомление", "Yuqori charchoq", "Overreaching / High Fatigue", Color(0xFFEF4444))
+    UNTRAINED("Не тренировалась", "Shug'ullanilmagan", "Untrained", DarkSurfaceHigh),
+    UNDER_TRAINED("Ниже оптимального", "Optimaldan past", "Maintenance / Low", AmberWarm),
+    OPTIMAL("Оптимальный рост (Hypertrophy)", "Optimal o'sish", "Optimal Hypertrophy", EmeraldNeon),
+    OVER_REACHED("Высокое утомление", "Yuqori charchoq", "Overreaching / High Fatigue", CrimsonRed)
 }
 
 /**
@@ -285,14 +284,14 @@ private fun DrawScope.drawFrontBody(cx: Float, h: Float, data: Map<MuscleZone, M
 
     // Head Outline
     drawCircle(
-        color = Color(0xFF3F3F46),
+        color = BorderSubtle,
         radius = 16f * scale,
         center = Offset(cx, headY)
     )
 
     // Neck
     drawRoundRect(
-        color = Color(0xFF3F3F46),
+        color = BorderSubtle,
         topLeft = Offset(cx - 8f * scale, headY + 12f * scale),
         size = Size(16f * scale, 16f * scale),
         cornerRadius = CornerRadius(2f, 2f)
@@ -445,7 +444,7 @@ private fun DrawScope.drawBackBody(cx: Float, h: Float, data: Map<MuscleZone, Mu
 
     // Head Outline
     drawCircle(
-        color = Color(0xFF3F3F46),
+        color = BorderSubtle,
         radius = 16f * scale,
         center = Offset(cx, headY)
     )

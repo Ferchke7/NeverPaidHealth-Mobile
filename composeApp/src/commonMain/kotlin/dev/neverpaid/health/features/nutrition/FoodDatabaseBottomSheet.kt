@@ -55,15 +55,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import dev.neverpaid.health.core.designsystem.AmberGold
 import dev.neverpaid.health.core.designsystem.BorderSubtle
-import dev.neverpaid.health.core.designsystem.CyanElectric
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.IndigoElectric
-import dev.neverpaid.health.core.designsystem.PurpleAccent
+import dev.neverpaid.health.core.designsystem.InfoAccent
+import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -143,10 +143,10 @@ fun FoodDatabaseBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("Поиск (курица, рис, творог, лосось...)", style = MaterialTheme.typography.bodyMedium, color = TextMuted) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary) },
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = DarkSurfaceElevated,
-                    unfocusedContainerColor = DarkSurface,
+                    focusedContainerColor = ObsidianWell,
+                    unfocusedContainerColor = ObsidianWell,
                     focusedBorderColor = EmeraldNeon,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,
@@ -262,19 +262,19 @@ fun FoodDatabaseBottomSheet(
                             Text(
                                 text = "Б: ${calculated.protein.toInt()}г",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = IndigoElectric,
+                                color = InfoAccent,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
                                 text = "Ж: ${calculated.fats.toInt()}г",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = PurpleAccent,
+                                color = TextSecondary,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
                                 text = "У: ${calculated.carbs.toInt()}г",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = CyanElectric,
+                                color = AmberGold,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -395,17 +395,17 @@ fun FoodDatabaseBottomSheet(
                                     Text(
                                         text = "Б: ${food.proteinPer100g}г",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = IndigoElectric
+                                        color = InfoAccent
                                     )
                                     Text(
                                         text = "У: ${food.carbsPer100g}г",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = CyanElectric
+                                        color = AmberGold
                                     )
                                     Text(
                                         text = "Ж: ${food.fatsPer100g}г",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = PurpleAccent
+                                        color = TextSecondary
                                     )
                                 }
                             }

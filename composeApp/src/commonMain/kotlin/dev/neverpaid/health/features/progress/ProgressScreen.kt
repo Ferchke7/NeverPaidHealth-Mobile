@@ -46,7 +46,7 @@ import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.IndigoElectric
+import dev.neverpaid.health.core.designsystem.InfoAccent
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -437,7 +437,7 @@ private fun HypertrophyDistributionCard(muscleSets: Map<String, Int>) {
                 val progress = (sets / 20f).coerceIn(0f, 1f)
                 val statusColor = when {
                     sets >= 12 -> EmeraldNeon
-                    sets >= 8 -> IndigoElectric
+                    sets >= 8 -> InfoAccent
                     else -> AmberWarm
                 }
 

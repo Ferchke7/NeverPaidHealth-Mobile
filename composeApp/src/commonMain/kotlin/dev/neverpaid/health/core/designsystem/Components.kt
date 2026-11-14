@@ -1,5 +1,6 @@
 package dev.neverpaid.health.core.designsystem
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -61,9 +64,9 @@ fun DudaBrandLogo(
         Box(
             modifier = Modifier
                 .size(32.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(8.dp))
                 .background(EmeraldSubtle)
-                .border(width = 1.dp, color = BorderHighlight, shape = RoundedCornerShape(10.dp)),
+                .border(width = 1.dp, color = BorderHighlight, shape = RoundedCornerShape(8.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -180,17 +183,18 @@ fun DudaQuickNavPills(
     ) {
         items(items, key = { it.id }) { item ->
             val isSelected = item.id == selectedId
-            val bg = if (isSelected) EmeraldSubtle else DarkSurfaceVariant
+            val bg = if (isSelected) EmeraldSubtle else DarkSurface
             val border = if (isSelected) BorderHighlight else BorderSubtle
             val textColor = if (isSelected) EmeraldLight else TextSecondary
 
             Box(
                 modifier = Modifier
+                    .heightIn(min = 44.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .background(bg)
                     .border(width = 1.dp, color = border, shape = RoundedCornerShape(20.dp))
                     .clickable { onSelect(item.id) }
-                    .padding(horizontal = 14.dp, vertical = 7.dp),
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -218,7 +222,7 @@ fun DudaQuickNavPills(
 @Composable
 fun AthleticCard(
     modifier: Modifier = Modifier,
-    shape: RoundedCornerShape = RoundedCornerShape(16.dp),
+    shape: RoundedCornerShape = RoundedCornerShape(14.dp),
     backgroundColor: Color = DarkSurface,
     borderColor: Color = BorderSubtle,
     content: @Composable () -> Unit
@@ -228,7 +232,9 @@ fun AthleticCard(
             .fillMaxWidth()
             .border(width = 1.dp, color = borderColor, shape = shape),
         shape = shape,
-        color = backgroundColor
+        color = backgroundColor,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
         content()
     }
@@ -242,8 +248,8 @@ fun SetTypeBadge(
     onClick: () -> Unit = {}
 ) {
     val (badgeText, badgeColor, textColor) = when (type.lowercase()) {
-        "warmup", "w" -> Triple("W", AmberWarm, DarkBackground)
-        "drop", "d" -> Triple("D", IndigoElectric, DarkBackground)
+        "warmup", "w" -> Triple("W", AmberWarm, ObsidianInkOnLight)
+        "drop", "d" -> Triple("D", InfoAccent, ObsidianInkOnLight)
         "failure", "f" -> Triple("F", CrimsonRed, TextPrimary)
         else -> Triple("$setIndex", DarkSurfaceHigh, TextPrimary)
     }
@@ -279,10 +285,17 @@ fun PrimaryAthleticButton(
             .fillMaxWidth()
             .height(50.dp),
         enabled = enabled,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp,
+            disabledElevation = 0.dp
+        ),
         colors = ButtonDefaults.buttonColors(
             containerColor = EmeraldNeon,
-            contentColor = Color.Black,
+            contentColor = ObsidianInkOnLight,
             disabledContainerColor = DarkSurfaceHigh,
             disabledContentColor = TextMuted
         )
@@ -313,13 +326,12 @@ fun SecondaryAthleticButton(
             .fillMaxWidth()
             .height(46.dp),
         enabled = enabled,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = ObsidianWell,
             contentColor = TextPrimary
         ),
-        border = ButtonDefaults.outlinedButtonBorder.copy(
-            brush = androidx.compose.ui.graphics.SolidColor(BorderHighlight)
-        )
+        border = BorderStroke(1.dp, BorderSubtle)
     ) {
         if (icon != null) {
             Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -350,7 +362,8 @@ fun StatCounter(
                 text = value,
                 fontWeight = FontWeight.Bold,
                 fontSize = 19.sp,
-                color = accentColor
+                color = accentColor,
+                style = TextStyle(fontFeatureSettings = "tnum")
             )
             if (unit.isNotEmpty()) {
                 Spacer(modifier = Modifier.width(3.dp))

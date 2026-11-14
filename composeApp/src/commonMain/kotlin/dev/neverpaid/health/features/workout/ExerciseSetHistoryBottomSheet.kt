@@ -50,15 +50,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.neverpaid.health.core.designsystem.AmberGoldSoft
+import dev.neverpaid.health.core.designsystem.AmberWarm
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.EmeraldDark
 import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
+import dev.neverpaid.health.core.designsystem.InfoAccent
+import dev.neverpaid.health.core.designsystem.InfoAccentLight
+import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -198,21 +202,22 @@ fun ExerciseSetHistoryBottomSheet(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(DarkSurfaceVariant)
+                        .background(ObsidianWell)
+                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                         .padding(vertical = 8.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = Color(0xFFFFB300), modifier = Modifier.size(12.dp))
+                        Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = AmberWarm, modifier = Modifier.size(12.dp))
                         Spacer(modifier = Modifier.width(3.dp))
-                        Text(text = strings.allTimePR, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFB300))
+                        Text(text = strings.allTimePR, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = AmberWarm)
                     }
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = if (prSummary.best1RMKg > 0) dev.neverpaid.health.core.math.StrengthCalculator.formatWeight(prSummary.best1RMKg, isKgUnit) else "—",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Black,
-                        color = Color(0xFFFFD54F)
+                        color = AmberGoldSoft
                     )
                     Text(text = "1RM", fontSize = 9.sp, color = TextMuted)
                 }
@@ -222,7 +227,8 @@ fun ExerciseSetHistoryBottomSheet(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(DarkSurfaceVariant)
+                        .background(ObsidianWell)
+                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                         .padding(vertical = 8.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -246,21 +252,22 @@ fun ExerciseSetHistoryBottomSheet(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(DarkSurfaceVariant)
+                        .background(ObsidianWell)
+                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                         .padding(vertical = 8.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color(0xFF64B5F6), modifier = Modifier.size(12.dp))
+                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = InfoAccent, modifier = Modifier.size(12.dp))
                         Spacer(modifier = Modifier.width(3.dp))
-                        Text(text = strings.totalCompleted, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFF64B5F6))
+                        Text(text = strings.totalCompleted, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = InfoAccent)
                     }
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "${prSummary.totalSets}",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Black,
-                        color = Color(0xFF90CAF9)
+                        color = InfoAccentLight
                     )
                     Text(text = "подходов", fontSize = 9.sp, color = TextMuted)
                 }
@@ -392,11 +399,11 @@ fun ExerciseSetHistoryBottomSheet(
 
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            color = DarkSurfaceVariant,
+                            shape = RoundedCornerShape(10.dp),
+                            color = ObsidianWell,
                             border = androidx.compose.foundation.BorderStroke(
                                 1.dp,
-                                if (rank == 0 && sortBy == "best") Color(0xFFFFB300).copy(alpha = 0.4f) else BorderSubtle
+                                if (rank == 0 && sortBy == "best") AmberWarm.copy(alpha = 0.55f) else BorderSubtle
                             )
                         ) {
                             Row(

@@ -64,7 +64,8 @@ import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
-import dev.neverpaid.health.core.designsystem.IndigoElectric
+import dev.neverpaid.health.core.designsystem.InfoAccent
+import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -235,10 +236,10 @@ fun ExercisesScreen(
             },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = DarkSurfaceVariant,
-                unfocusedContainerColor = DarkSurfaceVariant,
+                focusedContainerColor = ObsidianWell,
+                unfocusedContainerColor = ObsidianWell,
                 focusedBorderColor = EmeraldNeon,
                 unfocusedBorderColor = BorderSubtle,
                 focusedTextColor = TextPrimary,
@@ -268,7 +269,7 @@ fun ExercisesScreen(
                     text = label,
                     isSelected = isSelected,
                     onClick = { onAction(ExercisesUiAction.OnSelectEquipment(key)) },
-                    selectedColor = IndigoElectric
+                    selectedColor = InfoAccent
                 )
             }
         }

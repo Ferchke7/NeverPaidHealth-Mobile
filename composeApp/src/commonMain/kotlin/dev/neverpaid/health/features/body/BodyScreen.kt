@@ -72,7 +72,8 @@ import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
-import dev.neverpaid.health.core.designsystem.IndigoElectric
+import dev.neverpaid.health.core.designsystem.InfoAccent
+import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
 import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
@@ -293,7 +294,7 @@ fun BodyScreen(
                             title = "ИМТ (BMI)",
                             value = "${state.bmi}",
                             unit = "",
-                            accentColor = IndigoElectric
+                            accentColor = InfoAccent
                         )
                         StatCounter(
                             title = "Норма TDEE",
@@ -547,7 +548,8 @@ private fun BMICalculatorInteractiveCard(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(DarkSurfaceVariant)
+                        .background(ObsidianWell)
+                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                         .padding(10.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
@@ -559,7 +561,8 @@ private fun BMICalculatorInteractiveCard(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(DarkSurfaceVariant)
+                        .background(ObsidianWell)
+                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                         .padding(10.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
@@ -571,12 +574,13 @@ private fun BMICalculatorInteractiveCard(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(DarkSurfaceVariant)
+                        .background(ObsidianWell)
+                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                         .padding(10.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                         Text("Масса (+12%)", fontSize = 10.sp, color = TextSecondary)
-                        Text("$bulkKcal ккал", fontSize = 14.sp, fontWeight = FontWeight.Black, color = IndigoElectric)
+                        Text("$bulkKcal ккал", fontSize = 14.sp, fontWeight = FontWeight.Black, color = InfoAccent)
                     }
                 }
             }

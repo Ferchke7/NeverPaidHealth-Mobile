@@ -45,13 +45,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import dev.neverpaid.health.core.designsystem.AmberGold
 import dev.neverpaid.health.core.designsystem.BorderSubtle
-import dev.neverpaid.health.core.designsystem.CyanElectric
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.IndigoElectric
+import dev.neverpaid.health.core.designsystem.InfoAccent
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -280,7 +279,7 @@ fun AnthropometryCalculatorBottomSheet(
                                 text = "Максимальный вес: ${naturalLimit.maxWeightAt10PercentFatKg.toInt()} кг (сухой)",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = CyanElectric
+                                color = InfoAccent
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(

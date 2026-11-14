@@ -85,8 +85,7 @@ import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
-import dev.neverpaid.health.core.designsystem.IndigoElectric
-import dev.neverpaid.health.core.designsystem.IndigoSubtle
+import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
 import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
@@ -500,7 +499,7 @@ private fun QuickStartHeroCard(
                     title = "Объём",
                     value = StrengthCalculator.formatVolume(totalVolumeKg),
                     unit = "кг",
-                    accentColor = IndigoElectric
+                    accentColor = TextPrimary
                 )
                 StatCounter(
                     title = "Серия",
@@ -823,13 +822,18 @@ private fun RoutineCardItem(
                         modifier = Modifier
                             .size(38.dp)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (isCustom) IndigoSubtle else EmeraldSubtle),
+                            .background(if (isCustom) EmeraldSubtle else ObsidianWell)
+                            .border(
+                                1.dp,
+                                if (isCustom) BorderHighlight else BorderSubtle,
+                                RoundedCornerShape(10.dp)
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.FitnessCenter,
                             contentDescription = null,
-                            tint = if (isCustom) IndigoElectric else EmeraldLight,
+                            tint = if (isCustom) EmeraldLight else TextSecondary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -1156,10 +1160,10 @@ private fun RoutineEditorBottomSheet(
                 label = { Text("Название (напр. День Груди и Бицепса)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = DarkSurfaceVariant,
-                    unfocusedContainerColor = DarkSurfaceVariant,
+                    focusedContainerColor = ObsidianWell,
+                    unfocusedContainerColor = ObsidianWell,
                     focusedBorderColor = EmeraldNeon,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,
@@ -1175,10 +1179,10 @@ private fun RoutineEditorBottomSheet(
                 label = { Text("Описание / заметка к сплиту") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = DarkSurfaceVariant,
-                    unfocusedContainerColor = DarkSurfaceVariant,
+                    focusedContainerColor = ObsidianWell,
+                    unfocusedContainerColor = ObsidianWell,
                     focusedBorderColor = EmeraldNeon,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,

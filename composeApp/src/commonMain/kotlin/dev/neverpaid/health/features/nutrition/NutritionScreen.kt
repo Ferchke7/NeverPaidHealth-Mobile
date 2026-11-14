@@ -65,7 +65,6 @@ import dev.neverpaid.health.core.designsystem.AmberWarm
 import dev.neverpaid.health.core.designsystem.AthleticCard
 import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.BorderSubtle
-import dev.neverpaid.health.core.designsystem.CyanElectric
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
@@ -73,8 +72,8 @@ import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
-import dev.neverpaid.health.core.designsystem.IndigoElectric
-import dev.neverpaid.health.core.designsystem.IndigoSubtle
+import dev.neverpaid.health.core.designsystem.InfoAccent
+import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.SecondaryAthleticButton
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
@@ -359,7 +358,7 @@ fun NutritionScreen(
                             title = "Углеводы",
                             current = "${state.totalCarbs} г",
                             target = "${state.targetCarbs} г",
-                            color = IndigoElectric,
+                            color = InfoAccent,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -466,8 +465,8 @@ fun NutritionScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = DarkSurfaceVariant,
-                            unfocusedContainerColor = DarkSurfaceVariant,
+                            focusedContainerColor = ObsidianWell,
+                            unfocusedContainerColor = ObsidianWell,
                             focusedBorderColor = EmeraldNeon,
                             unfocusedBorderColor = BorderSubtle,
                             focusedTextColor = TextPrimary,
@@ -483,7 +482,7 @@ fun NutritionScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(DarkSurfaceVariant)
+                                    .background(ObsidianWell)
                                     .border(1.dp, BorderSubtle, RoundedCornerShape(8.dp))
                                     .clickable { onAction(NutritionUiAction.OnAiDescriptionChanged(prompt)) }
                                     .padding(horizontal = 10.dp, vertical = 5.dp)
@@ -643,7 +642,7 @@ fun NutritionScreen(
                         text = "+ База продуктов (150+)",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = CyanElectric,
+                        color = InfoAccent,
                         modifier = Modifier.clickable { isFoodCatalogSheetOpen = true }
                     )
                     Text(
@@ -862,8 +861,8 @@ private fun AddMealBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = DarkSurfaceVariant,
-                    unfocusedContainerColor = DarkSurfaceVariant,
+                    focusedContainerColor = ObsidianWell,
+                    unfocusedContainerColor = ObsidianWell,
                     focusedBorderColor = EmeraldNeon,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,

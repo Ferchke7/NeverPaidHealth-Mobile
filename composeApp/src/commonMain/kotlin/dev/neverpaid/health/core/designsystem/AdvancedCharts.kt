@@ -8,6 +8,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -49,7 +50,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -151,8 +151,8 @@ fun InteractiveVolumeChart(
             modifier = modifier
                 .fillMaxWidth()
                 .height(220.dp)
-                .background(DarkSurfaceVariant, RoundedCornerShape(16.dp))
-                .border(1.dp, BorderSubtle, RoundedCornerShape(16.dp)),
+                .background(DarkSurface, RoundedCornerShape(14.dp))
+                .border(1.dp, BorderSubtle, RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -348,18 +348,14 @@ fun InteractiveVolumeChart(
                         close()
                     }
 
-                    // Draw Gradient Area Under Curve
+                    // Flat Obsidian Area Under Curve
                     drawPath(
                         path = fillPath,
-                        brush = Brush.verticalGradient(
-                            colors = listOf(gradientStartColor, gradientEndColor),
-                            startY = topPadding,
-                            endY = topPadding + chartHeight
-                        ),
+                        color = gradientStartColor,
                         style = Fill
                     )
 
-                    // Draw Main Glowing Line
+                    // Draw Main Crisp Line
                     drawPath(
                         path = strokePath,
                         color = lineColor,
@@ -369,14 +365,13 @@ fun InteractiveVolumeChart(
                         )
                     )
 
-                    // Draw Milestone PR Badges / Points
+                    // Draw Milestone PR Badges / Points (flat geometric, no blur halo)
                     points.forEachIndexed { index, point ->
                         val dp = dataPoints[index]
                         if (dp.isPersonalRecord) {
-                            // Gold star / outer halo
                             drawCircle(
-                                color = AmberGold.copy(alpha = 0.35f),
-                                radius = 9.dp.toPx(),
+                                color = DarkBackground,
+                                radius = 6.dp.toPx(),
                                 center = point
                             )
                             drawCircle(
@@ -756,10 +751,10 @@ fun MacronutrientDonutGauge(
                         style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                     )
 
-                    // 2. Protein Ring: Indigo Electric
+                    // 2. Protein Ring: Sky Info Accent
                     val protSweep = animProteinProgress * 360f
                     drawArc(
-                        color = IndigoElectric,
+                        color = InfoAccent,
                         startAngle = -90f,
                         sweepAngle = protSweep,
                         useCenter = false,
@@ -768,10 +763,10 @@ fun MacronutrientDonutGauge(
                         style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                     )
 
-                    // 3. Carbs Ring: Cyan Electric
+                    // 3. Carbs Ring: Amber Gold
                     val carbsSweep = animCarbsProgress * 360f
                     drawArc(
-                        color = CyanElectric,
+                        color = AmberGold,
                         startAngle = -90f,
                         sweepAngle = carbsSweep,
                         useCenter = false,
@@ -780,10 +775,10 @@ fun MacronutrientDonutGauge(
                         style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                     )
 
-                    // 4. Fats Ring: Purple Accent
+                    // 4. Fats Ring: Neutral Secondary
                     val fatsSweep = animFatsProgress * 360f
                     drawArc(
-                        color = PurpleAccent,
+                        color = TextSecondary,
                         startAngle = -90f,
                         sweepAngle = fatsSweep,
                         useCenter = false,
@@ -820,19 +815,19 @@ fun MacronutrientDonutGauge(
                     label = strings.protein,
                     current = progress.currentProteinGrams,
                     target = progress.targetProteinGrams,
-                    color = IndigoElectric
+                    color = InfoAccent
                 )
                 MacroLegendRow(
                     label = strings.carbs,
                     current = progress.currentCarbsGrams,
                     target = progress.targetCarbsGrams,
-                    color = CyanElectric
+                    color = AmberGold
                 )
                 MacroLegendRow(
                     label = strings.fats,
                     current = progress.currentFatsGrams,
                     target = progress.targetFatsGrams,
-                    color = PurpleAccent
+                    color = TextSecondary
                 )
             }
         }
@@ -914,9 +909,9 @@ fun WaterHydrationWave(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        border = BorderStroke(1.dp, BorderSubtle)
     ) {
         Column(
             modifier = Modifier
@@ -935,7 +930,7 @@ fun WaterHydrationWave(
                     Icon(
                         imageVector = Icons.Default.WaterDrop,
                         contentDescription = null,
-                        tint = CyanElectric,
+                        tint = InfoAccent,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
@@ -950,7 +945,7 @@ fun WaterHydrationWave(
                     text = "$currentMl / $targetMl ml (${(progress * 100).toInt()}%)",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = CyanElectric
+                    color = InfoAccent
                 )
             }
 
@@ -961,8 +956,9 @@ fun WaterHydrationWave(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(90.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(DarkSurfaceElevated)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(ObsidianWell)
+                    .border(1.dp, BorderDivider, RoundedCornerShape(10.dp))
                     .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
@@ -1005,24 +1001,16 @@ fun WaterHydrationWave(
                         close()
                     }
 
-                    // Draw sub-wave
+                    // Flat Obsidian sub-wave
                     drawPath(
                         path = subWavePath,
-                        brush = Brush.verticalGradient(
-                            colors = listOf(CyanElectric.copy(alpha = 0.35f), IndigoElectric.copy(alpha = 0.25f)),
-                            startY = waterLevelY,
-                            endY = h
-                        )
+                        color = InfoAccent.copy(alpha = 0.22f)
                     )
 
-                    // Draw primary wave
+                    // Flat Obsidian primary wave
                     drawPath(
                         path = wavePath,
-                        brush = Brush.verticalGradient(
-                            colors = listOf(CyanElectric.copy(alpha = 0.85f), IndigoDark.copy(alpha = 0.75f)),
-                            startY = waterLevelY,
-                            endY = h
-                        )
+                        color = InfoAccent.copy(alpha = 0.45f)
                     )
 
                     // Target Line Indicator at 100%
@@ -1045,12 +1033,13 @@ fun WaterHydrationWave(
                 ) {
                     FilledTonalButton(
                         onClick = { onAddWater(250) },
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, BorderSubtle),
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = DarkSurface.copy(alpha = 0.75f),
-                            contentColor = CyanElectric
+                            containerColor = DarkSurface,
+                            contentColor = InfoAccent
                         ),
-                        modifier = Modifier.height(34.dp)
+                        modifier = Modifier.height(44.dp)
                     ) {
                         Text("+250 ml", style = MaterialTheme.typography.labelSmall)
                     }
@@ -1059,12 +1048,13 @@ fun WaterHydrationWave(
 
                     FilledTonalButton(
                         onClick = { onAddWater(500) },
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, BorderSubtle),
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = DarkSurface.copy(alpha = 0.75f),
-                            contentColor = CyanElectric
+                            containerColor = DarkSurface,
+                            contentColor = InfoAccent
                         ),
-                        modifier = Modifier.height(34.dp)
+                        modifier = Modifier.height(44.dp)
                     ) {
                         Text("+500 ml", style = MaterialTheme.typography.labelSmall)
                     }

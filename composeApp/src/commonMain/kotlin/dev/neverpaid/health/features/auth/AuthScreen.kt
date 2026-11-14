@@ -57,11 +57,16 @@ import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.CrimsonSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.DudaBrandLogo
 import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
+import dev.neverpaid.health.core.designsystem.GoogleBrandBlue
+import dev.neverpaid.health.core.designsystem.GoogleBrandGreen
+import dev.neverpaid.health.core.designsystem.GoogleBrandRed
+import dev.neverpaid.health.core.designsystem.GoogleBrandYellow
+import dev.neverpaid.health.core.designsystem.ObsidianInkOnLight
+import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -79,7 +84,7 @@ fun GoogleLogoIcon(modifier: Modifier = Modifier) {
 
         // Blue horizontal crossbar
         drawLine(
-            color = Color(0xFF4285F4),
+            color = GoogleBrandBlue,
             start = androidx.compose.ui.geometry.Offset(cx, cy),
             end = androidx.compose.ui.geometry.Offset(w, cy),
             strokeWidth = stroke,
@@ -91,7 +96,7 @@ fun GoogleLogoIcon(modifier: Modifier = Modifier) {
 
         // Red top arc
         drawArc(
-            color = Color(0xFFEA4335),
+            color = GoogleBrandRed,
             startAngle = 205f,
             sweepAngle = 110f,
             useCenter = false,
@@ -102,7 +107,7 @@ fun GoogleLogoIcon(modifier: Modifier = Modifier) {
 
         // Yellow bottom-left arc
         drawArc(
-            color = Color(0xFFFBBC05),
+            color = GoogleBrandYellow,
             startAngle = 125f,
             sweepAngle = 80f,
             useCenter = false,
@@ -113,7 +118,7 @@ fun GoogleLogoIcon(modifier: Modifier = Modifier) {
 
         // Green bottom arc
         drawArc(
-            color = Color(0xFF34A853),
+            color = GoogleBrandGreen,
             startAngle = 40f,
             sweepAngle = 85f,
             useCenter = false,
@@ -124,7 +129,7 @@ fun GoogleLogoIcon(modifier: Modifier = Modifier) {
 
         // Blue upper-right hook
         drawArc(
-            color = Color(0xFF4285F4),
+            color = GoogleBrandBlue,
             startAngle = 315f,
             sweepAngle = 55f,
             useCenter = false,
@@ -376,10 +381,10 @@ fun AuthScreen(
                     },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurfaceVariant,
+                        focusedContainerColor = ObsidianWell,
+                        unfocusedContainerColor = ObsidianWell,
                         focusedBorderColor = EmeraldNeon,
                         unfocusedBorderColor = BorderSubtle,
                         focusedTextColor = TextPrimary,
@@ -403,9 +408,10 @@ fun AuthScreen(
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = DarkSurfaceVariant,
+                            containerColor = ObsidianWell,
                             contentColor = EmeraldLight
                         )
                     ) {
@@ -496,10 +502,11 @@ fun AuthScreen(
                 Button(
                     onClick = onTriggerGoogleSignIn,
                     enabled = !state.isLoading,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
-                        contentColor = Color(0xFF18181B)
+                        contentColor = ObsidianInkOnLight
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -515,7 +522,7 @@ fun AuthScreen(
                         },
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF18181B)
+                        color = ObsidianInkOnLight
                     )
                 }
 
@@ -525,9 +532,10 @@ fun AuthScreen(
                 OutlinedButton(
                     onClick = { onAction(AuthUiAction.OnOpenBrowserLogin) },
                     enabled = !state.isLoading,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = DarkSurfaceVariant,
+                        containerColor = DarkSurface,
                         contentColor = TextPrimary
                     ),
                     modifier = Modifier
@@ -577,19 +585,20 @@ fun AuthScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 3. Instant Guest Mode (Emerald Neon)
+                // 3. Instant Guest Mode (Obsidian Emerald Subtle)
                 Button(
                     onClick = { onAction(AuthUiAction.OnContinueAsGuest) },
                     enabled = !state.isLoading,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = DarkSurfaceVariant,
+                        containerColor = EmeraldSubtle,
                         contentColor = TextPrimary
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
-                        .border(1.dp, BorderHighlight, RoundedCornerShape(12.dp))
+                        .border(1.dp, BorderHighlight, RoundedCornerShape(10.dp))
                 ) {
                     Icon(
                         imageVector = Icons.Default.ElectricBolt,

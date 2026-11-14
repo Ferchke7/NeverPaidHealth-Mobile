@@ -45,12 +45,12 @@ import androidx.compose.ui.unit.dp
 import dev.neverpaid.health.core.designsystem.AmberWarm
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.CrimsonRed
-import dev.neverpaid.health.core.designsystem.CyanElectric
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
+import dev.neverpaid.health.core.designsystem.InfoAccent
+import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -137,11 +137,11 @@ fun ReadinessSurveyModal(
             // Live Computed Readiness Score Preview
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = ObsidianWell),
                 border = BorderStroke(1.dp, when (tempAssessment.tier) {
                     ReadinessTier.PEAK_READINESS -> EmeraldNeon
-                    ReadinessTier.NORMAL_READINESS -> CyanElectric
+                    ReadinessTier.NORMAL_READINESS -> InfoAccent
                     ReadinessTier.MILD_FATIGUE -> AmberWarm
                     ReadinessTier.CRITICAL_RECOVERY -> CrimsonRed
                 })
@@ -163,7 +163,7 @@ fun ReadinessSurveyModal(
                             fontWeight = FontWeight.Bold,
                             color = when (tempAssessment.tier) {
                                 ReadinessTier.PEAK_READINESS -> EmeraldNeon
-                                ReadinessTier.NORMAL_READINESS -> CyanElectric
+                                ReadinessTier.NORMAL_READINESS -> InfoAccent
                                 ReadinessTier.MILD_FATIGUE -> AmberWarm
                                 ReadinessTier.CRITICAL_RECOVERY -> CrimsonRed
                             }

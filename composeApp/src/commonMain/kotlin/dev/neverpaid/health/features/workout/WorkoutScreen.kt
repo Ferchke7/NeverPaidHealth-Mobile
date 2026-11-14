@@ -85,7 +85,7 @@ import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
-import dev.neverpaid.health.core.designsystem.IndigoElectric
+import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.SecondaryAthleticButton
 import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
@@ -298,7 +298,7 @@ fun WorkoutScreen(
                     StatCounter(
                         title = "Упражнения",
                         value = "${workout.exercises.size}",
-                        accentColor = IndigoElectric
+                        accentColor = TextPrimary
                     )
                     StatCounter(
                         title = "Подходы",
@@ -791,8 +791,8 @@ private fun WorkoutExerciseCard(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurfaceVariant,
+                        focusedContainerColor = ObsidianWell,
+                        unfocusedContainerColor = ObsidianWell,
                         focusedBorderColor = EmeraldNeon,
                         unfocusedBorderColor = BorderSubtle,
                         focusedTextColor = TextPrimary,
@@ -1033,8 +1033,8 @@ private fun WorkoutSetRow(
                         .fillMaxWidth()
                         .height(36.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(DarkSurfaceVariant)
-                        .border(1.dp, if (set.isCompleted) EmeraldNeon.copy(alpha = 0.4f) else BorderSubtle, RoundedCornerShape(8.dp)),
+                        .background(ObsidianWell)
+                        .border(1.dp, if (set.isCompleted) BorderHighlight else BorderSubtle, RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     OutlinedTextField(
@@ -1098,8 +1098,8 @@ private fun WorkoutSetRow(
                         .fillMaxWidth()
                         .height(36.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(DarkSurfaceVariant)
-                        .border(1.dp, if (set.isCompleted) EmeraldNeon.copy(alpha = 0.4f) else BorderSubtle, RoundedCornerShape(8.dp))
+                        .background(ObsidianWell)
+                        .border(1.dp, if (set.isCompleted) BorderHighlight else BorderSubtle, RoundedCornerShape(8.dp))
                         .clickable { isExpanded = true },
                     contentAlignment = Alignment.Center
                 ) {

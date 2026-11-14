@@ -63,6 +63,7 @@ import dev.neverpaid.health.core.designsystem.EmeraldDark
 import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
+import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -368,10 +369,10 @@ fun CoachScreen(
                 onValueChange = { onAction(CoachUiAction.OnInputMessageChanged(it)) },
                 placeholder = { Text(text = "Спросите тренера или попросите сплит...", color = TextMuted, fontSize = 13.sp) },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = DarkSurfaceVariant,
-                    unfocusedContainerColor = DarkSurfaceVariant,
+                    focusedContainerColor = ObsidianWell,
+                    unfocusedContainerColor = ObsidianWell,
                     focusedBorderColor = EmeraldNeon,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,
@@ -412,7 +413,7 @@ private fun ChatMessageBubble(
 ) {
     val isUser = message.isUser
     val alignment = if (isUser) Alignment.End else Alignment.Start
-    val bg = if (isUser) EmeraldDark else DarkSurfaceVariant
+    val bg = if (isUser) EmeraldSubtle else DarkSurface
 
     val (cleanedText, embeddedWorkout) = remember(message.text) {
         if (isUser) message.text to null else extractEmbeddedWorkoutPlan(message.text)

@@ -264,7 +264,7 @@ private fun launchCustomTabFallback(activity: Activity, onError: (String) -> Uni
             .setShowTitle(true)
             .setDefaultColorSchemeParams(
                 CustomTabColorSchemeParams.Builder()
-                    .setToolbarColor(0xFF09090B.toInt())
+                    .setToolbarColor(0xFF0A0A0A.toInt())
                     .build()
             )
             .build()

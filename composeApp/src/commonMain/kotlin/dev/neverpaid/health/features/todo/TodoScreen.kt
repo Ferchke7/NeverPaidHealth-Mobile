@@ -76,8 +76,9 @@ import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
-import dev.neverpaid.health.core.designsystem.IndigoElectric
-import dev.neverpaid.health.core.designsystem.IndigoSubtle
+import dev.neverpaid.health.core.designsystem.InfoAccent
+import dev.neverpaid.health.core.designsystem.ObsidianInkOnLight
+import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.SecondaryAthleticButton
 import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
@@ -191,16 +192,16 @@ fun TodoScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(IndigoSubtle)
-                            .border(1.dp, IndigoElectric.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+                            .background(EmeraldSubtle)
+                            .border(1.dp, BorderHighlight, RoundedCornerShape(10.dp))
                             .clickable { onAction(TodoUiAction.OnStartFocusTimer(null)) }
-                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                            .padding(horizontal = 10.dp, vertical = 10.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.Timer,
                                 contentDescription = strings.todoPomodoroFocus,
-                                tint = IndigoElectric,
+                                tint = EmeraldLight,
                                 modifier = Modifier.size(15.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
@@ -211,11 +212,12 @@ fun TodoScreen(
                     Button(
                         onClick = { onAction(TodoUiAction.OnOpenTaskModal(null)) },
                         shape = RoundedCornerShape(10.dp),
+                        elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = EmeraldNeon,
-                            contentColor = Color.Black
+                            contentColor = ObsidianInkOnLight
                         ),
-                        modifier = Modifier.height(36.dp)
+                        modifier = Modifier.height(44.dp)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
@@ -227,7 +229,7 @@ fun TodoScreen(
 
         // 4 KPI Cards Row (matching TodoCalendarPage.tsx)
         item(key = "kpi_row") {
-            AthleticCard(backgroundColor = DarkSurfaceVariant) {
+            AthleticCard(backgroundColor = DarkSurface) {
                 Column(modifier = Modifier.padding(14.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -241,7 +243,7 @@ fun TodoScreen(
                         StatCounter(
                             title = "Прогресс дня",
                             value = "${(progressFraction * 100).toInt()}%",
-                            accentColor = IndigoElectric
+                            accentColor = InfoAccent
                         )
                         StatCounter(
                             title = "Важные",
@@ -381,14 +383,14 @@ fun TodoScreen(
                                         .size(32.dp)
                                         .clip(CircleShape)
                                         .background(
-                                            if (logItem.actionType == "focus_session") IndigoSubtle else EmeraldSubtle
+                                            if (logItem.actionType == "focus_session") InfoAccent.copy(alpha = 0.15f) else EmeraldSubtle
                                         ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = if (logItem.actionType == "focus_session") Icons.Default.Timer else Icons.Default.Check,
                                         contentDescription = null,
-                                        tint = if (logItem.actionType == "focus_session") IndigoElectric else EmeraldLight,
+                                        tint = if (logItem.actionType == "focus_session") InfoAccent else EmeraldLight,
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }
@@ -640,7 +642,7 @@ private fun TodoTaskItemCard(
                             Text(
                                 text = "↻ ежедневно",
                                 fontSize = 10.sp,
-                                color = IndigoElectric
+                                color = InfoAccent
                             )
                         }
                     }
@@ -847,10 +849,10 @@ private fun CreateOrEditTaskBottomSheet(
                 label = { Text(strings.todoTaskTitleLabel) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = DarkSurfaceVariant,
-                    unfocusedContainerColor = DarkSurfaceVariant,
+                    focusedContainerColor = ObsidianWell,
+                    unfocusedContainerColor = ObsidianWell,
                     focusedBorderColor = EmeraldNeon,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,
@@ -866,10 +868,10 @@ private fun CreateOrEditTaskBottomSheet(
                 label = { Text(strings.todoTargetLabel) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = DarkSurfaceVariant,
-                    unfocusedContainerColor = DarkSurfaceVariant,
+                    focusedContainerColor = ObsidianWell,
+                    unfocusedContainerColor = ObsidianWell,
                     focusedBorderColor = EmeraldNeon,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,
@@ -891,10 +893,10 @@ private fun CreateOrEditTaskBottomSheet(
                 },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = DarkSurfaceVariant,
-                    unfocusedContainerColor = DarkSurfaceVariant,
+                    focusedContainerColor = ObsidianWell,
+                    unfocusedContainerColor = ObsidianWell,
                     focusedBorderColor = EmeraldNeon,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,

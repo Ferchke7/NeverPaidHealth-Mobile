@@ -52,7 +52,6 @@ import dev.neverpaid.health.core.designsystem.EmeraldDark
 import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
-import dev.neverpaid.health.core.designsystem.IndigoElectric
 import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
@@ -308,7 +307,7 @@ private fun HistoryWorkoutCard(
                 StatCounter(
                     title = "Упражнения",
                     value = "${workout.exercises.size}",
-                    accentColor = IndigoElectric
+                    accentColor = TextPrimary
                 )
                 StatCounter(
                     title = "Время",

@@ -38,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -89,9 +88,7 @@ fun BarbellSleeveCanvas(
                 val shaftWidth = 50f
                 val shaftHeight = 16f
                 drawRoundRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF64748B), Color(0xFF334155), Color(0xFF1E293B))
-                    ),
+                    color = BarbellShaftColor,
                     topLeft = Offset(0f, centerY - (shaftHeight / 2f)),
                     size = Size(shaftWidth, shaftHeight),
                     cornerRadius = CornerRadius(2f, 2f)
@@ -101,9 +98,7 @@ fun BarbellSleeveCanvas(
                 val stopperWidth = 24f
                 val stopperHeight = 70f
                 drawRoundRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF94A3B8), Color(0xFF64748B), Color(0xFF334155))
-                    ),
+                    color = BarbellCollarColor,
                     topLeft = Offset(shaftWidth, centerY - (stopperHeight / 2f)),
                     size = Size(stopperWidth, stopperHeight),
                     cornerRadius = CornerRadius(4f, 4f)
@@ -114,9 +109,7 @@ fun BarbellSleeveCanvas(
                 val sleeveWidth = (canvasWidth - sleeveStartX - 20f).coerceAtLeast(180f)
                 val sleeveHeight = 26f
                 drawRoundRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFFCBD5E1), Color(0xFF94A3B8), Color(0xFF64748B), Color(0xFF334155))
-                    ),
+                    color = BarbellSleeveColor,
                     topLeft = Offset(sleeveStartX, centerY - (sleeveHeight / 2f)),
                     size = Size(sleeveWidth, sleeveHeight),
                     cornerRadius = CornerRadius(3f, 3f)
@@ -137,17 +130,9 @@ fun BarbellSleeveCanvas(
                         val plateColor = Color(spec.colorHex)
                         val topY = centerY - (plateHeight / 2f)
 
-                        // Plate body gradient
+                        // Flat Obsidian plate body
                         drawRoundRect(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    plateColor.copy(alpha = 0.85f),
-                                    plateColor,
-                                    plateColor.copy(alpha = 0.7f)
-                                ),
-                                startX = currentX,
-                                endX = currentX + plateWidth
-                            ),
+                            color = plateColor,
                             topLeft = Offset(currentX, topY),
                             size = Size(plateWidth, plateHeight),
                             cornerRadius = CornerRadius(3f, 3f)
@@ -155,7 +140,7 @@ fun BarbellSleeveCanvas(
 
                         // Outer border for bumper visibility
                         drawRoundRect(
-                            color = Color(0x66000000),
+                            color = BarbellStrokeScrim,
                             topLeft = Offset(currentX, topY),
                             size = Size(plateWidth, plateHeight),
                             cornerRadius = CornerRadius(3f, 3f),
@@ -166,7 +151,7 @@ fun BarbellSleeveCanvas(
                         if (spec.diameterMm >= 350) {
                             val hubHeight = 32f
                             drawRoundRect(
-                                color = Color(0x55000000),
+                                color = BarbellStrokeScrim,
                                 topLeft = Offset(currentX + 2f, centerY - (hubHeight / 2f)),
                                 size = Size((plateWidth - 4f).coerceAtLeast(2f), hubHeight),
                                 cornerRadius = CornerRadius(2f, 2f)
@@ -180,7 +165,7 @@ fun BarbellSleeveCanvas(
                                 style = TextStyle(
                                     fontSize = if (plateHeight > 90f) 10.sp else 8.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = if (spec.colorHex == 0xFFF8FAFC) Color(0xFF0F172A) else Color.White
+                                    color = if (spec.colorHex == LightPlateHexColor) ObsidianInkOnLight else TextPrimary
                                 )
                             )
                             val textX = currentX + (plateWidth - textLayout.size.width) / 2f
@@ -197,9 +182,7 @@ fun BarbellSleeveCanvas(
                     val collarWidth = 14f
                     val collarHeight = 44f
                     drawRoundRect(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(Color(0xFFE2E8F0), Color(0xFF94A3B8), Color(0xFF475569))
-                        ),
+                        color = BarbellSleeveColor,
                         topLeft = Offset(currentX + 3f, centerY - (collarHeight / 2f)),
                         size = Size(collarWidth, collarHeight),
                         cornerRadius = CornerRadius(3f, 3f)

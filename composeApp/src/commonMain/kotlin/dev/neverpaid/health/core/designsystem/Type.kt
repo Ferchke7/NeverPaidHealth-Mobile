@@ -10,36 +10,39 @@ val AthleticTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 40.sp,
+        fontSize = 30.sp,
+        lineHeight = 36.sp,
+        letterSpacing = (-0.6).sp,
         color = TextPrimary
     ),
     headlineMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
         fontSize = 24.sp,
-        lineHeight = 32.sp,
+        lineHeight = 30.sp,
+        letterSpacing = (-0.5).sp,
         color = TextPrimary
     ),
     titleLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
         fontSize = 20.sp,
-        lineHeight = 28.sp,
+        lineHeight = 26.sp,
+        letterSpacing = (-0.3).sp,
         color = TextPrimary
     ),
     titleMedium = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 15.sp,
+        lineHeight = 22.sp,
         color = TextPrimary
     ),
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
+        fontSize = 15.sp,
+        lineHeight = 22.sp,
         color = TextPrimary
     ),
     bodyMedium = TextStyle(
@@ -51,7 +54,7 @@ val AthleticTypography = Typography(
     ),
     labelLarge = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         color = TextPrimary

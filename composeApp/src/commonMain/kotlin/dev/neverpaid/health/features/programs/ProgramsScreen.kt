@@ -87,8 +87,8 @@ import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
-import dev.neverpaid.health.core.designsystem.IndigoElectric
-import dev.neverpaid.health.core.designsystem.IndigoSubtle
+import dev.neverpaid.health.core.designsystem.InfoAccent
+import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
 import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
@@ -349,10 +349,10 @@ fun ProgramsScreen(
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurfaceVariant,
+                        focusedContainerColor = ObsidianWell,
+                        unfocusedContainerColor = ObsidianWell,
                         focusedBorderColor = EmeraldNeon,
                         unfocusedBorderColor = BorderSubtle,
                         focusedTextColor = TextPrimary,
@@ -935,7 +935,7 @@ private fun AthleteProfileBottomSheet(
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     StatCounter("Тренировок", "${profile.totalWorkouts}", accentColor = EmeraldNeon)
-                    StatCounter("Тоннаж", StrengthCalculator.formatVolume(profile.totalVolumeKg), "кг", accentColor = IndigoElectric)
+                    StatCounter("Тоннаж", StrengthCalculator.formatVolume(profile.totalVolumeKg), "кг", accentColor = InfoAccent)
                     StatCounter("Лайков", "${profile.totalLikesReceived}", accentColor = AmberWarm)
                 }
             }
@@ -1307,10 +1307,10 @@ private fun ProgramCommentsBottomSheet(
                     onValueChange = onTextChanged,
                     placeholder = { Text(text = "Написать комментарий...", color = TextMuted, fontSize = 13.sp) },
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurfaceVariant,
+                        focusedContainerColor = ObsidianWell,
+                        unfocusedContainerColor = ObsidianWell,
                         focusedBorderColor = EmeraldNeon,
                         unfocusedBorderColor = BorderSubtle,
                         focusedTextColor = TextPrimary,

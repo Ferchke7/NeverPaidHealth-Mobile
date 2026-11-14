@@ -1,5 +1,6 @@
 package dev.neverpaid.health.core.designsystem
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -167,8 +170,8 @@ fun FloatingFocusTimerOverlay(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 4.dp),
-            backgroundColor = DarkSurfaceVariant,
-            borderColor = IndigoElectric
+            backgroundColor = DarkSurface,
+            borderColor = BorderHighlight
         ) {
             Row(
                 modifier = Modifier
@@ -185,7 +188,7 @@ fun FloatingFocusTimerOverlay(
                     Icon(
                         imageVector = Icons.Default.Timer,
                         contentDescription = null,
-                        tint = IndigoElectric,
+                        tint = EmeraldLight,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -202,7 +205,8 @@ fun FloatingFocusTimerOverlay(
                             text = formatted,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Black,
-                            color = EmeraldLight
+                            color = EmeraldLight,
+                            style = TextStyle(fontFeatureSettings = "tnum")
                         )
                     }
                 }
@@ -295,7 +299,8 @@ fun FloatingFocusTimerOverlay(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
-                    .background(DarkSurfaceVariant)
+                    .background(ObsidianWell)
+                    .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -308,6 +313,7 @@ fun FloatingFocusTimerOverlay(
                     Box(
                         modifier = Modifier
                             .weight(1f)
+                            .heightIn(min = 44.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(if (selected) EmeraldNeon else Color.Transparent)
                             .clickable { onSetMode(modeKey, "focus", mins.coerceAtLeast(15)) }
@@ -318,7 +324,7 @@ fun FloatingFocusTimerOverlay(
                             text = label,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (selected) Color.Black else TextSecondary
+                            color = if (selected) ObsidianInkOnLight else TextSecondary
                         )
                     }
                 }
@@ -340,8 +346,9 @@ fun FloatingFocusTimerOverlay(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
+                                .heightIn(min = 44.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (selected) EmeraldSubtle else DarkSurfaceVariant)
+                                .background(if (selected) EmeraldSubtle else ObsidianWell)
                                 .border(
                                     1.dp,
                                     if (selected) BorderHighlight else BorderSubtle,
@@ -370,8 +377,9 @@ fun FloatingFocusTimerOverlay(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
+                                .heightIn(min = 44.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (selected) EmeraldSubtle else DarkSurfaceVariant)
+                                .background(if (selected) EmeraldSubtle else ObsidianWell)
                                 .border(
                                     1.dp,
                                     if (selected) BorderHighlight else BorderSubtle,
@@ -411,7 +419,8 @@ fun FloatingFocusTimerOverlay(
                         text = formatted,
                         fontSize = 38.sp,
                         fontWeight = FontWeight.Black,
-                        color = TextPrimary
+                        color = TextPrimary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
                     Text(
                         text = "Помидоров: ${state.pomodoroCount}",
@@ -432,7 +441,12 @@ fun FloatingFocusTimerOverlay(
                     modifier = Modifier
                         .weight(1f)
                         .height(48.dp),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = ObsidianWell,
+                        contentColor = TextPrimary
+                    ),
+                    border = BorderStroke(1.dp, BorderSubtle)
                 ) {
                     Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
@@ -444,10 +458,11 @@ fun FloatingFocusTimerOverlay(
                     modifier = Modifier
                         .weight(1.4f)
                         .height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (state.isRunning) AmberWarm else EmeraldNeon,
-                        contentColor = Color.Black
+                        contentColor = ObsidianInkOnLight
                     )
                 ) {
                     Icon(
@@ -471,8 +486,12 @@ fun FloatingFocusTimerOverlay(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(46.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = EmeraldLight)
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = EmeraldSubtle,
+                    contentColor = EmeraldLight
+                ),
+                border = BorderStroke(1.dp, BorderHighlight)
             ) {
                 Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))

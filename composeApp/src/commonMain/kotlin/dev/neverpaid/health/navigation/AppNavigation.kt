@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -60,6 +61,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.neverpaid.health.core.designsystem.BorderDivider
+import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
@@ -70,8 +73,7 @@ import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.FloatingActiveWorkoutPill
 import dev.neverpaid.health.core.designsystem.FloatingFocusTimerOverlay
-import dev.neverpaid.health.core.designsystem.IndigoElectric
-import dev.neverpaid.health.core.designsystem.IndigoSubtle
+import dev.neverpaid.health.core.designsystem.ObsidianInkOnLight
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -221,7 +223,7 @@ fun DudaMobileApp() {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(DarkSurface)
+                            .background(DarkBackground)
                             .statusBarsPadding()
                     ) {
                         if (isSecondaryScreen) {
@@ -285,13 +287,13 @@ fun DudaMobileApp() {
                                                 modifier = Modifier
                                                     .size(6.dp)
                                                     .clip(CircleShape)
-                                                    .background(Color.Black)
+                                                    .background(ObsidianInkOnLight)
                                             )
                                             Text(
                                                 text = "LIVE",
                                                 fontSize = 10.sp,
                                                 fontWeight = FontWeight.Black,
-                                                color = Color.Black
+                                                color = ObsidianInkOnLight
                                             )
                                         }
                                     }
@@ -300,18 +302,20 @@ fun DudaMobileApp() {
                                     if (focusTimerState.isOpen) {
                                         Box(
                                             modifier = Modifier
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(IndigoSubtle)
+                                                .defaultMinSize(minWidth = 40.dp, minHeight = 40.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(EmeraldSubtle)
+                                                .border(1.dp, BorderHighlight, RoundedCornerShape(10.dp))
                                                 .clickable {
                                                     repository.setFocusModalOpen(!focusTimerState.isModalOpen)
                                                 }
-                                                .padding(horizontal = 8.dp, vertical = 5.dp),
+                                                .padding(horizontal = 8.dp, vertical = 6.dp),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Timer,
                                                 contentDescription = "Фокус-таймер",
-                                                tint = IndigoElectric,
+                                                tint = EmeraldLight,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
@@ -322,14 +326,22 @@ fun DudaMobileApp() {
                                     val userInitials = if (isGuest) "G" else currentUser?.name?.trim()?.take(1)?.uppercase().orEmpty()
                                     Box(
                                         modifier = Modifier
-                                            .size(34.dp)
+                                            .size(36.dp)
                                             .clip(CircleShape)
                                             .background(
-                                                if (currentScreen == Screen.Profile) EmeraldNeon else DarkSurfaceHigh
+                                                when {
+                                                    currentScreen == Screen.Profile -> EmeraldNeon
+                                                    isGuest -> DarkSurfaceHigh
+                                                    else -> EmeraldSubtle
+                                                }
                                             )
                                             .border(
                                                 1.dp,
-                                                if (isGuest) dev.neverpaid.health.core.designsystem.AmberWarm.copy(alpha = 0.6f) else EmeraldNeon.copy(alpha = 0.4f),
+                                                when {
+                                                    currentScreen == Screen.Profile -> EmeraldNeon
+                                                    isGuest -> dev.neverpaid.health.core.designsystem.AmberWarm
+                                                    else -> BorderHighlight
+                                                },
                                                 CircleShape
                                             )
                                             .clickable { navigateTo(Screen.Profile) },
@@ -340,13 +352,13 @@ fun DudaMobileApp() {
                                                 text = userInitials,
                                                 fontSize = 13.sp,
                                                 fontWeight = FontWeight.Black,
-                                                color = if (currentScreen == Screen.Profile) Color.Black else if (isGuest) dev.neverpaid.health.core.designsystem.AmberWarm else EmeraldNeon
+                                                color = if (currentScreen == Screen.Profile) ObsidianInkOnLight else if (isGuest) dev.neverpaid.health.core.designsystem.AmberWarm else EmeraldLight
                                             )
                                         } else {
                                             Icon(
                                                 imageVector = Icons.Default.Person,
                                                 contentDescription = strings.profileTitle,
-                                                tint = if (currentScreen == Screen.Profile) Color.Black else EmeraldNeon,
+                                                tint = if (currentScreen == Screen.Profile) ObsidianInkOnLight else EmeraldLight,
                                                 modifier = Modifier.size(18.dp)
                                             )
                                         }
@@ -355,7 +367,7 @@ fun DudaMobileApp() {
                             }
                         }
 
-                        HorizontalDivider(color = BorderSubtle, thickness = 0.5.dp)
+                        HorizontalDivider(color = BorderDivider, thickness = 1.dp)
                     }
                 }
             },
@@ -364,7 +376,7 @@ fun DudaMobileApp() {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(DarkSurface)
+                            .background(DarkBackground)
                             .windowInsetsPadding(WindowInsets.navigationBars)
                     ) {
                         // Global Minimized Focus Timer Pill
@@ -397,9 +409,9 @@ fun DudaMobileApp() {
                         }
 
                         NavigationBar(
-                            containerColor = DarkSurface,
+                            containerColor = DarkBackground,
                             contentColor = TextPrimary,
-                            tonalElevation = 8.dp,
+                            tonalElevation = 0.dp,
                             windowInsets = WindowInsets(0, 0, 0, 0)
                         ) {
                             mobileBottomNavItems.forEach { screen ->
@@ -427,8 +439,8 @@ fun DudaMobileApp() {
                                         selectedIconColor = EmeraldLight,
                                         selectedTextColor = EmeraldLight,
                                         indicatorColor = EmeraldSubtle,
-                                        unselectedIconColor = TextMuted,
-                                        unselectedTextColor = TextMuted
+                                        unselectedIconColor = TextSecondary,
+                                        unselectedTextColor = TextSecondary
                                     )
                                 )
                             }
