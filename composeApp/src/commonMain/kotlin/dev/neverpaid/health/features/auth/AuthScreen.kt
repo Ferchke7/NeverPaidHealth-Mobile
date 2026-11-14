@@ -206,7 +206,7 @@ fun AuthScreen(
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(10.dp))
-                    .background(DarkSurfaceVariant)
+                    .background(DarkSurface)
                     .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                     .padding(3.dp),
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -723,7 +723,7 @@ private fun FeatureHighlightTile(
     description: String
 ) {
     AthleticCard(
-        backgroundColor = DarkSurfaceVariant,
+        backgroundColor = DarkSurface,
         borderColor = BorderSubtle
     ) {
         Column(
