@@ -25,8 +25,8 @@ class SetHistoryCalculatorTest {
         assertEquals("(20+15кг)", SetHistoryCalculator.formatPlateBreakdown(50.0))
         assertEquals("(20+2.5кг)", SetHistoryCalculator.formatPlateBreakdown(25.0))
         assertEquals("(20+40кг)", SetHistoryCalculator.formatPlateBreakdown(100.0))
-        assertNull(SetHistoryCalculator.formatPlateBreakdown(24.0))
-        assertNull(SetHistoryCalculator.formatPlateBreakdown(20.0))
+        assertEquals("(20+2кг)", SetHistoryCalculator.formatPlateBreakdown(24.0))
+        assertEquals("(20кг)", SetHistoryCalculator.formatPlateBreakdown(20.0))
         assertNull(SetHistoryCalculator.formatPlateBreakdown(15.0))
     }
 
@@ -215,4 +215,21 @@ class SetHistoryCalculatorTest {
         assertEquals(25.0, recent[1].weightKg)
         assertEquals(20.0, recent[2].weightKg)
     }
+    @Test
+    fun emptyHistoryDoesNotCreateBenchmarkWorkouts() {
+        assertTrue(SetHistoryCalculator.extractExerciseHistory(emptyList(), "new", "New").isEmpty())
+    }
+
+    @Test
+    fun unfinishedSetsDoNotBecomePersonalRecords() {
+        val workout = Workout(
+            id = "unfinished-sets", name = "Push", isFinished = true,
+            exercises = listOf(WorkoutExercise(
+                exerciseId = "bench", exerciseName = "Bench",
+                sets = listOf(WorkoutSet(id = "unchecked", setNumber = 1, weightKg = 200.0, reps = 5, isCompleted = false))
+            ))
+        )
+        assertTrue(SetHistoryCalculator.extractExerciseHistory(listOf(workout), "bench", "Bench").isEmpty())
+    }
+
 }

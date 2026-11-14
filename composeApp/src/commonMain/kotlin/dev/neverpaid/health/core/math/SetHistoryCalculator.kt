@@ -51,7 +51,7 @@ object SetHistoryCalculator {
 
                 if (idMatch || nameMatch) {
                     for (s in ex.sets) {
-                        if (!s.isCompleted && s.weightKg <= 0.0 && s.reps <= 0) continue
+                        if (!s.isCompleted) continue
 
                         val weight = s.weightKg
                         val reps = s.reps
@@ -74,41 +74,6 @@ object SetHistoryCalculator {
                             )
                         )
                     }
-                }
-            }
-        }
-
-        // If completely empty (brand new exercise or offline), synthesize 3 benchmark historical workouts
-        if (records.isEmpty()) {
-            val baseWeight = 50.0
-            val baseReps = 8
-            val sessionDaysAgo = listOf(3L, 7L, 12L)
-            val sessionNames = listOf("Прошлая тренировка", "2-я прошлая тренировка", "3-я прошлая тренировка")
-            val now = 1730900000000L // stable epoch ms
-
-            for (sessionIdx in 0 until 3) {
-                val days = sessionDaysAgo[sessionIdx]
-                val workoutDate = now - days * 86400000L
-                val weightStep = sessionIdx * 2.5
-
-                for (setNum in 1..4) {
-                    val w = (baseWeight - weightStep).coerceAtLeast(20.0)
-                    val r = (baseReps - if (setNum > 2) 1 else 0).coerceAtLeast(6)
-                    val e1rm = StrengthCalculator.calculateE1RM(w, r) ?: w
-
-                    records.add(
-                        HistoricalSetRecord(
-                            workoutId = "benchmark-session-${sessionIdx + 1}",
-                            workoutName = sessionNames[sessionIdx],
-                            dateEpochMs = workoutDate,
-                            setNumber = setNum,
-                            setType = "normal",
-                            weightKg = w,
-                            reps = r,
-                            e1rmKg = round(e1rm * 10.0) / 10.0,
-                            volumeKg = round(w * r * 10.0) / 10.0
-                        )
-                    )
                 }
             }
         }

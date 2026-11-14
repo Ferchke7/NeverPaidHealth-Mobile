@@ -185,6 +185,7 @@ fun NutritionScreen(
             onProteinChanged = { onAction(NutritionUiAction.OnMealProteinChanged(it)) },
             onFatsChanged = { onAction(NutritionUiAction.OnMealFatsChanged(it)) },
             onCarbsChanged = { onAction(NutritionUiAction.OnMealCarbsChanged(it)) },
+            isSaving = state.isSavingMeal,
             onSave = { onAction(NutritionUiAction.OnSaveMeal) },
             onDismiss = { onAction(NutritionUiAction.OnCloseAddMealSheet) }
         )
@@ -577,6 +578,7 @@ fun NutritionScreen(
                                     }
                                     Button(
                                         onClick = { onAction(NutritionUiAction.OnConfirmAiPreview) },
+                                        enabled = !state.isSavingMeal,
                                         modifier = Modifier.weight(1.4f),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = EmeraldNeon,
@@ -811,6 +813,7 @@ private fun AddMealBottomSheet(
     onProteinChanged: (String) -> Unit,
     onFatsChanged: (String) -> Unit,
     onCarbsChanged: (String) -> Unit,
+    isSaving: Boolean,
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -922,7 +925,7 @@ private fun AddMealBottomSheet(
 
             Button(
                 onClick = onSave,
-                enabled = mealName.isNotBlank() && calories.isNotBlank(),
+                enabled = !isSaving && mealName.isNotBlank() && calories.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = EmeraldNeon,
                     contentColor = DarkBackground

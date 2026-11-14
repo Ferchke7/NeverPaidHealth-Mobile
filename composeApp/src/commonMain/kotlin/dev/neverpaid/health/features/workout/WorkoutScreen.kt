@@ -291,7 +291,7 @@ fun WorkoutScreen(
                 ) {
                     StatCounter(
                         title = "Объём",
-                        value = StrengthCalculator.formatVolume(workout.totalVolumeKg),
+                        value = StrengthCalculator.formatVolume(if (state.isKgUnit) workout.totalVolumeKg else StrengthCalculator.kgToLbs(workout.totalVolumeKg)),
                         unit = if (state.isKgUnit) "кг" else "lb",
                         accentColor = EmeraldNeon
                     )
@@ -425,7 +425,7 @@ private fun ActiveWorkoutTopBar(
     val timerText = StrengthCalculator.formatDuration(hrs, mins, secs)
 
     val unitLabel = if (isKgUnit) "kg" else "lb"
-    val volumeText = StrengthCalculator.formatVolume(totalVolumeKg)
+    val volumeText = StrengthCalculator.formatVolume(if (isKgUnit) totalVolumeKg else StrengthCalculator.kgToLbs(totalVolumeKg))
 
     Row(
         modifier = Modifier
@@ -727,7 +727,7 @@ private fun WorkoutExerciseCard(
                                             modifier = Modifier.size(10.dp)
                                         )
                                         Text(
-                                            text = "PR: ${prRecord.bestWeightKg.toInt()} $unitLabel × ${prRecord.bestReps}",
+                                            text = "PR: ${displayWeight(prRecord.bestWeightKg, isKgUnit)} $unitLabel × ${prRecord.bestReps}",
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = AmberWarm
@@ -918,52 +918,8 @@ private fun WorkoutSetRow(
     val prevWeight = set.previousWeightKg ?: 0.0
     val prevReps = set.previousReps ?: 0
 
-    val effectiveTopRecords = remember(topRecords, hasPrev, prevWeight, prevReps, set.weightKg, set.reps, set.setNumber, set.type) {
-        val list = topRecords.toMutableList()
-        if (list.isEmpty()) {
-            val seedWeight = if (prevWeight > 0.0) prevWeight else (if (set.weightKg > 0.0) set.weightKg else 50.0)
-            val seedReps = if (prevReps > 0) prevReps else (if (set.reps > 0) set.reps else 8)
-            val calc1RM = StrengthCalculator.calculateE1RM(seedWeight, seedReps) ?: seedWeight
-            list.add(
-                HistoricalSetRecord(
-                    workoutId = "prev-session-1",
-                    workoutName = "1-я прошлая тренировка",
-                    dateEpochMs = PlatformBridge.currentTimeMillis() - 3 * 86400000L,
-                    setNumber = set.setNumber,
-                    setType = set.type,
-                    weightKg = seedWeight,
-                    reps = seedReps,
-                    e1rmKg = round(calc1RM * 10.0) / 10.0,
-                    volumeKg = round(seedWeight * seedReps * 10.0) / 10.0
-                )
-            )
-        }
-
-        if (list.isNotEmpty() && list.size < 3) {
-            val first = list[0]
-            while (list.size < 3) {
-                val step = list.size
-                val pastDays = (step + 1) * 4L
-                val pastWeight = if (first.weightKg > 20.0) (first.weightKg - step * 2.5).coerceAtLeast(0.0) else first.weightKg
-                val pastReps = (first.reps - step).coerceAtLeast(1)
-                val calc1RM = StrengthCalculator.calculateE1RM(pastWeight, pastReps) ?: pastWeight
-                list.add(
-                    HistoricalSetRecord(
-                        workoutId = "prev-synth-$step",
-                        workoutName = "${step + 1}-я прошлая тренировка",
-                        dateEpochMs = PlatformBridge.currentTimeMillis() - pastDays * 86400000L,
-                        setNumber = set.setNumber,
-                        setType = set.type,
-                        weightKg = pastWeight,
-                        reps = pastReps,
-                        e1rmKg = round(calc1RM * 10.0) / 10.0,
-                        volumeKg = round(pastWeight * pastReps * 10.0) / 10.0
-                    )
-                )
-            }
-        }
-        list
-    }
+    // Show only recorded performances, matching the web history.
+    val effectiveTopRecords = topRecords
 
     val rowBorderColor = when {
         isExpanded -> EmeraldNeon.copy(alpha = 0.5f)
@@ -1039,7 +995,7 @@ private fun WorkoutSetRow(
                 ) {
                     Text(
                         text = if (prevDisplayWeight > 0.0 || prevDisplayReps > 0) {
-                            "${prevDisplayWeight.toInt()} $unitLabel × $prevDisplayReps"
+                            "${displayWeight(prevDisplayWeight, isKgUnit)} $unitLabel × $prevDisplayReps"
                         } else "—",
                         fontSize = 11.sp,
                         fontWeight = if (prevDisplayWeight > 0.0) FontWeight.SemiBold else FontWeight.Normal,
@@ -1059,8 +1015,9 @@ private fun WorkoutSetRow(
             }
 
             // 3. WEIGHT INPUT + Plate breakdown badge
-            var weightText by remember(set.weightKg) {
-                mutableStateOf(if (set.weightKg == 0.0) "" else set.weightKg.toString().removeSuffix(".0"))
+            var weightText by remember(set.weightKg, isKgUnit) {
+                val displayedWeight = if (isKgUnit) set.weightKg else StrengthCalculator.kgToLbs(set.weightKg)
+                mutableStateOf(if (set.weightKg == 0.0) "" else displayedWeight.toString().removeSuffix(".0"))
             }
             val currentOrPrevWeight = if (set.weightKg > 0.0) set.weightKg else prevWeight
             val plateBreakdown = remember(currentOrPrevWeight) {
@@ -1084,14 +1041,16 @@ private fun WorkoutSetRow(
                         value = weightText,
                         onValueChange = { input ->
                             weightText = input
-                            val parsed = input.toDoubleOrNull()
-                            if (parsed != null && parsed >= 0) onUpdateWeight(parsed)
+                            val parsed = if (input.isBlank()) 0.0 else input.replace(',', '.').toDoubleOrNull()
+                            if (parsed != null && parsed.isFinite() && parsed >= 0) {
+                                onUpdateWeight(if (isKgUnit) parsed else parsed / 2.20462262185)
+                            }
                         },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         placeholder = {
                             Text(
-                                text = if (prevWeight > 0) "${prevWeight.toInt()}" else "0",
+                                text = if (prevWeight > 0) displayWeight(prevWeight, isKgUnit) else "0",
                                 fontSize = 12.sp,
                                 color = TextMuted,
                                 textAlign = TextAlign.Center,
@@ -1333,7 +1292,7 @@ private fun WorkoutSetRow(
                                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                                             ) {
                                                 Text(
-                                                    text = "${rec.weightKg.toInt()} $unitLabel × ${rec.reps}",
+                                                    text = "${displayWeight(rec.weightKg, isKgUnit)} $unitLabel × ${rec.reps}",
                                                     fontSize = 12.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = TextPrimary
@@ -1344,7 +1303,7 @@ private fun WorkoutSetRow(
                                                         color = EmeraldNeon.copy(alpha = 0.15f)
                                                     ) {
                                                         Text(
-                                                            text = "1RM: ${rec.e1rmKg.toInt()} $unitLabel",
+                                                            text = "1RM: ${displayWeight(rec.e1rmKg, isKgUnit)} $unitLabel",
                                                             fontSize = 9.sp,
                                                             fontWeight = FontWeight.SemiBold,
                                                             color = EmeraldLight,
@@ -1430,4 +1389,9 @@ private fun WorkoutSetRow(
             }
         }
     }
+}
+
+private fun displayWeight(weightKg: Double, isKgUnit: Boolean): String {
+    val weight = if (isKgUnit) weightKg else StrengthCalculator.kgToLbs(weightKg)
+    return (round(weight * 10.0) / 10.0).toString().removeSuffix(".0")
 }

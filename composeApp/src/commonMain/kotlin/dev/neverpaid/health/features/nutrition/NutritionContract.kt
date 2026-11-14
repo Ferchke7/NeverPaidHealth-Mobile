@@ -36,6 +36,7 @@ data class NutritionUiState(
     val newMealFats: String = "",
     val newMealCarbs: String = "",
 
+    val isSavingMeal: Boolean = false,
     val isLoading: Boolean = false
 ) : UiState
 

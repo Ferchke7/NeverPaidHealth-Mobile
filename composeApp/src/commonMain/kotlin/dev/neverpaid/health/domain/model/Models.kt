@@ -848,6 +848,7 @@ data class MealLog(
 
 @Serializable
 data class SaveMealRequestDto(
+    @SerialName("logged_at") val loggedAt: String? = null,
     @SerialName("meal_type") val mealType: String,
     @SerialName("name") val name: String,
     @SerialName("calories") val calories: Int,

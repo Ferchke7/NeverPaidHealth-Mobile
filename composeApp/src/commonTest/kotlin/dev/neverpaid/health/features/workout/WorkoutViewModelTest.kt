@@ -86,4 +86,28 @@ class WorkoutViewModelTest {
         val afterDeleteWorkout = viewModel.state.value.workout!!
         assertEquals(initialSetCount, afterDeleteWorkout.exercises.first().sets.size)
     }
+    @Test
+    fun addingExerciseStartsWithOneEmptySetLikeWeb() = runTest {
+        val exercise = viewModel.state.value.availableExercises.first()
+        viewModel.onAction(WorkoutUiAction.OnSelectExerciseToAdd(exercise))
+        testDispatcher.scheduler.advanceUntilIdle()
+        val sets = viewModel.state.value.workout!!.exercises.last().sets
+        assertEquals(1, sets.size)
+        assertEquals(0.0, sets.single().weightKg)
+        assertFalse(sets.single().isCompleted)
+    }
+
+    @Test
+    fun swappingExercisePreservesSetTypesAndResetsPerformance() = runTest {
+        val previous = viewModel.state.value.workout!!.exercises.first()
+        viewModel.onAction(WorkoutUiAction.OnOpenSwapExercisePicker(previous.exerciseId))
+        val replacement = viewModel.state.value.availableExercises.first { it.id != previous.exerciseId }
+        viewModel.onAction(WorkoutUiAction.OnSelectExerciseToAdd(replacement))
+        testDispatcher.scheduler.advanceUntilIdle()
+        val updated = viewModel.state.value.workout!!.exercises.first()
+        assertEquals(replacement.id, updated.exerciseId)
+        assertEquals(previous.sets.map { it.setType }, updated.sets.map { it.setType })
+        assertTrue(updated.sets.all { it.weightKg == 0.0 && !it.isCompleted })
+    }
+
 }
