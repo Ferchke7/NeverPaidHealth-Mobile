@@ -38,11 +38,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.neverpaid.health.core.designsystem.AnimatedExerciseFramesCard
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
+import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
+import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
 import dev.neverpaid.health.core.designsystem.ObsidianCard
 import dev.neverpaid.health.core.designsystem.ObsidianDivider
 import dev.neverpaid.health.core.designsystem.ObsidianEmptyCard
@@ -494,23 +497,37 @@ private fun GroupedCatalogExerciseRow(
                 .padding(horizontal = 24.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onInspectFull() },
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = exercise.name,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextPrimary
+                ExerciseThumbnail(
+                    exerciseName = exercise.name,
+                    sourceId = exercise.sourceId,
+                    exerciseId = exercise.id,
+                    fallbackMuscle = exercise.primaryMuscle,
+                    size = ExerciseThumbnailSize.MD,
+                    onClick = onInspectFull
                 )
-                Text(
-                    text = "${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}",
-                    fontSize = 13.sp,
-                    color = TextSecondary
-                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = exercise.name,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}",
+                        fontSize = 13.sp,
+                        color = TextSecondary
+                    )
+                }
             }
 
             FlowRow(
@@ -578,22 +595,41 @@ private fun CustomExerciseCard(
         backgroundColor = DarkSurface,
         borderColor = BorderSubtle
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = exercise.name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onInspectFull() },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ExerciseThumbnail(
+                exerciseName = exercise.name,
+                sourceId = exercise.sourceId,
+                exerciseId = exercise.id,
+                fallbackMuscle = exercise.primaryMuscle,
+                size = ExerciseThumbnailSize.MD,
+                onClick = onInspectFull
             )
-            Text(
-                text = when (lang) {
-                    "uz" -> "Shaxsiy mashq · ${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}"
-                    "en" -> "Custom exercise · ${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}"
-                    else -> "Своё упражнение · ${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}"
-                },
-                fontSize = 13.sp,
-                color = TextSecondary
-            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = exercise.name,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Shaxsiy mashq · ${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}"
+                        "en" -> "Custom exercise · ${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}"
+                        else -> "Своё упражнение · ${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}"
+                    },
+                    fontSize = 13.sp,
+                    color = TextSecondary
+                )
+            }
         }
 
         FlowRow(
@@ -678,6 +714,13 @@ private fun ExpandedTechniquePanel(
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = TextPrimary
+        )
+        AnimatedExerciseFramesCard(
+            exerciseName = exercise.name,
+            sourceId = exercise.sourceId,
+            exerciseId = exercise.id,
+            primaryMuscle = exercise.primaryMuscle,
+            lang = lang
         )
         Text(
             text = exercise.instructions.ifBlank {

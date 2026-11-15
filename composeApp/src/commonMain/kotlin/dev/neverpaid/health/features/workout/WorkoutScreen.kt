@@ -70,6 +70,8 @@ import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
+import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
+import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
 import dev.neverpaid.health.core.designsystem.InteractivePlateCalculator
 import dev.neverpaid.health.core.designsystem.ObsidianCard
 import dev.neverpaid.health.core.designsystem.ObsidianDivider
@@ -835,37 +837,53 @@ private fun WorkoutExerciseCard(
     val muscleUpper = localizeMuscleName(exercise.primaryMuscleGroup).uppercase()
 
     ObsidianCard {
-        Text(
-            text = "$indexPadded / $totalPadded · $muscleUpper",
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            color = TextMuted,
-            letterSpacing = 0.8.sp
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = exercise.exerciseName.ifBlank { exercise.exercise.name },
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary,
-            modifier = Modifier.clickable(onClick = onInspect)
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        if (prRecord != null) {
-            val prW = if (isKgUnit) prRecord.weightKg else StrengthCalculator.kgToLbs(prRecord.weightKg)
-            Text(
-                text = "Личный рекорд · ${formatCleanWeight(prW)} $unitLabel × ${prRecord.reps}",
-                fontSize = 13.sp,
-                color = EmeraldNeon,
-                modifier = Modifier.clickable(onClick = onInspect)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ExerciseThumbnail(
+                exerciseName = exercise.exerciseName.ifBlank { exercise.exercise.name },
+                sourceId = exercise.exercise.sourceId,
+                exerciseId = exercise.exerciseId,
+                fallbackMuscle = exercise.primaryMuscleGroup,
+                size = ExerciseThumbnailSize.MD,
+                onClick = onInspect
             )
-        } else {
-            Text(
-                text = "Техника и инструкции →",
-                fontSize = 13.sp,
-                color = TextSecondary,
-                modifier = Modifier.clickable(onClick = onInspect)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "$indexPadded / $totalPadded · $muscleUpper",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextMuted,
+                    letterSpacing = 0.8.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = exercise.exerciseName.ifBlank { exercise.exercise.name },
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary,
+                    modifier = Modifier.clickable(onClick = onInspect)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                if (prRecord != null) {
+                    val prW = if (isKgUnit) prRecord.weightKg else StrengthCalculator.kgToLbs(prRecord.weightKg)
+                    Text(
+                        text = "Личный рекорд · ${formatCleanWeight(prW)} $unitLabel × ${prRecord.reps}",
+                        fontSize = 13.sp,
+                        color = EmeraldNeon,
+                        modifier = Modifier.clickable(onClick = onInspect)
+                    )
+                } else {
+                    Text(
+                        text = "Техника и инструкции →",
+                        fontSize = 13.sp,
+                        color = TextSecondary,
+                        modifier = Modifier.clickable(onClick = onInspect)
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(14.dp))

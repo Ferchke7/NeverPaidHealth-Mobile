@@ -51,6 +51,8 @@ import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
+import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
+import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
 import dev.neverpaid.health.core.designsystem.ObsidianCard
 import dev.neverpaid.health.core.designsystem.ObsidianDivider
 import dev.neverpaid.health.core.designsystem.ObsidianEmptyCard
@@ -380,12 +382,25 @@ fun HistoryScreen(
                                         workout.exercises.forEachIndexed { exIdx, ex ->
                                             val exVol = ex.sets.filter { it.isCompleted }.sumOf { it.weightKg * it.reps }
                                                 .let { if (it > 0.0) it else ex.sets.sumOf { s -> s.weightKg * s.reps } }
-                                            Text(
-                                                text = ex.exerciseName.ifBlank { ex.exercise.name },
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = TextPrimary
-                                            )
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                            ) {
+                                                ExerciseThumbnail(
+                                                    exerciseName = ex.exerciseName.ifBlank { ex.exercise.name },
+                                                    sourceId = ex.exercise.sourceId,
+                                                    exerciseId = ex.exerciseId,
+                                                    fallbackMuscle = ex.primaryMuscleGroup,
+                                                    size = ExerciseThumbnailSize.SM
+                                                )
+                                                Text(
+                                                    text = ex.exerciseName.ifBlank { ex.exercise.name },
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = TextPrimary,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
                                             Spacer(modifier = Modifier.height(6.dp))
                                             ex.sets.forEach { s ->
                                                 Text(

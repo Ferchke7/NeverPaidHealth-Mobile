@@ -1,6 +1,7 @@
 package dev.neverpaid.health.core.platform
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.ImageBitmap
 
 expect object PlatformBridge {
     fun vibrate()
@@ -14,6 +15,7 @@ expect object PlatformBridge {
     fun remove(key: String)
     fun clear()
     fun decodeBase64ToString(base64: String): String?
+    fun decodeImageBitmap(bytes: ByteArray): ImageBitmap?
     fun openUrl(url: String)
 }
 

@@ -102,6 +102,8 @@ import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
+import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
+import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
 import dev.neverpaid.health.core.designsystem.InfoAccent
 import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
@@ -773,6 +775,11 @@ private fun ProgramDetailBottomSheet(
                                             fontWeight = FontWeight.Medium,
                                             color = EmeraldNeon
                                         )
+                                        ExerciseThumbnail(
+                                            exerciseName = ex.exerciseName,
+                                            exerciseId = ex.exerciseId,
+                                            size = ExerciseThumbnailSize.XS
+                                        )
                                         Text(
                                             text = ex.exerciseName,
                                             fontSize = 14.sp,
@@ -1157,6 +1164,11 @@ private fun ProgramEditorBottomSheet(
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = EmeraldNeon
+                                        )
+                                        ExerciseThumbnail(
+                                            exerciseName = ex.exerciseName,
+                                            exerciseId = ex.exerciseId,
+                                            size = ExerciseThumbnailSize.SM
                                         )
                                         Text(
                                             text = ex.exerciseName,

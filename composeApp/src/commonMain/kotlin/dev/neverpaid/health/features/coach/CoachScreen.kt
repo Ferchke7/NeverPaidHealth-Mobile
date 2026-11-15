@@ -1,5 +1,6 @@
 package dev.neverpaid.health.features.coach
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +63,7 @@ import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.designsystem.TextSoft
+import dev.neverpaid.health.core.designsystem.rememberBase64ImageBitmap
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.core.platform.PlatformBridge
@@ -575,6 +578,7 @@ fun CoachScreen(
                         Spacer(modifier = Modifier.height(14.dp))
 
                         if (state.attachedImageBase64 != null) {
+                            val attachedBitmap = rememberBase64ImageBitmap(state.attachedImageBase64)
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -585,16 +589,33 @@ fun CoachScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = when (lang) {
-                                        "uz" -> "Rasm biriktirildi"
-                                        "en" -> "Photo attached"
-                                        else -> "Фото прикреплено к сообщению"
-                                    },
-                                    fontSize = 12.sp,
-                                    color = EmeraldLight,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    if (attachedBitmap != null) {
+                                        Image(
+                                            bitmap = attachedBitmap,
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .border(1.dp, BorderSubtle, RoundedCornerShape(6.dp))
+                                        )
+                                    }
+                                    Text(
+                                        text = when (lang) {
+                                            "uz" -> "Rasm biriktirildi"
+                                            "en" -> "Photo attached"
+                                            else -> "Фото прикреплено к сообщению"
+                                        },
+                                        fontSize = 12.sp,
+                                        color = EmeraldLight,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                                 IconButton(
                                     onClick = { onAction(CoachUiAction.OnClearAttachedPhoto) },
                                     modifier = Modifier.size(24.dp)

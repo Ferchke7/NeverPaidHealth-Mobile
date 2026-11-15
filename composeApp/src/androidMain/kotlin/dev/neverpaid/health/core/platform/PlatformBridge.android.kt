@@ -58,6 +58,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -157,6 +159,15 @@ actual object PlatformBridge {
         return try {
             val bytes = android.util.Base64.decode(base64, android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP)
             String(bytes, Charsets.UTF_8)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    actual fun decodeImageBitmap(bytes: ByteArray): ImageBitmap? {
+        if (bytes.isEmpty()) return null
+        return try {
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
         } catch (_: Exception) {
             null
         }

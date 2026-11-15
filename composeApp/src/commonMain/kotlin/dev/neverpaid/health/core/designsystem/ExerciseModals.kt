@@ -45,7 +45,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -54,9 +53,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.math.StrengthCalculator
 import dev.neverpaid.health.domain.model.Exercise
 import dev.neverpaid.health.domain.model.Workout
@@ -219,20 +218,16 @@ fun ExercisePickerBottomSheet(
                                 modifier = Modifier.weight(1f),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(38.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(EmeraldSubtle),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.FitnessCenter,
-                                        contentDescription = null,
-                                        tint = EmeraldLight,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
+                                ExerciseThumbnail(
+                                    exerciseName = exercise.name,
+                                    sourceId = exercise.sourceId,
+                                    exerciseId = exercise.id,
+                                    fallbackMuscle = exercise.primaryMuscle,
+                                    size = ExerciseThumbnailSize.SM,
+                                    onClick = if (onInspectExercise != null) {
+                                        { onInspectExercise(exercise) }
+                                    } else null
+                                )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
@@ -295,7 +290,7 @@ fun ExerciseInfoBottomSheet(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var activeFrame by remember { mutableIntStateOf(0) }
+    val lang = LocalDudaStrings.current.languageCode
 
     val instructionsList = remember(exercise) {
         if (exercise.instructions.isNotBlank()) {
@@ -388,77 +383,14 @@ fun ExerciseInfoBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 2-Frame Biomechanics Visual Card (matching ExerciseInfoModal.tsx)
-            AthleticCard(
-                backgroundColor = DarkSurfaceVariant,
-                borderColor = BorderHighlight
-            ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (activeFrame == 0) "ФАЗА 1: ИСХОДНОЕ ПОЛОЖЕНИЕ" else "ФАЗА 2: ПИКОВОЕ СОКРАЩЕНИЕ",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = EmeraldLight
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            listOf(0 to "Старт", 1 to "Пик").forEach { (idx, label) ->
-                                val selected = activeFrame == idx
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(if (selected) EmeraldNeon else DarkSurfaceHigh)
-                                        .clickable { activeFrame = idx }
-                                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = label,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (selected) Color.Black else TextSecondary
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(DarkSurface)
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                imageVector = Icons.Default.FitnessCenter,
-                                contentDescription = null,
-                                tint = if (activeFrame == 0) EmeraldLight else AmberWarm,
-                                modifier = Modifier.size(36.dp)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = if (activeFrame == 0) {
-                                    "Растяжение под контролем • Вдох • Стабилизация лопаток и кора"
-                                } else {
-                                    "Мощное сокращение ${localizeMuscleName(exercise.primaryMuscle).lowercase()} • Выдох • Пауза 0.5с в верхней точке"
-                                },
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                }
-            }
+            // 2-Frame Alternating ("Back-and-Forth") Exercise Illustration Card
+            AnimatedExerciseFramesCard(
+                exerciseName = exercise.name,
+                sourceId = exercise.sourceId,
+                exerciseId = exercise.id,
+                primaryMuscle = exercise.primaryMuscle,
+                lang = lang
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 

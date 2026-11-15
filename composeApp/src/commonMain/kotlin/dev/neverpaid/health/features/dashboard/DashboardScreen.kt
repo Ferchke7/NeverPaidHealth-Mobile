@@ -104,6 +104,8 @@ import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
+import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
+import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
 import dev.neverpaid.health.core.designsystem.ObsidianWell
 import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
 import dev.neverpaid.health.core.designsystem.StatCounter
@@ -687,9 +689,15 @@ private fun ActiveProgramScheduleSection(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onInspectExercise(ex.exerciseId, ex.exerciseName) },
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            ExerciseThumbnail(
+                                exerciseName = ex.exerciseName,
+                                exerciseId = ex.exerciseId,
+                                size = ExerciseThumbnailSize.XS,
+                                onClick = { onInspectExercise(ex.exerciseId, ex.exerciseName) }
+                            )
                             Text(
                                 text = "${ex.targetSets} × ${ex.exerciseName}",
                                 fontSize = 14.sp,
@@ -765,13 +773,24 @@ private fun RoutineCardItem(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 routine.exercises.take(5).forEach { ex ->
-                    Text(
-                        text = "${ex.targetSets} × ${ex.exerciseName}",
-                        fontSize = 14.sp,
-                        color = TextSoft,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ExerciseThumbnail(
+                            exerciseName = ex.exerciseName,
+                            exerciseId = ex.exerciseId,
+                            size = ExerciseThumbnailSize.XS
+                        )
+                        Text(
+                            text = "${ex.targetSets} × ${ex.exerciseName}",
+                            fontSize = 14.sp,
+                            color = TextSoft,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
                 if (routine.exercises.size > 5) {
                     Text(
@@ -910,20 +929,12 @@ private fun RoutineDetailBottomSheet(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .background(EmeraldSubtle),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "${idx + 1}",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = EmeraldLight
-                                    )
-                                }
+                                ExerciseThumbnail(
+                                    exerciseName = ex.exerciseName,
+                                    exerciseId = ex.exerciseId,
+                                    size = ExerciseThumbnailSize.SM,
+                                    onClick = { onInspectExercise(ex.exerciseId, ex.exerciseName) }
+                                )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
@@ -1102,9 +1113,14 @@ private fun RoutineEditorBottomSheet(
                         Column(modifier = Modifier.padding(12.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                ExerciseThumbnail(
+                                    exerciseName = ex.exerciseName,
+                                    exerciseId = ex.exerciseId,
+                                    size = ExerciseThumbnailSize.XS
+                                )
                                 Text(
                                     text = "${idx + 1}. ${ex.exerciseName}",
                                     fontSize = 14.sp,

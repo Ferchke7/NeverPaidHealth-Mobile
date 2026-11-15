@@ -21,10 +21,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import org.jetbrains.skia.Image as SkiaImage
 import platform.Foundation.NSDate
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSUUID
@@ -94,6 +97,15 @@ actual object PlatformBridge {
             } catch (_: Exception) {
                 null
             }
+        }
+    }
+
+    actual fun decodeImageBitmap(bytes: ByteArray): ImageBitmap? {
+        if (bytes.isEmpty()) return null
+        return try {
+            SkiaImage.makeFromEncoded(bytes).toComposeImageBitmap()
+        } catch (_: Exception) {
+            null
         }
     }
 
