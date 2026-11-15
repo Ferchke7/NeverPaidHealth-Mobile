@@ -41,6 +41,7 @@ val CrimsonSubtle = Color(0x26EF4444)
 
 // Obsidian High-Contrast Neutral Typography
 val TextPrimary = Color(0xFFFAFAFA)          // #fafafa Neutral-50
+val TextSoft = Color(0xFFE5E5E5)             // #e5e5e5 Neutral-200 secondary copy
 val TextSecondary = Color(0xFFA3A3A3)        // #a3a3a3 Neutral-400
 val TextMuted = Color(0xFF737373)            // #737373 Neutral-500
 

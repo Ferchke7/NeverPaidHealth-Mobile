@@ -1,5 +1,18 @@
 package dev.neverpaid.health.features.auth
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import dev.neverpaid.health.core.designsystem.BorderDivider
+import dev.neverpaid.health.core.designsystem.CrimsonRed
+import dev.neverpaid.health.core.designsystem.ObsidianCard
+import dev.neverpaid.health.core.designsystem.ObsidianDivider
+import dev.neverpaid.health.core.designsystem.ObsidianInkOnLight
+import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
+import dev.neverpaid.health.core.designsystem.ObsidianPillTab
+import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
+import dev.neverpaid.health.core.designsystem.ObsidianTextField
+import dev.neverpaid.health.core.designsystem.TextSoft
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,6 +45,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -177,6 +191,7 @@ fun AuthRoute(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AuthScreen(
     state: AuthUiState,
@@ -191,577 +206,328 @@ fun AuthScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(DarkBackground)
     ) {
-        // Top Bar: Duda Brand Logo + Language Switcher
+        // Minimal Obsidian Auth Header (duda.uz + RU/UZ/EN language switcher)
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            DudaBrandLogo()
+            Text(
+                text = "duda.uz",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = (-0.3).sp,
+                color = TextPrimary
+            )
 
             Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(DarkSurface)
-                    .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
-                    .padding(3.dp),
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 listOf("ru" to "RU", "uz" to "UZ", "en" to "EN").forEach { (code, label) ->
-                    val isSelected = lang == code
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(7.dp))
-                            .background(if (isSelected) EmeraldNeon else Color.Transparent)
-                            .clickable { onAction(AuthUiAction.OnSelectLanguage(code)) }
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = label,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isSelected) Color.Black else TextSecondary
-                        )
-                    }
+                    ObsidianPillTab(
+                        text = label,
+                        selected = lang == code,
+                        onClick = { onAction(AuthUiAction.OnSelectLanguage(code)) }
+                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(26.dp))
+        HorizontalDivider(thickness = 1.dp, color = BorderDivider)
 
-        // Hero Sparkle Badge
-        Box(
+        Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(20.dp))
-                .background(EmeraldSubtle)
-                .border(1.dp, BorderHighlight, RoundedCornerShape(20.dp))
-                .padding(horizontal = 14.dp, vertical = 6.dp)
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = null,
-                    tint = EmeraldLight,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "duda.uz • AI Strength & Nutrition",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = EmeraldLight
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        Text(
-            text = when (lang) {
-                "uz" -> "Kuch mashg'ulotlari va ovqatlanishning aqlli kundaligi"
-                "en" -> "Your Smart Strength & Nutrition Training Log"
-                else -> "Твой умный дневник силовых тренировок и питания"
-            },
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Black,
-            color = TextPrimary,
-            textAlign = TextAlign.Center,
-            lineHeight = 30.sp
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = when (lang) {
-                "uz" -> "Mashg'ulotlarni yozib boring, 1RM rekordlarni kuzating, AI yordamida ovqatlanishni tahlil qiling."
-                "en" -> "Log workouts with auto rest timers, track 1RM & tonnage, and analyze meals with AI."
-                else -> "Логируй подходы и веса, отслеживай 1ПМ и тоннаж, считай КБЖУ с ИИ."
-            },
-            fontSize = 13.sp,
-            color = TextSecondary,
-            textAlign = TextAlign.Center,
-            lineHeight = 18.sp
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Main Permanent Authentication Card
-        AthleticCard(
-            backgroundColor = DarkSurface,
-            borderColor = BorderHighlight
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            // Card 1: Primary Native Login Card
+            ObsidianCard(
+                backgroundColor = DarkSurface,
+                borderColor = BorderSubtle
             ) {
-                // Section 1: ALWAYS VISIBLE Credentials / Token Input
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Text(
+                    text = when (lang) {
+                        "uz" -> "NATIVE · ILOVA"
+                        "en" -> "NATIVE · APP"
+                        else -> "NATIVE · ПРИЛОЖЕНИЕ"
+                    },
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 0.8.sp,
+                    color = TextSecondary
+                )
+
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Senga moslashadigan mashg'ulotlar."
+                        "en" -> "Workouts that adapt to you."
+                        else -> "Тренировки, которые подстраиваются под тебя."
+                    },
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    lineHeight = 34.sp,
+                    letterSpacing = (-0.5).sp,
+                    color = TextPrimary
+                )
+
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Davom etish uchun kiring"
+                        "en" -> "Sign in to continue"
+                        else -> "Войдите, чтобы продолжить"
+                    },
+                    fontSize = 14.sp,
+                    color = TextSecondary
+                )
+
+                androidx.compose.material3.Surface(
+                    onClick = onTriggerGoogleSignIn,
+                    enabled = !state.isLoading,
+                    shape = RoundedCornerShape(10.dp),
+                    color = EmeraldNeon,
+                    contentColor = ObsidianInkOnLight
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(EmeraldSubtle)
-                            .border(1.dp, BorderHighlight, RoundedCornerShape(8.dp)),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Key,
-                            contentDescription = null,
-                            tint = EmeraldNeon,
-                            modifier = Modifier.size(17.dp)
-                        )
-                    }
-                    Column {
+                        if (state.isLoading) {
+                            CircularProgressIndicator(
+                                color = ObsidianInkOnLight,
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            GoogleLogoIcon(modifier = Modifier.size(16.dp))
+                        }
                         Text(
                             text = when (lang) {
-                                "uz" -> "Kirish uchun token / Credentials"
-                                "en" -> "Session Token / Credentials"
-                                else -> "Вход по токену сессии / Credentials"
+                                "uz" -> "Google orqali davom etish"
+                                "en" -> "Continue with Google"
+                                else -> "Продолжить с Google"
                             },
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "duda.uz saytidagi np_access_token yoki Google ID token"
-                                "en" -> "np_access_token from duda.uz or Google ID token"
-                                else -> "np_access_token из duda.uz или Google ID токен"
-                            },
-                            fontSize = 11.sp,
-                            color = TextMuted
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = ObsidianInkOnLight
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Error Notice
                 if (state.errorMessage != null) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(10.dp))
                             .background(CrimsonSubtle)
-                            .border(1.dp, CrimsonRed.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                            .border(1.dp, CrimsonRed.copy(alpha = 0.45f), RoundedCornerShape(10.dp))
                             .padding(12.dp)
                     ) {
                         Text(
                             text = state.errorMessage,
                             color = CrimsonRed,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp
                         )
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                OutlinedTextField(
-                    value = state.tokenInput,
-                    onValueChange = { onAction(AuthUiAction.OnTokenInputChanged(it)) },
-                    placeholder = {
-                        Text(
-                            text = "np_access_token или токен Google...",
-                            fontSize = 12.sp,
-                            color = TextMuted
-                        )
-                    },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = ObsidianWell,
-                        unfocusedContainerColor = ObsidianWell,
-                        focusedBorderColor = EmeraldNeon,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
-                    )
-                )
+                ObsidianDivider(color = BorderSubtle)
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = {
-                            val clip = clipboardManager.getText()?.text.orEmpty()
-                            if (clip.isNotBlank()) {
-                                onAction(AuthUiAction.OnPasteTokenFromClipboard(clip))
-                            }
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    WelcomeFeatureLine(
+                        title = when (lang) {
+                            "uz" -> "Mashg'ulotlar"
+                            "en" -> "Workouts"
+                            else -> "Тренировки"
                         },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = ObsidianWell,
-                            contentColor = EmeraldLight
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ContentPaste,
-                            contentDescription = null,
-                            tint = EmeraldNeon,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Qo'yish"
-                                "en" -> "Paste"
-                                else -> "Из буфера"
-                            },
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = EmeraldLight
-                        )
-                    }
-
-                    Button(
-                        onClick = { onAction(AuthUiAction.OnSubmitTokenClick) },
-                        enabled = !state.isLoading,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = EmeraldNeon,
-                            contentColor = Color.Black
-                        ),
-                        modifier = Modifier
-                            .weight(1.2f)
-                            .height(48.dp)
-                    ) {
-                        if (state.isLoading) {
-                            CircularProgressIndicator(
-                                color = Color.Black,
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Login,
-                                contentDescription = null,
-                                tint = Color.Black,
-                                modifier = Modifier.size(17.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = when (lang) {
-                                    "uz" -> "Token orqali kirish"
-                                    "en" -> "Sign in"
-                                    else -> "Войти по токену"
-                                },
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.Black
-                            )
+                        subtitle = when (lang) {
+                            "uz" -> "Shablonlar, dasturlar va mashqlar"
+                            "en" -> "Templates, programs and exercises"
+                            else -> "Шаблоны, программы и упражнения"
                         }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                // Divider
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtle)
-                    Text(
-                        text = when (lang) {
-                            "uz" -> "YOKI GOOGLE ORQALI"
-                            "en" -> "OR VIA GOOGLE"
-                            else -> "ИЛИ ЧЕРЕЗ GOOGLE"
+                    )
+                    WelcomeFeatureLine(
+                        title = when (lang) {
+                            "uz" -> "Tarix"
+                            "en" -> "History"
+                            else -> "История"
                         },
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextMuted,
-                        modifier = Modifier.padding(horizontal = 10.dp)
+                        subtitle = when (lang) {
+                            "uz" -> "O'tgan mashg'ulotlar bir joyda"
+                            "en" -> "Past workouts in one place"
+                            else -> "Прошедшие тренировки в одном месте"
+                        }
                     )
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtle)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 2. Google One-Tap Native Button
-                Button(
-                    onClick = onTriggerGoogleSignIn,
-                    enabled = !state.isLoading,
-                    shape = RoundedCornerShape(10.dp),
-                    elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = ObsidianInkOnLight
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                ) {
-                    GoogleLogoIcon()
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = when (lang) {
-                            "uz" -> "Google orqali kirish"
-                            "en" -> "Continue with Google"
-                            else -> "Войти через Google"
+                    WelcomeFeatureLine(
+                        title = when (lang) {
+                            "uz" -> "Progress"
+                            "en" -> "Progress"
+                            else -> "Прогресс"
                         },
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ObsidianInkOnLight
+                        subtitle = when (lang) {
+                            "uz" -> "Mashg'ulot ko'rsatkichlari va tana metrikalari"
+                            "en" -> "Training metrics and body measurements"
+                            else -> "Показатели тренировок и метрики тела"
+                        }
                     )
                 }
+            }
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // 2b. Browser Sign-In (duda.uz)
-                OutlinedButton(
-                    onClick = { onAction(AuthUiAction.OnOpenBrowserLogin) },
-                    enabled = !state.isLoading,
-                    shape = RoundedCornerShape(10.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = DarkSurface,
-                        contentColor = TextPrimary
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Language,
-                        contentDescription = null,
-                        tint = EmeraldNeon,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = when (lang) {
-                            "uz" -> "Brauzerda kirish (duda.uz)"
-                            "en" -> "Sign in via Browser (duda.uz)"
-                            else -> "Войти через браузер (duda.uz)"
-                        },
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Divider
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtle)
-                    Text(
-                        text = when (lang) {
-                            "uz" -> "YOKI OFLAYN REJIMDA"
-                            "en" -> "OR OFFLINE MODE"
-                            else -> "ИЛИ БЕЗ РЕГИСТРАЦИИ"
-                        },
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextMuted,
-                        modifier = Modifier.padding(horizontal = 10.dp)
-                    )
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtle)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 3. Instant Guest Mode (Obsidian Emerald Subtle)
-                Button(
-                    onClick = { onAction(AuthUiAction.OnContinueAsGuest) },
-                    enabled = !state.isLoading,
-                    shape = RoundedCornerShape(10.dp),
-                    elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = EmeraldSubtle,
-                        contentColor = TextPrimary
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                        .border(1.dp, BorderHighlight, RoundedCornerShape(10.dp))
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ElectricBolt,
-                        contentDescription = null,
-                        tint = EmeraldNeon,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = when (lang) {
-                            "uz" -> "Mehmon sifatida davom etish (100% Oflayn)"
-                            "en" -> "Continue as Guest (100% Offline)"
-                            else -> "Продолжить как гость (100% Оффлайн)"
-                        },
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
+            // Card 2: Guest Mode (Native Offline)
+            ObsidianCard(
+                backgroundColor = DarkSurface,
+                borderColor = BorderSubtle
+            ) {
                 Text(
                     text = when (lang) {
-                        "uz" -> "Barcha funksiyalar ochiq • Ma'lumotlar qurilmada saqlanadi"
-                        "en" -> "All features unlocked • 100% offline-ready"
-                        else -> "Все функции активны • Локальное хранилище без ограничений"
+                        "uz" -> "Akkauntsiz"
+                        "en" -> "Without an account"
+                        else -> "Без аккаунта"
                     },
-                    fontSize = 11.sp,
-                    color = EmeraldLight.copy(alpha = 0.85f),
-                    textAlign = TextAlign.Center
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Mehmon rejimi faqat native ilovada mavjud."
+                        "en" -> "Guest mode is available only in the native app."
+                        else -> "Гостевой режим доступен только в нативном приложении."
+                    },
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    color = TextSecondary
+                )
+                ObsidianOutlineButton(
+                    text = when (lang) {
+                        "uz" -> "Mehmon sifatida davom etish"
+                        "en" -> "Continue as guest"
+                        else -> "Продолжить как гость"
+                    },
+                    enabled = !state.isLoading,
+                    onClick = { onAction(AuthUiAction.OnContinueAsGuest) }
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            // Card 3: Token Login (Native Only) + Browser OAuth Fallback
+            ObsidianCard(
+                backgroundColor = DarkSurface,
+                borderColor = BorderSubtle
+            ) {
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Token orqali kirish"
+                        "en" -> "Sign in with token"
+                        else -> "Вход по токену"
+                    },
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Faqat native ilova · mavjud kirish usuli."
+                        "en" -> "Native app only · existing sign-in method."
+                        else -> "Только нативное приложение · существующий способ входа."
+                    },
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    color = TextSecondary
+                )
 
-        // Feature Highlights Matrix (2x2 athletic cards)
-        val features = listOf(
-            Triple(
-                Icons.Default.FitnessCenter,
-                when (lang) {
-                    "uz" -> "Aqlli mashg'ulot"
-                    "en" -> "Smart Workout Log"
-                    else -> "Умный лог тренировок"
-                },
-                when (lang) {
-                    "uz" -> "Dam olish taymeri, 1RM va o'tgan og'irliklar"
-                    "en" -> "Rest timer, 1RM calculator & past sets"
-                    else -> "Авто-таймер отдыха, 1ПМ и прошлые веса"
-                }
-            ),
-            Triple(
-                Icons.Default.ShowChart,
-                when (lang) {
-                    "uz" -> "Haqiqiy tahlil"
-                    "en" -> "Real Analytics"
-                    else -> "Аналитика и тоннаж"
-                },
-                when (lang) {
-                    "uz" -> "Haftalik tonnaj va 84 kunlik faollik xaritasi"
-                    "en" -> "Weekly tonnage & 84-day consistency matrix"
-                    else -> "Недельный тоннаж и 84-дневный стрик"
-                }
-            ),
-            Triple(
-                Icons.Default.Restaurant,
-                when (lang) {
-                    "uz" -> "AI Ovqatlanish"
-                    "en" -> "AI Nutrition"
-                    else -> "ИИ-Дневник питания"
-                },
-                when (lang) {
-                    "uz" -> "Taom rasmidan KBJU hisoblash va maqsadlar"
-                    "en" -> "Photo macro scan & daily target balance"
-                    else -> "Оценка КБЖУ по фото и баланс макросов"
-                }
-            ),
-            Triple(
-                Icons.Default.ElectricBolt,
-                when (lang) {
-                    "uz" -> "Oflayn rejim"
-                    "en" -> "Offline-Ready"
-                    else -> "Оффлайн-доступ"
-                },
-                when (lang) {
-                    "uz" -> "Internet bo'lmasa ham to'liq ishlaydi"
-                    "en" -> "Works 100% locally with instant sync"
-                    else -> "Работает без интернета с авто-сохранением"
-                }
-            )
-        )
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (i in features.indices step 2) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val f1 = features[i]
-                    Box(modifier = Modifier.weight(1f)) {
-                        FeatureHighlightTile(icon = f1.first, title = f1.second, description = f1.third)
-                    }
-                    if (i + 1 < features.size) {
-                        val f2 = features[i + 1]
-                        Box(modifier = Modifier.weight(1f)) {
-                            FeatureHighlightTile(icon = f2.first, title = f2.second, description = f2.third)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Kirish tokeni"
+                            "en" -> "Access token"
+                            else -> "Токен доступа"
+                        },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary
+                    )
+                    ObsidianTextField(
+                        value = state.tokenInput,
+                        onValueChange = { onAction(AuthUiAction.OnTokenInputChanged(it)) },
+                        placeholder = when (lang) {
+                            "uz" -> "Tokenni kiriting"
+                            "en" -> "Paste token"
+                            else -> "Вставьте токен"
+                        },
+                        singleLine = true,
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    val clip = clipboardManager.getText()?.text.orEmpty()
+                                    if (clip.isNotBlank()) {
+                                        onAction(AuthUiAction.OnPasteTokenFromClipboard(clip))
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentPaste,
+                                    contentDescription = "Paste token",
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
-                    }
+                    )
+                }
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ObsidianOutlineButton(
+                        text = when (lang) {
+                            "uz" -> "Token bilan kirish"
+                            "en" -> "Sign in with token"
+                            else -> "Войти по токену"
+                        },
+                        enabled = !state.isLoading,
+                        onClick = { onAction(AuthUiAction.OnSubmitTokenClick) }
+                    )
+                    ObsidianOutlineButton(
+                        text = when (lang) {
+                            "uz" -> "Brauzerda kirish"
+                            "en" -> "Browser login"
+                            else -> "Войти через браузер"
+                        },
+                        enabled = !state.isLoading,
+                        textColor = TextSecondary,
+                        onClick = { onAction(AuthUiAction.OnOpenBrowserLogin) }
+                    )
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
 @Composable
-private fun FeatureHighlightTile(
-    icon: ImageVector,
+private fun WelcomeFeatureLine(
     title: String,
-    description: String
+    subtitle: String
 ) {
-    AthleticCard(
-        backgroundColor = DarkSurface,
-        borderColor = BorderSubtle
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(EmeraldSubtle)
-                    .border(1.dp, BorderHighlight, RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = EmeraldLight,
-                    modifier = Modifier.size(17.dp)
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary,
-                maxLines = 1
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = description,
-                fontSize = 11.sp,
-                color = TextSecondary,
-                lineHeight = 14.sp,
-                maxLines = 2
-            )
-        }
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = title,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary
+        )
+        Text(
+            text = subtitle,
+            fontSize = 13.sp,
+            color = TextSecondary
+        )
     }
 }

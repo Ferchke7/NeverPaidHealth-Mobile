@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,48 +18,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.filled.Vibration
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,22 +48,30 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.neverpaid.health.core.designsystem.AmberGold
-import dev.neverpaid.health.core.designsystem.AthleticCard
+import dev.neverpaid.health.core.designsystem.AmberWarm
+import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldDark
+import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
-import dev.neverpaid.health.core.designsystem.InfoAccent
-import dev.neverpaid.health.core.designsystem.ObsidianWell
+import dev.neverpaid.health.core.designsystem.ObsidianCard
+import dev.neverpaid.health.core.designsystem.ObsidianDivider
+import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
+import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
+import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
+import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
+import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
+import dev.neverpaid.health.core.designsystem.ObsidianPillTab
+import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
+import dev.neverpaid.health.core.designsystem.ObsidianTextField
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.designsystem.TextSoft
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.domain.model.FeedbackItem
@@ -100,19 +90,14 @@ fun ProfileRoute(
         }
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = DarkBackground
-    ) { innerPadding ->
-        ProfileScreen(
-            state = state,
-            onAction = viewModel::onAction,
-            modifier = Modifier.padding(innerPadding)
-        )
-    }
+    ProfileScreen(
+        state = state,
+        onAction = viewModel::onAction,
+        modifier = modifier
+    )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ProfileScreen(
     state: ProfileUiState,
@@ -120,704 +105,709 @@ fun ProfileScreen(
     modifier: Modifier = Modifier
 ) {
     val strings = LocalDudaStrings.current
+    val lang = strings.languageCode
     val restOptions = listOf(60, 90, 120, 180)
-    val languages = listOf("ru" to "Русский", "uz" to "O'zbek", "en" to "English")
+    val languages = listOf("ru" to "RU", "uz" to "UZ", "en" to "EN")
 
-    val filteredFeedback = state.feedbackList.filter { item ->
-        state.selectedFeedbackFilter == "all" || item.category.equals(state.selectedFeedbackFilter, ignoreCase = true)
+    var isLogoutConfirmOpen by rememberSaveable { mutableStateOf(false) }
+    var isCommunityListExpanded by rememberSaveable { mutableStateOf(false) }
+
+    val filteredFeedback = remember(state.feedbackList, state.selectedFeedbackFilter) {
+        state.feedbackList.filter { item ->
+            state.selectedFeedbackFilter == "all" || item.category.equals(state.selectedFeedbackFilter, ignoreCase = true)
+        }
     }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(DarkBackground)
     ) {
-        // User Identity Card
-        item(key = "user_identity_card") {
-            AthleticCard(backgroundColor = DarkSurface) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(EmeraldSubtle)
-                                .border(1.dp, EmeraldNeon.copy(alpha = 0.4f), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val initials = state.userName.trim().take(2).uppercase()
-                            if (initials.isNotEmpty()) {
-                                Text(
-                                    text = initials,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = EmeraldNeon
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = null,
-                                    tint = EmeraldNeon,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        Column {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Text(
-                                    text = if (state.isGuest) "Гость" else state.userName,
-                                    fontSize = 19.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = TextPrimary
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(if (state.isGuest) dev.neverpaid.health.core.designsystem.AmberWarm.copy(alpha = 0.2f) else EmeraldSubtle)
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = if (state.isGuest) "ГОСТЬ" else "PRO",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = if (state.isGuest) dev.neverpaid.health.core.designsystem.AmberWarm else EmeraldNeon
-                                    )
-                                }
-                            }
-                            if (state.userEmail.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = state.userEmail,
-                                    fontSize = 12.sp,
-                                    color = TextMuted
-                                )
-                            }
-                        }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            // Header — Figma 12
+            item(key = "header", contentType = "header") {
+                ObsidianPageHeader(
+                    title = strings.profileTitle,
+                    subtitle = when (lang) {
+                        "uz" -> "Sozlamalar, ma'lumotlar va maqsadlar"
+                        "en" -> "Preferences, data and settings"
+                        else -> "Предпочтения, данные и настройки"
                     }
+                )
+            }
 
-                    OutlinedButton(
-                        onClick = { onAction(ProfileUiAction.OnLogoutClick) },
-                        shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = null,
-                            tint = if (state.isGuest) EmeraldNeon else CrimsonRed,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (state.isGuest) "Войти" else strings.profileLogout,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (state.isGuest) EmeraldNeon else CrimsonRed
-                        )
-                    }
+            if (state.isLoading && state.user == null) {
+                item(key = "loading_card", contentType = "loading") {
+                    ObsidianLoadingCard(
+                        title = strings.stateLoadingTitle,
+                        hint = strings.stateLoadingHint,
+                        kicker = "01 · ${strings.profileTitle}"
+                    )
                 }
             }
-        }
 
-        // Guest Mode Sync Banner
-        if (state.isGuest) {
-            item(key = "guest_mode_banner") {
-                AthleticCard(
-                    backgroundColor = DarkSurfaceVariant,
-                    borderColor = dev.neverpaid.health.core.designsystem.BorderHighlight
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
+            // Status / Error Banner
+            if (state.errorMessage != null || state.successMessage != null) {
+                item(key = "status_banner", contentType = "banner") {
+                    val isError = state.errorMessage != null
+                    val accent = if (isError) CrimsonRed else EmeraldNeon
+                    ObsidianCard(
+                        backgroundColor = if (isError) DarkSurface else EmeraldSubtle,
+                        borderColor = if (isError) CrimsonRed.copy(alpha = 0.5f) else BorderHighlight,
+                        contentPadding = PaddingValues(14.dp)
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = null,
-                                tint = EmeraldNeon,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = "Локальный режим (Гость)",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "Все ваши тренировки, программы и питание сохраняются локально. Войдите через Google, чтобы синхронизировать прогресс с duda.uz.",
-                            fontSize = 12.sp,
-                            color = TextSecondary,
-                            lineHeight = 16.sp
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Button(
-                            onClick = { onAction(ProfileUiAction.OnLogoutClick) },
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldNeon),
-                            modifier = Modifier.fillMaxWidth().height(38.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Войти через Google для синхронизации",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = DarkBackground
+                                text = state.errorMessage ?: state.successMessage.orEmpty(),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = accent,
+                                modifier = Modifier.weight(1f)
                             )
-                        }
-                    }
-                }
-            }
-        }
-
-        // Status / Error Banner
-        if (state.errorMessage != null || state.successMessage != null) {
-            item(key = "status_banner") {
-                val isError = state.errorMessage != null
-                val bannerColor = if (isError) CrimsonRed else EmeraldNeon
-                AthleticCard(backgroundColor = bannerColor.copy(alpha = 0.14f)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = state.errorMessage ?: state.successMessage.orEmpty(),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = bannerColor,
-                            modifier = Modifier.weight(1f)
-                        )
-                        IconButton(
-                            onClick = { onAction(ProfileUiAction.OnDismissMessages) },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = null,
-                                tint = bannerColor,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // Live duda.uz Platform Stats Card
-        item(key = "platform_stats_card") {
-            val stats = state.platformStats
-            AthleticCard(backgroundColor = DarkSurface) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Public,
-                                contentDescription = null,
-                                tint = EmeraldNeon,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    text = "Экосистема duda.uz",
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = "Живая статистика сообщества атлетов",
-                                    fontSize = 11.sp,
-                                    color = TextMuted
+                            IconButton(
+                                onClick = { onAction(ProfileUiAction.OnDismissMessages) },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = null,
+                                    tint = accent,
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                         }
                     }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        PlatformStatPill(
-                            label = "Атлетов",
-                            value = stats.totalUsers.toString(),
-                            color = EmeraldNeon,
-                            modifier = Modifier.weight(1f)
-                        )
-                        PlatformStatPill(
-                            label = "Тренировок",
-                            value = stats.totalWorkouts.toString(),
-                            color = InfoAccent,
-                            modifier = Modifier.weight(1f)
-                        )
-                        PlatformStatPill(
-                            label = "Программ",
-                            value = stats.totalPrograms.toString(),
-                            color = AmberGold,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        PlatformStatPill(
-                            label = "Блюд в логе",
-                            value = stats.totalMeals.toString(),
-                            color = TextPrimary,
-                            modifier = Modifier.weight(1f)
-                        )
-                        PlatformStatPill(
-                            label = "AI разборов",
-                            value = stats.totalAiQueries.toString(),
-                            color = EmeraldNeon,
-                            modifier = Modifier.weight(1f)
-                        )
-                        val tons = (stats.totalVolumeKg / 1000.0).toInt()
-                        PlatformStatPill(
-                            label = "Тоннаж",
-                            value = "${tons}т",
-                            color = InfoAccent,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
                 }
             }
-        }
 
-        // Daily Calorie, Macro & Water Targets Card
-        item(key = "macro_targets_card") {
-            AthleticCard(backgroundColor = DarkSurface) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Restaurant,
-                            contentDescription = null,
-                            tint = EmeraldNeon,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "Дневные цели КБЖУ и воды",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                            Text(
-                                text = "Синхронизируются с разделом Питание и AI Тренером",
-                                fontSize = 11.sp,
-                                color = TextMuted
-                            )
-                        }
+            // Card 1: Account & Language — Figma 12
+            item(key = "account_card", contentType = "account") {
+                ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    Text(
+                        text = when (lang) { "uz" -> "Akkaunt"; "en" -> "Account"; else -> "Аккаунт" },
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    val displayName = if (state.isGuest) {
+                        when (lang) { "uz" -> "Mehmon"; "en" -> "Guest"; else -> "Гость" }
+                    } else {
+                        state.userName
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = state.calorieTargetInput,
-                            onValueChange = { onAction(ProfileUiAction.OnUpdateCalorieTarget(it)) },
-                            label = { Text("Ккал / день", fontSize = 11.sp) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = profileTextFieldColors()
-                        )
-                        OutlinedTextField(
-                            value = state.waterGoalInput,
-                            onValueChange = { onAction(ProfileUiAction.OnUpdateWaterGoal(it)) },
-                            label = { Text("Вода (мл)", fontSize = 11.sp) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = profileTextFieldColors()
-                        )
-                    }
+                    Text(
+                        text = displayName,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = state.proteinTargetInput,
-                            onValueChange = { onAction(ProfileUiAction.OnUpdateProteinTarget(it)) },
-                            label = { Text("Белки (г)", fontSize = 11.sp) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = profileTextFieldColors()
-                        )
-                        OutlinedTextField(
-                            value = state.carbsTargetInput,
-                            onValueChange = { onAction(ProfileUiAction.OnUpdateCarbsTarget(it)) },
-                            label = { Text("Углеводы (г)", fontSize = 11.sp) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = profileTextFieldColors()
-                        )
-                        OutlinedTextField(
-                            value = state.fatsTargetInput,
-                            onValueChange = { onAction(ProfileUiAction.OnUpdateFatsTarget(it)) },
-                            label = { Text("Жиры (г)", fontSize = 11.sp) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = profileTextFieldColors()
-                        )
-                    }
-
-                    Button(
-                        onClick = { onAction(ProfileUiAction.OnSaveMacroTargets) },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = EmeraldNeon,
-                            contentColor = DarkBackground
-                        ),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
+                    if (state.userEmail.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Сохранить цели питания",
+                            text = state.userEmail,
                             fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
+                            color = TextMuted
                         )
                     }
-                }
-            }
-        }
 
-        // Language Selection (RU / UZ / EN)
-        item(key = "language_section") {
-            AthleticCard(backgroundColor = DarkSurface) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Language,
-                            contentDescription = null,
-                            tint = EmeraldNeon,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(
+                        text = when (lang) { "uz" -> "Ism"; "en" -> "Name"; else -> "Имя" },
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    ObsidianInnerWell {
                         Text(
-                            text = strings.profileLanguage,
+                            text = displayName,
                             fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
                             color = TextPrimary
                         )
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                        languages.forEachIndexed { index, (code, label) ->
-                            val isSelected = state.languageCode.equals(code, ignoreCase = true)
-                            SegmentedButton(
-                                selected = isSelected,
-                                onClick = { onAction(ProfileUiAction.OnSelectLanguage(code)) },
-                                shape = SegmentedButtonDefaults.itemShape(index = index, count = languages.size),
-                                colors = SegmentedButtonDefaults.colors(
-                                    activeContainerColor = EmeraldNeon,
-                                    activeContentColor = DarkBackground,
-                                    inactiveContainerColor = DarkSurfaceHigh,
-                                    inactiveContentColor = TextSecondary
-                                )
-                            ) {
-                                Text(
-                                    text = label,
-                                    fontSize = 12.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                )
-                            }
+                    if (state.isGuest) {
+                        ObsidianOutlineButton(
+                            text = when (lang) {
+                                "uz" -> "Google orqali kirish"
+                                "en" -> "Sign in with Google"
+                                else -> "Вход через Google"
+                            },
+                            onClick = { onAction(ProfileUiAction.OnLogoutClick) }
+                        )
+                    } else {
+                        ObsidianOutlineButton(
+                            text = when (lang) {
+                                "uz" -> "Ma'lumotlarni yangilash"
+                                "en" -> "Sync account"
+                                else -> "Обновить профиль"
+                            },
+                            onClick = { onAction(ProfileUiAction.OnRefresh) }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = strings.profileLanguage,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        languages.forEach { (code, label) ->
+                            ObsidianPillTab(
+                                text = label,
+                                selected = state.languageCode.equals(code, ignoreCase = true),
+                                onClick = { onAction(ProfileUiAction.OnSelectLanguage(code)) }
+                            )
                         }
                     }
                 }
             }
-        }
 
-        // Units System (KG / LB) & Rest Timer
-        item(key = "units_and_timer_section") {
-            AthleticCard(backgroundColor = DarkSurface) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Scale,
-                            contentDescription = null,
-                            tint = EmeraldNeon,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = strings.profileUnits,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                    }
+            // Card 2: Training Preferences — Figma 12
+            item(key = "training_prefs_card", contentType = "training_prefs") {
+                ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Mashg'ulotlar"
+                            "en" -> "Workouts"
+                            else -> "Тренировки"
+                        },
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
 
-                    val units = listOf(true to "KG (Килограммы)", false to "LB (Фунты)")
-                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                        units.forEachIndexed { index, (useKg, label) ->
-                            val isSelected = state.useKilograms == useKg
-                            SegmentedButton(
-                                selected = isSelected,
-                                onClick = { onAction(ProfileUiAction.OnToggleUnits(useKg)) },
-                                shape = SegmentedButtonDefaults.itemShape(index = index, count = units.size),
-                                colors = SegmentedButtonDefaults.colors(
-                                    activeContainerColor = EmeraldNeon,
-                                    activeContentColor = DarkBackground,
-                                    inactiveContainerColor = DarkSurfaceHigh,
-                                    inactiveContentColor = TextSecondary
-                                )
-                            ) {
-                                Text(
-                                    text = label,
-                                    fontSize = 12.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Timer,
-                            contentDescription = null,
-                            tint = EmeraldNeon,
-                            modifier = Modifier.size(20.dp)
+                    Text(
+                        text = strings.profileUnits,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ObsidianPillTab(
+                            text = "KG",
+                            selected = state.useKilograms,
+                            onClick = { onAction(ProfileUiAction.OnToggleUnits(true)) }
                         )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = strings.profileRestTimer,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
+                        ObsidianPillTab(
+                            text = "LB",
+                            selected = !state.useKilograms,
+                            onClick = { onAction(ProfileUiAction.OnToggleUnits(false)) }
                         )
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(
+                        text = strings.profileRestTimer,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         restOptions.forEach { secs ->
-                            val isSelected = state.defaultRestSeconds == secs
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isSelected) EmeraldDark else DarkSurfaceHigh)
-                                    .clickable { onAction(ProfileUiAction.OnSelectDefaultRest(secs)) }
-                                    .padding(vertical = 10.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "${secs}s",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) TextPrimary else TextSecondary
-                                )
-                            }
+                            ObsidianPillTab(
+                                text = "$secs ${when (lang) { "uz" -> "son"; "en" -> "s"; else -> "с" }}",
+                                selected = state.defaultRestSeconds == secs,
+                                onClick = { onAction(ProfileUiAction.OnSelectDefaultRest(secs)) }
+                            )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ObsidianDivider()
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Vibration,
-                                contentDescription = null,
-                                tint = EmeraldNeon,
-                                modifier = Modifier.size(20.dp)
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Taymer ovozi"
+                                "en" -> "Timer sound"
+                                else -> "Звук таймера"
+                            },
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextPrimary
+                        )
+                        Switch(
+                            checked = state.soundAlertsEnabled,
+                            onCheckedChange = { onAction(ProfileUiAction.OnToggleSound(it)) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = DarkBackground,
+                                checkedTrackColor = EmeraldNeon,
+                                uncheckedThumbColor = TextSecondary,
+                                uncheckedTrackColor = DarkSurfaceHigh
                             )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = strings.profileVibration,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                        }
+                        )
+                    }
 
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = strings.profileVibration,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextPrimary
+                        )
                         Switch(
                             checked = state.vibrationEnabled,
                             onCheckedChange = { onAction(ProfileUiAction.OnToggleVibration(it)) },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = DarkBackground,
                                 checkedTrackColor = EmeraldNeon,
-                                uncheckedThumbColor = TextMuted,
+                                uncheckedThumbColor = TextSecondary,
                                 uncheckedTrackColor = DarkSurfaceHigh
                             )
                         )
                     }
                 }
             }
-        }
 
-        // Community Feedback & Feature Request Board Header
-        item(key = "feedback_board_header") {
-            AthleticCard(backgroundColor = DarkSurface) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Отзывы и Идеи сообщества",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = TextPrimary
-                            )
-                            Text(
-                                text = "Предлагайте функции, голосуйте и сообщайте о багах",
-                                fontSize = 11.sp,
-                                color = TextMuted
-                            )
-                        }
-                        Button(
-                            onClick = { onAction(ProfileUiAction.OnOpenFeedbackModal) },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = EmeraldNeon,
-                                contentColor = DarkBackground
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Оставить отзыв",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+            // Card 3: Nutrition Targets & Parameters — Figma 12
+            item(key = "macro_targets_card", contentType = "macros") {
+                val pVal = state.proteinTargetInput.toIntOrNull() ?: 0
+                val cVal = state.carbsTargetInput.toIntOrNull() ?: 0
+                val fVal = state.fatsTargetInput.toIntOrNull() ?: 0
+                val computedKcal = (pVal * 4) + (cVal * 4) + (fVal * 9)
 
-                    val filters = listOf(
-                        "all" to "Все (${state.feedbackList.size})",
-                        "idea" to "Идеи",
-                        "bug" to "Баги",
-                        "praise" to "Отзывы"
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        filters.forEach { (key, label) ->
-                            val selected = state.selectedFeedbackFilter == key
-                            FilterChip(
-                                selected = selected,
-                                onClick = { onAction(ProfileUiAction.OnSelectFeedbackFilter(key)) },
-                                label = {
-                                    Text(
-                                        text = label,
-                                        fontSize = 11.sp,
-                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
-                                    )
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Ovqatlanish maqsadlari va parametrlar"
+                                "en" -> "Nutrition goals & targets"
+                                else -> "Цели питания и параметры"
+                            },
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Ovqatlanish va AI Murabbiy bo'limlari bilan sinxronlanadi."
+                                "en" -> "Synced with Nutrition & AI Coach goals."
+                                else -> "Синхронизируются с разделом Питание и AI Тренером."
+                            },
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        ObsidianLabeledField(
+                            label = when (lang) { "uz" -> "Oqsillar, g"; "en" -> "Protein, g"; else -> "Белки, г" },
+                            value = state.proteinTargetInput,
+                            onValueChange = { onAction(ProfileUiAction.OnUpdateProteinTarget(it)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            placeholder = "180"
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        ObsidianLabeledField(
+                            label = when (lang) { "uz" -> "Uglevodlar, g"; "en" -> "Carbs, g"; else -> "Углеводы, г" },
+                            value = state.carbsTargetInput,
+                            onValueChange = { onAction(ProfileUiAction.OnUpdateCarbsTarget(it)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            placeholder = "280"
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        ObsidianLabeledField(
+                            label = when (lang) { "uz" -> "Yog'lar, g"; "en" -> "Fats, g"; else -> "Жиры, г" },
+                            value = state.fatsTargetInput,
+                            onValueChange = { onAction(ProfileUiAction.OnUpdateFatsTarget(it)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            placeholder = "80"
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Text(
+                            text = "${if (computedKcal > 0) computedKcal else state.calorieTargetInput} ккал",
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "${pVal}×4 + ${cVal}×4 + ${fVal}×9",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            ObsidianLabeledField(
+                                label = when (lang) {
+                                    "uz" -> "Kaloriya / kun"
+                                    "en" -> "Calories / day"
+                                    else -> "Ккал / день"
                                 },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = EmeraldSubtle,
-                                    selectedLabelColor = EmeraldNeon,
-                                    containerColor = DarkSurfaceHigh,
-                                    labelColor = TextSecondary
-                                )
+                                value = state.calorieTargetInput,
+                                onValueChange = { onAction(ProfileUiAction.OnUpdateCalorieTarget(it)) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                            ObsidianLabeledField(
+                                label = when (lang) {
+                                    "uz" -> "Suv maqsadi, ml"
+                                    "en" -> "Water goal, ml"
+                                    else -> "Вода, мл"
+                                },
+                                value = state.waterGoalInput,
+                                onValueChange = { onAction(ProfileUiAction.OnUpdateWaterGoal(it)) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
+
+                    ObsidianPrimaryButton(
+                        text = when (lang) {
+                            "uz" -> "Sozlamalarni saqlash"
+                            "en" -> "Save preferences"
+                            else -> "Сохранить предпочтения"
+                        },
+                        onClick = { onAction(ProfileUiAction.OnSaveMacroTargets) },
+                        fillWidth = true
+                    )
+
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "O'zgarishlar joriy sozlamalar mantiqi orqali qo'llaniladi."
+                            "en" -> "Changes apply via the active preferences store."
+                            else -> "Изменения применяются через текущую логику настроек."
+                        },
+                        fontSize = 12.sp,
+                        color = TextMuted
+                    )
                 }
             }
-        }
 
-        if (filteredFeedback.isEmpty()) {
-            item(key = "feedback_empty") {
-                AthleticCard(backgroundColor = DarkSurface) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+            // Card 4: Data, App & Confirmed Logout — Figma 12
+            item(key = "data_app_card", contentType = "data_app") {
+                val stats = state.platformStats
+                ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Ma'lumotlar va ilova"
+                            "en" -> "Data & application"
+                            else -> "Данные и приложение"
+                        },
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    ObsidianInnerWell {
+                        val tons = (stats.totalVolumeKg / 1000.0).toInt()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            StatCol(
+                                label = when (lang) { "uz" -> "Atletlar"; "en" -> "Athletes"; else -> "Атлетов" },
+                                value = stats.totalUsers.toString()
+                            )
+                            StatCol(
+                                label = when (lang) { "uz" -> "Mashg'ulot"; "en" -> "Workouts"; else -> "Тренировок" },
+                                value = stats.totalWorkouts.toString()
+                            )
+                            StatCol(
+                                label = when (lang) { "uz" -> "Tonnaj"; "en" -> "Tonnage"; else -> "Тоннаж" },
+                                value = "${tons}т"
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(
+                        text = "API base URL",
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    ObsidianInnerWell {
                         Text(
-                            text = "Пока нет записей в этой категории",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextSecondary
+                            text = "https://duda.uz/api/v1",
+                            fontSize = 14.sp,
+                            color = TextSoft
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ObsidianDivider()
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    if (state.isGuest) {
+                        ObsidianPrimaryButton(
+                            text = when (lang) {
+                                "uz" -> "Akkauntga kirish"
+                                "en" -> "Sign in"
+                                else -> "Войти в аккаунт"
+                            },
+                            onClick = { onAction(ProfileUiAction.OnLogoutClick) },
+                            fillWidth = true
+                        )
+                    } else if (!isLogoutConfirmOpen) {
+                        ObsidianOutlineButton(
+                            text = strings.profileLogout,
+                            onClick = { isLogoutConfirmOpen = true },
+                            fillWidth = true,
+                            textColor = CrimsonRed,
+                            borderColor = CrimsonRed.copy(alpha = 0.45f)
+                        )
+                    } else {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Akkauntdan chiqasizmi?"
+                                "en" -> "Log out of account?"
+                                else -> "Выйти из аккаунта?"
+                            },
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Avval chiqishni tasdiqlang. Bu yerdaligingizda sessiya faol qoladi."
+                                "en" -> "Confirm sign-out first. Your session remains active until confirmed."
+                                else -> "Сначала подтвердите выход. Пока вы здесь, сеанс остаётся активным."
+                            },
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            ObsidianOutlineButton(
+                                text = strings.cancel,
+                                onClick = { isLogoutConfirmOpen = false },
+                                modifier = Modifier.weight(1f),
+                                fillWidth = true
+                            )
+                            ObsidianOutlineButton(
+                                text = strings.profileLogout,
+                                onClick = {
+                                    isLogoutConfirmOpen = false
+                                    onAction(ProfileUiAction.OnLogoutClick)
+                                },
+                                modifier = Modifier.weight(1f),
+                                fillWidth = true,
+                                textColor = CrimsonRed,
+                                borderColor = CrimsonRed
+                            )
+                        }
+                    }
                 }
             }
-        } else {
-            items(filteredFeedback, key = { it.id }) { item ->
-                FeedbackItemCard(
-                    item = item,
-                    onUpvote = { onAction(ProfileUiAction.OnToggleFeedbackUpvote(item.id)) }
-                )
-            }
-        }
 
-        item(key = "spacer_bottom") {
-            Spacer(modifier = Modifier.height(32.dp))
+            // Card 5: Community Feedback & Ideas — Figma 12
+            item(key = "feedback_card", contentType = "feedback") {
+                ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "duda.uz ni yaxshilashga yordam bering"
+                            "en" -> "Help improve duda.uz"
+                            else -> "Помогите сделать duda.uz лучше"
+                        },
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Yaxshilash taklif qiling yoki mavjud g'oyani qo'llab-quvvatlang."
+                            "en" -> "Suggest an improvement or upvote an existing idea."
+                            else -> "Предложите улучшение или поддержите существующую идею."
+                        },
+                        fontSize = 13.sp,
+                        color = TextSecondary
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Taklifingiz"
+                            "en" -> "Your suggestion"
+                            else -> "Ваше предложение"
+                        },
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    ObsidianTextField(
+                        value = state.feedbackMessage,
+                        onValueChange = { onAction(ProfileUiAction.OnUpdateFeedbackMessage(it)) },
+                        placeholder = when (lang) {
+                            "uz" -> "Nimani yaxshilash kerak?"
+                            "en" -> "What should we improve?"
+                            else -> "Что стоит улучшить?"
+                        },
+                        singleLine = false,
+                        minLines = 2
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ObsidianOutlineButton(
+                            text = when (lang) {
+                                "uz" -> "Taklif yuborish"
+                                "en" -> "Send suggestion"
+                                else -> "Отправить предложение"
+                            },
+                            onClick = { onAction(ProfileUiAction.OnSubmitFeedback) },
+                            enabled = !state.isSubmittingFeedback && state.feedbackMessage.isNotBlank()
+                        )
+                        ObsidianOutlineButton(
+                            text = when (lang) {
+                                "uz" -> "Kategoriya bilan yuborish"
+                                "en" -> "Full form"
+                                else -> "Подробный отзыв"
+                            },
+                            onClick = { onAction(ProfileUiAction.OnOpenFeedbackModal) }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ObsidianDivider()
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Jamiyat g'oyalari (${state.feedbackList.size})"
+                            "en" -> "Community ideas (${state.feedbackList.size})"
+                            else -> "Идеи сообщества (${state.feedbackList.size})"
+                        },
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Mavjud takliflar va ovozlar"
+                            "en" -> "Existing suggestions and votes"
+                            else -> "Существующие предложения и голоса"
+                        },
+                        fontSize = 12.sp,
+                        color = TextMuted
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    ObsidianOutlineButton(
+                        text = if (isCommunityListExpanded) {
+                            when (lang) { "uz" -> "Ro'yxatni yopish"; "en" -> "Hide ideas"; else -> "Скрыть идеи" }
+                        } else {
+                            when (lang) { "uz" -> "Ko'rish va ovoz berish"; "en" -> "View and vote"; else -> "Посмотреть и проголосовать" }
+                        },
+                        onClick = { isCommunityListExpanded = !isCommunityListExpanded },
+                        fillWidth = true
+                    )
+
+                    if (isCommunityListExpanded) {
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(
+                                "all" to "${when (lang) { "uz" -> "Hammasi"; "en" -> "All"; else -> "Все" }} (${state.feedbackList.size})",
+                                "idea" to when (lang) { "uz" -> "G'oyalar"; "en" -> "Ideas"; else -> "Идеи" },
+                                "bug" to when (lang) { "uz" -> "Xatolar"; "en" -> "Bugs"; else -> "Баги" },
+                                "praise" to when (lang) { "uz" -> "Fikrlar"; "en" -> "Praise"; else -> "Отзывы" }
+                            ).forEach { (key, label) ->
+                                ObsidianPillTab(
+                                    text = label,
+                                    selected = state.selectedFeedbackFilter == key,
+                                    onClick = { onAction(ProfileUiAction.OnSelectFeedbackFilter(key)) }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        if (filteredFeedback.isEmpty()) {
+                            ObsidianInnerWell {
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "Bu bo'limda hali yozuvlar yo'q"
+                                        "en" -> "No entries in this category yet"
+                                        else -> "Пока нет записей в этой категории"
+                                    },
+                                    fontSize = 13.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        } else {
+                            filteredFeedback.forEachIndexed { idx, item ->
+                                if (idx > 0) ObsidianDivider()
+                                FeedbackItemCleanRow(
+                                    item = item,
+                                    lang = lang,
+                                    onUpvote = { onAction(ProfileUiAction.OnToggleFeedbackUpvote(item.id)) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            item(key = "bottom_spacer", contentType = "spacer") {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
     }
 
-    // Feedback Submission ModalBottomSheet
     if (state.isFeedbackModalOpen) {
         ModalBottomSheet(
             onDismissRequest = { onAction(ProfileUiAction.OnCloseFeedbackModal) },
@@ -828,65 +818,55 @@ fun ProfileScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Text(
-                    text = "Оставить отзыв или предложение",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = TextPrimary
-                )
-
-                val categories = listOf(
-                    Triple("idea", "Идея", Icons.Default.Lightbulb),
-                    Triple("bug", "Баг", Icons.Default.BugReport),
-                    Triple("praise", "Отзыв", Icons.Default.Favorite)
-                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    categories.forEach { (catKey, catLabel, icon) ->
-                        val selected = state.feedbackCategory == catKey
-                        FilterChip(
-                            selected = selected,
-                            onClick = { onAction(ProfileUiAction.OnSelectFeedbackCategory(catKey)) },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = icon,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            },
-                            label = {
-                                Text(
-                                    text = catLabel,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = EmeraldSubtle,
-                                selectedLabelColor = EmeraldNeon,
-                                selectedLeadingIconColor = EmeraldNeon,
-                                containerColor = DarkSurfaceHigh,
-                                labelColor = TextSecondary
-                            )
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Fikr yoki taklif qoldirish"
+                            "en" -> "Leave feedback or idea"
+                            else -> "Оставить отзыв или предложение"
+                        },
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+                    IconButton(onClick = { onAction(ProfileUiAction.OnCloseFeedbackModal) }) {
+                        Icon(Icons.Default.Close, contentDescription = null, tint = TextSecondary)
+                    }
+                }
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf(
+                        "idea" to when (lang) { "uz" -> "G'oya"; "en" -> "Idea"; else -> "Идея" },
+                        "bug" to when (lang) { "uz" -> "Xato"; "en" -> "Bug"; else -> "Баг" },
+                        "praise" to when (lang) { "uz" -> "Fikr"; "en" -> "Praise"; else -> "Отзыв" }
+                    ).forEach { (catKey, catLabel) ->
+                        ObsidianPillTab(
+                            text = catLabel,
+                            selected = state.feedbackCategory == catKey,
+                            onClick = { onAction(ProfileUiAction.OnSelectFeedbackCategory(catKey)) }
                         )
                     }
                 }
 
-                // Star Rating Row
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "Оценка:",
+                        text = when (lang) { "uz" -> "Baho:"; "en" -> "Rating:"; else -> "Оценка:" },
                         fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
                         color = TextSecondary
                     )
                     (1..5).forEach { star ->
@@ -897,221 +877,142 @@ fun ProfileScreen(
                             Icon(
                                 imageVector = Icons.Default.Star,
                                 contentDescription = "$star",
-                                tint = if (star <= state.feedbackRating) AmberGold else TextMuted.copy(alpha = 0.35f),
-                                modifier = Modifier.size(24.dp)
+                                tint = if (star <= state.feedbackRating) AmberWarm else TextMuted.copy(alpha = 0.35f),
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }
                 }
 
-                OutlinedTextField(
+                ObsidianTextField(
                     value = state.feedbackMessage,
                     onValueChange = { onAction(ProfileUiAction.OnUpdateFeedbackMessage(it)) },
-                    label = { Text("Опишите вашу идею, баг или впечатление...") },
-                    minLines = 3,
-                    maxLines = 6,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = profileTextFieldColors()
+                    placeholder = when (lang) {
+                        "uz" -> "G'oyangiz, xato yoki taassurotingizni yozing..."
+                        "en" -> "Describe your idea, bug or feedback..."
+                        else -> "Опишите вашу идею, баг или впечатление..."
+                    },
+                    singleLine = false,
+                    minLines = 3
                 )
 
-                Button(
-                    onClick = { onAction(ProfileUiAction.OnSubmitFeedback) },
-                    enabled = !state.isSubmittingFeedback && state.feedbackMessage.isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = EmeraldNeon,
-                        contentColor = DarkBackground
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                ) {
-                    Text(
-                        text = if (state.isSubmittingFeedback) "Отправка..." else "Отправить в duda.uz",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.ExtraBold
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    ObsidianOutlineButton(
+                        text = strings.cancel,
+                        onClick = { onAction(ProfileUiAction.OnCloseFeedbackModal) },
+                        modifier = Modifier.weight(1f),
+                        fillWidth = true
+                    )
+                    ObsidianPrimaryButton(
+                        text = if (state.isSubmittingFeedback) strings.loading else when (lang) {
+                            "uz" -> "Yuborish"
+                            "en" -> "Submit"
+                            else -> "Отправить"
+                        },
+                        onClick = { onAction(ProfileUiAction.OnSubmitFeedback) },
+                        enabled = !state.isSubmittingFeedback && state.feedbackMessage.isNotBlank(),
+                        modifier = Modifier.weight(1f),
+                        fillWidth = true
                     )
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
 }
 
 @Composable
-private fun PlatformStatPill(
-    label: String,
-    value: String,
-    color: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(DarkSurfaceHigh)
-            .padding(horizontal = 10.dp, vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+private fun StatCol(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,
             fontSize = 16.sp,
-            fontWeight = FontWeight.Black,
-            color = color
+            fontWeight = FontWeight.SemiBold,
+            color = EmeraldNeon
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
-            fontSize = 10.sp,
-            color = TextMuted,
-            maxLines = 1
+            fontSize = 11.sp,
+            color = TextMuted
         )
     }
 }
 
 @Composable
-private fun FeedbackItemCard(
+private fun FeedbackItemCleanRow(
     item: FeedbackItem,
+    lang: String,
     onUpvote: () -> Unit
 ) {
-    val categoryColor = when (item.category.lowercase()) {
-        "bug" -> CrimsonRed
-        "praise" -> AmberGold
-        else -> EmeraldNeon
-    }
     val categoryLabel = when (item.category.lowercase()) {
-        "bug" -> "БАГ"
-        "praise" -> "ОТЗЫВ"
-        else -> "ИДЕЯ"
+        "bug" -> when (lang) { "uz" -> "Xato"; "en" -> "Bug"; else -> "Баг" }
+        "praise" -> when (lang) { "uz" -> "Fikr"; "en" -> "Praise"; else -> "Отзыв" }
+        else -> when (lang) { "uz" -> "G'oya"; "en" -> "Idea"; else -> "Идея" }
     }
 
-    AthleticCard(backgroundColor = DarkSurface) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clip(CircleShape)
-                            .background(EmeraldSubtle),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = item.userName.take(1).uppercase(),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = EmeraldNeon
-                        )
-                    }
-                    Column {
-                        Text(
-                            text = item.userName.ifBlank { "Атлет" },
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = item.createdAt.take(10),
-                            fontSize = 10.sp,
-                            color = TextMuted
-                        )
-                    }
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(categoryColor.copy(alpha = 0.16f))
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
-                        Text(
-                            text = categoryLabel,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Black,
-                            color = categoryColor
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = null,
-                            tint = AmberGold,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(2.dp))
-                        Text(
-                            text = item.rating.toString(),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AmberGold
-                        )
-                    }
-                }
-            }
-
             Text(
-                text = item.message,
-                fontSize = 13.sp,
-                color = TextPrimary,
-                lineHeight = 18.sp
+                text = "${item.userName.ifBlank { "Атлет" }} · $categoryLabel",
+                fontSize = 12.sp,
+                color = EmeraldNeon,
+                fontWeight = FontWeight.Medium
             )
+            Text(
+                text = item.createdAt.take(10),
+                fontSize = 11.sp,
+                color = TextMuted
+            )
+        }
 
+        Text(
+            text = item.message,
+            fontSize = 14.sp,
+            color = TextPrimary,
+            lineHeight = 20.sp
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            val shape = RoundedCornerShape(8.dp)
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                modifier = Modifier
+                    .clip(shape)
+                    .background(if (item.upvotedByMe) EmeraldSubtle else DarkBackground)
+                    .border(
+                        1.dp,
+                        if (item.upvotedByMe) BorderHighlight else BorderSubtle,
+                        shape
+                    )
+                    .clickable(onClick = onUpvote)
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (item.upvotedByMe) EmeraldSubtle else DarkSurfaceHigh)
-                        .clickable(onClick = onUpvote)
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(5.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ThumbUp,
-                        contentDescription = null,
-                        tint = if (item.upvotedByMe) EmeraldNeon else TextSecondary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = item.upvotes.toString(),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (item.upvotedByMe) EmeraldNeon else TextSecondary
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.ThumbUp,
+                    contentDescription = null,
+                    tint = if (item.upvotedByMe) EmeraldNeon else TextSecondary,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = item.upvotes.toString(),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (item.upvotedByMe) EmeraldLight else TextSecondary
+                )
             }
         }
     }
 }
-
-@Composable
-private fun profileTextFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = ObsidianWell,
-    unfocusedContainerColor = ObsidianWell,
-    focusedBorderColor = EmeraldNeon,
-    unfocusedBorderColor = BorderSubtle,
-    focusedTextColor = TextPrimary,
-    unfocusedTextColor = TextPrimary,
-    focusedLabelColor = EmeraldNeon,
-    unfocusedLabelColor = TextMuted
-)

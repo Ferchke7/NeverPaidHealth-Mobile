@@ -1,5 +1,24 @@
 package dev.neverpaid.health.features.dashboard
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
+import dev.neverpaid.health.core.designsystem.BorderDivider
+import dev.neverpaid.health.core.designsystem.ObsidianCard
+import dev.neverpaid.health.core.designsystem.ObsidianDivider
+import dev.neverpaid.health.core.designsystem.ObsidianEmptyCard
+import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
+import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
+import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
+import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
+import dev.neverpaid.health.core.designsystem.ObsidianPillTab
+import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
+import dev.neverpaid.health.core.designsystem.ObsidianTextField
+import dev.neverpaid.health.core.designsystem.TextSoft
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -175,6 +194,7 @@ fun DashboardRoute(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DashboardScreen(
     state: DashboardUiState,
@@ -182,56 +202,115 @@ fun DashboardScreen(
     onNavigateToScreen: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    if (state.isLoading && state.prebuiltRoutines.isEmpty()) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = EmeraldNeon)
+    val strings = LocalDudaStrings.current
+    val lang = when (strings.navWorkouts) {
+        "Mashg'ulotlar" -> "uz"
+        "Workouts" -> "en"
+        else -> "ru"
+    }
+
+    var searchQuery by remember { mutableStateOf("") }
+    var sortMode by remember { mutableStateOf("custom") } // "custom" | "prebuilt" | "alpha"
+
+    if (state.isLoading && state.prebuiltRoutines.isEmpty() && state.customRoutines.isEmpty()) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(DarkBackground)
+                .padding(horizontal = 20.dp, vertical = 24.dp)
+        ) {
+            ObsidianLoadingCard(
+                title = strings.stateLoadingTitle,
+                hint = strings.stateLoadingHint,
+                kicker = "01 · ${strings.navWorkouts}"
+            )
         }
         return
+    }
+
+    val combinedRoutines = remember(state.customRoutines, state.prebuiltRoutines, searchQuery, sortMode) {
+        val taggedCustom = state.customRoutines.map { true to it }
+        val taggedPrebuilt = state.prebuiltRoutines.map { false to it }
+        val ordered = when (sortMode) {
+            "prebuilt" -> taggedPrebuilt + taggedCustom
+            "alpha" -> (taggedCustom + taggedPrebuilt).sortedBy { it.second.title.lowercase() }
+            else -> taggedCustom + taggedPrebuilt
+        }
+        val q = searchQuery.trim().lowercase()
+        if (q.isEmpty()) {
+            ordered
+        } else {
+            ordered.filter { (_, r) ->
+                r.title.lowercase().contains(q) ||
+                    r.description.lowercase().contains(q) ||
+                    r.exercises.any { it.exerciseName.lowercase().contains(q) }
+            }
+        }
     }
 
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .background(DarkBackground),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 112.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        item(key = "top_spacer") {
-            Spacer(modifier = Modifier.height(2.dp))
+        // 1. Page Header ("Тренировки" / "Ваши программы и шаблоны")
+        item(key = "page_header", contentType = "header") {
+            ObsidianPageHeader(
+                title = strings.navWorkouts,
+                subtitle = when (lang) {
+                    "uz" -> "Dasturlar va shablonlaringiz"
+                    "en" -> "Your programs and templates"
+                    else -> "Ваши программы и шаблоны"
+                }
+            )
         }
 
-        // 1. Active Workout Banner (if in progress)
+        // 2. Active Workout Banner (if in progress)
         if (state.hasActiveWorkout) {
-            item(key = "active_workout_banner") {
+            item(key = "active_workout_banner", contentType = "active_banner") {
                 ActiveWorkoutBannerCard(
                     title = state.activeWorkoutTitle,
                     exercisesCount = state.activeWorkoutExercisesCount,
                     completedSetsCount = state.activeWorkoutCompletedSets,
+                    lang = lang,
                     onResumeClick = { onAction(DashboardUiAction.OnResumeWorkoutClick) }
                 )
             }
         }
 
-        // 2. Quick Start Hero Card (1:1 with WorkoutsPage.tsx)
-        item(key = "quick_start_card") {
-            QuickStartHeroCard(
-                totalWorkouts = state.totalWorkouts,
-                totalVolumeKg = state.totalVolumeKg,
-                streakDays = state.currentStreakDays,
-                onStartEmpty = { onAction(DashboardUiAction.OnStartEmptyWorkoutClick) },
-                onCreateRoutine = { onAction(DashboardUiAction.OnOpenRoutineEditor(null)) }
-            )
+        // 3. Primary Quick Actions Wrap
+        item(key = "quick_actions", contentType = "actions") {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ObsidianPrimaryButton(
+                    text = when (lang) {
+                        "uz" -> "Bo'sh mashg'ulotni boshlash"
+                        "en" -> "Start empty workout"
+                        else -> "Начать пустую тренировку"
+                    },
+                    onClick = { onAction(DashboardUiAction.OnStartEmptyWorkoutClick) }
+                )
+                ObsidianOutlineButton(
+                    text = when (lang) {
+                        "uz" -> "Yangi shablon"
+                        "en" -> "New template"
+                        else -> "Новый шаблон"
+                    },
+                    onClick = { onAction(DashboardUiAction.OnOpenRoutineEditor(null)) }
+                )
+            }
         }
 
-        // 2.5 Quick Hub Navigation (Programs, Exercises, History, Body)
-        item(key = "training_hub_actions") {
-            TrainingHubQuickActions(onNavigateToScreen = onNavigateToScreen)
-        }
-
-        // 3. Active Program Schedule Card (GET /api/v1/programs/user/active)
-        item(key = "active_program_schedule") {
+        // 4. Active Program Schedule Card
+        item(key = "active_program_schedule", contentType = "active_program") {
             ActiveProgramScheduleSection(
                 bundle = state.activeProgramBundle,
                 selectedDayNumber = state.selectedProgramDayNumber,
+                lang = lang,
                 onSelectDayTab = { onAction(DashboardUiAction.OnSelectProgramDayTab(it)) },
                 onStartProgramDay = { onAction(DashboardUiAction.OnStartProgramDayClick(it)) },
                 onSkipRestDay = { onAction(DashboardUiAction.OnSkipRestDayClick) },
@@ -242,140 +321,131 @@ fun DashboardScreen(
             )
         }
 
-        // 4. My Custom Routines (GET /api/v1/routines)
-        item(key = "my_routines_header") {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "МОИ СПЛИТЫ И РУТИНЫ",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextMuted,
-                        letterSpacing = 1.sp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(DarkSurfaceHigh)
-                            .padding(horizontal = 7.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "${state.customRoutines.size}",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextSecondary
-                        )
-                    }
-                }
+        // 5. Templates Header & Search + Order Filter
+        item(key = "templates_controls", contentType = "controls") {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Mening shablonlarim"
+                        "en" -> "My templates"
+                        else -> "Мои шаблоны"
+                    },
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
 
                 Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(EmeraldSubtle)
-                        .border(1.dp, BorderHighlight, RoundedCornerShape(8.dp))
-                        .clickable { onAction(DashboardUiAction.OnOpenRoutineEditor(null)) }
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        tint = EmeraldLight,
-                        modifier = Modifier.size(14.dp)
+                    ObsidianTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = when (lang) {
+                            "uz" -> "Shablon qidirish"
+                            "en" -> "Search templates"
+                            else -> "Поиск шаблонов"
+                        },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Создать сплит",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldLight
+                    ObsidianOutlineButton(
+                        text = when (sortMode) {
+                            "prebuilt" -> when (lang) {
+                                "uz" -> "Tartib: baza"
+                                "en" -> "Order: starter"
+                                else -> "Порядок: базовые"
+                            }
+                            "alpha" -> when (lang) {
+                                "uz" -> "Tartib: A–Z"
+                                "en" -> "Order: A–Z"
+                                else -> "Порядок: А–Я"
+                            }
+                            else -> when (lang) {
+                                "uz" -> "Tartib: meniki"
+                                "en" -> "Order: mine"
+                                else -> "Порядок: мои"
+                            }
+                        },
+                        onClick = {
+                            sortMode = when (sortMode) {
+                                "custom" -> "prebuilt"
+                                "prebuilt" -> "alpha"
+                                else -> "custom"
+                            }
+                        }
                     )
                 }
             }
         }
 
-        if (state.customRoutines.isEmpty()) {
-            item(key = "empty_custom_routines") {
-                AthleticCard(
-                    backgroundColor = DarkSurface,
-                    borderColor = BorderSubtle
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "У вас пока нет собственных рутин",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Создайте свой тренировочный день или начните по готовым шаблонам ниже",
-                            fontSize = 11.sp,
-                            color = TextMuted
-                        )
-                    }
-                }
+        // 6. Templates List
+        if (combinedRoutines.isEmpty()) {
+            item(key = "empty_templates", contentType = "empty") {
+                ObsidianEmptyCard(
+                    title = when (lang) {
+                        "uz" -> "Shablonlar topilmadi"
+                        "en" -> "No templates found"
+                        else -> "Шаблоны не найдены"
+                    },
+                    description = when (lang) {
+                        "uz" -> "Yangi shablon yarating yoki qidiruv so'zini tozalang."
+                        "en" -> "Create a new template or clear your search filter."
+                        else -> "Создайте новый шаблон тренировки или сбросьте поисковый запрос."
+                    },
+                    primaryActionLabel = when (lang) {
+                        "uz" -> "Yangi shablon"
+                        "en" -> "New template"
+                        else -> "Новый шаблон"
+                    },
+                    onPrimaryAction = { onAction(DashboardUiAction.OnOpenRoutineEditor(null)) },
+                    secondaryActionLabel = if (searchQuery.isNotBlank()) {
+                        when (lang) {
+                            "uz" -> "Qidiruvni tozalash"
+                            "en" -> "Clear search"
+                            else -> "Сбросить поиск"
+                        }
+                    } else null,
+                    onSecondaryAction = { searchQuery = "" }
+                )
             }
         } else {
-            items(state.customRoutines, key = { "custom_${it.id}" }) { routine ->
+            items(
+                items = combinedRoutines,
+                key = { (isCustom, r) -> "${if (isCustom) "custom" else "prebuilt"}_${r.id}" },
+                contentType = { "routine_card" }
+            ) { (isCustom, routine) ->
                 RoutineCardItem(
                     routine = routine,
-                    isCustom = true,
+                    isCustom = isCustom,
+                    lang = lang,
                     onStart = { onAction(DashboardUiAction.OnSelectRoutineClick(routine)) },
                     onPreview = { onAction(DashboardUiAction.OnPreviewRoutineClick(routine)) },
-                    onEdit = { onAction(DashboardUiAction.OnOpenRoutineEditor(routine)) },
-                    onDelete = { onAction(DashboardUiAction.OnDeleteRoutineClick(routine.id)) }
+                    onEdit = if (isCustom) {
+                        { onAction(DashboardUiAction.OnOpenRoutineEditor(routine)) }
+                    } else null,
+                    onDuplicate = {
+                        val copySuffix = when (lang) {
+                            "uz" -> "(nusxa)"
+                            "en" -> "(copy)"
+                            else -> "(копия)"
+                        }
+                        onAction(
+                            DashboardUiAction.OnOpenRoutineEditor(
+                                routine.copy(
+                                    id = "prebuilt-copy-${routine.id}",
+                                    name = "${routine.title} $copySuffix"
+                                )
+                            )
+                        )
+                    },
+                    onDelete = if (isCustom) {
+                        { onAction(DashboardUiAction.OnDeleteRoutineClick(routine.id)) }
+                    } else null
                 )
             }
-        }
-
-        // 5. Starter Prebuilt Templates (5 PREBUILT_ROUTINES from WorkoutsPage.tsx)
-        item(key = "prebuilt_routines_header") {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "ГОТОВЫЕ БАЗОВЫЕ ШАБЛОНЫ",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextMuted,
-                    letterSpacing = 1.sp
-                )
-                Text(
-                    text = "Каталог программ →",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = EmeraldLight,
-                    modifier = Modifier.clickable { onNavigateToScreen("programs") }
-                )
-            }
-        }
-
-        items(state.prebuiltRoutines, key = { it.id }) { routine ->
-            RoutineCardItem(
-                routine = routine,
-                isCustom = false,
-                onStart = { onAction(DashboardUiAction.OnSelectRoutineClick(routine)) },
-                onPreview = { onAction(DashboardUiAction.OnPreviewRoutineClick(routine)) },
-                onEdit = null,
-                onDelete = null
-            )
-        }
-
-        item(key = "bottom_space") {
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -385,145 +455,56 @@ private fun ActiveWorkoutBannerCard(
     title: String,
     exercisesCount: Int,
     completedSetsCount: Int,
+    lang: String,
     onResumeClick: () -> Unit
 ) {
-    AthleticCard(
-        backgroundColor = DarkSurfaceVariant,
-        borderColor = EmeraldNeon
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onResumeClick() }
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(EmeraldNeon)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Column {
-                    Text(
-                        text = "ТРЕНИРОВКА АКТИВНА",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldLight,
-                        letterSpacing = 1.sp
-                    )
-                    Text(
-                        text = title,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "$exercisesCount упражнений • $completedSetsCount выполненных подходов",
-                        fontSize = 11.sp,
-                        color = TextSecondary
-                    )
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(EmeraldNeon)
-                    .padding(horizontal = 12.dp, vertical = 7.dp)
-            ) {
-                Text(
-                    text = "Продолжить →",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun QuickStartHeroCard(
-    totalWorkouts: Int,
-    totalVolumeKg: Double,
-    streakDays: Int,
-    onStartEmpty: () -> Unit,
-    onCreateRoutine: () -> Unit
-) {
-    AthleticCard(
-        backgroundColor = DarkSurfaceVariant,
+    ObsidianCard(
+        backgroundColor = EmeraldSubtle,
         borderColor = BorderHighlight
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Тренировки",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Black,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "Логируйте рабочие подходы, таймер отдыха и 1ПМ в реальном времени",
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(DarkSurface)
-                    .padding(vertical = 10.dp, horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceAround
-            ) {
-                StatCounter(
-                    title = "Тренировок",
-                    value = "$totalWorkouts",
-                    unit = "",
-                    accentColor = EmeraldNeon
-                )
-                StatCounter(
-                    title = "Объём",
-                    value = StrengthCalculator.formatVolume(totalVolumeKg),
-                    unit = "кг",
-                    accentColor = TextPrimary
-                )
-                StatCounter(
-                    title = "Серия",
-                    value = "$streakDays",
-                    unit = "дн.",
-                    accentColor = AmberWarm
-                )
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            PrimaryAthleticButton(
-                text = "Начать пустую тренировку",
-                onClick = onStartEmpty,
-                icon = Icons.Default.ElectricBolt
-            )
-        }
+        Text(
+            text = when (lang) {
+                "uz" -> "FAOL MASHG'ULOT"
+                "en" -> "ACTIVE WORKOUT"
+                else -> "ТРЕНИРОВКА АКТИВНА"
+            },
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = 0.8.sp,
+            color = EmeraldNeon
+        )
+        Text(
+            text = title,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary
+        )
+        Text(
+            text = when (lang) {
+                "uz" -> "$exercisesCount mashq · $completedSetsCount bajarilgan yondashuv"
+                "en" -> "$exercisesCount exercises · $completedSetsCount completed sets"
+                else -> "$exercisesCount упражнений · $completedSetsCount выполненных подходов"
+            },
+            fontSize = 14.sp,
+            color = TextSecondary
+        )
+        ObsidianPrimaryButton(
+            text = when (lang) {
+                "uz" -> "Davom etish"
+                "en" -> "Resume workout"
+                else -> "Продолжить"
+            },
+            onClick = onResumeClick
+        )
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ActiveProgramScheduleSection(
     bundle: ActiveProgramBundle?,
     selectedDayNumber: Int,
+    lang: String,
     onSelectDayTab: (Int) -> Unit,
     onStartProgramDay: (ProgramDay) -> Unit,
     onSkipRestDay: () -> Unit,
@@ -534,253 +515,194 @@ private fun ActiveProgramScheduleSection(
     val currentDayNumber = bundle?.userProgram?.currentDayNumber ?: 1
 
     if (program == null) {
-        AthleticCard(
+        ObsidianCard(
             backgroundColor = DarkSurface,
             borderColor = BorderSubtle
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onNavigateToPrograms() }
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(EmeraldSubtle),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CalendarToday,
-                            contentDescription = null,
-                            tint = EmeraldLight,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "Нет активной программы",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "Выберите программу (PPL, Upper/Lower, Full Body) в каталоге",
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
-                    }
-                }
-                Text(
-                    text = "Выбрать →",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = EmeraldLight
-                )
-            }
+            Text(
+                text = when (lang) {
+                    "uz" -> "FAOL DASTUR"
+                    "en" -> "ACTIVE PROGRAM"
+                    else -> "АКТИВНАЯ ПРОГРАММА"
+                },
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 0.8.sp,
+                color = EmeraldNeon
+            )
+            Text(
+                text = when (lang) {
+                    "uz" -> "Faol dastur tanlanmagan"
+                    "en" -> "No active program selected"
+                    else -> "Нет активной программы"
+                },
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
+            )
+            Text(
+                text = when (lang) {
+                    "uz" -> "Katalogdan dastur tanlang (PPL, Upper/Lower, Full Body)"
+                    "en" -> "Pick a structured split (PPL, Upper/Lower, Full Body) in the catalog"
+                    else -> "Выберите структурированный сплит (PPL, Upper/Lower, Full Body) в каталоге"
+                },
+                fontSize = 14.sp,
+                color = TextSecondary
+            )
+            ObsidianOutlineButton(
+                text = when (lang) {
+                    "uz" -> "Dasturlarni ochish"
+                    "en" -> "Browse programs"
+                    else -> "Открыть программы"
+                },
+                onClick = onNavigateToPrograms
+            )
         }
         return
     }
 
     val days = program.days.sortedBy { it.dayNumber }
-    val selectedDay = days.find { it.dayNumber == selectedDayNumber } ?: days.firstOrNull()
+    val selectedDay = days.find { it.dayNumber == selectedDayNumber }
+        ?: days.find { it.dayNumber == currentDayNumber }
+        ?: days.firstOrNull()
+    var showDaySelector by remember { mutableStateOf(false) }
 
-    AthleticCard(
+    ObsidianCard(
         backgroundColor = DarkSurface,
-        borderColor = BorderHighlight
+        borderColor = BorderSubtle
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(EmeraldSubtle)
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = EmeraldLight,
-                                modifier = Modifier.size(12.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "АКТИВНЫЙ ПЛАН",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = EmeraldLight
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "По очереди: День $currentDayNumber",
-                        fontSize = 11.sp,
-                        color = TextSecondary
+        Text(
+            text = when (lang) {
+                "uz" -> "FAOL DASTUR"
+                "en" -> "ACTIVE PROGRAM"
+                else -> "АКТИВНАЯ ПРОГРАММА"
+            },
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = 0.8.sp,
+            color = EmeraldNeon
+        )
+
+        Text(
+            text = when (lang) {
+                "uz" -> "${selectedDay?.dayNumber ?: currentDayNumber}-kun / ${days.size} · ${program.title}"
+                "en" -> "Day #${selectedDay?.dayNumber ?: currentDayNumber} of ${days.size} · ${program.title}"
+                else -> "День #${selectedDay?.dayNumber ?: currentDayNumber} из ${days.size} · ${program.title}"
+            },
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary
+        )
+
+        Text(
+            text = if (selectedDay == null) {
+                program.description
+            } else if (selectedDay.isRestDay || selectedDay.exercises.isEmpty()) {
+                when (lang) {
+                    "uz" -> "Dam olish kuni · Tiklanish"
+                    "en" -> "Rest day · CNS & muscle recovery"
+                    else -> "День отдыха · Восстановление ЦНС и сон"
+                }
+            } else {
+                when (lang) {
+                    "uz" -> "${selectedDay.title} · ${selectedDay.exercises.size} mashq"
+                    "en" -> "${selectedDay.title} · ${selectedDay.exercises.size} exercises"
+                    else -> "${selectedDay.title} · ${selectedDay.exercises.size} упражнений"
+                }
+            },
+            fontSize = 14.sp,
+            color = TextSecondary
+        )
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (selectedDay != null) {
+                if (selectedDay.isRestDay || selectedDay.exercises.isEmpty()) {
+                    ObsidianPrimaryButton(
+                        text = when (lang) {
+                            "uz" -> "Dam olishni o'tkazish"
+                            "en" -> "Skip rest day"
+                            else -> "Пропустить отдых"
+                        },
+                        onClick = onSkipRestDay
+                    )
+                } else {
+                    ObsidianPrimaryButton(
+                        text = when (lang) {
+                            "uz" -> "Mashg'ulotni boshlash"
+                            "en" -> "Start workout"
+                            else -> "Начать тренировку"
+                        },
+                        onClick = { onStartProgramDay(selectedDay) }
                     )
                 }
-
-                Text(
-                    text = "Сменить →",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = EmeraldLight,
-                    modifier = Modifier.clickable { onNavigateToPrograms() }
-                )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = program.title,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Black,
-                color = TextPrimary
+            ObsidianOutlineButton(
+                text = when (lang) {
+                    "uz" -> "Kunni tanlash"
+                    "en" -> "Choose day"
+                    else -> "Выбрать день"
+                },
+                onClick = { showDaySelector = !showDaySelector }
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            ObsidianOutlineButton(
+                text = when (lang) {
+                    "uz" -> "Dasturni ochish"
+                    "en" -> "Open program"
+                    else -> "Открыть программу"
+                },
+                onClick = onNavigateToPrograms
+            )
+        }
 
-            // Day selector tabs
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(days, key = { it.dayNumber }) { day ->
+        if (showDaySelector && days.isNotEmpty()) {
+            ObsidianDivider(color = BorderSubtle)
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                days.forEach { day ->
                     val isSelected = day.dayNumber == (selectedDay?.dayNumber ?: 1)
-                    val isCurrentQueue = day.dayNumber == currentDayNumber
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (isSelected) EmeraldNeon else DarkSurfaceVariant)
-                            .border(
-                                width = 1.dp,
-                                color = if (isCurrentQueue && !isSelected) EmeraldLight else BorderSubtle,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .clickable { onSelectDayTab(day.dayNumber) }
-                            .padding(horizontal = 12.dp, vertical = 7.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (isCurrentQueue) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .clip(CircleShape)
-                                        .background(if (isSelected) Color.Black else EmeraldNeon)
-                                )
-                                Spacer(modifier = Modifier.width(5.dp))
-                            }
-                            Text(
-                                text = "День ${day.dayNumber}",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isSelected) Color.Black else TextPrimary
-                            )
-                        }
-                    }
+                    ObsidianPillTab(
+                        text = when (lang) {
+                            "uz" -> "${day.dayNumber}-kun"
+                            "en" -> "Day ${day.dayNumber}"
+                            else -> "День ${day.dayNumber}"
+                        },
+                        selected = isSelected,
+                        onClick = { onSelectDayTab(day.dayNumber) }
+                    )
                 }
             }
 
-            if (selectedDay != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(DarkSurfaceVariant)
-                        .padding(12.dp)
-                ) {
-                    if (selectedDay.isRestDay || selectedDay.exercises.isEmpty()) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
+            if (selectedDay != null && selectedDay.exercises.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    selectedDay.exercises.forEach { ex ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onInspectExercise(ex.exerciseId, ex.exerciseName) },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "День отдыха и восстановления",
+                                text = "${ex.targetSets} × ${ex.exerciseName}",
                                 fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = TextSoft,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Восстановление ЦНС, сон 8 часов и выполнение нормы белка.",
-                                fontSize = 12.sp,
-                                color = TextSecondary
+                                text = "${ex.targetRepsMin}–${ex.targetRepsMax}",
+                                fontSize = 13.sp,
+                                color = TextMuted
                             )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            OutlinedButton(
-                                onClick = onSkipRestDay,
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Пропустить день отдыха →", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    } else {
-                        Column {
-                            Text(
-                                text = selectedDay.title,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            selectedDay.exercises.forEachIndexed { idx, ex ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { onInspectExercise(ex.exerciseId, ex.exerciseName) }
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "${idx + 1}. ${ex.exerciseName}",
-                                        fontSize = 12.sp,
-                                        color = TextPrimary,
-                                        modifier = Modifier.weight(1f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = "${ex.targetSets} × ${ex.targetRepsMin}–${ex.targetRepsMax}",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = EmeraldLight
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Button(
-                                onClick = { onStartProgramDay(selectedDay) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(46.dp),
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = EmeraldNeon,
-                                    contentColor = Color.Black
-                                )
-                            ) {
-                                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Начать День ${selectedDay.dayNumber}: ${selectedDay.title}",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
                         }
                     }
                 }
@@ -794,165 +716,122 @@ private fun ActiveProgramScheduleSection(
 private fun RoutineCardItem(
     routine: Routine,
     isCustom: Boolean,
+    lang: String,
     onStart: () -> Unit,
     onPreview: () -> Unit,
     onEdit: (() -> Unit)?,
+    onDuplicate: () -> Unit,
     onDelete: (() -> Unit)?
 ) {
-    AthleticCard(
+    val estimatedMinutes = (routine.exercises.sumOf { it.targetSets } * 3).coerceAtLeast(20)
+    ObsidianCard(
         backgroundColor = DarkSurface,
         borderColor = BorderSubtle
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onPreview() }
-                .padding(14.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (isCustom) EmeraldSubtle else ObsidianWell)
-                            .border(
-                                1.dp,
-                                if (isCustom) BorderHighlight else BorderSubtle,
-                                RoundedCornerShape(10.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.FitnessCenter,
-                            contentDescription = null,
-                            tint = if (isCustom) EmeraldLight else TextSecondary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = routine.title,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        if (routine.description.isNotBlank()) {
-                            Text(
-                                text = routine.description,
-                                fontSize = 12.sp,
-                                color = TextSecondary,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                }
-
-                if (isCustom) {
-                    Row {
-                        if (onEdit != null) {
-                            IconButton(onClick = onEdit, modifier = Modifier.size(30.dp)) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Редактировать",
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                        if (onDelete != null) {
-                            IconButton(onClick = onDelete, modifier = Modifier.size(30.dp)) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Удалить",
-                                    tint = CrimsonRed,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = routine.title,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
+            )
+            if (routine.description.isNotBlank()) {
+                Text(
+                    text = routine.description,
+                    fontSize = 14.sp,
+                    color = TextSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
+            Text(
+                text = when (lang) {
+                    "uz" -> "${routine.exercises.size} mashq · ~$estimatedMinutes daq"
+                    "en" -> "${routine.exercises.size} exercises · ~$estimatedMinutes min"
+                    else -> "${routine.exercises.size} упражнений · ~$estimatedMinutes мин"
+                },
+                fontSize = 13.sp,
+                color = TextMuted
+            )
+        }
 
-            Spacer(modifier = Modifier.height(10.dp))
+        if (routine.exercises.isNotEmpty()) {
+            ObsidianDivider(color = BorderSubtle)
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onPreview() },
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                routine.exercises.take(4).forEach { ex ->
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(DarkSurfaceVariant)
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "${ex.exerciseName} (${ex.targetSets}×${ex.targetRepsMin}-${ex.targetRepsMax})",
-                            fontSize = 11.sp,
-                            color = TextSecondary
-                        )
-                    }
-                }
-                if (routine.exercises.size > 4) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(DarkSurfaceHigh)
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "+${routine.exercises.size - 4} ещё",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = EmeraldLight
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onPreview,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(40.dp),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(15.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Состав (${routine.exercises.size})", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                }
-
-                Button(
-                    onClick = onStart,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(40.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = EmeraldNeon,
-                        contentColor = Color.Black
+                routine.exercises.take(5).forEach { ex ->
+                    Text(
+                        text = "${ex.targetSets} × ${ex.exerciseName}",
+                        fontSize = 14.sp,
+                        color = TextSoft,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Начать", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
+                if (routine.exercises.size > 5) {
+                    Text(
+                        text = "+${routine.exercises.size - 5} ещё",
+                        fontSize = 13.sp,
+                        color = EmeraldLight
+                    )
+                }
+            }
+        }
+
+        ObsidianDivider(color = BorderSubtle)
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ObsidianPrimaryButton(
+                text = when (lang) {
+                    "uz" -> "Boshlash"
+                    "en" -> "Start"
+                    else -> "Начать"
+                },
+                onClick = onStart
+            )
+            ObsidianOutlineButton(
+                text = if (isCustom) {
+                    when (lang) {
+                        "uz" -> "Tahrirlash"
+                        "en" -> "Edit"
+                        else -> "Изменить"
+                    }
+                } else {
+                    when (lang) {
+                        "uz" -> "Tarkib"
+                        "en" -> "Details"
+                        else -> "Состав"
+                    }
+                },
+                onClick = {
+                    if (isCustom && onEdit != null) onEdit() else onPreview()
+                }
+            )
+            ObsidianOutlineButton(
+                text = when (lang) {
+                    "uz" -> "Nusxalash"
+                    "en" -> "Duplicate"
+                    else -> "Копировать"
+                },
+                onClick = onDuplicate
+            )
+            if (isCustom && onDelete != null) {
+                ObsidianOutlineButton(
+                    text = when (lang) {
+                        "uz" -> "O'chirish"
+                        "en" -> "Delete"
+                        else -> "Удалить"
+                    },
+                    onClick = onDelete
+                )
             }
         }
     }

@@ -275,12 +275,26 @@ data class DudaStrings(
     val sleepQuality: String,
     val stressLevel: String,
     val readinessScore: String,
-    val readinessRecommendation: String
+    val readinessRecommendation: String,
+
+    // Navigation & System Chrome (Obsidian 1:1)
+    val menuButton: String = "Меню",
+    val menuAllSections: String = "Все разделы",
+    val menuAllSectionsSubtitle: String = "Меню приложения · Native / Kotlin",
+    val navPrograms: String = "Программы",
+    val navExercises: String = "Упражнения",
+    val navHistory: String = "История",
+    val navBody: String = "Метрики тела",
+    val navProfile: String = "Профиль",
+    val stateLoadingTitle: String = "Загружаем данные",
+    val stateLoadingHint: String = "Подождите немного…",
+    val stateErrorTitle: String = "Не удалось загрузить данные",
+    val stateErrorHint: String = "Сервер не ответил. Попробуйте повторить запрос."
 )
 
 val RuDudaStrings = DudaStrings(
     languageCode = "ru",
-    navWorkouts = "Тренировка",
+    navWorkouts = "Тренировки",
     navTodo = "План",
     navNutrition = "Питание",
     navCoach = "AI Тренер",
@@ -536,12 +550,24 @@ val RuDudaStrings = DudaStrings(
     sleepQuality = "Качество и глубина сна",
     stressLevel = "Уровень психологического стресса",
     readinessScore = "Индекс готовности к нагрузке",
-    readinessRecommendation = "Рекомендация по объёму"
+    readinessRecommendation = "Рекомендация по объёму",
+    menuButton = "Меню",
+    menuAllSections = "Все разделы",
+    menuAllSectionsSubtitle = "Меню приложения · Native / Kotlin",
+    navPrograms = "Программы",
+    navExercises = "Упражнения",
+    navHistory = "История",
+    navBody = "Метрики тела",
+    navProfile = "Профиль",
+    stateLoadingTitle = "Загружаем данные",
+    stateLoadingHint = "Подождите немного…",
+    stateErrorTitle = "Не удалось загрузить данные",
+    stateErrorHint = "Сервер не ответил. Попробуйте повторить запрос."
 )
 
 val UzDudaStrings = DudaStrings(
     languageCode = "uz",
-    navWorkouts = "Mashg'ulot",
+    navWorkouts = "Mashg'ulotlar",
     navTodo = "Reja",
     navNutrition = "Oziqlanish",
     navCoach = "AI Murabbiy",
@@ -797,7 +823,19 @@ val UzDudaStrings = DudaStrings(
     sleepQuality = "Uyqu sifati va chuqurligi",
     stressLevel = "Psixologik stress darajasi",
     readinessScore = "Yuklamaga tayyorgarlik indeksi",
-    readinessRecommendation = "Yuklama bo'yicha tavsiya"
+    readinessRecommendation = "Yuklama bo'yicha tavsiya",
+    menuButton = "Menyu",
+    menuAllSections = "Barcha bo'limlar",
+    menuAllSectionsSubtitle = "Ilova menyusi · Native / Kotlin",
+    navPrograms = "Dasturlar",
+    navExercises = "Mashqlar",
+    navHistory = "Tarix",
+    navBody = "Tana ko'rsatkichlari",
+    navProfile = "Profil",
+    stateLoadingTitle = "Ma'lumotlar yuklanmoqda",
+    stateLoadingHint = "Biroz kuting…",
+    stateErrorTitle = "Ma'lumotlarni yuklab bo'lmadi",
+    stateErrorHint = "Server javob bermadi. So'rovni qayta urinib ko'ring."
 )
 
 val EnDudaStrings = DudaStrings(
@@ -1058,7 +1096,19 @@ val EnDudaStrings = DudaStrings(
     sleepQuality = "Sleep Quality & Restfulness",
     stressLevel = "Psychological Stress",
     readinessScore = "Readiness Index",
-    readinessRecommendation = "Volume Recommendation"
+    readinessRecommendation = "Volume Recommendation",
+    menuButton = "Menu",
+    menuAllSections = "All sections",
+    menuAllSectionsSubtitle = "App menu · Native / Kotlin",
+    navPrograms = "Programs",
+    navExercises = "Exercises",
+    navHistory = "History",
+    navBody = "Body Metrics",
+    navProfile = "Profile",
+    stateLoadingTitle = "Loading data",
+    stateLoadingHint = "Please wait a moment…",
+    stateErrorTitle = "Failed to load data",
+    stateErrorHint = "The server did not respond. Try again."
 )
 
 fun getDudaStrings(languageCode: String): DudaStrings {

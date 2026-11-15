@@ -5,12 +5,16 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,77 +24,69 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.neverpaid.health.core.audio.AthleteSoundManager
 import dev.neverpaid.health.core.designsystem.AmberWarm
-import dev.neverpaid.health.core.designsystem.AthleticCard
+import dev.neverpaid.health.core.designsystem.BorderDivider
 import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.BorderSubtle
-import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldDark
-import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
-import dev.neverpaid.health.core.designsystem.ObsidianWell
-import dev.neverpaid.health.core.designsystem.SecondaryAthleticButton
-import dev.neverpaid.health.core.designsystem.StatCounter
+import dev.neverpaid.health.core.designsystem.InteractivePlateCalculator
+import dev.neverpaid.health.core.designsystem.ObsidianCard
+import dev.neverpaid.health.core.designsystem.ObsidianDivider
+import dev.neverpaid.health.core.designsystem.ObsidianEmptyCard
+import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
+import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
+import dev.neverpaid.health.core.designsystem.ObsidianPillTab
+import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
+import dev.neverpaid.health.core.designsystem.ObsidianProgressBar
+import dev.neverpaid.health.core.designsystem.ObsidianTextField
+import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
+import dev.neverpaid.health.core.designsystem.ObsidianWhiteButton
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.designsystem.TextSoft
+import dev.neverpaid.health.core.designsystem.localizeMuscleName
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.math.HistoricalSetRecord
 import dev.neverpaid.health.core.math.SetHistoryCalculator
@@ -101,9 +97,14 @@ import dev.neverpaid.health.domain.model.Workout
 import dev.neverpaid.health.domain.model.WorkoutExercise
 import dev.neverpaid.health.domain.model.WorkoutSet
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.round
 
+private enum class FinishSheetStage {
+    CONFIRM_INCOMPLETE,
+    SUMMARY
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutRoute(
     viewModel: WorkoutViewModel,
@@ -111,61 +112,100 @@ fun WorkoutRoute(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var showDiscardDialog by remember { mutableStateOf(false) }
+    var showDiscardSheet by remember { mutableStateOf(false) }
+    var finishSheetStage by remember { mutableStateOf<FinishSheetStage?>(null) }
+    var completedSummaryWorkout by remember { mutableStateOf<Workout?>(null) }
     var warmupExercise by remember { mutableStateOf<WorkoutExercise?>(null) }
+    var plateCalculatorWeightKg by remember { mutableStateOf<Double?>(null) }
+    var plateCalculatorTargetExId by remember { mutableStateOf<String?>(null) }
+    var plateCalculatorTargetSetId by remember { mutableStateOf<String?>(null) }
+    var restSheetTotalSeconds by remember { mutableIntStateOf(90) }
+    var showRestSheet by remember { mutableStateOf(false) }
+    var lastRestPresetSeconds by remember { mutableIntStateOf(90) }
 
-    CollectEffect(viewModel.effect) { effect ->
-        when (effect) {
-            is WorkoutUiEffect.WorkoutFinishedSummary -> onNavigateBack()
-            WorkoutUiEffect.NavigateBack -> onNavigateBack()
-            WorkoutUiEffect.TriggerHaptic -> PlatformBridge.vibrate()
-            is WorkoutUiEffect.ShowToast -> PlatformBridge.showToast(effect.message)
+    LaunchedEffect(state.isRestTimerActive, state.restTimerSecondsRemaining) {
+        if (state.isRestTimerActive && state.restTimerSecondsRemaining > restSheetTotalSeconds) {
+            restSheetTotalSeconds = state.restTimerSecondsRemaining
         }
     }
 
-    if (showDiscardDialog) {
-        AlertDialog(
-            onDismissRequest = { showDiscardDialog = false },
-            title = { Text("Отменить тренировку?", color = TextPrimary, fontWeight = FontWeight.Bold) },
-            text = {
-                Text(
-                    "Все записанные подходы в текущей сессии будут удалены без сохранения.",
-                    color = TextSecondary
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDiscardDialog = false
-                        viewModel.onAction(WorkoutUiAction.OnDiscardWorkoutClick)
-                    }
-                ) {
-                    Text("Сбросить", color = CrimsonRed, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDiscardDialog = false }) {
-                    Text("Отмена", color = TextSecondary)
-                }
-            },
-            containerColor = DarkSurfaceVariant
-        )
+    CollectEffect(viewModel.effect) { effect ->
+        when (effect) {
+            is WorkoutUiEffect.WorkoutFinishedSummary -> completedSummaryWorkout = effect.workout
+            WorkoutUiEffect.NavigateBack -> onNavigateBack()
+            WorkoutUiEffect.TriggerHaptic -> PlatformBridge.vibrate()
+            is WorkoutUiEffect.ShowToast -> {}
+        }
     }
+
+    val workout = state.workout
+
+    WorkoutScreen(
+        state = state,
+        restPresetSeconds = lastRestPresetSeconds,
+        restTotalSeconds = restSheetTotalSeconds,
+        onAction = viewModel::onAction,
+        onRequestFinish = {
+            if (workout != null) {
+                val hasIncomplete = workout.exercises.any { ex -> ex.sets.any { !it.isCompleted } }
+                finishSheetStage = if (hasIncomplete) {
+                    FinishSheetStage.CONFIRM_INCOMPLETE
+                } else {
+                    FinishSheetStage.SUMMARY
+                }
+            }
+        },
+        onRequestDiscard = { showDiscardSheet = true },
+        onOpenWarmup = { ex -> warmupExercise = ex },
+        onOpenPlates = { exId, setId, wKg ->
+            plateCalculatorTargetExId = exId
+            plateCalculatorTargetSetId = setId
+            plateCalculatorWeightKg = wKg.coerceAtLeast(20.0)
+        },
+        onStartOrOpenRest = { secs ->
+            lastRestPresetSeconds = secs
+            restSheetTotalSeconds = secs
+            if (!state.isRestTimerActive) {
+                viewModel.onAction(WorkoutUiAction.OnStartManualRestTimer(secs))
+            }
+            showRestSheet = true
+        },
+        onCycleRestPreset = {
+            val presets = listOf(60, 90, 120, 180)
+            val nextIdx = (presets.indexOf(lastRestPresetSeconds) + 1) % presets.size
+            lastRestPresetSeconds = presets[nextIdx]
+            restSheetTotalSeconds = lastRestPresetSeconds
+            viewModel.onAction(WorkoutUiAction.OnStartManualRestTimer(lastRestPresetSeconds))
+        },
+        modifier = modifier
+    )
 
     if (state.showExercisePicker) {
         ExercisePickerBottomSheet(
             exercises = state.availableExercises,
-            title = if (state.swappingExerciseId != null) "Заменить упражнение" else "Добавить упражнение",
-            onSelectExercise = { viewModel.onAction(WorkoutUiAction.OnSelectExerciseToAdd(it)) },
-            onInspectExercise = { viewModel.onAction(WorkoutUiAction.OnInspectExercise(it)) },
-            onDismiss = { viewModel.onAction(WorkoutUiAction.OnCloseExercisePicker) }
+            title = if (state.swappingExerciseId != null) {
+                "Заменить упражнение"
+            } else {
+                "Добавить упражнение"
+            },
+            onSelectExercise = { ex ->
+                viewModel.onAction(WorkoutUiAction.OnSelectExerciseToAdd(ex))
+            },
+            onInspectExercise = { ex ->
+                viewModel.onAction(WorkoutUiAction.OnInspectExercise(ex))
+            },
+            onDismiss = {
+                viewModel.onAction(WorkoutUiAction.OnCloseExercisePicker)
+            }
         )
     }
 
     if (state.inspectedExercise != null) {
         ExerciseInfoBottomSheet(
             exercise = state.inspectedExercise!!,
-            onDismiss = { viewModel.onAction(WorkoutUiAction.OnInspectExercise(null)) }
+            onDismiss = {
+                viewModel.onAction(WorkoutUiAction.OnInspectExercise(null))
+            }
         )
     }
 
@@ -177,7 +217,7 @@ fun WorkoutRoute(
             onDismiss = { warmupExercise = null },
             onApplyWarmupSets = { sets ->
                 val exId = warmupExercise?.exerciseId ?: ""
-                sets.forEach { (w, r) ->
+                sets.forEach { _ ->
                     viewModel.onAction(WorkoutUiAction.OnAddSet(exId))
                 }
                 warmupExercise = null
@@ -185,8 +225,8 @@ fun WorkoutRoute(
         )
     }
 
-    if (state.historySheetExerciseId != null && state.historySheetExerciseName != null) {
-        val exerciseHistory = remember(state.workoutHistory, state.historySheetExerciseId, state.historySheetExerciseName) {
+    if (state.historySheetExerciseId != null) {
+        val exerciseHistory = remember(state.workoutHistory, state.historySheetExerciseId) {
             SetHistoryCalculator.extractExerciseHistory(
                 workouts = state.workoutHistory,
                 exerciseId = state.historySheetExerciseId ?: "",
@@ -205,6 +245,7 @@ fun WorkoutRoute(
                 if (exId.isNotEmpty() && setId.isNotEmpty()) {
                     viewModel.onAction(WorkoutUiAction.OnApplySetValues(exId, setId, w, r))
                 }
+                viewModel.onAction(WorkoutUiAction.OnCloseSetHistorySheet)
             },
             onDismiss = {
                 viewModel.onAction(WorkoutUiAction.OnCloseSetHistorySheet)
@@ -212,679 +253,894 @@ fun WorkoutRoute(
         )
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = DarkBackground,
-        topBar = {
-            ActiveWorkoutTopBar(
-                title = state.workout?.title ?: "Тренировка",
-                startTimeEpochMs = state.workoutStartTimeEpochMs,
-                totalVolumeKg = state.workout?.totalVolumeKg ?: 0.0,
-                exercisesCount = state.workout?.exercises?.size ?: 0,
-                isKgUnit = state.isKgUnit,
-                onMinimizeClick = onNavigateBack,
-                onDiscardClick = { showDiscardDialog = true },
-                onFinishClick = { viewModel.onAction(WorkoutUiAction.OnFinishWorkoutClick) },
-                onStartRestTimer = { viewModel.onAction(WorkoutUiAction.OnStartManualRestTimer(90)) }
-            )
-        },
-        bottomBar = {
-            AnimatedVisibility(
-                visible = state.isRestTimerActive,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+    if (plateCalculatorWeightKg != null) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { plateCalculatorWeightKg = null },
+            sheetState = sheetState,
+            containerColor = DarkSurface,
+            contentColor = TextPrimary
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
             ) {
-                EnhancedRestTimerBar(
-                    secondsRemaining = state.restTimerSecondsRemaining,
-                    onAddSeconds = { viewModel.onAction(WorkoutUiAction.OnRestTimerAddSeconds(it)) },
-                    onSkip = { viewModel.onAction(WorkoutUiAction.OnRestTimerSkip) }
+                Text(
+                    text = LocalDudaStrings.current.plateCalculatorTitle,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
                 )
+                Spacer(modifier = Modifier.height(12.dp))
+                InteractivePlateCalculator(
+                    initialWeightKg = plateCalculatorWeightKg ?: 60.0,
+                    onWeightConfirmed = { confirmedKg ->
+                        val exId = plateCalculatorTargetExId
+                        val setId = plateCalculatorTargetSetId
+                        if (!exId.isNullOrBlank() && !setId.isNullOrBlank()) {
+                            viewModel.onAction(WorkoutUiAction.OnUpdateWeight(exId, setId, confirmedKg))
+                        }
+                        plateCalculatorWeightKg = null
+                    }
+                )
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
-    ) { innerPadding ->
-        WorkoutScreen(
-            state = state,
-            onAction = viewModel::onAction,
-            onRequestDiscard = { showDiscardDialog = true },
-            onOpenWarmup = { warmupExercise = it },
-            modifier = Modifier.padding(innerPadding)
+    }
+
+    if (showRestSheet && workout != null) {
+        WorkoutRestModalSheet(
+            secondsRemaining = state.restTimerSecondsRemaining.coerceAtLeast(0),
+            totalSeconds = restSheetTotalSeconds.coerceAtLeast(1),
+            restPresetSeconds = lastRestPresetSeconds,
+            workout = workout,
+            isKgUnit = state.isKgUnit,
+            onAddSeconds = { viewModel.onAction(WorkoutUiAction.OnRestTimerAddSeconds(it)) },
+            onSkip = {
+                viewModel.onAction(WorkoutUiAction.OnRestTimerSkip)
+                showRestSheet = false
+            },
+            onCyclePreset = {
+                val presets = listOf(60, 90, 120, 180)
+                val nextIdx = (presets.indexOf(lastRestPresetSeconds) + 1) % presets.size
+                lastRestPresetSeconds = presets[nextIdx]
+                restSheetTotalSeconds = lastRestPresetSeconds
+                viewModel.onAction(WorkoutUiAction.OnStartManualRestTimer(lastRestPresetSeconds))
+            },
+            onDismiss = { showRestSheet = false }
+        )
+    }
+
+    val activeStage = finishSheetStage
+    if (activeStage != null && workout != null) {
+        WorkoutFinishModalSheet(
+            stage = activeStage,
+            workout = workout,
+            startTimeEpochMs = state.workoutStartTimeEpochMs,
+            isKgUnit = state.isKgUnit,
+            isFinishing = state.isFinishing,
+            onProceedToSummary = { finishSheetStage = FinishSheetStage.SUMMARY },
+            onConfirmSave = {
+                finishSheetStage = null
+                viewModel.onAction(WorkoutUiAction.OnFinishWorkoutClick)
+            },
+            onDismiss = { finishSheetStage = null }
+        )
+    }
+
+    if (completedSummaryWorkout != null) {
+        val summaryWorkout = completedSummaryWorkout!!
+        WorkoutFinishModalSheet(
+            stage = FinishSheetStage.SUMMARY,
+            workout = summaryWorkout,
+            startTimeEpochMs = summaryWorkout.startTimeEpochMs,
+            isKgUnit = state.isKgUnit,
+            isFinishing = false,
+            onProceedToSummary = {},
+            onConfirmSave = {
+                completedSummaryWorkout = null
+                onNavigateBack()
+            },
+            onDismiss = {
+                completedSummaryWorkout = null
+                onNavigateBack()
+            }
+        )
+    }
+
+    if (showDiscardSheet) {
+        WorkoutDiscardModalSheet(
+            onConfirmDiscard = {
+                showDiscardSheet = false
+                viewModel.onAction(WorkoutUiAction.OnDiscardWorkoutClick)
+            },
+            onDismiss = { showDiscardSheet = false }
         )
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun WorkoutScreen(
     state: WorkoutUiState,
+    restPresetSeconds: Int = 90,
+    restTotalSeconds: Int = 90,
     onAction: (WorkoutUiAction) -> Unit,
+    onRequestFinish: () -> Unit = { onAction(WorkoutUiAction.OnFinishWorkoutClick) },
     onRequestDiscard: () -> Unit = {},
     onOpenWarmup: (WorkoutExercise) -> Unit = {},
+    onOpenPlates: (String, String, Double) -> Unit = { _, _, _ -> },
+    onStartOrOpenRest: (Int) -> Unit = { onAction(WorkoutUiAction.OnStartManualRestTimer(it)) },
+    onCycleRestPreset: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalDudaStrings.current
     val workout = state.workout
+    var showAllExercises by remember(workout?.id) { mutableStateOf(false) }
+    var prevExerciseCount by remember(workout?.id) { mutableIntStateOf(workout?.exercises?.size ?: 0) }
+    var showSessionNoteEditor by remember { mutableStateOf(false) }
+    var sessionTitleDraft by remember(workout?.id, workout?.title) { mutableStateOf(workout?.title ?: "") }
+
+    LaunchedEffect(workout?.exercises?.size) {
+        val count = workout?.exercises?.size ?: 0
+        if (count > prevExerciseCount) {
+            showAllExercises = true
+        }
+        prevExerciseCount = count
+    }
+
+    var elapsedSeconds by remember(state.workoutStartTimeEpochMs) { mutableStateOf(0L) }
+    LaunchedEffect(state.workoutStartTimeEpochMs, workout?.id) {
+        while (true) {
+            val nowMs = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+            val start = if (state.workoutStartTimeEpochMs > 0L) state.workoutStartTimeEpochMs else nowMs
+            elapsedSeconds = ((nowMs - start) / 1000L).coerceAtLeast(0L)
+            delay(1000L)
+        }
+    }
 
     if (workout == null) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(text = "Нет активной тренировки", color = TextSecondary)
+        Scaffold(
+            modifier = modifier.fillMaxSize(),
+            containerColor = DarkBackground
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+            ) {
+                ObsidianPageHeader(
+                    title = strings.navWorkouts,
+                    subtitle = "Нет активной сессии"
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                ObsidianEmptyCard(
+                    title = "Тренировка не запущена",
+                    description = "Выберите шаблон на вкладке «Тренировки» или начните пустую сессию."
+                )
+            }
         }
         return
     }
 
-    val completedSetsCount = workout.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
-
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        item(key = "volume_banner") {
-            Spacer(modifier = Modifier.height(6.dp))
-            AthleticCard(
-                backgroundColor = DarkSurfaceVariant,
-                borderColor = BorderHighlight
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp, horizontal = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    StatCounter(
-                        title = "Объём",
-                        value = StrengthCalculator.formatVolume(if (state.isKgUnit) workout.totalVolumeKg else StrengthCalculator.kgToLbs(workout.totalVolumeKg)),
-                        unit = if (state.isKgUnit) "кг" else "lb",
-                        accentColor = EmeraldNeon
-                    )
-                    StatCounter(
-                        title = "Упражнения",
-                        value = "${workout.exercises.size}",
-                        accentColor = TextPrimary
-                    )
-                    StatCounter(
-                        title = "Подходы",
-                        value = "$completedSetsCount",
-                        unit = "вып.",
-                        accentColor = AmberWarm
-                    )
-                }
-            }
-        }
-
-        items(
-            items = workout.exercises,
-            key = { it.id.ifBlank { it.exerciseId } }
-        ) { exerciseItem ->
-            WorkoutExerciseCard(
-                exercise = exerciseItem,
-                workoutHistory = state.workoutHistory,
-                unitLabel = if (state.isKgUnit) "КГ" else "LB",
-                isKgUnit = state.isKgUnit,
-                onOpenWarmup = { onOpenWarmup(exerciseItem) },
-                onUpdateWeight = { setId, w ->
-                    onAction(WorkoutUiAction.OnUpdateWeight(exerciseItem.exerciseId, setId, w))
-                },
-                onUpdateReps = { setId, r ->
-                    onAction(WorkoutUiAction.OnUpdateReps(exerciseItem.exerciseId, setId, r))
-                },
-                onApplyPrevious = { setId ->
-                    onAction(WorkoutUiAction.OnApplyPreviousSet(exerciseItem.exerciseId, setId))
-                },
-                onApplyValues = { setId, w, r ->
-                    onAction(WorkoutUiAction.OnApplySetValues(exerciseItem.exerciseId, setId, w, r))
-                },
-                onOpenHistoryMenu = { setNum, setId ->
-                    onAction(
-                        WorkoutUiAction.OnOpenSetHistorySheet(
-                            exerciseId = exerciseItem.exerciseId,
-                            exerciseName = exerciseItem.exerciseName,
-                            setNumber = setNum,
-                            setId = setId
-                        )
-                    )
-                },
-                onToggleComplete = { setId ->
-                    onAction(WorkoutUiAction.OnToggleSetComplete(exerciseItem.exerciseId, setId))
-                },
-                onToggleSetType = { setId ->
-                    onAction(WorkoutUiAction.OnToggleSetType(exerciseItem.exerciseId, setId))
-                },
-                onAddSet = { onAction(WorkoutUiAction.OnAddSet(exerciseItem.exerciseId)) },
-                onDeleteSet = { setId ->
-                    onAction(WorkoutUiAction.OnDeleteSet(exerciseItem.exerciseId, setId))
-                },
-                onUpdateNotes = { notes ->
-                    onAction(WorkoutUiAction.OnUpdateExerciseNotes(exerciseItem.exerciseId, notes))
-                },
-                onInspectExercise = {
-                    onAction(WorkoutUiAction.OnInspectExercise(exerciseItem.exercise))
-                },
-                onSwapExercise = {
-                    onAction(WorkoutUiAction.OnOpenSwapExercisePicker(exerciseItem.exerciseId))
-                },
-                onRemoveExercise = {
-                    onAction(WorkoutUiAction.OnRemoveExercise(exerciseItem.exerciseId))
-                }
-            )
-        }
-
-        item(key = "add_exercise_button") {
-            SecondaryAthleticButton(
-                text = "+ Добавить упражнение",
-                onClick = { onAction(WorkoutUiAction.OnOpenExercisePicker) }
-            )
-        }
-
-        item(key = "discard_workout_button") {
-            OutlinedButton(
-                onClick = onRequestDiscard,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    text = "Отменить тренировку",
-                    color = CrimsonRed,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        item(key = "spacer_bottom") {
-            Spacer(modifier = Modifier.height(96.dp))
+    val totalVolumeKg = remember(workout) {
+        workout.exercises.sumOf { ex ->
+            ex.sets.filter { it.isCompleted }.sumOf { it.weightKg * it.reps }
         }
     }
-}
+    val displayTotalVolume = if (state.isKgUnit) totalVolumeKg else StrengthCalculator.kgToLbs(totalVolumeKg)
+    val unitLabel = if (state.isKgUnit) strings.unitKg else strings.unitLbs
 
-@Composable
-private fun ActiveWorkoutTopBar(
-    title: String,
-    startTimeEpochMs: Long,
-    totalVolumeKg: Double,
-    exercisesCount: Int,
-    isKgUnit: Boolean,
-    onMinimizeClick: () -> Unit,
-    onDiscardClick: () -> Unit,
-    onFinishClick: () -> Unit,
-    onStartRestTimer: () -> Unit
-) {
-    var elapsedSeconds by remember { mutableStateOf(0L) }
-
-    LaunchedEffect(startTimeEpochMs) {
-        while (true) {
-            val now = PlatformBridge.currentTimeMillis()
-            elapsedSeconds = ((now - startTimeEpochMs) / 1000).coerceAtLeast(0)
-            delay(1000)
-        }
+    val visibleExercises = if (showAllExercises || workout.exercises.size <= 2) {
+        workout.exercises
+    } else {
+        workout.exercises.take(2)
     }
 
-    val hrs = elapsedSeconds / 3600
-    val mins = (elapsedSeconds % 3600) / 60
-    val secs = elapsedSeconds % 60
-    val timerText = StrengthCalculator.formatDuration(hrs, mins, secs)
-
-    val unitLabel = if (isKgUnit) "kg" else "lb"
-    val volumeText = StrengthCalculator.formatVolume(if (isKgUnit) totalVolumeKg else StrengthCalculator.kgToLbs(totalVolumeKg))
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(DarkSurface)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = DarkBackground
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            contentPadding = PaddingValues(
+                start = 20.dp,
+                end = 20.dp,
+                top = 8.dp,
+                bottom = 110.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            IconButton(
-                onClick = onMinimizeClick,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Свернуть",
-                    tint = TextPrimary
+            item(key = "page_header", contentType = "header") {
+                ObsidianPageHeader(
+                    title = "Тренировка",
+                    subtitle = workout.title.ifBlank { "Свободная тренировка" }
                 )
             }
-            Spacer(modifier = Modifier.width(6.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = title,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(EmeraldNeon)
-                    )
-                }
 
-                Spacer(modifier = Modifier.height(2.dp))
+            // Card 1: Session Metrics & Controls (1:1 Figma 04)
+            item(key = "session_summary_card", contentType = "summary") {
+                ObsidianCard {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "ВРЕМЯ",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = TextMuted,
+                                letterSpacing = 0.8.sp
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = formatElapsedShort(elapsedSeconds),
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "ОБЪЁМ",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = TextMuted,
+                                letterSpacing = 0.8.sp
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "${formatRoundedInt(displayTotalVolume)} $unitLabel",
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                        }
+                    }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
+                    Spacer(modifier = Modifier.height(14.dp))
+
                     Text(
-                        text = timerText,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldNeon
-                    )
-                    Text("•", fontSize = 10.sp, color = TextMuted)
-                    Text(
-                        text = "$volumeText $unitLabel volume",
+                        text = "УПРАЖНЕНИЯ",
                         fontSize = 11.sp,
-                        color = TextSecondary
+                        fontWeight = FontWeight.Medium,
+                        color = TextMuted,
+                        letterSpacing = 0.8.sp
                     )
-                    if (exercisesCount > 0) {
-                        Text("•", fontSize = 10.sp, color = TextMuted)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${workout.exercises.size}",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ObsidianPrimaryButton(
+                            text = strings.workoutFinish,
+                            onClick = onRequestFinish
+                        )
+                        ObsidianOutlineButton(
+                            text = strings.workoutDiscard,
+                            onClick = onRequestDiscard
+                        )
+                        ObsidianOutlineButton(
+                            text = if (showSessionNoteEditor) "Скрыть заметку" else "Заметка сессии",
+                            onClick = { showSessionNoteEditor = !showSessionNoteEditor }
+                        )
+                    }
+
+                    AnimatedVisibility(visible = showSessionNoteEditor) {
+                        Column {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            ObsidianDivider()
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Text(
+                                text = "Название / заметка тренировки",
+                                fontSize = 12.sp,
+                                color = TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            ObsidianTextField(
+                                value = sessionTitleDraft,
+                                onValueChange = {
+                                    sessionTitleDraft = it
+                                    onAction(WorkoutUiAction.OnUpdateWorkoutTitle(it))
+                                },
+                                placeholder = "Push Hypertrophy · День 1"
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Inline Active Rest Card when countdown runs (1:1 Figma 15 Card 1)
+            item(key = "active_rest_card", contentType = "rest") {
+                AnimatedVisibility(
+                    visible = state.isRestTimerActive && state.restTimerSecondsRemaining > 0,
+                    enter = fadeIn() + slideInVertically(),
+                    exit = fadeOut() + slideOutVertically()
+                ) {
+                    val lastCompleted = remember(workout) { findLastCompletedSetInfo(workout) }
+                    ObsidianCard {
                         Text(
-                            text = "$exercisesCount exercises",
+                            text = "01 / ОТДЫХ",
                             fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = EmeraldNeon,
+                            letterSpacing = 0.8.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Время восстановиться",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = formatCountdown(state.restTimerSecondsRemaining),
+                            fontSize = 36.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Осталось ${state.restTimerSecondsRemaining} секунд",
+                            fontSize = 13.sp,
                             color = TextSecondary
                         )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        val progress = (state.restTimerSecondsRemaining.toFloat() / restTotalSeconds.coerceAtLeast(1).toFloat())
+                            .coerceIn(0f, 1f)
+                        ObsidianProgressBar(
+                            progress = progress,
+                            color = EmeraldNeon
+                        )
+
+                        if (lastCompleted != null) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            ObsidianDivider()
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Text(
+                                text = lastCompleted.exerciseName,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            val lw = if (state.isKgUnit) lastCompleted.weightKg else StrengthCalculator.kgToLbs(lastCompleted.weightKg)
+                            val lv = lw * lastCompleted.reps
+                            Text(
+                                text = "Последний подход · ${formatCleanWeight(lw)} $unitLabel × ${lastCompleted.reps}",
+                                fontSize = 12.sp,
+                                color = TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "${formatRoundedInt(lv)} $unitLabel",
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "объём последнего подхода",
+                                fontSize = 12.sp,
+                                color = TextMuted
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ObsidianOutlineButton(
+                                text = "−15 сек",
+                                onClick = { onAction(WorkoutUiAction.OnRestTimerAddSeconds(-15)) }
+                            )
+                            ObsidianOutlineButton(
+                                text = "+30 сек",
+                                onClick = { onAction(WorkoutUiAction.OnRestTimerAddSeconds(30)) }
+                            )
+                            ObsidianOutlineButton(
+                                text = "Пропустить",
+                                onClick = { onAction(WorkoutUiAction.OnRestTimerSkip) }
+                            )
+                            ObsidianOutlineButton(
+                                text = "Отдых ${formatCountdown(restPresetSeconds)}",
+                                onClick = onCycleRestPreset
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (workout.exercises.isEmpty()) {
+                item(key = "empty_exercises_card", contentType = "empty") {
+                    ObsidianEmptyCard(
+                        title = "Упражнений пока нет",
+                        description = "Добавьте упражнения из каталога, чтобы начать фиксировать подходы и тоннаж.",
+                        primaryActionLabel = strings.workoutAddExercise,
+                        onPrimaryAction = { onAction(WorkoutUiAction.OnOpenExercisePicker) }
+                    )
+                }
+            } else {
+                itemsIndexed(
+                    items = visibleExercises,
+                    key = { idx, ex -> "${ex.id}_$idx" },
+                    contentType = { _, _ -> "exercise_card" }
+                ) { index, exercise ->
+                    WorkoutExerciseCard(
+                        index = index,
+                        totalExercises = workout.exercises.size,
+                        exercise = exercise,
+                        workoutHistory = state.workoutHistory,
+                        isKgUnit = state.isKgUnit,
+                        restPresetSeconds = restPresetSeconds,
+                        onInspect = { onAction(WorkoutUiAction.OnInspectExercise(exercise.exercise)) },
+                        onSwap = { onAction(WorkoutUiAction.OnOpenSwapExercisePicker(exercise.exerciseId)) },
+                        onRemove = { onAction(WorkoutUiAction.OnRemoveExercise(exercise.exerciseId)) },
+                        onUpdateNotes = { notes -> onAction(WorkoutUiAction.OnUpdateExerciseNotes(exercise.exerciseId, notes)) },
+                        onUpdateWeight = { setId, wKg -> onAction(WorkoutUiAction.OnUpdateWeight(exercise.exerciseId, setId, wKg)) },
+                        onUpdateReps = { setId, reps -> onAction(WorkoutUiAction.OnUpdateReps(exercise.exerciseId, setId, reps)) },
+                        onApplyPrevious = { setId -> onAction(WorkoutUiAction.OnApplyPreviousSet(exercise.exerciseId, setId)) },
+                        onOpenSetHistory = { setNumber, setId ->
+                            onAction(
+                                WorkoutUiAction.OnOpenSetHistorySheet(
+                                    exerciseId = exercise.exerciseId,
+                                    exerciseName = exercise.exerciseName,
+                                    setNumber = setNumber,
+                                    setId = setId
+                                )
+                            )
+                        },
+                        onToggleSetComplete = { setId -> onAction(WorkoutUiAction.OnToggleSetComplete(exercise.exerciseId, setId)) },
+                        onToggleSetType = { setId -> onAction(WorkoutUiAction.OnToggleSetType(exercise.exerciseId, setId)) },
+                        onAddSet = { onAction(WorkoutUiAction.OnAddSet(exercise.exerciseId)) },
+                        onDeleteSet = { setId -> onAction(WorkoutUiAction.OnDeleteSet(exercise.exerciseId, setId)) },
+                        onOpenWarmup = { onOpenWarmup(exercise) },
+                        onOpenPlates = { setId, wKg -> onOpenPlates(exercise.exerciseId, setId, wKg) },
+                        onOpenRest = { onStartOrOpenRest(restPresetSeconds) }
+                    )
+                }
+
+                if (workout.exercises.size > 2 && !showAllExercises) {
+                    val remaining = workout.exercises.size - 2
+                    item(key = "show_more_card", contentType = "show_more") {
+                        ObsidianCard {
+                            Text(
+                                text = "Ещё $remaining упражнения",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Откройте, чтобы продолжить тренировку",
+                                fontSize = 14.sp,
+                                color = TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(14.dp))
+                            ObsidianOutlineButton(
+                                text = "Показать ещё $remaining",
+                                onClick = { showAllExercises = true }
+                            )
+                        }
+                    }
+                }
+
+                item(key = "add_exercise_footer", contentType = "footer") {
+                    ObsidianCard {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Нужно больше объёма?",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextPrimary
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Добавьте упражнение в текущую сессию",
+                                    fontSize = 13.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            ObsidianOutlineButton(
+                                text = "+ Добавить",
+                                onClick = { onAction(WorkoutUiAction.OnOpenExercisePicker) }
+                            )
+                        }
                     }
                 }
             }
         }
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(
-                onClick = onStartRestTimer,
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Timer,
-                    contentDescription = "Таймер отдыха",
-                    tint = EmeraldLight,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-
-            TextButton(
-                onClick = onDiscardClick,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                modifier = Modifier.height(34.dp)
-            ) {
-                Text(
-                    text = "Discard",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = CrimsonRed
-                )
-            }
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            Button(
-                onClick = onFinishClick,
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = EmeraldNeon,
-                    contentColor = Color.Black
-                ),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                modifier = Modifier.height(34.dp)
-            ) {
-                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(15.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Done", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-        }
     }
 }
 
-@Composable
-private fun EnhancedRestTimerBar(
-    secondsRemaining: Int,
-    onAddSeconds: (Int) -> Unit,
-    onSkip: () -> Unit
-) {
-    val minutes = secondsRemaining / 60
-    val seconds = secondsRemaining % 60
-    val timeFormatted = StrengthCalculator.formatTime(minutes, seconds)
-
-    AthleticCard(
-        modifier = Modifier.padding(12.dp),
-        backgroundColor = AmberWarm.copy(alpha = 0.15f),
-        borderColor = AmberWarm.copy(alpha = 0.45f)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Timer,
-                    contentDescription = null,
-                    tint = AmberWarm,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Rest Timer: ",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AmberWarm
-                )
-                Text(
-                    text = "${secondsRemaining}s ($timeFormatted)",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Black,
-                    color = AmberWarm
-                )
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = AmberWarm.copy(alpha = 0.25f),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, AmberWarm.copy(alpha = 0.4f)),
-                    modifier = Modifier.clickable { onAddSeconds(30) }
-                ) {
-                    Text(
-                        text = "+30s",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AmberWarm,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                    )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = DarkSurfaceHigh,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-                    modifier = Modifier.clickable { onSkip() }
-                ) {
-                    Text(
-                        text = "Skip",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun WorkoutExerciseCard(
+    index: Int,
+    totalExercises: Int,
     exercise: WorkoutExercise,
     workoutHistory: List<Workout>,
-    unitLabel: String,
     isKgUnit: Boolean,
-    onOpenWarmup: () -> Unit = {},
+    restPresetSeconds: Int,
+    onInspect: () -> Unit,
+    onSwap: () -> Unit,
+    onRemove: () -> Unit,
+    onUpdateNotes: (String) -> Unit,
     onUpdateWeight: (String, Double) -> Unit,
     onUpdateReps: (String, Int) -> Unit,
     onApplyPrevious: (String) -> Unit,
-    onApplyValues: (String, Double, Int) -> Unit,
-    onOpenHistoryMenu: (Int, String) -> Unit,
-    onToggleComplete: (String) -> Unit,
+    onOpenSetHistory: (Int, String) -> Unit,
+    onToggleSetComplete: (String) -> Unit,
     onToggleSetType: (String) -> Unit,
     onAddSet: () -> Unit,
     onDeleteSet: (String) -> Unit,
-    onUpdateNotes: (String) -> Unit,
-    onInspectExercise: () -> Unit,
-    onSwapExercise: () -> Unit,
-    onRemoveExercise: () -> Unit
+    onOpenWarmup: () -> Unit,
+    onOpenPlates: (String, Double) -> Unit,
+    onOpenRest: () -> Unit
 ) {
-    var showNotes by remember(exercise.notes) { mutableStateOf(exercise.notes.isNotBlank()) }
+    val strings = LocalDudaStrings.current
+    val unitLabel = if (isKgUnit) strings.unitKg else strings.unitLbs
 
-    val exerciseHistory = remember(workoutHistory, exercise.exerciseId, exercise.exerciseName) {
+    val exerciseHistory = remember(workoutHistory, exercise.exerciseId) {
         SetHistoryCalculator.extractExerciseHistory(
             workouts = workoutHistory,
             exerciseId = exercise.exerciseId,
             exerciseName = exercise.exerciseName
         )
     }
-
-    val prRecord = remember(exerciseHistory) {
+    val prData = remember(exerciseHistory) {
         SetHistoryCalculator.getAllTimePR(exerciseHistory)
     }
+    val prRecord = prData.bestRecord
 
-    AthleticCard(backgroundColor = DarkSurface) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onInspectExercise() },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(DarkSurfaceVariant),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.FitnessCenter,
-                            contentDescription = null,
-                            tint = EmeraldNeon,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+    var selectedSetId by remember(exercise.id, exercise.sets.size) {
+        mutableStateOf(
+            exercise.sets.firstOrNull { !it.isCompleted }?.id
+                ?: exercise.sets.firstOrNull()?.id
+                ?: ""
+        )
+    }
+    val activeSet = exercise.sets.find { it.id == selectedSetId }
+        ?: exercise.sets.firstOrNull { !it.isCompleted }
+        ?: exercise.sets.firstOrNull()
 
-                    Spacer(modifier = Modifier.width(10.dp))
+    var noteExpanded by remember { mutableStateOf(exercise.notes.isNotBlank()) }
+    var editingNotes by remember { mutableStateOf(false) }
+    var noteDraft by remember(exercise.id, exercise.notes) { mutableStateOf(exercise.notes) }
 
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = exercise.exerciseName,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            if (prRecord.bestRecord != null && prRecord.bestWeightKg > 0) {
-                                Surface(
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = AmberWarm.copy(alpha = 0.15f),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, AmberWarm.copy(alpha = 0.35f))
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.EmojiEvents,
-                                            contentDescription = null,
-                                            tint = AmberWarm,
-                                            modifier = Modifier.size(10.dp)
-                                        )
-                                        Text(
-                                            text = "PR: ${displayWeight(prRecord.bestWeightKg, isKgUnit)} $unitLabel × ${prRecord.bestReps}",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = AmberWarm
-                                        )
-                                    }
-                                }
-                            }
-                            Text(
-                                text = "${exercise.sets.size} SET",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextMuted
-                            )
-                        }
-                    }
-                }
+    val indexPadded = (index + 1).toString().padStart(2, '0')
+    val totalPadded = totalExercises.coerceAtLeast(1).toString().padStart(2, '0')
+    val muscleUpper = localizeMuscleName(exercise.primaryMuscleGroup).uppercase()
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { showNotes = !showNotes }, modifier = Modifier.size(30.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.EditNote,
-                            contentDescription = "Заметка",
-                            tint = if (showNotes) EmeraldNeon else TextSecondary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    IconButton(onClick = onSwapExercise, modifier = Modifier.size(30.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.SwapHoriz,
-                            contentDescription = "Заменить упражнение",
-                            tint = TextSecondary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    IconButton(onClick = onInspectExercise, modifier = Modifier.size(30.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = "Техника",
-                            tint = TextSecondary,
-                            modifier = Modifier.size(17.dp)
-                        )
-                    }
-                    IconButton(onClick = onRemoveExercise, modifier = Modifier.size(30.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Удалить",
-                            tint = CrimsonRed.copy(alpha = 0.8f),
-                            modifier = Modifier.size(17.dp)
-                        )
-                    }
-                }
-            }
+    ObsidianCard {
+        Text(
+            text = "$indexPadded / $totalPadded · $muscleUpper",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = TextMuted,
+            letterSpacing = 0.8.sp
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = exercise.exerciseName.ifBlank { exercise.exercise.name },
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary,
+            modifier = Modifier.clickable(onClick = onInspect)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        if (prRecord != null) {
+            val prW = if (isKgUnit) prRecord.weightKg else StrengthCalculator.kgToLbs(prRecord.weightKg)
+            Text(
+                text = "Личный рекорд · ${formatCleanWeight(prW)} $unitLabel × ${prRecord.reps}",
+                fontSize = 13.sp,
+                color = EmeraldNeon,
+                modifier = Modifier.clickable(onClick = onInspect)
+            )
+        } else {
+            Text(
+                text = "Техника и инструкции →",
+                fontSize = 13.sp,
+                color = TextSecondary,
+                modifier = Modifier.clickable(onClick = onInspect)
+            )
+        }
 
-            if (showNotes) {
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = exercise.notes,
-                    onValueChange = onUpdateNotes,
-                    placeholder = { Text("Заметка к упражнению (напр. пауза внизу)...", fontSize = 12.sp) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = ObsidianWell,
-                        unfocusedContainerColor = ObsidianWell,
-                        focusedBorderColor = EmeraldNeon,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
+        Spacer(modifier = Modifier.height(14.dp))
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ObsidianOutlineButton(
+                text = "Заменить",
+                onClick = onSwap
+            )
+            ObsidianOutlineButton(
+                text = "Убрать",
+                onClick = onRemove
+            )
+        }
+
+        if (exercise.notes.isNotBlank() || editingNotes) {
+            Spacer(modifier = Modifier.height(14.dp))
+            ObsidianInnerWell {
+                Text(
+                    text = if (exercise.notes.isNotBlank()) "Заметка · 1 активна" else "Заметка к упражнению",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = EmeraldNeon
+                )
+                if (editingNotes) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ObsidianTextField(
+                        value = noteDraft,
+                        onValueChange = { noteDraft = it },
+                        placeholder = "Пауза 1 сек в нижней точке, лопатки сведены",
+                        singleLine = false
                     )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Set Table Header: # | PREV | +KG | REPS | ✓
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("#", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(30.dp), textAlign = TextAlign.Center)
-                Text("PREV", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(72.dp), textAlign = TextAlign.Center)
-                Text(unitLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(70.dp), textAlign = TextAlign.Center)
-                Text("REPS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(56.dp), textAlign = TextAlign.Center)
-                Text("✓", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted, modifier = Modifier.width(34.dp), textAlign = TextAlign.Center)
-                Spacer(modifier = Modifier.width(24.dp))
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            exercise.sets.forEach { set ->
-                WorkoutSetRow(
-                    set = set,
-                    allExerciseHistory = exerciseHistory,
-                    isKgUnit = isKgUnit,
-                    unitLabel = unitLabel,
-                    onUpdateWeight = { onUpdateWeight(set.id, it) },
-                    onUpdateReps = { onUpdateReps(set.id, it) },
-                    onApplyPrevious = { onApplyPrevious(set.id) },
-                    onApplyValues = { w, r -> onApplyValues(set.id, w, r) },
-                    onOpenHistoryMenu = { onOpenHistoryMenu(set.setNumber, set.id) },
-                    onToggleComplete = { onToggleComplete(set.id) },
-                    onToggleSetType = { onToggleSetType(set.id) },
-                    onDelete = { onDeleteSet(set.id) }
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // Action buttons row: + Add Set and + Warmup
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Surface(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(38.dp)
-                        .clickable { onAddSet() },
-                    shape = RoundedCornerShape(12.dp),
-                    color = DarkSurfaceHigh,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                    Spacer(modifier = Modifier.height(10.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null, tint = EmeraldNeon, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("+ Add Set", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        ObsidianPrimaryButton(
+                            text = strings.save,
+                            onClick = {
+                                onUpdateNotes(noteDraft.trim())
+                                editingNotes = false
+                                noteExpanded = noteDraft.isNotBlank()
+                            }
+                        )
+                        ObsidianOutlineButton(
+                            text = strings.cancel,
+                            onClick = {
+                                noteDraft = exercise.notes
+                                editingNotes = false
+                            }
+                        )
                     }
-                }
-
-                Surface(
-                    modifier = Modifier
-                        .height(38.dp)
-                        .clickable { onOpenWarmup() },
-                    shape = RoundedCornerShape(12.dp),
-                    color = AmberWarm.copy(alpha = 0.12f),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, AmberWarm.copy(alpha = 0.35f))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                } else {
+                    if (noteExpanded && exercise.notes.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = exercise.notes,
+                            fontSize = 13.sp,
+                            lineHeight = 19.sp,
+                            color = TextSoft
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = AmberWarm, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("+ Warmup", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AmberWarm)
+                        ObsidianOutlineButton(
+                            text = if (noteExpanded) "Свернуть" else "Открыть",
+                            onClick = { noteExpanded = !noteExpanded }
+                        )
+                        ObsidianOutlineButton(
+                            text = "Комментировать",
+                            onClick = {
+                                noteExpanded = true
+                                editingNotes = true
+                            }
+                        )
                     }
                 }
             }
+        }
+
+        if (activeSet != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Тип подхода · подход ${activeSet.setNumber}",
+                fontSize = 12.sp,
+                color = TextSecondary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val setTypeOrder = listOf("normal", "warmup", "drop", "failure")
+            val setTypeLabels = listOf("Обычный", "Разминка", "Дроп", "Отказ")
+            val currentIdx = setTypeOrder.indexOf(activeSet.setType).coerceAtLeast(0)
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                setTypeOrder.forEachIndexed { targetIdx, typeKey ->
+                    ObsidianPillTab(
+                        text = setTypeLabels[targetIdx],
+                        selected = activeSet.setType == typeKey,
+                        onClick = {
+                            val steps = (targetIdx - currentIdx + setTypeOrder.size) % setTypeOrder.size
+                            repeat(steps) { onToggleSetType(activeSet.id) }
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Column headers
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = "№",
+                fontSize = 12.sp,
+                color = TextMuted,
+                modifier = Modifier.width(26.dp)
+            )
+            Text(
+                text = "Вес, $unitLabel",
+                fontSize = 12.sp,
+                color = TextMuted,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = "Повторы",
+                fontSize = 12.sp,
+                color = TextMuted,
+                modifier = Modifier.weight(1f)
+            )
+            Box(
+                modifier = Modifier.width(36.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "✓",
+                    fontSize = 12.sp,
+                    color = TextMuted
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        exercise.sets.forEachIndexed { sIdx, set ->
+            val displayNum = when (set.setType) {
+                "warmup" -> "W"
+                "drop" -> "D"
+                "failure" -> "F"
+                else -> "${set.setNumber}"
+            }
+            val displayColor = when {
+                set.id == activeSet?.id -> EmeraldNeon
+                set.setType == "warmup" -> AmberWarm
+                else -> TextPrimary
+            }
+
+            WorkoutSetRow(
+                set = set,
+                displayBadge = displayNum,
+                badgeColor = displayColor,
+                isKgUnit = isKgUnit,
+                unitLabel = unitLabel,
+                prRecord = prRecord,
+                canDelete = exercise.sets.size > 1,
+                onSelectSet = { selectedSetId = set.id },
+                onUpdateWeight = { onUpdateWeight(set.id, it) },
+                onUpdateReps = { onUpdateReps(set.id, it) },
+                onApplyPrevious = { onApplyPrevious(set.id) },
+                onOpenHistory = {
+                    selectedSetId = set.id
+                    onOpenSetHistory(set.setNumber, set.id)
+                },
+                onToggleComplete = {
+                    selectedSetId = set.id
+                    if (!set.isCompleted) {
+                        val isNewPr = prRecord != null &&
+                            set.weightKg > 0 &&
+                            set.reps > 0 &&
+                            ((StrengthCalculator.calculateE1RM(set.weightKg, set.reps) ?: 0.0) > prRecord.e1rmKg)
+                        if (isNewPr) {
+                            AthleteSoundManager.playPersonalRecordFanfare()
+                        } else {
+                            AthleteSoundManager.playSetComplete()
+                        }
+                        PlatformBridge.vibrate()
+                    }
+                    onToggleSetComplete(set.id)
+                },
+                onDelete = { onDeleteSet(set.id) }
+            )
+
+            if (sIdx < exercise.sets.lastIndex) {
+                ObsidianDivider()
+            }
+        }
+
+        if (activeSet != null) {
+            Spacer(modifier = Modifier.height(14.dp))
+            Text(
+                text = "Быстрые повторы",
+                fontSize = 12.sp,
+                color = TextMuted
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf(8, 6, 4).forEach { repsPreset ->
+                    ObsidianPillTab(
+                        text = "$repsPreset",
+                        selected = activeSet.reps == repsPreset,
+                        onClick = { onUpdateReps(activeSet.id, repsPreset) }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        val plateWeightKg = activeSet?.weightKg?.takeIf { it > 0 }
+            ?: exercise.sets.lastOrNull { it.weightKg > 0 }?.weightKg
+            ?: 60.0
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ObsidianOutlineButton(
+                text = "+ Подход",
+                onClick = onAddSet
+            )
+            ObsidianOutlineButton(
+                text = "+ Разминка",
+                onClick = onOpenWarmup
+            )
+            if (exercise.equipment.lowercase() in setOf("barbell", "ez_bar", "smith_machine", "machine")) {
+                ObsidianOutlineButton(
+                    text = "Блины",
+                    onClick = { onOpenPlates(activeSet?.id ?: "", plateWeightKg) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ObsidianOutlineButton(
+                text = "Отдых · ${formatCountdown(restPresetSeconds)}",
+                onClick = onOpenRest
+            )
+            ObsidianOutlineButton(
+                text = "Заметка",
+                onClick = {
+                    noteExpanded = true
+                    editingNotes = !editingNotes
+                }
+            )
         }
     }
 }
@@ -892,506 +1148,665 @@ private fun WorkoutExerciseCard(
 @Composable
 private fun WorkoutSetRow(
     set: WorkoutSet,
-    allExerciseHistory: List<HistoricalSetRecord>,
+    displayBadge: String,
+    badgeColor: Color,
     isKgUnit: Boolean,
     unitLabel: String,
+    prRecord: HistoricalSetRecord?,
+    canDelete: Boolean,
+    onSelectSet: () -> Unit,
     onUpdateWeight: (Double) -> Unit,
     onUpdateReps: (Int) -> Unit,
     onApplyPrevious: () -> Unit,
-    onApplyValues: (Double, Int) -> Unit,
-    onOpenHistoryMenu: () -> Unit,
+    onOpenHistory: () -> Unit,
     onToggleComplete: () -> Unit,
-    onToggleSetType: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val strings = LocalDudaStrings.current
-    val coroutineScope = rememberCoroutineScope()
-    var isExpanded by remember { mutableStateOf(false) }
-    var appliedKey by remember { mutableStateOf<String?>(null) }
-
-    // Last 3 recent performances for this specific set number
-    val (topRecords, isFallback) = remember(allExerciseHistory, set.setNumber) {
-        SetHistoryCalculator.getLast3RecentForSet(allExerciseHistory, set.setNumber)
+    val displayedWeight = if (isKgUnit) set.weightKg else StrengthCalculator.kgToLbs(set.weightKg)
+    var weightText by remember(set.id, set.weightKg, isKgUnit) {
+        mutableStateOf(
+            if (displayedWeight <= 0.0) "" else formatCleanWeight(displayedWeight)
+        )
+    }
+    var repsText by remember(set.id, set.reps) {
+        mutableStateOf(if (set.reps <= 0) "" else set.reps.toString())
     }
 
     val hasPrev = set.previousWeightKg != null && set.previousReps != null
-    val prevWeight = set.previousWeightKg ?: 0.0
-    val prevReps = set.previousReps ?: 0
+    val prevDisplayedW = if (set.previousWeightKg != null) {
+        if (isKgUnit) set.previousWeightKg else StrengthCalculator.kgToLbs(set.previousWeightKg)
+    } else 0.0
 
-    // Show only recorded performances, matching the web history.
-    val effectiveTopRecords = topRecords
+    val inputBorder = if (set.isCompleted) EmeraldNeon.copy(alpha = 0.45f) else BorderSubtle
 
-    val rowBorderColor = when {
-        isExpanded -> EmeraldNeon.copy(alpha = 0.5f)
-        set.isCompleted -> EmeraldNeon.copy(alpha = 0.35f)
-        else -> BorderSubtle
-    }
-
-    val rowBackground = when {
-        isExpanded -> DarkSurfaceVariant
-        set.isCompleted -> EmeraldDark.copy(alpha = 0.12f)
-        else -> Color.Transparent
-    }
-
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onSelectSet)
+            .padding(vertical = 10.dp)
+    ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(rowBackground)
-                .border(1.dp, rowBorderColor, RoundedCornerShape(12.dp))
-                .padding(horizontal = 6.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // 1. SET # / TYPE BADGE (Round circle)
             Box(
                 modifier = Modifier
-                    .size(30.dp)
-                    .clip(CircleShape)
-                    .background(
-                        when {
-                            set.type == "warmup" -> AmberWarm.copy(alpha = 0.2f)
-                            set.isCompleted -> EmeraldNeon.copy(alpha = 0.2f)
-                            else -> DarkSurfaceHigh
-                        }
-                    )
-                    .clickable { onToggleSetType() },
-                contentAlignment = Alignment.Center
+                    .width(26.dp)
+                    .clickable(onClick = onOpenHistory),
+                contentAlignment = Alignment.CenterStart
             ) {
                 Text(
-                    text = when (set.type) {
-                        "warmup" -> "W"
-                        "drop" -> "D"
-                        "failure" -> "F"
-                        else -> "${set.setNumber}"
-                    },
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = when {
-                        set.type == "warmup" -> AmberWarm
-                        set.isCompleted -> EmeraldNeon
-                        else -> TextSecondary
-                    }
+                    text = displayBadge,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = badgeColor
                 )
             }
 
-            // 2. PREV PILL (Tapping toggles top 3 history accordion!)
-            val prevDisplayWeight = if (hasPrev && prevWeight > 0.0) prevWeight else (if (effectiveTopRecords.isNotEmpty()) effectiveTopRecords[0].weightKg else 0.0)
-            val prevDisplayReps = if (hasPrev && prevReps > 0) prevReps else (if (effectiveTopRecords.isNotEmpty()) effectiveTopRecords[0].reps else 0)
-
+            // Weight Input (#0A0A0A)
             Box(
                 modifier = Modifier
-                    .width(72.dp)
+                    .weight(1f)
+                    .height(40.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(if (isExpanded) EmeraldNeon.copy(alpha = 0.15f) else Color.Transparent)
-                    .clickable { isExpanded = !isExpanded }
-                    .padding(vertical = 4.dp, horizontal = 2.dp),
-                contentAlignment = Alignment.Center
+                    .background(DarkBackground)
+                    .border(1.dp, inputBorder, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 12.dp),
+                contentAlignment = Alignment.CenterStart
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = if (prevDisplayWeight > 0.0 || prevDisplayReps > 0) {
-                            "${displayWeight(prevDisplayWeight, isKgUnit)} $unitLabel × $prevDisplayReps"
-                        } else "—",
-                        fontSize = 11.sp,
-                        fontWeight = if (prevDisplayWeight > 0.0) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (prevDisplayWeight > 0.0) EmeraldLight else TextMuted,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = if (isExpanded) EmeraldNeon else TextMuted,
-                        modifier = Modifier.size(14.dp)
-                    )
-                }
-            }
-
-            // 3. WEIGHT INPUT + Plate breakdown badge
-            var weightText by remember(set.weightKg, isKgUnit) {
-                val displayedWeight = if (isKgUnit) set.weightKg else StrengthCalculator.kgToLbs(set.weightKg)
-                mutableStateOf(if (set.weightKg == 0.0) "" else displayedWeight.toString().removeSuffix(".0"))
-            }
-            val currentOrPrevWeight = if (set.weightKg > 0.0) set.weightKg else prevWeight
-            val plateBreakdown = remember(currentOrPrevWeight) {
-                SetHistoryCalculator.formatPlateBreakdown(currentOrPrevWeight)
-            }
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.width(70.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(36.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(ObsidianWell)
-                        .border(1.dp, if (set.isCompleted) BorderHighlight else BorderSubtle, RoundedCornerShape(8.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    OutlinedTextField(
-                        value = weightText,
-                        onValueChange = { input ->
-                            weightText = input
-                            val parsed = if (input.isBlank()) 0.0 else input.replace(',', '.').toDoubleOrNull()
-                            if (parsed != null && parsed.isFinite() && parsed >= 0) {
-                                onUpdateWeight(if (isKgUnit) parsed else parsed / 2.20462262185)
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        placeholder = {
-                            Text(
-                                text = if (prevWeight > 0) displayWeight(prevWeight, isKgUnit) else "0",
-                                fontSize = 12.sp,
-                                color = TextMuted,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        },
-                        textStyle = androidx.compose.ui.text.TextStyle(
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (set.isCompleted) EmeraldLight else TextPrimary,
-                            textAlign = TextAlign.Center
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent
-                        )
-                    )
-                }
-                if (plateBreakdown != null) {
-                    Text(
-                        text = plateBreakdown,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextMuted,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
-                }
-            }
-
-            // 4. REPS INPUT
-            var repsText by remember(set.reps) {
-                mutableStateOf(if (set.reps == 0) "" else set.reps.toString())
-            }
-            val quickReps = remember(effectiveTopRecords) {
-                effectiveTopRecords.take(3).map { it.reps }.distinct()
-            }
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.width(56.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(36.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(ObsidianWell)
-                        .border(1.dp, if (set.isCompleted) BorderHighlight else BorderSubtle, RoundedCornerShape(8.dp))
-                        .clickable { isExpanded = true },
-                    contentAlignment = Alignment.Center
-                ) {
-                    OutlinedTextField(
-                        value = repsText,
-                        onValueChange = { input ->
-                            repsText = input
-                            val parsed = input.toIntOrNull()
-                            if (parsed != null && parsed >= 0) onUpdateReps(parsed)
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        placeholder = {
-                            Text(
-                                text = if (prevReps > 0) "$prevReps" else "10",
-                                fontSize = 12.sp,
-                                color = TextMuted,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        },
-                        textStyle = androidx.compose.ui.text.TextStyle(
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (set.isCompleted) EmeraldLight else TextPrimary,
-                            textAlign = TextAlign.Center
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent
-                        )
-                    )
-                }
-
-                if (quickReps.isNotEmpty()) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(3.dp),
-                        modifier = Modifier.padding(top = 2.dp)
-                    ) {
-                        quickReps.forEach { r ->
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(DarkSurfaceHigh)
-                                    .clickable { onUpdateReps(r) }
-                                    .padding(horizontal = 4.dp, vertical = 1.dp)
-                            ) {
-                                Text(
-                                    text = "$r",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = EmeraldNeon
-                                )
-                            }
+                BasicTextField(
+                    value = weightText,
+                    onValueChange = { raw ->
+                        val cleaned = raw.replace(",", ".").filter { it.isDigit() || it == '.' }
+                        weightText = cleaned
+                        val parsed = cleaned.toDoubleOrNull() ?: 0.0
+                        val kgVal = if (isKgUnit) parsed else StrengthCalculator.lbsToKg(parsed)
+                        onUpdateWeight(kgVal)
+                    },
+                    singleLine = true,
+                    textStyle = LocalTextStyle.current.copy(
+                        color = TextPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    ),
+                    cursorBrush = SolidColor(EmeraldNeon),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    decorationBox = { inner ->
+                        if (weightText.isEmpty()) {
+                            Text("0", color = TextMuted, fontSize = 14.sp)
                         }
-                    }
-                }
+                        inner()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
-            // 5. COMPLETION CHECKMARK BUTTON
+            // Reps Input (#0A0A0A)
             Box(
                 modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(if (set.isCompleted) EmeraldNeon else DarkSurfaceHigh)
-                    .clickable {
-                        if (!set.isCompleted) {
-                            if (set.weightKg == 0.0 && set.reps == 0 && hasPrev) {
-                                onApplyPrevious()
-                            }
-                            AthleteSoundManager.playSetComplete()
-                        }
-                        onToggleComplete()
-                    },
-                contentAlignment = Alignment.Center
+                    .weight(1f)
+                    .height(40.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(DarkBackground)
+                    .border(1.dp, inputBorder, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 12.dp),
+                contentAlignment = Alignment.CenterStart
             ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Выполнено",
-                    tint = if (set.isCompleted) Color.Black else TextMuted,
-                    modifier = Modifier.size(18.dp)
+                BasicTextField(
+                    value = repsText,
+                    onValueChange = { raw ->
+                        val cleaned = raw.filter { it.isDigit() }
+                        repsText = cleaned
+                        onUpdateReps(cleaned.toIntOrNull() ?: 0)
+                    },
+                    singleLine = true,
+                    textStyle = LocalTextStyle.current.copy(
+                        color = TextPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    ),
+                    cursorBrush = SolidColor(EmeraldNeon),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    decorationBox = { inner ->
+                        if (repsText.isEmpty()) {
+                            Text("0", color = TextMuted, fontSize = 14.sp)
+                        }
+                        inner()
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
-            // 6. DELETE BUTTON
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.size(24.dp)
+            // Completion Check Box
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (set.isCompleted) EmeraldNeon else DarkBackground)
+                    .border(
+                        width = 1.dp,
+                        color = if (set.isCompleted) EmeraldNeon else BorderSubtle,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .clickable(onClick = onToggleComplete),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Удалить сет",
-                    tint = TextMuted,
-                    modifier = Modifier.size(15.dp)
-                )
+                if (set.isCompleted) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
         }
 
-        // EXPANDED ACCORDION: Top 3 Best Records + Menu Trigger
-        AnimatedVisibility(visible = isExpanded) {
-            Surface(
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val prevLabel = if (hasPrev) {
+                "Ранее: ${formatCleanWeight(prevDisplayedW)} × ${set.previousReps} $unitLabel / повт."
+            } else {
+                "Ранее: —"
+            }
+            Text(
+                text = prevLabel,
+                fontSize = 12.sp,
+                color = if (hasPrev) TextSecondary else TextMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceVariant,
-                border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldNeon.copy(alpha = 0.35f))
+                    .weight(1f)
+                    .clickable(enabled = hasPrev) { onApplyPrevious() }
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.padding(10.dp)) {
-                    // Header
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.EmojiEvents,
-                                contentDescription = null,
-                                tint = AmberWarm,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Text(
-                                text = if (isFallback) strings.setRecordsFallbackTitle else "${strings.setRecordsTitle} #${set.setNumber}",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AmberWarm
-                            )
-                        }
-
-                        IconButton(
-                            onClick = { isExpanded = false },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowUp,
-                                contentDescription = "Свернуть",
-                                tint = TextSecondary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    if (effectiveTopRecords.isEmpty()) {
-                        Text(
-                            text = strings.noRecordsYet,
-                            fontSize = 11.sp,
-                            color = TextMuted,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    } else {
-                        effectiveTopRecords.take(3).forEachIndexed { rIdx, rec ->
-                            val uniqueKey = "${rec.workoutId}-${rec.setNumber}-$rIdx"
-                            val isApplied = appliedKey == uniqueKey
-                            val medal = when (rIdx) {
-                                0 -> "🥇"
-                                1 -> "🥈"
-                                else -> "🥉"
-                            }
-
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 3.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                color = DarkSurfaceHigh,
-                                border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Text(text = medal, fontSize = 14.sp)
-                                        Column {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                            ) {
-                                                Text(
-                                                    text = "${displayWeight(rec.weightKg, isKgUnit)} $unitLabel × ${rec.reps}",
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = TextPrimary
-                                                )
-                                                if (rec.e1rmKg > 0) {
-                                                    Surface(
-                                                        shape = RoundedCornerShape(4.dp),
-                                                        color = EmeraldNeon.copy(alpha = 0.15f)
-                                                    ) {
-                                                        Text(
-                                                            text = "1RM: ${displayWeight(rec.e1rmKg, isKgUnit)} $unitLabel",
-                                                            fontSize = 9.sp,
-                                                            fontWeight = FontWeight.SemiBold,
-                                                            color = EmeraldLight,
-                                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                                                        )
-                                                    }
-                                                }
-                                            }
-
-                                            Text(
-                                                text = "${PlatformBridge.formatDate(rec.dateEpochMs, "dd MMM yyyy")} • ${rec.workoutName}",
-                                                fontSize = 10.sp,
-                                                color = TextMuted,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
-                                    }
-
-                                    // Apply Button
-                                    Button(
-                                        onClick = {
-                                            onApplyValues(rec.weightKg, rec.reps)
-                                            appliedKey = uniqueKey
-                                            coroutineScope.launch {
-                                                delay(1500)
-                                                if (appliedKey == uniqueKey) appliedKey = null
-                                            }
-                                        },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (isApplied) EmeraldNeon else DarkSurfaceVariant,
-                                            contentColor = if (isApplied) Color.Black else TextPrimary
-                                        ),
-                                        shape = RoundedCornerShape(6.dp),
-                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                                        modifier = Modifier.height(28.dp)
-                                    ) {
-                                        Text(
-                                            text = if (isApplied) strings.applied else strings.applyRecord,
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    // Separate Menu Trigger Button
-                    Surface(
+                Text(
+                    text = "История",
+                    fontSize = 11.sp,
+                    color = EmeraldNeon,
+                    modifier = Modifier.clickable(onClick = onOpenHistory)
+                )
+                if (canDelete) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Удалить подход",
+                        tint = TextMuted,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onOpenHistoryMenu() },
-                        shape = RoundedCornerShape(8.dp),
-                        color = DarkSurfaceHigh,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldNeon.copy(alpha = 0.3f))
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp, horizontal = 10.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.History,
-                                contentDescription = null,
-                                tint = EmeraldNeon,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = strings.openHistoryMenu,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = EmeraldNeon
-                            )
-                        }
-                    }
+                            .size(16.dp)
+                            .clickable(onClick = onDelete)
+                    )
                 }
             }
         }
     }
 }
 
-private fun displayWeight(weightKg: Double, isKgUnit: Boolean): String {
-    val weight = if (isKgUnit) weightKg else StrengthCalculator.kgToLbs(weightKg)
-    return (round(weight * 10.0) / 10.0).toString().removeSuffix(".0")
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun WorkoutRestModalSheet(
+    secondsRemaining: Int,
+    totalSeconds: Int,
+    restPresetSeconds: Int,
+    workout: Workout,
+    isKgUnit: Boolean,
+    onAddSeconds: (Int) -> Unit,
+    onSkip: () -> Unit,
+    onCyclePreset: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val strings = LocalDudaStrings.current
+    val unitLabel = if (isKgUnit) strings.unitKg else strings.unitLbs
+    val lastCompleted = remember(workout) { findLastCompletedSetInfo(workout) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = DarkSurface,
+        contentColor = TextPrimary
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 12.dp)
+        ) {
+            Text(
+                text = "01 / ОТДЫХ",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = EmeraldNeon,
+                letterSpacing = 0.8.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Время восстановиться",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
+            )
+            Spacer(modifier = Modifier.height(14.dp))
+            Text(
+                text = formatCountdown(secondsRemaining),
+                fontSize = 40.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Осталось $secondsRemaining секунд",
+                fontSize = 13.sp,
+                color = TextSecondary
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            ObsidianProgressBar(
+                progress = (secondsRemaining.toFloat() / totalSeconds.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f),
+                color = EmeraldNeon
+            )
+
+            if (lastCompleted != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                ObsidianDivider()
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = lastCompleted.exerciseName,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextPrimary
+                )
+                val lw = if (isKgUnit) lastCompleted.weightKg else StrengthCalculator.kgToLbs(lastCompleted.weightKg)
+                val lv = lw * lastCompleted.reps
+                Text(
+                    text = "Последний подход · ${formatCleanWeight(lw)} $unitLabel × ${lastCompleted.reps}",
+                    fontSize = 12.sp,
+                    color = TextSecondary
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "${formatRoundedInt(lv)} $unitLabel",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                Text(
+                    text = "объём последнего подхода",
+                    fontSize = 12.sp,
+                    color = TextMuted
+                )
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ObsidianOutlineButton(
+                    text = "−15 сек",
+                    onClick = { onAddSeconds(-15) }
+                )
+                ObsidianOutlineButton(
+                    text = "+30 сек",
+                    onClick = { onAddSeconds(30) }
+                )
+                ObsidianOutlineButton(
+                    text = "Пропустить",
+                    onClick = onSkip
+                )
+                ObsidianOutlineButton(
+                    text = "Настроить отдых (${formatCountdown(restPresetSeconds)})",
+                    onClick = onCyclePreset
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun WorkoutFinishModalSheet(
+    stage: FinishSheetStage,
+    workout: Workout,
+    startTimeEpochMs: Long,
+    isKgUnit: Boolean,
+    isFinishing: Boolean,
+    onProceedToSummary: () -> Unit,
+    onConfirmSave: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val strings = LocalDudaStrings.current
+    val unitLabel = if (isKgUnit) strings.unitKg else strings.unitLbs
+
+    val completedSetsCount = remember(workout) {
+        workout.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
+    }
+    val exactVolumeKg = remember(workout) {
+        workout.exercises.sumOf { ex -> ex.sets.filter { it.isCompleted }.sumOf { it.weightKg * it.reps } }
+    }
+    val displayedExactVolume = if (isKgUnit) exactVolumeKg else StrengthCalculator.kgToLbs(exactVolumeKg)
+    val tonnageStr = if (isKgUnit && exactVolumeKg >= 1000.0) {
+        val tons = round((exactVolumeKg / 1000.0) * 100.0) / 100.0
+        "${tons.toString().replace('.', ',')} т"
+    } else {
+        "${formatRoundedInt(displayedExactVolume)} $unitLabel"
+    }
+
+    val durationSeconds = remember(workout, startTimeEpochMs) {
+        if (workout.durationSeconds > 0L) workout.durationSeconds
+        else {
+            val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+            val start = if (startTimeEpochMs > 0L) startTimeEpochMs else now
+            ((now - start) / 1000L).coerceAtLeast(1L)
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = DarkSurface,
+        contentColor = TextPrimary
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 12.dp)
+        ) {
+            when (stage) {
+                FinishSheetStage.CONFIRM_INCOMPLETE -> {
+                    Text(
+                        text = "03 / ПОДТВЕРЖДЕНИЕ",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextMuted,
+                        letterSpacing = 0.8.sp
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Есть незавершённые подходы",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary,
+                        lineHeight = 28.sp
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Вернитесь к тренировке или сохраните только отмеченные подходы.",
+                        fontSize = 14.sp,
+                        lineHeight = 21.sp,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(18.dp))
+                    ObsidianDivider()
+                    Spacer(modifier = Modifier.height(18.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ObsidianPrimaryButton(
+                            text = "Вернуться к тренировке",
+                            onClick = onDismiss
+                        )
+                        ObsidianOutlineButton(
+                            text = "Сохранить только отмеченные",
+                            onClick = onProceedToSummary
+                        )
+                    }
+                }
+
+                FinishSheetStage.SUMMARY -> {
+                    Text(
+                        text = "02 / ЗАВЕРШЕНИЕ",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = EmeraldNeon,
+                        letterSpacing = 0.8.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Хорошая работа",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${workout.exercises.size} упражнения · $completedSetsCount подходов",
+                        fontSize = 14.sp,
+                        color = TextSecondary
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "ОБЪЁМ",
+                                fontSize = 11.sp,
+                                color = TextMuted,
+                                letterSpacing = 0.8.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = tonnageStr,
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "ВРЕМЯ",
+                                fontSize = 11.sp,
+                                color = TextMuted,
+                                letterSpacing = 0.8.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = formatCountdown(durationSeconds.toInt()),
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Точный объём · ${formatRoundedInt(displayedExactVolume)} $unitLabel",
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+
+                    if (workout.exercises.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        ObsidianDivider()
+                        workout.exercises.forEachIndexed { idx, ex ->
+                            val exCompleted = ex.sets.count { it.isCompleted }
+                            val exVol = ex.sets.filter { it.isCompleted }.sumOf { it.weightKg * it.reps }
+                            val exDispVol = if (isKgUnit) exVol else StrengthCalculator.kgToLbs(exVol)
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp)
+                            ) {
+                                Text(
+                                    text = ex.exerciseName.ifBlank { ex.exercise.name },
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextPrimary
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "$exCompleted подхода · ${formatRoundedInt(exDispVol)} $unitLabel",
+                                    fontSize = 12.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                            if (idx < workout.exercises.lastIndex) {
+                                ObsidianDivider()
+                            }
+                        }
+                        ObsidianDivider()
+                    }
+
+                    Spacer(modifier = Modifier.height(18.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ObsidianPrimaryButton(
+                            text = if (isFinishing) "Сохранение..." else strings.save,
+                            onClick = onConfirmSave,
+                            enabled = !isFinishing
+                        )
+                        ObsidianOutlineButton(
+                            text = "Вернуться к тренировке",
+                            onClick = onDismiss
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun WorkoutDiscardModalSheet(
+    onConfirmDiscard: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val strings = LocalDudaStrings.current
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = DarkSurface,
+        contentColor = TextPrimary
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 12.dp)
+        ) {
+            Text(
+                text = "04 / СБРОС",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                color = TextMuted,
+                letterSpacing = 0.8.sp
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = strings.workoutDiscardConfirmTitle,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = strings.workoutDiscardConfirmText,
+                fontSize = 14.sp,
+                lineHeight = 21.sp,
+                color = TextSecondary
+            )
+            Spacer(modifier = Modifier.height(18.dp))
+            ObsidianDivider()
+            Spacer(modifier = Modifier.height(18.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ObsidianOutlineButton(
+                    text = strings.cancel,
+                    onClick = onDismiss
+                )
+                ObsidianWhiteButton(
+                    text = "Сбросить тренировку",
+                    onClick = onConfirmDiscard
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+private data class CompletedSetBrief(
+    val exerciseName: String,
+    val weightKg: Double,
+    val reps: Int
+)
+
+private fun findLastCompletedSetInfo(workout: Workout): CompletedSetBrief? {
+    for (ex in workout.exercises.asReversed()) {
+        val last = ex.sets.asReversed().firstOrNull { it.isCompleted && it.weightKg > 0 && it.reps > 0 }
+        if (last != null) {
+            return CompletedSetBrief(
+                exerciseName = ex.exerciseName.ifBlank { ex.exercise.name },
+                weightKg = last.weightKg,
+                reps = last.reps
+            )
+        }
+    }
+    return null
+}
+
+private fun formatElapsedShort(seconds: Long): String {
+    val safe = seconds.coerceAtLeast(0L)
+    val h = safe / 3600L
+    val m = (safe % 3600L) / 60L
+    val s = safe % 60L
+    return if (h > 0) {
+        "$h:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
+    } else {
+        "$m:${s.toString().padStart(2, '0')}"
+    }
+}
+
+private fun formatCountdown(seconds: Int): String {
+    val safe = seconds.coerceAtLeast(0)
+    val m = safe / 60
+    val s = safe % 60
+    return "$m:${s.toString().padStart(2, '0')}"
+}
+
+private fun formatCleanWeight(weight: Double): String {
+    val rounded = round(weight * 10.0) / 10.0
+    return if (rounded % 1.0 == 0.0) {
+        rounded.toInt().toString()
+    } else {
+        rounded.toString()
+    }
+}
+
+private fun formatRoundedInt(value: Double): String {
+    val intVal = round(value).toLong()
+    val raw = intVal.toString()
+    if (raw.length <= 3) return raw
+    val sb = StringBuilder()
+    var count = 0
+    for (i in raw.length - 1 downTo 0) {
+        sb.append(raw[i])
+        count++
+        if (count % 3 == 0 && i > 0) {
+            sb.append(' ')
+        }
+    }
+    return sb.reverse().toString()
 }

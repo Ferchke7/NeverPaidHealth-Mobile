@@ -1,5 +1,6 @@
 package dev.neverpaid.health.features.todo
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,8 +9,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,89 +22,95 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.neverpaid.health.core.designsystem.AmberWarm
-import dev.neverpaid.health.core.designsystem.AthleticCard
+import dev.neverpaid.health.core.audio.AthleteSoundManager
 import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
 import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
-import dev.neverpaid.health.core.designsystem.InfoAccent
+import dev.neverpaid.health.core.designsystem.ObsidianCard
+import dev.neverpaid.health.core.designsystem.ObsidianDivider
+import dev.neverpaid.health.core.designsystem.ObsidianEmptyCard
 import dev.neverpaid.health.core.designsystem.ObsidianInkOnLight
-import dev.neverpaid.health.core.designsystem.ObsidianWell
-import dev.neverpaid.health.core.designsystem.SecondaryAthleticButton
-import dev.neverpaid.health.core.designsystem.StatCounter
+import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
+import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
+import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
+import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
+import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
+import dev.neverpaid.health.core.designsystem.ObsidianPillTab
+import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
+import dev.neverpaid.health.core.designsystem.ObsidianProgressBar
+import dev.neverpaid.health.core.designsystem.ObsidianWhiteButton
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
-import dev.neverpaid.health.core.i18n.LocalDudaStrings
+import dev.neverpaid.health.core.designsystem.TextSoft
 import dev.neverpaid.health.core.i18n.DudaStrings
-import dev.neverpaid.health.core.mvi.CollectEffect
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.data.catalog.StandardHabitsCatalog
 import dev.neverpaid.health.domain.model.AthleteHabit
 import dev.neverpaid.health.domain.model.SaveTodoRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
+import kotlinx.coroutines.delay
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 
-private fun getTodoCategories(strings: DudaStrings): List<Pair<String, String>> = listOf(
-    "all" to (if (strings.languageCode == "uz") "Barchasi" else if (strings.languageCode == "en") "All" else "Все"),
-    "workout" to (if (strings.languageCode == "uz") "Mashg‘ulot" else if (strings.languageCode == "en") "Workout" else "Тренировка"),
-    "nutrition" to (if (strings.languageCode == "uz") "Oziqlanish" else if (strings.languageCode == "en") "Nutrition" else "Питание"),
-    "supplement" to (if (strings.languageCode == "uz") "Qo‘shimchalar" else if (strings.languageCode == "en") "Supplements" else "Добавки"),
-    "cardio" to (if (strings.languageCode == "uz") "Kardio" else if (strings.languageCode == "en") "Cardio" else "Кардио"),
-    "recovery" to (if (strings.languageCode == "uz") "Tiklanish" else if (strings.languageCode == "en") "Recovery" else "Восстановление"),
-    "general" to (if (strings.languageCode == "uz") "Umumiy" else if (strings.languageCode == "en") "General" else "Общее")
-)
+private enum class FocusMode {
+    POMODORO,
+    TIMER,
+    STOPWATCH
+}
+
+private enum class FocusPhase {
+    WORK,
+    BREAK
+}
 
 @Composable
 fun TodoRoute(
@@ -110,26 +119,24 @@ fun TodoRoute(
     onNavigateToProfile: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsState()
 
-    CollectEffect(viewModel.effect) { effect ->
-        when (effect) {
-            is TodoUiEffect.StartWorkoutSession -> onStartWorkout(effect.title)
-            is TodoUiEffect.ShowToast -> PlatformBridge.showToast(effect.message)
-            TodoUiEffect.TriggerHaptic -> PlatformBridge.vibrate()
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is TodoUiEffect.StartWorkoutSession -> onStartWorkout(effect.title)
+                is TodoUiEffect.ShowToast -> PlatformBridge.showToast(effect.message)
+                TodoUiEffect.TriggerHaptic -> PlatformBridge.vibrate()
+            }
         }
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = DarkBackground
-    ) { innerPadding ->
-        TodoScreen(
-            state = state,
-            onAction = viewModel::onAction,
-            modifier = Modifier.padding(innerPadding)
-        )
-    }
+    TodoScreen(
+        state = state,
+        onAction = viewModel::onAction,
+        onNavigateToProfile = onNavigateToProfile,
+        modifier = modifier
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -137,625 +144,968 @@ fun TodoRoute(
 fun TodoScreen(
     state: TodoUiState,
     onAction: (TodoUiAction) -> Unit,
+    onNavigateToProfile: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val strings = LocalDudaStrings.current
-    val todoCategories = remember(strings) { getTodoCategories(strings) }
+    val lang = strings.languageCode
 
-    if (state.isTaskModalOpen) {
-        CreateOrEditTaskBottomSheet(
-            existingTask = state.editingTask,
-            defaultDate = state.selectedDate,
-            onSave = { req ->
-                onAction(TodoUiAction.OnSaveTask(req, state.editingTask?.id))
-            },
-            onDismiss = { onAction(TodoUiAction.OnCloseTaskModal) }
-        )
+    var showHabitsSection by rememberSaveable { mutableStateOf(false) }
+    var habits by remember { mutableStateOf(StandardHabitsCatalog.standardPresets.take(4)) }
+    var inlineEditingTask by remember { mutableStateOf<TodoTask?>(null) }
+
+    // Inline Focus Timer State
+    var focusMode by rememberSaveable { mutableStateOf(FocusMode.POMODORO) }
+    var focusPhase by rememberSaveable { mutableStateOf(FocusPhase.WORK) }
+    var activeTaskTitle by rememberSaveable { mutableStateOf<String?>(null) }
+    var timerSecondsLeft by rememberSaveable { mutableIntStateOf(25 * 60) }
+    var stopwatchElapsedSeconds by rememberSaveable { mutableIntStateOf(0) }
+    var isTimerRunning by rememberSaveable { mutableStateOf(false) }
+    var hasStartedSession by rememberSaveable { mutableStateOf(false) }
+    var soundEnabled by rememberSaveable { mutableStateOf(true) }
+
+    LaunchedEffect(isTimerRunning, focusMode, focusPhase) {
+        while (isTimerRunning) {
+            delay(1000L)
+            if (focusMode == FocusMode.STOPWATCH) {
+                stopwatchElapsedSeconds += 1
+            } else {
+                if (timerSecondsLeft > 0) {
+                    timerSecondsLeft -= 1
+                } else {
+                    isTimerRunning = false
+                    if (soundEnabled) {
+                        AthleteSoundManager.playIntervalGong()
+                    }
+                    PlatformBridge.showToast(
+                        when (lang) {
+                            "uz" -> "Fokus sessiyasi yakunlandi"
+                            "en" -> "Focus session finished"
+                            else -> "Сессия фокуса завершена"
+                        }
+                    )
+                }
+            }
+        }
     }
 
-    var habits by remember {
-        mutableStateOf(StandardHabitsCatalog.standardPresets.take(4))
+    // Keep inline edit selection synchronized if task is updated/deleted
+    LaunchedEffect(state.allTasks) {
+        val currentEdit = inlineEditingTask
+        if (currentEdit != null) {
+            inlineEditingTask = state.allTasks.firstOrNull { it.id == currentEdit.id }
+        }
     }
 
-    val progressFraction = if (state.totalCount > 0) {
-        (state.completedCount.toFloat() / state.totalCount.toFloat()).coerceIn(0f, 1f)
-    } else 0f
+    val activeDate = state.selectedDate.ifBlank { currentTodayIso() }
 
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .background(DarkBackground)
     ) {
-        item(key = "header") {
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = strings.todoTitle,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Black,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = strings.todoSubtitle,
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(EmeraldSubtle)
-                            .border(1.dp, BorderHighlight, RoundedCornerShape(10.dp))
-                            .clickable { onAction(TodoUiAction.OnStartFocusTimer(null)) }
-                            .padding(horizontal = 10.dp, vertical = 10.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Timer,
-                                contentDescription = strings.todoPomodoroFocus,
-                                tint = EmeraldLight,
-                                modifier = Modifier.size(15.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(strings.todoPomodoroFocus, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                        }
-                    }
-
-                    Button(
-                        onClick = { onAction(TodoUiAction.OnOpenTaskModal(null)) },
-                        shape = RoundedCornerShape(10.dp),
-                        elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = EmeraldNeon,
-                            contentColor = ObsidianInkOnLight
-                        ),
-                        modifier = Modifier.height(44.dp)
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(strings.todoAddTask, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
-
-        // 4 KPI Cards Row (matching TodoCalendarPage.tsx)
-        item(key = "kpi_row") {
-            AthleticCard(backgroundColor = DarkSurface) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround
-                    ) {
-                        StatCounter(
-                            title = "Выполнено",
-                            value = "${state.completedCount}/${state.totalCount}",
-                            accentColor = EmeraldNeon
-                        )
-                        StatCounter(
-                            title = "Прогресс дня",
-                            value = "${(progressFraction * 100).toInt()}%",
-                            accentColor = InfoAccent
-                        )
-                        StatCounter(
-                            title = "Важные",
-                            value = "${state.highPriorityRemaining}",
-                            unit = "ост.",
-                            accentColor = AmberWarm
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    LinearProgressIndicator(
-                        progress = { progressFraction },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(3.dp)),
-                        color = EmeraldNeon,
-                        trackColor = DarkSurfaceHigh
-                    )
-                }
-            }
-        }
-
-        // Athlete Habits Tracker Card
-        item(key = "athlete_habits_card") {
-            HabitTrackerView(
-                habits = habits,
-                currentDateIso = state.selectedDate,
-                onToggleHabitToday = { habitId ->
-                    val today = state.selectedDate
-                    habits = habits.map { h ->
-                        if (h.id == habitId) {
-                            val newDates = if (h.isCompletedOn(today)) h.completedDates - today else h.completedDates + today
-                            h.copy(completedDates = newDates)
-                        } else h
-                    }
-                },
-                onAddHabitPreset = { preset ->
-                    if (habits.none { it.id == preset.id }) {
-                        habits = habits + preset
-                    }
-                }
-            )
-        }
-
-        // View Mode Switcher: Список задач / Календарь месяца / Журнал активности
-        item(key = "view_mode_tabs") {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(DarkSurfaceVariant)
-                    .padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                listOf(
-                    Triple("list", if (strings.languageCode == "uz") "Ro‘yxat" else if (strings.languageCode == "en") "List" else "Список", Icons.Default.List),
-                    Triple("calendar", if (strings.languageCode == "uz") "Taqvim" else if (strings.languageCode == "en") "Calendar" else "Календарь", Icons.Default.CalendarMonth),
-                    Triple("log", "${if (strings.languageCode == "uz") "Jurnal" else if (strings.languageCode == "en") "Log" else "Журнал"} (${state.activityLogs.size})", Icons.Default.History)
-                ).forEach { (modeKey, label, icon) ->
-                    val selected = state.viewMode == modeKey
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(if (selected) EmeraldNeon else Color.Transparent)
-                            .clickable { onAction(TodoUiAction.OnSetViewMode(modeKey)) }
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = null,
-                                tint = if (selected) Color.Black else TextSecondary,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = label,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (selected) Color.Black else TextSecondary,
-                                maxLines = 1
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        if (state.viewMode == "calendar") {
-            // Month Calendar Overview
-            item(key = "month_calendar") {
-                MonthCalendarOverviewCard(
-                    selectedDate = state.selectedDate,
-                    allTasks = state.allTasks,
-                    onSelectDate = { date ->
-                        onAction(TodoUiAction.OnSelectDate(date))
-                        onAction(TodoUiAction.OnSetViewMode("list"))
-                    }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            item(key = "page_header", contentType = "header") {
+                ObsidianPageHeader(
+                    title = strings.todoTitle,
+                    subtitle = strings.todoSubtitle
                 )
             }
-        } else if (state.viewMode == "log") {
-            // Activity Log View (TodoActivityLog.tsx)
-            if (state.activityLogs.isEmpty()) {
-                item(key = "empty_logs") {
-                    AthleticCard(backgroundColor = DarkSurface) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+
+            if (state.isLoading && state.allTasks.isEmpty()) {
+                item(key = "loading_card", contentType = "loading") {
+                    ObsidianLoadingCard(
+                        title = strings.stateLoadingTitle,
+                        hint = strings.stateLoadingHint,
+                        kicker = "01 · ${strings.todoTitle}"
+                    )
+                }
+            } else {
+                // Date Navigation & 7-Day Strip (Figma 09)
+                item(key = "date_strip", contentType = "date_strip") {
+                    ObsidianCard(contentPadding = PaddingValues(18.dp)) {
+                        Text(
+                            text = formatFullPlanDate(activeDate, lang),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Журнал активности пока пуст", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                "Выполняйте задачи и запускайте Фокус-сессии, чтобы видеть полную хронологию.",
-                                fontSize = 12.sp,
-                                color = TextSecondary
+                            ObsidianOutlineButton(
+                                text = when (lang) {
+                                    "uz" -> "← Oldinga"
+                                    "en" -> "← Back"
+                                    else -> "← Назад"
+                                },
+                                onClick = { onAction(TodoUiAction.OnSelectDate(shiftIsoDate(activeDate, -1))) }
+                            )
+                            ObsidianOutlineButton(
+                                text = when (lang) {
+                                    "uz" -> "Bugun"
+                                    "en" -> "Today"
+                                    else -> "Сегодня"
+                                },
+                                onClick = { onAction(TodoUiAction.OnSelectDate(currentTodayIso())) }
+                            )
+                            ObsidianOutlineButton(
+                                text = when (lang) {
+                                    "uz" -> "Keyingi →"
+                                    "en" -> "Forward →"
+                                    else -> "Вперёд →"
+                                },
+                                onClick = { onAction(TodoUiAction.OnSelectDate(shiftIsoDate(activeDate, 1))) }
+                            )
+                            ObsidianPillTab(
+                                text = when (lang) {
+                                    "uz" -> "Odatlar (${habits.count { it.isCompletedOn(activeDate) }}/${habits.size})"
+                                    "en" -> "Habits (${habits.count { it.isCompletedOn(activeDate) }}/${habits.size})"
+                                    else -> "Привычки (${habits.count { it.isCompletedOn(activeDate) }}/${habits.size})"
+                                },
+                                selected = showHabitsSection,
+                                onClick = { showHabitsSection = !showHabitsSection }
+                            )
+                        }
+
+                        if (state.calendarDays.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                state.calendarDays.forEach { day ->
+                                    val dayShape = RoundedCornerShape(10.dp)
+                                    val bgColor = when {
+                                        day.isSelected -> EmeraldSubtle
+                                        else -> DarkBackground
+                                    }
+                                    val borderColor = when {
+                                        day.isSelected -> BorderHighlight
+                                        day.isToday -> EmeraldNeon.copy(alpha = 0.45f)
+                                        else -> BorderSubtle
+                                    }
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .defaultMinSize(minHeight = 54.dp)
+                                            .clip(dayShape)
+                                            .background(bgColor)
+                                            .border(1.dp, borderColor, dayShape)
+                                            .clickable { onAction(TodoUiAction.OnSelectDate(day.dateString)) }
+                                            .padding(vertical = 8.dp, horizontal = 2.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            text = day.dayName.take(2),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (day.isSelected) EmeraldNeon else TextMuted,
+                                            maxLines = 1
+                                        )
+                                        Spacer(modifier = Modifier.height(3.dp))
+                                        Text(
+                                            text = day.dayNumber,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontFamily = FontFamily.Default,
+                                            color = if (day.isSelected) EmeraldLight else TextPrimary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Toggleable Habit Tracker section (preserves existing capability without cluttering Figma baseline)
+                if (showHabitsSection) {
+                    item(key = "habits_section", contentType = "habits") {
+                        ObsidianCard(contentPadding = PaddingValues(18.dp)) {
+                            HabitTrackerView(
+                                habits = habits,
+                                currentDateIso = activeDate,
+                                onToggleHabitToday = { habitId ->
+                                    habits = habits.map { item ->
+                                        if (item.id == habitId) {
+                                            val updatedDates = if (activeDate in item.completedDates) {
+                                                item.completedDates - activeDate
+                                            } else {
+                                                item.completedDates + activeDate
+                                            }
+                                            item.copy(completedDates = updatedDates)
+                                        } else {
+                                            item
+                                        }
+                                    }
+                                },
+                                onAddHabitPreset = { preset ->
+                                    if (habits.none { it.id == preset.id }) {
+                                        habits = habits + preset
+                                    }
+                                }
                             )
                         }
                     }
                 }
-            } else {
-                items(state.activityLogs, key = { it.id }) { logItem ->
-                    AthleticCard(backgroundColor = DarkSurface) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (logItem.actionType == "focus_session") InfoAccent.copy(alpha = 0.15f) else EmeraldSubtle
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = if (logItem.actionType == "focus_session") Icons.Default.Timer else Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = if (logItem.actionType == "focus_session") InfoAccent else EmeraldLight,
-                                        modifier = Modifier.size(16.dp)
-                                    )
+
+                // Card 1: Checklist ("Небольшие шаги каждый день") — Figma 09
+                item(key = "checklist_card", contentType = "checklist") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Har kuni kichik qadamlar"
+                                "en" -> "Small steps every day"
+                                else -> "Небольшие шаги каждый день"
+                            },
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "${state.totalCount} ta vazifadan ${state.completedCount} tasi bajarildi"
+                                "en" -> "${state.completedCount} of ${state.totalCount} tasks completed"
+                                else -> "${state.completedCount} из ${state.totalCount} задач выполнена"
+                            },
+                            fontSize = 13.sp,
+                            color = TextSecondary
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        val progress = if (state.totalCount > 0) {
+                            (state.completedCount.toFloat() / state.totalCount.toFloat()).coerceIn(0f, 1f)
+                        } else {
+                            0f
+                        }
+                        ObsidianProgressBar(
+                            progress = progress,
+                            heightDp = 6,
+                            color = EmeraldNeon
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        val categories = listOf(
+                            "all" to when (lang) { "uz" -> "Hammasi"; "en" -> "All"; else -> "Все" },
+                            "workout" to when (lang) { "uz" -> "Mashg'ulot"; "en" -> "Workout"; else -> "Тренировка" },
+                            "nutrition" to when (lang) { "uz" -> "Oziqlanish"; "en" -> "Nutrition"; else -> "Питание" },
+                            "supplement" to when (lang) { "uz" -> "Qo'shimcha"; "en" -> "Supps"; else -> "Добавки" },
+                            "work" to when (lang) { "uz" -> "Ish"; "en" -> "Work"; else -> "Работа" },
+                            "recovery" to when (lang) { "uz" -> "Tiklanish"; "en" -> "Recovery"; else -> "Восстановление" }
+                        )
+
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(categories, key = { it.first }) { (key, label) ->
+                                ObsidianPillTab(
+                                    text = label,
+                                    selected = state.selectedCategoryFilter == key,
+                                    onClick = { onAction(TodoUiAction.OnSelectCategoryFilter(key)) }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        ObsidianPrimaryButton(
+                            text = "+ ${strings.todoAddTask}",
+                            onClick = { onAction(TodoUiAction.OnOpenTaskModal(null)) },
+                            fillWidth = true
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        if (state.tasksForSelectedDate.isEmpty()) {
+                            ObsidianInnerWell {
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "Tanlangan kun uchun vazifalar yo'q"
+                                        "en" -> "No tasks for selected day"
+                                        else -> "На выбранный день задач нет"
+                                    },
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "Mashg'ulot maqsadi, kreatin yoki fokus sessiyasini qo'shing"
+                                        "en" -> "Add a workout goal, supplement, or focus session"
+                                        else -> "Добавьте тренировочную цель, приём добавок или сессию фокуса"
+                                    },
+                                    fontSize = 12.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        } else {
+                            state.tasksForSelectedDate.forEachIndexed { index, task ->
+                                if (index > 0) {
+                                    ObsidianDivider()
                                 }
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column(modifier = Modifier.weight(1f)) {
+                                val isCompleted = task.isCompletedOn(activeDate)
+                                TodoChecklistRow(
+                                    task = task,
+                                    isCompleted = isCompleted,
+                                    lang = lang,
+                                    onToggle = { onAction(TodoUiAction.OnToggleTask(task.id)) },
+                                    onEdit = { inlineEditingTask = task },
+                                    onMoveTomorrow = {
+                                        val nextDate = shiftIsoDate(
+                                            task.scheduledDate.ifBlank { activeDate },
+                                            1
+                                        )
+                                        onAction(
+                                            TodoUiAction.OnSaveTask(
+                                                request = SaveTodoRequestDto(
+                                                    title = task.title,
+                                                    notes = task.notes,
+                                                    category = task.category,
+                                                    priority = task.priority,
+                                                    scheduledDate = nextDate,
+                                                    scheduledTime = task.startTime,
+                                                    repeatDaily = task.repeatDaily,
+                                                    durationMinutes = task.durationMinutes
+                                                ),
+                                                editingId = task.id
+                                            )
+                                        )
+                                        PlatformBridge.showToast(
+                                            when (lang) {
+                                                "uz" -> "Ertaga ko'chirildi ($nextDate)"
+                                                "en" -> "Moved to next day ($nextDate)"
+                                                else -> "Перенесено на $nextDate"
+                                            }
+                                        )
+                                    },
+                                    onStartFocus = {
+                                        activeTaskTitle = task.title
+                                        focusMode = FocusMode.POMODORO
+                                        focusPhase = FocusPhase.WORK
+                                        timerSecondsLeft = task.pomodoroMinutes * 60
+                                        hasStartedSession = true
+                                        isTimerRunning = true
+                                        onAction(TodoUiAction.OnStartFocusTimer(task))
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Card 2: Focus Timer ("Время для фокуса") — Figma 09
+                item(key = "focus_timer_card", contentType = "focus_timer") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Fokus vaqti"
+                                "en" -> "Time for focus"
+                                else -> "Время для фокуса"
+                            },
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ObsidianPillTab(
+                                text = when (lang) { "uz" -> "Pomodoro"; "en" -> "Pomodoro"; else -> "Помодоро" },
+                                selected = focusMode == FocusMode.POMODORO,
+                                onClick = {
+                                    focusMode = FocusMode.POMODORO
+                                    isTimerRunning = false
+                                    hasStartedSession = false
+                                    timerSecondsLeft = if (focusPhase == FocusPhase.WORK) 25 * 60 else 5 * 60
+                                }
+                            )
+                            ObsidianPillTab(
+                                text = when (lang) { "uz" -> "Taymer"; "en" -> "Timer"; else -> "Таймер" },
+                                selected = focusMode == FocusMode.TIMER,
+                                onClick = {
+                                    focusMode = FocusMode.TIMER
+                                    isTimerRunning = false
+                                    hasStartedSession = false
+                                    timerSecondsLeft = 15 * 60
+                                }
+                            )
+                            ObsidianPillTab(
+                                text = when (lang) { "uz" -> "Sekundomer"; "en" -> "Stopwatch"; else -> "Секундомер" },
+                                selected = focusMode == FocusMode.STOPWATCH,
+                                onClick = {
+                                    focusMode = FocusMode.STOPWATCH
+                                    isTimerRunning = false
+                                    hasStartedSession = false
+                                    stopwatchElapsedSeconds = 0
+                                }
+                            )
+                        }
+
+                        if (focusMode == FocusMode.POMODORO) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                ObsidianPillTab(
+                                    text = when (lang) { "uz" -> "Ish"; "en" -> "Work"; else -> "Работа" },
+                                    selected = focusPhase == FocusPhase.WORK,
+                                    onClick = {
+                                        focusPhase = FocusPhase.WORK
+                                        isTimerRunning = false
+                                        timerSecondsLeft = 25 * 60
+                                    }
+                                )
+                                ObsidianPillTab(
+                                    text = when (lang) { "uz" -> "Tanaffus"; "en" -> "Break"; else -> "Перерыв" },
+                                    selected = focusPhase == FocusPhase.BREAK,
+                                    onClick = {
+                                        focusPhase = FocusPhase.BREAK
+                                        isTimerRunning = false
+                                        timerSecondsLeft = 5 * 60
+                                    }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        val displayedSeconds = if (focusMode == FocusMode.STOPWATCH) {
+                            stopwatchElapsedSeconds
+                        } else {
+                            timerSecondsLeft
+                        }
+                        Text(
+                            text = formatMmSs(displayedSeconds),
+                            fontSize = 52.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = FontFamily.Default,
+                            color = TextPrimary,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        val statusText = when {
+                            activeTaskTitle != null -> activeTaskTitle!!
+                            focusMode == FocusMode.STOPWATCH -> when (lang) {
+                                "uz" -> "Sekundomer"
+                                "en" -> "Stopwatch"
+                                else -> "Секундомер"
+                            }
+                            focusPhase == FocusPhase.WORK -> when (lang) {
+                                "uz" -> "Ish sessiyasi (25 min)"
+                                "en" -> "Work session (25 min)"
+                                else -> "Рабочая сессия (25 мин)"
+                            }
+                            else -> when (lang) {
+                                "uz" -> "Tanaffus (5 min)"
+                                "en" -> "Break (5 min)"
+                                else -> "Перерыв (5 мин)"
+                            }
+                        }
+                        Text(
+                            text = statusText,
+                            fontSize = 13.sp,
+                            color = TextSecondary,
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ObsidianWhiteButton(
+                                text = when {
+                                    isTimerRunning -> when (lang) { "uz" -> "Faol"; "en" -> "Running"; else -> "Идёт" }
+                                    hasStartedSession -> when (lang) { "uz" -> "Davom etish"; "en" -> "Resume"; else -> "Продолжить" }
+                                    else -> strings.todoPomodoroStart
+                                },
+                                onClick = {
+                                    hasStartedSession = true
+                                    isTimerRunning = true
+                                },
+                                enabled = !isTimerRunning
+                            )
+                            ObsidianOutlineButton(
+                                text = strings.todoPomodoroPause,
+                                onClick = { isTimerRunning = false },
+                                enabled = isTimerRunning
+                            )
+                            ObsidianOutlineButton(
+                                text = strings.todoPomodoroReset,
+                                onClick = {
+                                    isTimerRunning = false
+                                    hasStartedSession = false
+                                    activeTaskTitle = null
+                                    stopwatchElapsedSeconds = 0
+                                    timerSecondsLeft = when (focusMode) {
+                                        FocusMode.POMODORO -> if (focusPhase == FocusPhase.WORK) 25 * 60 else 5 * 60
+                                        FocusMode.TIMER -> 15 * 60
+                                        FocusMode.STOPWATCH -> 0
+                                    }
+                                }
+                            )
+                            ObsidianOutlineButton(
+                                text = when {
+                                    lang == "uz" -> if (soundEnabled) "Ovoz: yoq." else "Ovoz: o'ch."
+                                    lang == "en" -> if (soundEnabled) "Sound: on" else "Sound: off"
+                                    else -> if (soundEnabled) "Звук: вкл." else "Звук: выкл."
+                                },
+                                onClick = {
+                                    soundEnabled = !soundEnabled
+                                    if (soundEnabled) {
+                                        AthleteSoundManager.playIntervalGong()
+                                    }
+                                }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Yakunlangan sessiyalar faoliyat jurnalida ko'rinadi."
+                                "en" -> "Completed sessions will appear in the activity log."
+                                else -> "Завершённые сессии появятся в журнале."
+                            },
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+                    }
+                }
+
+                // Card 3: Inline Task Editor ("Редактирование задачи") — Figma 09
+                inlineEditingTask?.let { editing ->
+                    item(key = "inline_task_editor_${editing.id}", contentType = "inline_editor") {
+                        InlineTaskEditorCard(
+                            task = editing,
+                            strings = strings,
+                            onSave = { request ->
+                                onAction(TodoUiAction.OnSaveTask(request, editing.id))
+                                inlineEditingTask = null
+                            },
+                            onDelete = {
+                                onAction(TodoUiAction.OnDeleteTask(editing.id))
+                                inlineEditingTask = null
+                            },
+                            onCancel = { inlineEditingTask = null }
+                        )
+                    }
+                }
+
+                // Card 4: Activity Log ("Журнал активности") — Figma 09
+                item(key = "activity_log_card", contentType = "activity_log") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Faoliyat jurnali"
+                                "en" -> "Activity log"
+                                else -> "Журнал активности"
+                            },
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val completedForDay = state.tasksForSelectedDate.filter { it.isCompletedOn(activeDate) }
+
+                        if (state.activityLogs.isEmpty() && completedForDay.isEmpty()) {
+                            ObsidianInnerWell {
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "Hozircha yozuvlar yo'q"
+                                        "en" -> "No activity entries yet"
+                                        else -> "Пока нет записей активности"
+                                    },
+                                    fontSize = 13.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        } else {
+                            state.activityLogs.take(8).forEachIndexed { idx, log ->
+                                if (idx > 0) ObsidianDivider()
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        val timeLabel = log.startedAt
+                                            .substringAfter("T", "")
+                                            .take(5)
+                                            .ifBlank { log.loggedDate }
+                                        Text(
+                                            text = timeLabel.ifBlank { "●" },
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontFamily = FontFamily.Default,
+                                            color = EmeraldNeon
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(
+                                            text = log.taskTitle,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = TextPrimary,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = logItem.taskTitle,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextPrimary
-                                    )
-                                    Text(
-                                        text = when (logItem.actionType) {
-                                            "focus_session" -> "Фокус-сессия (${logItem.durationSeconds / 60} мин)"
-                                            "created" -> "Создана задача"
-                                            else -> "Выполнено"
-                                        },
-                                        fontSize = 11.sp,
+                                        text = if (log.durationMinutes > 0) "${log.durationMinutes} мин" else log.actionType,
+                                        fontSize = 12.sp,
+                                        fontFamily = FontFamily.Default,
                                         color = TextSecondary
                                     )
                                 }
                             }
-                            Text(
-                                text = logItem.loggedDate.take(10),
-                                fontSize = 11.sp,
-                                color = TextMuted
-                            )
+
+                            completedForDay.take(5).forEachIndexed { idx, task ->
+                                if (state.activityLogs.isNotEmpty() || idx > 0) {
+                                    ObsidianDivider()
+                                }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = task.scheduledTime.ifBlank { "✓" },
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontFamily = FontFamily.Default,
+                                            color = EmeraldNeon
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(
+                                            text = task.title,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = TextPrimary,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = when (lang) {
+                                            "uz" -> "Bajarildi"
+                                            "en" -> "Done"
+                                            else -> "Выполнена"
+                                        },
+                                        fontSize = 12.sp,
+                                        color = EmeraldNeon
+                                    )
+                                }
+                            }
                         }
                     }
                 }
-            }
-        } else {
-            // LIST VIEW: 7-day strip + Category chips + Tasks
-            item(key = "date_strip") {
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(state.calendarDays, key = { it.dateString }) { day ->
-                        val bg = if (day.isSelected) EmeraldSubtle else DarkSurfaceVariant
-                        val border = if (day.isSelected) BorderHighlight else BorderSubtle
 
-                        Column(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(bg)
-                                .border(width = 1.dp, color = border, shape = RoundedCornerShape(14.dp))
-                                .clickable { onAction(TodoUiAction.OnSelectDate(day.dateString)) }
-                                .padding(vertical = 10.dp, horizontal = 12.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = day.dayName,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (day.isSelected) EmeraldLight else TextSecondary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = day.dayNumber,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Black,
-                                color = if (day.isSelected) TextPrimary else TextSecondary
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(if (day.isToday) EmeraldNeon else DarkSurfaceHigh)
-                            )
-                        }
-                    }
+                item(key = "bottom_spacer", contentType = "spacer") {
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
-            }
-
-            item(key = "category_filters") {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(todoCategories, key = { it.first }) { (key, label) ->
-                        val selected = state.selectedCategoryFilter == key
-                        FilterChip(
-                            selected = selected,
-                            onClick = { onAction(TodoUiAction.OnSelectCategoryFilter(key)) },
-                            label = { Text(label, fontSize = 12.sp) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = EmeraldSubtle,
-                                selectedLabelColor = EmeraldLight,
-                                containerColor = DarkSurfaceVariant,
-                                labelColor = TextSecondary
-                            )
-                        )
-                    }
-                }
-            }
-
-            if (state.tasksForSelectedDate.isEmpty()) {
-                item(key = "empty_tasks") {
-                    AthleticCard(backgroundColor = DarkSurface) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "На ${state.selectedDate} задач нет",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Добавьте тренировочную цель, приём креатина или сессию фокуса",
-                                fontSize = 12.sp,
-                                color = TextSecondary
-                            )
-                        }
-                    }
-                }
-            } else {
-                items(state.tasksForSelectedDate, key = { it.id }) { task ->
-                    val isCompleted = task.isCompletedOn(state.selectedDate)
-                    TodoTaskItemCard(
-                        task = task,
-                        isCompleted = isCompleted,
-                        onToggle = { onAction(TodoUiAction.OnToggleTask(task.id)) },
-                        onStartFocus = { onAction(TodoUiAction.OnStartFocusTimer(task)) },
-                        onEdit = { onAction(TodoUiAction.OnOpenTaskModal(task)) },
-                        onDelete = { onAction(TodoUiAction.OnDeleteTask(task.id)) }
-                    )
-                }
-            }
-
-            item(key = "add_task_button") {
-                SecondaryAthleticButton(
-                    text = "+ Добавить задачу",
-                    onClick = { onAction(TodoUiAction.OnOpenTaskModal(null)) },
-                    icon = Icons.Default.Add
-                )
             }
         }
+    }
 
-        item(key = "bottom_spacer") {
-            Spacer(modifier = Modifier.height(32.dp))
-        }
+    if (state.isTaskModalOpen) {
+        CreateOrEditTaskBottomSheet(
+            existingTask = state.editingTask,
+            selectedDate = activeDate,
+            strings = strings,
+            onDismiss = { onAction(TodoUiAction.OnCloseTaskModal) },
+            onSave = { request ->
+                onAction(TodoUiAction.OnSaveTask(request, state.editingTask?.id))
+            },
+            onDelete = state.editingTask?.let { task ->
+                {
+                    onAction(TodoUiAction.OnDeleteTask(task.id))
+                    onAction(TodoUiAction.OnCloseTaskModal)
+                }
+            }
+        )
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TodoTaskItemCard(
+private fun TodoChecklistRow(
     task: TodoTask,
     isCompleted: Boolean,
+    lang: String,
     onToggle: () -> Unit,
-    onStartFocus: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onMoveTomorrow: () -> Unit,
+    onStartFocus: () -> Unit
 ) {
-    val strings = LocalDudaStrings.current
-    val categoryLabel = when (task.category.lowercase()) {
-        "workout" -> if (strings.languageCode == "uz") "Mashg‘ulot" else if (strings.languageCode == "en") "Workout" else "Тренировка"
-        "nutrition" -> if (strings.languageCode == "uz") "Oziqlanish" else if (strings.languageCode == "en") "Nutrition" else "Питание"
-        "supplement" -> if (strings.languageCode == "uz") "Qo‘shimchalar" else if (strings.languageCode == "en") "Supplements" else "Добавки"
-        "cardio" -> if (strings.languageCode == "uz") "Kardio" else if (strings.languageCode == "en") "Cardio" else "Кардио"
-        "recovery" -> if (strings.languageCode == "uz") "Tiklanish" else if (strings.languageCode == "en") "Recovery" else "Восстановление"
-        else -> if (strings.languageCode == "uz") "Umumiy" else if (strings.languageCode == "en") "General" else "Общее"
-    }
-    val priorityColor = when (task.priority.lowercase()) {
-        "high" -> CrimsonRed
-        "low" -> TextMuted
-        else -> AmberWarm
-    }
-
-    AthleticCard(
-        backgroundColor = DarkSurface,
-        borderColor = if (isCompleted) BorderHighlight else BorderSubtle
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onToggle() }
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .clickable(onClick = onToggle),
+            verticalAlignment = Alignment.Top
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clickable(onClick = onToggle),
+                contentAlignment = Alignment.CenterStart
             ) {
-                Checkbox(
-                    checked = isCompleted,
-                    onCheckedChange = { onToggle() },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = EmeraldNeon,
-                        checkmarkColor = DarkBackground,
-                        uncheckedColor = TextMuted
-                    )
+                val boxShape = RoundedCornerShape(6.dp)
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(boxShape)
+                        .background(if (isCompleted) TextPrimary else DarkBackground)
+                        .border(
+                            width = 1.dp,
+                            color = if (isCompleted) TextPrimary else BorderSubtle,
+                            shape = boxShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isCompleted) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = ObsidianInkOnLight,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
+                }
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = task.title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isCompleted) TextSecondary else TextPrimary,
+                    textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None
                 )
-
-                Spacer(modifier = Modifier.width(6.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
+                Spacer(modifier = Modifier.height(3.dp))
+                val statusLabel = if (isCompleted) {
+                    when (lang) { "uz" -> "bajarildi"; "en" -> "completed"; else -> "выполнена" }
+                } else {
+                    when (lang) { "uz" -> "bajarilmagan"; "en" -> "pending"; else -> "не выполнена" }
+                }
+                val catLabel = localizeTodoCategory(task.category, lang)
+                Text(
+                    text = "$catLabel · ${task.durationMinutes} мин · $statusLabel",
+                    fontSize = 12.sp,
+                    color = if (isCompleted) EmeraldNeon else TextSecondary
+                )
+                if (task.notes.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = task.title,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isCompleted) TextSecondary else TextPrimary,
-                        textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None
+                        text = task.notes,
+                        fontSize = 12.sp,
+                        color = TextMuted,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    if (task.notes.isNotBlank()) {
-                        Text(
-                            text = task.notes,
-                            fontSize = 12.sp,
-                            color = TextSecondary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(DarkSurfaceVariant)
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = categoryLabel,
-                                fontSize = 10.sp,
-                                color = EmeraldLight
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(priorityColor)
-                        )
-                        if (!task.scheduledTime.isNullOrBlank()) {
-                            Text(
-                                text = "⏰ ${task.scheduledTime}",
-                                fontSize = 10.sp,
-                                color = TextMuted
-                            )
-                        }
-                        if (task.repeatDaily) {
-                            Text(
-                                text = "↻ ежедневно",
-                                fontSize = 10.sp,
-                                color = InfoAccent
-                            )
-                        }
-                    }
                 }
             }
+        }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = onStartFocus,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Timer,
-                        contentDescription = "Фокус",
-                        tint = EmeraldLight,
-                        modifier = Modifier.size(17.dp)
-                    )
-                }
-                IconButton(
-                    onClick = onEdit,
-                    modifier = Modifier.size(30.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Изменить",
-                        tint = TextSecondary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(30.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Удалить",
-                        tint = TextMuted,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
+        Spacer(modifier = Modifier.height(10.dp))
+
+        FlowRow(
+            modifier = Modifier.padding(start = 44.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ObsidianOutlineButton(
+                text = when (lang) { "uz" -> "Tahrirlash"; "en" -> "Edit"; else -> "Изменить" },
+                onClick = onEdit
+            )
+            ObsidianOutlineButton(
+                text = when (lang) { "uz" -> "Ko'chirish"; "en" -> "Move +1d"; else -> "Перенести" },
+                onClick = onMoveTomorrow
+            )
+            ObsidianOutlineButton(
+                text = when (lang) { "uz" -> "Jurnal / Fokus"; "en" -> "Focus"; else -> "Журнал" },
+                onClick = onStartFocus
+            )
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MonthCalendarOverviewCard(
-    selectedDate: String,
-    allTasks: List<TodoTask>,
-    onSelectDate: (String) -> Unit
+private fun InlineTaskEditorCard(
+    task: TodoTask,
+    strings: DudaStrings,
+    onSave: (SaveTodoRequestDto) -> Unit,
+    onDelete: () -> Unit,
+    onCancel: () -> Unit
 ) {
-    val yearMonth = selectedDate.take(7) // "YYYY-MM"
-    val daysInMonth = (1..30).map { day ->
-        "$yearMonth-${day.toString().padStart(2, '0')}"
-    }
+    val lang = strings.languageCode
+    var title by remember(task.id) { mutableStateOf(task.title) }
+    var date by remember(task.id) { mutableStateOf(task.scheduledDate) }
+    var category by remember(task.id) { mutableStateOf(task.category) }
+    var durationText by remember(task.id) { mutableStateOf(task.durationMinutes.toString()) }
+    var priority by remember(task.id) { mutableStateOf(task.priority) }
 
-    AthleticCard(backgroundColor = DarkSurface) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Text(
-                text = "Календарь выполнения ($yearMonth)",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            FlowRow(
-                maxItemsInEachRow = 7,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                daysInMonth.forEach { dateStr ->
-                    val completedOnDate = allTasks.count { it.isCompletedOn(dateStr) }
-                    val isSelected = dateStr == selectedDate
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                when {
-                                    isSelected -> EmeraldNeon
-                                    completedOnDate > 0 -> EmeraldSubtle
-                                    else -> DarkSurfaceVariant
-                                }
-                            )
-                            .border(
-                                1.dp,
-                                if (isSelected) EmeraldLight else BorderSubtle,
-                                RoundedCornerShape(8.dp)
-                            )
-                            .clickable { onSelectDate(dateStr) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = dateStr.takeLast(2).removePrefix("0"),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isSelected) Color.Black else TextPrimary
-                            )
-                            if (completedOnDate > 0) {
-                                Text(
-                                    text = "✓$completedOnDate",
-                                    fontSize = 8.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) Color.Black else EmeraldLight
-                                )
-                            }
-                        }
-                    }
-                }
+    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+        Text(
+            text = when (lang) {
+                "uz" -> "Vazifani tahrirlash"
+                "en" -> "Edit task"
+                else -> "Редактирование задачи"
+            },
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        ObsidianLabeledField(
+            label = strings.todoTaskTitleLabel,
+            value = title,
+            onValueChange = { title = it },
+            placeholder = strings.todoTaskTitleLabel
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        ObsidianLabeledField(
+            label = when (lang) { "uz" -> "Sana"; "en" -> "Date"; else -> "Дата" },
+            value = date,
+            onValueChange = { date = it },
+            placeholder = "YYYY-MM-DD"
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = strings.todoCategoryLabel,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = TextSecondary
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf("workout", "nutrition", "supplement", "work", "recovery").forEach { key ->
+                ObsidianPillTab(
+                    text = localizeTodoCategory(key, lang),
+                    selected = category == key,
+                    onClick = { category = key }
+                )
             }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        ObsidianLabeledField(
+            label = when (lang) {
+                "uz" -> "Davomiyligi, min"
+                "en" -> "Duration, min"
+                else -> "Длительность, мин"
+            },
+            value = durationText,
+            onValueChange = { input -> durationText = input.filter { it.isDigit() } },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            placeholder = "30"
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = strings.todoPriorityLabel,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = TextSecondary
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("low", "medium", "high").forEach { p ->
+                ObsidianPillTab(
+                    text = localizePriority(p, lang),
+                    selected = priority == p,
+                    onClick = { priority = p }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ObsidianPrimaryButton(
+                text = strings.save,
+                onClick = {
+                    if (title.isNotBlank()) {
+                        onSave(
+                            SaveTodoRequestDto(
+                                title = title.trim(),
+                                notes = task.notes,
+                                category = category,
+                                priority = priority,
+                                scheduledDate = date.trim().ifBlank { task.scheduledDate },
+                                scheduledTime = task.startTime,
+                                repeatDaily = task.repeatDaily,
+                                durationMinutes = durationText.toIntOrNull()?.coerceAtLeast(1) ?: task.durationMinutes
+                            )
+                        )
+                    }
+                },
+                enabled = title.isNotBlank()
+            )
+            ObsidianOutlineButton(
+                text = strings.delete,
+                onClick = onDelete,
+                textColor = CrimsonRed,
+                borderColor = CrimsonRed.copy(alpha = 0.5f)
+            )
+            ObsidianOutlineButton(
+                text = strings.cancel,
+                onClick = onCancel
+            )
         }
     }
 }
@@ -764,37 +1114,59 @@ private fun MonthCalendarOverviewCard(
 @Composable
 private fun CreateOrEditTaskBottomSheet(
     existingTask: TodoTask?,
-    defaultDate: String,
+    selectedDate: String,
+    strings: DudaStrings,
+    onDismiss: () -> Unit,
     onSave: (SaveTodoRequestDto) -> Unit,
-    onDismiss: () -> Unit
+    onDelete: (() -> Unit)? = null
 ) {
-    val strings = LocalDudaStrings.current
-    val todoCategories = remember(strings) { getTodoCategories(strings) }
+    val lang = strings.languageCode
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     var title by remember { mutableStateOf(existingTask?.title ?: "") }
     var notes by remember { mutableStateOf(existingTask?.notes ?: "") }
-    var category by remember { mutableStateOf(existingTask?.category?.lowercase() ?: "workout") }
-    var priority by remember { mutableStateOf(existingTask?.priority?.lowercase() ?: "medium") }
+    var scheduledDate by remember { mutableStateOf(existingTask?.scheduledDate?.ifBlank { selectedDate } ?: selectedDate) }
     var scheduledTime by remember { mutableStateOf(existingTask?.scheduledTime ?: "") }
-    var repeatDaily by remember { mutableStateOf(existingTask?.repeatDaily ?: true) }
+    var durationText by remember { mutableStateOf((existingTask?.durationMinutes ?: 30).toString()) }
+    var category by remember { mutableStateOf(existingTask?.category ?: "workout") }
+    var priority by remember { mutableStateOf(existingTask?.priority ?: "medium") }
+    var repeatDaily by remember { mutableStateOf(existingTask?.repeatDaily ?: false) }
 
     val quickTemplates = listOf(
-        Triple("Силовая тренировка дня", "Разминка + рабочие подходы", "workout"),
-        Triple("Креатин моногидрат 5г", "Запить стаканом воды", "supplement"),
-        Triple("Дневная норма белка (2г/кг)", "Контроль КБЖУ", "nutrition"),
-        Triple("Кардио 30 минут (Зона 2)", "Пульс 125–135 уд/мин", "cardio"),
-        Triple("Здоровый сон 8 часов", "Восстановление ЦНС", "recovery")
+        Triple(
+            when (lang) { "uz" -> "Kreatin 5g ichish"; "en" -> "Take 5g Creatine"; else -> "Приём креатина 5г" },
+            when (lang) { "uz" -> "Mashg'ulotdan keyin suv bilan"; "en" -> "With water post-workout"; else -> "С водой после тренировки" },
+            "supplement"
+        ),
+        Triple(
+            when (lang) { "uz" -> "3L suv ichish"; "en" -> "Drink 3L Water"; else -> "Выпить 3 литра воды" },
+            when (lang) { "uz" -> "Kun davomida gidratatsiya"; "en" -> "Hydration throughout the day"; else -> "Гидратация в течение дня" },
+            "nutrition"
+        ),
+        Triple(
+            when (lang) { "uz" -> "20 min cho'zilish"; "en" -> "20 min Mobility"; else -> "Растяжка и МФР 20 мин" },
+            when (lang) { "uz" -> "Yelka va bel"; "en" -> "Shoulders & Lower back"; else -> "Плечи и поясница" },
+            "recovery"
+        ),
+        Triple(
+            when (lang) { "uz" -> "8 soat uyqu"; "en" -> "8 Hours Sleep"; else -> "Сон 8+ часов" },
+            when (lang) { "uz" -> "23:00 gacha uxlash"; "en" -> "Sleep before 23:00"; else -> "Отбой до 23:00" },
+            "recovery"
+        )
     )
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface
+        containerColor = DarkSurface,
+        contentColor = TextPrimary
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 10.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -802,9 +1174,17 @@ private fun CreateOrEditTaskBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (existingTask != null) strings.save else strings.todoNewTaskTitle,
+                    text = if (existingTask != null) {
+                        when (lang) {
+                            "uz" -> "Vazifani tahrirlash"
+                            "en" -> "Edit Task"
+                            else -> "Редактировать задачу"
+                        }
+                    } else {
+                        strings.todoNewTaskTitle
+                    },
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Black,
+                    fontWeight = FontWeight.SemiBold,
                     color = TextPrimary
                 )
                 IconButton(onClick = onDismiss) {
@@ -815,185 +1195,254 @@ private fun CreateOrEditTaskBottomSheet(
             if (existingTask == null) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = if (strings.languageCode == "uz") "TEZKOR SHABLONLAR" else if (strings.languageCode == "en") "QUICK TEMPLATES" else "БЫСТРЫЕ ШАБЛОНЫ",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextMuted
+                    text = when (lang) {
+                        "uz" -> "Tezkor shablonlar"
+                        "en" -> "Quick templates"
+                        else -> "Быстрые шаблоны"
+                    },
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextSecondary
                 )
-                Spacer(modifier = Modifier.height(6.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    items(quickTemplates) { (tplTitle, tplNotes, tplCat) ->
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(DarkSurfaceVariant)
-                                .border(1.dp, BorderSubtle, RoundedCornerShape(8.dp))
-                                .clickable {
-                                    title = tplTitle
-                                    notes = tplNotes
-                                    category = tplCat
-                                }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
-                        ) {
-                            Text("+ $tplTitle", fontSize = 11.sp, color = EmeraldLight, fontWeight = FontWeight.SemiBold)
-                        }
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(quickTemplates, key = { it.first }) { (tplTitle, tplNotes, tplCat) ->
+                        ObsidianPillTab(
+                            text = "+ $tplTitle",
+                            selected = false,
+                            onClick = {
+                                title = tplTitle
+                                notes = tplNotes
+                                category = tplCat
+                            }
+                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            OutlinedTextField(
+            ObsidianLabeledField(
+                label = strings.todoTaskTitleLabel,
                 value = title,
                 onValueChange = { title = it },
-                label = { Text(strings.todoTaskTitleLabel) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = ObsidianWell,
-                    unfocusedContainerColor = ObsidianWell,
-                    focusedBorderColor = EmeraldNeon,
-                    unfocusedBorderColor = BorderSubtle,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
-                )
+                placeholder = strings.todoTaskTitleLabel
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            OutlinedTextField(
+            ObsidianLabeledField(
+                label = strings.todoTargetLabel,
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text(strings.todoTargetLabel) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = ObsidianWell,
-                    unfocusedContainerColor = ObsidianWell,
-                    focusedBorderColor = EmeraldNeon,
-                    unfocusedBorderColor = BorderSubtle,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
-                )
+                placeholder = strings.todoTargetLabel
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            OutlinedTextField(
-                value = scheduledTime,
-                onValueChange = { scheduledTime = it },
-                label = {
-                    Text(
-                        if (strings.languageCode == "uz") "Eslatma vaqti (masalan: 18:00)"
-                        else if (strings.languageCode == "en") "Reminder time (e.g. 18:00)"
-                        else "Время напоминания (напр. 18:00)"
-                    )
-                },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = ObsidianWell,
-                    unfocusedContainerColor = ObsidianWell,
-                    focusedBorderColor = EmeraldNeon,
-                    unfocusedBorderColor = BorderSubtle,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ObsidianLabeledField(
+                    label = when (lang) { "uz" -> "Sana"; "en" -> "Date"; else -> "Дата" },
+                    value = scheduledDate,
+                    onValueChange = { scheduledDate = it },
+                    placeholder = "YYYY-MM-DD",
+                    modifier = Modifier.weight(1f)
                 )
+                ObsidianLabeledField(
+                    label = when (lang) { "uz" -> "Vaqt"; "en" -> "Time"; else -> "Время" },
+                    value = scheduledTime,
+                    onValueChange = { scheduledTime = it },
+                    placeholder = "18:00",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            ObsidianLabeledField(
+                label = when (lang) {
+                    "uz" -> "Davomiyligi, min"
+                    "en" -> "Duration, min"
+                    else -> "Длительность, мин"
+                },
+                value = durationText,
+                onValueChange = { input -> durationText = input.filter { it.isDigit() } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                placeholder = "30"
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text(strings.todoCategoryLabel, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMuted)
+            Text(
+                text = strings.todoCategoryLabel,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = TextSecondary
+            )
             Spacer(modifier = Modifier.height(6.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(todoCategories.filter { it.first != "all" }, key = { it.first }) { (catKey, catLabel) ->
-                    FilterChip(
-                        selected = category == catKey,
-                        onClick = { category = catKey },
-                        label = { Text(catLabel, fontSize = 12.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldSubtle,
-                            selectedLabelColor = EmeraldNeon
-                        )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf("workout", "nutrition", "supplement", "work", "recovery").forEach { key ->
+                    ObsidianPillTab(
+                        text = localizeTodoCategory(key, lang),
+                        selected = category == key,
+                        onClick = { category = key }
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Text(strings.todoPriorityLabel, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMuted)
+            Text(
+                text = strings.todoPriorityLabel,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = TextSecondary
+            )
             Spacer(modifier = Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val priorities = listOf(
-                    "high" to (if (strings.languageCode == "uz") "Yuqori" else if (strings.languageCode == "en") "High" else "Высокий"),
-                    "medium" to (if (strings.languageCode == "uz") "O‘rtacha" else if (strings.languageCode == "en") "Medium" else "Средний"),
-                    "low" to (if (strings.languageCode == "uz") "Past" else if (strings.languageCode == "en") "Low" else "Низкий")
-                )
-                priorities.forEach { (pKey, pLabel) ->
-                    FilterChip(
-                        selected = priority == pKey,
-                        onClick = { priority = pKey },
-                        label = { Text(pLabel, fontSize = 12.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldSubtle,
-                            selectedLabelColor = EmeraldNeon
-                        )
+                listOf("low", "medium", "high").forEach { key ->
+                    ObsidianPillTab(
+                        text = localizePriority(key, lang),
+                        selected = priority == key,
+                        onClick = { priority = key }
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(strings.todoRecurringDaily, fontSize = 14.sp, color = TextPrimary)
+                Text(
+                    text = strings.todoRecurringDaily,
+                    fontSize = 14.sp,
+                    color = TextSoft
+                )
                 Switch(
                     checked = repeatDaily,
                     onCheckedChange = { repeatDaily = it },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = DarkBackground,
-                        checkedTrackColor = EmeraldNeon
+                        checkedTrackColor = EmeraldNeon,
+                        uncheckedThumbColor = TextSecondary,
+                        uncheckedTrackColor = DarkSurfaceHigh
                     )
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = {
-                    if (title.isBlank()) return@Button
-                    onSave(
-                        SaveTodoRequestDto(
-                            title = title.trim(),
-                            notes = notes.trim(),
-                            category = category,
-                            priority = priority,
-                            scheduledDate = if (repeatDaily) "" else defaultDate,
-                            scheduledTime = scheduledTime.trim().ifBlank { null },
-                            repeatDaily = repeatDaily
-                        )
-                    )
-                },
-                enabled = title.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = EmeraldNeon,
-                    contentColor = DarkBackground
-                ),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text(strings.save, fontWeight = FontWeight.Bold)
+                if (onDelete != null) {
+                    ObsidianOutlineButton(
+                        text = strings.delete,
+                        onClick = onDelete,
+                        textColor = CrimsonRed,
+                        borderColor = CrimsonRed.copy(alpha = 0.5f)
+                    )
+                }
+                ObsidianOutlineButton(
+                    text = strings.cancel,
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    fillWidth = true
+                )
+                ObsidianPrimaryButton(
+                    text = strings.save,
+                    onClick = {
+                        if (title.isNotBlank()) {
+                            onSave(
+                                SaveTodoRequestDto(
+                                    title = title.trim(),
+                                    notes = notes.trim(),
+                                    category = category,
+                                    priority = priority,
+                                    scheduledDate = scheduledDate.trim().ifBlank { selectedDate },
+                                    scheduledTime = scheduledTime.trim().ifBlank { null },
+                                    repeatDaily = repeatDaily,
+                                    durationMinutes = durationText.toIntOrNull()?.coerceAtLeast(1) ?: 30
+                                )
+                            )
+                        }
+                    },
+                    enabled = title.isNotBlank(),
+                    modifier = Modifier.weight(1f),
+                    fillWidth = true
+                )
             }
-
-            Spacer(modifier = Modifier.height(22.dp))
         }
     }
+}
+
+private fun localizeTodoCategory(category: String, lang: String): String = when (category.lowercase()) {
+    "workout" -> when (lang) { "uz" -> "Mashg'ulot"; "en" -> "Workout"; else -> "Тренировка" }
+    "nutrition" -> when (lang) { "uz" -> "Oziqlanish"; "en" -> "Nutrition"; else -> "Питание" }
+    "supplement" -> when (lang) { "uz" -> "Qo'shimcha"; "en" -> "Supps"; else -> "Добавки" }
+    "cardio" -> when (lang) { "uz" -> "Kardio"; "en" -> "Cardio"; else -> "Кардио" }
+    "recovery" -> when (lang) { "uz" -> "Tiklanish"; "en" -> "Recovery"; else -> "Восстановление" }
+    else -> when (lang) { "uz" -> "Ish"; "en" -> "Work"; else -> "Работа" }
+}
+
+private fun localizePriority(priority: String, lang: String): String = when (priority.lowercase()) {
+    "high" -> when (lang) { "uz" -> "Yuqori"; "en" -> "High"; else -> "Высокий" }
+    "low" -> when (lang) { "uz" -> "Past"; "en" -> "Low"; else -> "Низкий" }
+    else -> when (lang) { "uz" -> "O'rta"; "en" -> "Medium"; else -> "Средний" }
+}
+
+private fun formatMmSs(totalSeconds: Int): String {
+    val safe = totalSeconds.coerceAtLeast(0)
+    val mins = safe / 60
+    val secs = safe % 60
+    return "${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}"
+}
+
+private fun currentTodayIso(): String =
+    Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
+
+private fun shiftIsoDate(isoDate: String, deltaDays: Int): String {
+    val base = runCatching { LocalDate.parse(isoDate) }
+        .getOrElse { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
+    return if (deltaDays >= 0) {
+        base.plus(deltaDays, DateTimeUnit.DAY).toString()
+    } else {
+        base.minus(-deltaDays, DateTimeUnit.DAY).toString()
+    }
+}
+
+private fun formatFullPlanDate(isoDate: String, lang: String): String {
+    val date = runCatching { LocalDate.parse(isoDate) }.getOrNull() ?: return isoDate
+    val weekday = when (date.dayOfWeek) {
+        DayOfWeek.MONDAY -> when (lang) { "uz" -> "Dushanba"; "en" -> "Monday"; else -> "Понедельник" }
+        DayOfWeek.TUESDAY -> when (lang) { "uz" -> "Seshanba"; "en" -> "Tuesday"; else -> "Вторник" }
+        DayOfWeek.WEDNESDAY -> when (lang) { "uz" -> "Chorshanba"; "en" -> "Wednesday"; else -> "Среда" }
+        DayOfWeek.THURSDAY -> when (lang) { "uz" -> "Payshanba"; "en" -> "Thursday"; else -> "Четверг" }
+        DayOfWeek.FRIDAY -> when (lang) { "uz" -> "Juma"; "en" -> "Friday"; else -> "Пятница" }
+        DayOfWeek.SATURDAY -> when (lang) { "uz" -> "Shanba"; "en" -> "Saturday"; else -> "Суббота" }
+        DayOfWeek.SUNDAY -> when (lang) { "uz" -> "Yakshanba"; "en" -> "Sunday"; else -> "Воскресенье" }
+        else -> ""
+    }
+    val month = when (date.monthNumber) {
+        1 -> when (lang) { "uz" -> "yanvar"; "en" -> "January"; else -> "января" }
+        2 -> when (lang) { "uz" -> "fevral"; "en" -> "February"; else -> "февраля" }
+        3 -> when (lang) { "uz" -> "mart"; "en" -> "March"; else -> "марта" }
+        4 -> when (lang) { "uz" -> "aprel"; "en" -> "April"; else -> "апреля" }
+        5 -> when (lang) { "uz" -> "may"; "en" -> "May"; else -> "мая" }
+        6 -> when (lang) { "uz" -> "iyun"; "en" -> "June"; else -> "июня" }
+        7 -> when (lang) { "uz" -> "iyul"; "en" -> "July"; else -> "июля" }
+        8 -> when (lang) { "uz" -> "avgust"; "en" -> "August"; else -> "августа" }
+        9 -> when (lang) { "uz" -> "sentyabr"; "en" -> "September"; else -> "сентября" }
+        10 -> when (lang) { "uz" -> "oktyabr"; "en" -> "October"; else -> "октября" }
+        11 -> when (lang) { "uz" -> "noyabr"; "en" -> "November"; else -> "ноября" }
+        else -> when (lang) { "uz" -> "dekabr"; "en" -> "December"; else -> "декабря" }
+    }
+    return "$weekday, ${date.dayOfMonth} $month ${date.year}"
 }

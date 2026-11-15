@@ -1,89 +1,91 @@
 package dev.neverpaid.health.features.body
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.neverpaid.health.core.designsystem.AmberWarm
-import dev.neverpaid.health.core.designsystem.AthleticCard
-import dev.neverpaid.health.core.designsystem.BorderHighlight
+import dev.neverpaid.health.core.designsystem.BorderDivider
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
-import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.EmeraldSubtle
-import dev.neverpaid.health.core.designsystem.InfoAccent
-import dev.neverpaid.health.core.designsystem.ObsidianWell
-import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
-import dev.neverpaid.health.core.designsystem.StatCounter
+import dev.neverpaid.health.core.designsystem.ObsidianCard
+import dev.neverpaid.health.core.designsystem.ObsidianDivider
+import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
+import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
+import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
+import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
+import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
+import dev.neverpaid.health.core.designsystem.ObsidianPillTab
+import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
+import dev.neverpaid.health.core.designsystem.ObsidianProgressBar
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.domain.model.BodyMeasurement
 import kotlin.math.abs
 import kotlin.math.roundToInt
+
+private enum class BodyChartMetric {
+    WEIGHT,
+    WAIST,
+    BODY_FAT
+}
+
+private enum class DietMode {
+    CUT,
+    MAINTAIN,
+    BULK
+}
 
 @Composable
 fun BodyRoute(
@@ -98,32 +100,48 @@ fun BodyRoute(
         }
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = DarkBackground
-    ) { innerPadding ->
-        BodyScreen(
-            state = state,
-            onAction = viewModel::onAction,
-            modifier = Modifier.padding(innerPadding)
-        )
-    }
+    BodyScreen(
+        state = state,
+        onAction = viewModel::onAction,
+        modifier = modifier
+    )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BodyScreen(
     state: BodyUiState,
     onAction: (BodyUiAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (state.isLoading && state.measurements.isEmpty()) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = EmeraldNeon)
-        }
-        return
-    }
+    val strings = LocalDudaStrings.current
+    val lang = strings.languageCode
 
     var isAnthropometrySheetOpen by remember { mutableStateOf(false) }
+    var chartMetric by rememberSaveable { mutableStateOf(BodyChartMetric.WEIGHT) }
+    var dietMode by rememberSaveable { mutableStateOf(DietMode.MAINTAIN) }
+
+    // Inline Add Measurement fields
+    var weightInput by remember(state.latestWeightKg) { mutableStateOf(formatOneDecimal(state.latestWeightKg)) }
+    var waistInput by remember { mutableStateOf("") }
+    var chestInput by remember { mutableStateOf("") }
+    var bicepsInput by remember { mutableStateOf("") }
+    var bodyFatInput by remember { mutableStateOf("") }
+    var notesInput by remember { mutableStateOf("") }
+
+    // Inline Calculator fields
+    var calcHeightInput by remember(state.heightCm) { mutableStateOf(state.heightCm.roundToInt().toString()) }
+    var calcWeightInput by remember(state.latestWeightKg) { mutableStateOf(formatOneDecimal(state.latestWeightKg)) }
+    var calcAgeInput by remember(state.age) { mutableStateOf(state.age.toString()) }
+    var calcGender by remember(state.gender) { mutableStateOf(state.gender) }
+    var calcActivity by remember(state.activityMultiplier) { mutableStateOf(state.activityMultiplier) }
+
+    // Inline Target weight field
+    var targetWeightInput by remember(state.targetWeightKg, state.latestWeightKg) {
+        mutableStateOf(
+            state.targetWeightKg?.let { formatOneDecimal(it) } ?: formatOneDecimal(state.latestWeightKg)
+        )
+    }
 
     if (isAnthropometrySheetOpen) {
         AnthropometryCalculatorBottomSheet(
@@ -132,15 +150,17 @@ fun BodyScreen(
             currentWeightKg = state.latestWeightKg,
             onDismiss = { isAnthropometrySheetOpen = false },
             onSaveMetrics = { bf, adonis ->
-                onAction(BodyUiAction.OnSaveFullMeasurement(
-                    weightKg = state.latestWeightKg,
-                    heightCm = state.heightCm,
-                    bodyFatPct = bf,
-                    waistCm = null,
-                    chestCm = null,
-                    bicepsCm = null,
-                    notes = "Индекс Адониса: ${((adonis * 100).toInt() / 100.0)}"
-                ))
+                onAction(
+                    BodyUiAction.OnSaveFullMeasurement(
+                        weightKg = state.latestWeightKg,
+                        heightCm = state.heightCm,
+                        bodyFatPct = bf,
+                        waistCm = null,
+                        chestCm = null,
+                        bicepsCm = null,
+                        notes = "Adonis Index: ${((adonis * 100).toInt() / 100.0)}"
+                    )
+                )
                 isAnthropometrySheetOpen = false
             }
         )
@@ -150,6 +170,8 @@ fun BodyScreen(
         AddMeasurementBottomSheet(
             defaultWeight = state.latestWeightKg,
             defaultHeight = state.heightCm,
+            unitLabel = strings.unitKg,
+            lang = lang,
             onSave = { w, h, bf, waist, chest, biceps, notes ->
                 onAction(BodyUiAction.OnSaveFullMeasurement(w, h, bf, waist, chest, biceps, notes))
             },
@@ -161,427 +183,846 @@ fun BodyScreen(
         TargetWeightDialog(
             currentTarget = state.targetWeightKg,
             latestWeight = state.latestWeightKg,
+            unitLabel = strings.unitKg,
+            lang = lang,
             onSave = { onAction(BodyUiAction.OnSaveTargetWeight(it)) },
             onDismiss = { onAction(BodyUiAction.OnCloseTargetWeightModal) }
         )
     }
 
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .background(DarkBackground)
     ) {
-        item(key = "header") {
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Вес, Замеры и ИМТ",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Black,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "Трекинг веса, скользящая средняя за 7 дней и калькулятор TDEE",
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    OutlinedButton(
-                        onClick = { isAnthropometrySheetOpen = true },
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.height(38.dp)
-                    ) {
-                        Text("Антропометрия", fontSize = 12.sp, color = EmeraldNeon, fontWeight = FontWeight.Bold)
-                    }
-
-                    OutlinedButton(
-                        onClick = { onAction(BodyUiAction.OnToggleBmiCalculator) },
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.height(38.dp)
-                    ) {
-                        Icon(Icons.Default.Calculate, contentDescription = null, tint = EmeraldLight, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("TDEE", fontSize = 12.sp, color = EmeraldLight, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
-
-        // Body Target Progress Card (BodyTargetProgressCard.tsx)
-        item(key = "target_progress_card") {
-            BodyTargetProgressCard(
-                startWeight = state.startWeightKg,
-                currentWeight = state.latestWeightKg,
-                targetWeight = state.targetWeightKg,
-                onEditTarget = { onAction(BodyUiAction.OnOpenTargetWeightModal) }
-            )
-        }
-
-        // Toggleable BMI & TDEE Calculator Card (BMICalculatorCard.tsx)
-        item(key = "bmi_calculator_card") {
-            AnimatedVisibility(visible = state.showBmiCalculator) {
-                BMICalculatorInteractiveCard(
-                    state = state,
-                    onUpdateParams = { g, a, h, w, act ->
-                        onAction(BodyUiAction.OnUpdateBmiParams(g, a, h, w, act))
-                    }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            // Header — Figma 11
+            item(key = "header", contentType = "header") {
+                ObsidianPageHeader(
+                    title = strings.bodyTitle,
+                    subtitle = strings.bodySubtitle
                 )
             }
-        }
 
-        // Current Weight & 7-Day SMA Card
-        item(key = "weight_card") {
-            AthleticCard(backgroundColor = DarkSurface) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(EmeraldSubtle),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.MonitorWeight,
-                                    contentDescription = null,
-                                    tint = EmeraldNeon,
-                                    modifier = Modifier.size(20.dp)
+            if (state.isLoading && state.measurements.isEmpty()) {
+                item(key = "loading_card", contentType = "loading") {
+                    ObsidianLoadingCard(
+                        title = strings.stateLoadingTitle,
+                        hint = strings.stateLoadingHint,
+                        kicker = "01 · ${strings.bodyTitle}"
+                    )
+                }
+            } else {
+                // Summary KPI Stack (3 cards) — Figma 11
+                item(key = "kpi_current_weight", contentType = "kpi") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = "${formatOneDecimal(state.latestWeightKg)} ${strings.unitKg}",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = EmeraldNeon
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = strings.bodyCurrentWeight,
+                            fontSize = 13.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+
+                item(key = "kpi_target_weight", contentType = "kpi") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                val targetLabel = state.targetWeightKg?.let {
+                                    "${formatOneDecimal(it)} ${strings.unitKg}"
+                                } ?: "—"
+                                Text(
+                                    text = targetLabel,
+                                    fontSize = 30.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "Maqsadli vazn"
+                                        "en" -> "Target weight"
+                                        else -> "Целевой вес"
+                                    },
+                                    fontSize = 13.sp,
+                                    color = TextSecondary
                                 )
                             }
-                            Spacer(modifier = Modifier.width(10.dp))
+                            ObsidianOutlineButton(
+                                text = when (lang) {
+                                    "uz" -> "O'zgartirish"
+                                    "en" -> "Edit"
+                                    else -> "Изменить"
+                                },
+                                onClick = { onAction(BodyUiAction.OnOpenTargetWeightModal) }
+                            )
+                        }
+                        val target = state.targetWeightKg
+                        if (target != null && target > 0.0) {
+                            val totalDiff = abs(target - state.startWeightKg).coerceAtLeast(0.5)
+                            val remaining = abs(target - state.latestWeightKg)
+                            val progress = (1.0 - (remaining / totalDiff)).toFloat().coerceIn(0.04f, 1f)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            ObsidianProgressBar(progress = progress, heightDp = 6, color = EmeraldNeon)
+                        }
+                    }
+                }
+
+                item(key = "kpi_sma_weight", contentType = "kpi") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        val sma = state.movingAverage7DayKg ?: state.latestWeightKg
+                        Text(
+                            text = "${formatOneDecimal(sma)} ${strings.unitKg}",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "${strings.bodyMovingAverage} · SMA 7",
+                            fontSize = 13.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+
+                // Weight & Body Composition Dynamics Chart Card — Figma 11
+                item(key = "dynamics_chart_card", contentType = "chart") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Vazn dinamikasi"
+                                "en" -> "Weight & body trend"
+                                else -> "Динамика веса"
+                            },
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ObsidianPillTab(
+                                text = when (lang) { "uz" -> "Vazn"; "en" -> "Weight"; else -> "Вес" },
+                                selected = chartMetric == BodyChartMetric.WEIGHT,
+                                onClick = { chartMetric = BodyChartMetric.WEIGHT }
+                            )
+                            ObsidianPillTab(
+                                text = when (lang) { "uz" -> "Bel"; "en" -> "Waist"; else -> "Обхваты" },
+                                selected = chartMetric == BodyChartMetric.WAIST,
+                                onClick = { chartMetric = BodyChartMetric.WAIST }
+                            )
+                            ObsidianPillTab(
+                                text = when (lang) { "uz" -> "Yog', %"; "en" -> "Body fat %"; else -> "Жир, %" },
+                                selected = chartMetric == BodyChartMetric.BODY_FAT,
+                                onClick = { chartMetric = BodyChartMetric.BODY_FAT }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        val series = remember(state.measurements, chartMetric) {
+                            state.measurements
+                                .sortedBy { it.loggedDate.ifBlank { it.id } }
+                                .mapNotNull { m ->
+                                    val value = when (chartMetric) {
+                                        BodyChartMetric.WEIGHT -> m.weightKg
+                                        BodyChartMetric.WAIST -> m.waistCm
+                                        BodyChartMetric.BODY_FAT -> m.bodyFatPercentage
+                                    }
+                                    value?.let { v ->
+                                        val dateStr = m.loggedDate.ifBlank {
+                                            PlatformBridge.formatDate(m.dateEpochMs, "dd.MM")
+                                        }
+                                        val shortDate = if (dateStr.length >= 10 && dateStr[4] == '-') {
+                                            "${dateStr.substring(8, 10)}.${dateStr.substring(5, 7)}"
+                                        } else {
+                                            dateStr.takeLast(5)
+                                        }
+                                        shortDate to v
+                                    }
+                                }
+                                .takeLast(8)
+                        }
+
+                        if (series.isEmpty()) {
+                            ObsidianInnerWell {
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "Grafik uchun o'lchovlar yo'q"
+                                        "en" -> "No measurements recorded for this metric yet"
+                                        else -> "Нет замеров для отображения графика"
+                                    },
+                                    fontSize = 13.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        } else {
+                            BodyTrendLineChart(
+                                points = series,
+                                unitLabel = when (chartMetric) {
+                                    BodyChartMetric.WEIGHT -> strings.unitKg
+                                    BodyChartMetric.WAIST -> "см"
+                                    BodyChartMetric.BODY_FAT -> "%"
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
                             Text(
-                                text = "ТЕКУЩИЕ ПОКАЗАТЕЛИ ТЕЛА",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextMuted,
-                                letterSpacing = 1.sp
+                                text = when (lang) {
+                                    "uz" -> "Yashil chiziq — oxirgi ${series.size} o'lchov · SMA 7"
+                                    "en" -> "Emerald line — last ${series.size} logs · SMA 7 uses last 7 logs"
+                                    else -> "Зелёная линия — последние ${series.size} замеров · SMA 7 по 7 замерам"
+                                },
+                                fontSize = 12.sp,
+                                color = TextMuted
                             )
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                // Recent Measurements List Card — Figma 11
+                item(key = "recent_measurements_card", contentType = "measurements") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Oxirgi o'lchovlar"
+                                "en" -> "Recent measurements"
+                                else -> "Последние замеры"
+                            },
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround
-                    ) {
-                        StatCounter(
-                            title = "Текущий вес",
-                            value = "${state.latestWeightKg}",
-                            unit = "кг",
-                            accentColor = TextPrimary
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        if (state.measurements.isEmpty()) {
+                            ObsidianInnerWell {
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "O'lchovlar tarixi bo'sh"
+                                        "en" -> "No measurements logged yet"
+                                        else -> "История замеров пока пуста"
+                                    },
+                                    fontSize = 13.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        } else {
+                            state.measurements.take(10).forEachIndexed { index, m ->
+                                if (index > 0) ObsidianDivider()
+                                BodyMeasurementCleanRow(
+                                    measurement = m,
+                                    unitLabel = strings.unitKg,
+                                    lang = lang,
+                                    onDelete = {
+                                        val dateKey = m.loggedDate.ifBlank {
+                                            PlatformBridge.formatDate(m.dateEpochMs, "yyyy-MM-dd")
+                                        }
+                                        onAction(BodyUiAction.OnDeleteMeasurement(dateKey))
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Inline Add Measurement Card — Figma 11
+                item(key = "add_measurement_card", contentType = "add_measurement") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "O'lchov qo'shish"
+                                "en" -> "Add measurement"
+                                else -> "Добавить замер"
+                            },
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
                         )
-                        StatCounter(
-                            title = "Средняя (7 дн.)",
-                            value = "${state.movingAverage7DayKg ?: state.latestWeightKg}",
-                            unit = "кг",
-                            accentColor = EmeraldNeon
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        ObsidianLabeledField(
+                            label = "${when (lang) { "uz" -> "Vazn"; "en" -> "Weight"; else -> "Вес" }}, ${strings.unitKg}",
+                            value = weightInput,
+                            onValueChange = { weightInput = it },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            placeholder = "78"
                         )
-                        StatCounter(
-                            title = "ИМТ (BMI)",
-                            value = "${state.bmi}",
-                            unit = "",
-                            accentColor = InfoAccent
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "O'lchamlar · ixtiyoriy"
+                                "en" -> "Circumferences · optional"
+                                else -> "Обхваты · необязательно"
+                            },
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextSecondary
                         )
-                        StatCounter(
-                            title = "Норма TDEE",
-                            value = "${state.tdeeCalories}",
-                            unit = "ккал",
-                            accentColor = AmberWarm
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            ObsidianLabeledField(
+                                label = when (lang) { "uz" -> "Bel, sm"; "en" -> "Waist, cm"; else -> "Талия, см" },
+                                value = waistInput,
+                                onValueChange = { waistInput = it },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                placeholder = "—",
+                                modifier = Modifier.weight(1f)
+                            )
+                            ObsidianLabeledField(
+                                label = when (lang) { "uz" -> "Ko'krak, sm"; "en" -> "Chest, cm"; else -> "Грудь, см" },
+                                value = chestInput,
+                                onValueChange = { chestInput = it },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                placeholder = "—",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            ObsidianLabeledField(
+                                label = when (lang) { "uz" -> "Qo'l, sm"; "en" -> "Arms, cm"; else -> "Руки, см" },
+                                value = bicepsInput,
+                                onValueChange = { bicepsInput = it },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                placeholder = "—",
+                                modifier = Modifier.weight(1f)
+                            )
+                            ObsidianLabeledField(
+                                label = when (lang) { "uz" -> "Yog', % · ixtiyoriy"; "en" -> "Body fat % · optional"; else -> "Жир, % · необязательно" },
+                                value = bodyFatInput,
+                                onValueChange = { bodyFatInput = it },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                placeholder = "—",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        ObsidianLabeledField(
+                            label = when (lang) { "uz" -> "Eslatma"; "en" -> "Note"; else -> "Заметка" },
+                            value = notesInput,
+                            onValueChange = { notesInput = it },
+                            placeholder = when (lang) {
+                                "uz" -> "Ertalab och qoringa"
+                                "en" -> "Morning fasted weigh-in"
+                                else -> "Утром натощак"
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ObsidianPrimaryButton(
+                                text = when (lang) {
+                                    "uz" -> "O'lchovni saqlash"
+                                    "en" -> "Save measurement"
+                                    else -> "Сохранить замер"
+                                },
+                                onClick = {
+                                    val w = weightInput.toDoubleOrNull() ?: state.latestWeightKg
+                                    val h = calcHeightInput.toDoubleOrNull() ?: state.heightCm
+                                    onAction(
+                                        BodyUiAction.OnSaveFullMeasurement(
+                                            weightKg = w,
+                                            heightCm = h,
+                                            bodyFatPct = bodyFatInput.toDoubleOrNull(),
+                                            waistCm = waistInput.toDoubleOrNull(),
+                                            chestCm = chestInput.toDoubleOrNull(),
+                                            bicepsCm = bicepsInput.toDoubleOrNull(),
+                                            notes = notesInput.trim()
+                                        )
+                                    )
+                                    waistInput = ""
+                                    chestInput = ""
+                                    bicepsInput = ""
+                                    bodyFatInput = ""
+                                    notesInput = ""
+                                }
+                            )
+                            ObsidianOutlineButton(
+                                text = when (lang) { "uz" -> "Tozalash"; "en" -> "Reset"; else -> "Очистить" },
+                                onClick = {
+                                    weightInput = formatOneDecimal(state.latestWeightKg)
+                                    waistInput = ""
+                                    chestInput = ""
+                                    bicepsInput = ""
+                                    bodyFatInput = ""
+                                    notesInput = ""
+                                }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Bo'sh maydon — o'lchov yo'q degani, nol emas"
+                                "en" -> "Empty field means not measured, not zero"
+                                else -> "Пустое поле — нет измерения, а не ноль"
+                            },
+                            fontSize = 12.sp,
+                            color = TextMuted
                         )
                     }
+                }
+
+                // Calculator Card (BMI / BMR / TDEE + Navy BF% & Adonis Sheet) — Figma 11
+                item(key = "calculator_card", contentType = "calculator") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Kalkulyator"
+                                "en" -> "Calculator"
+                                else -> "Калькулятор"
+                            },
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            ObsidianLabeledField(
+                                label = strings.bodyHeight,
+                                value = calcHeightInput,
+                                onValueChange = { calcHeightInput = it },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                placeholder = "178",
+                                modifier = Modifier.weight(1f)
+                            )
+                            ObsidianLabeledField(
+                                label = "${when (lang) { "uz" -> "Vazn"; "en" -> "Weight"; else -> "Вес" }}, ${strings.unitKg}",
+                                value = calcWeightInput,
+                                onValueChange = { calcWeightInput = it },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                placeholder = "78",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        ObsidianLabeledField(
+                            label = when (lang) { "uz" -> "Yosh, yil"; "en" -> "Age, yrs"; else -> "Возраст, лет" },
+                            value = calcAgeInput,
+                            onValueChange = { calcAgeInput = it.filter { c -> c.isDigit() } },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            placeholder = "28"
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = when (lang) { "uz" -> "Jins"; "en" -> "Sex"; else -> "Пол" },
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ObsidianPillTab(
+                                text = when (lang) { "uz" -> "Erkak"; "en" -> "Male"; else -> "Мужской" },
+                                selected = calcGender == "male",
+                                onClick = {
+                                    calcGender = "male"
+                                    onAction(
+                                        BodyUiAction.OnUpdateBmiParams(
+                                            gender = "male",
+                                            age = calcAgeInput.toIntOrNull() ?: state.age,
+                                            heightCm = calcHeightInput.toDoubleOrNull() ?: state.heightCm,
+                                            weightKg = calcWeightInput.toDoubleOrNull() ?: state.latestWeightKg,
+                                            activityMultiplier = calcActivity
+                                        )
+                                    )
+                                }
+                            )
+                            ObsidianPillTab(
+                                text = when (lang) { "uz" -> "Ayol"; "en" -> "Female"; else -> "Женский" },
+                                selected = calcGender == "female",
+                                onClick = {
+                                    calcGender = "female"
+                                    onAction(
+                                        BodyUiAction.OnUpdateBmiParams(
+                                            gender = "female",
+                                            age = calcAgeInput.toIntOrNull() ?: state.age,
+                                            heightCm = calcHeightInput.toDoubleOrNull() ?: state.heightCm,
+                                            weightKg = calcWeightInput.toDoubleOrNull() ?: state.latestWeightKg,
+                                            activityMultiplier = calcActivity
+                                        )
+                                    )
+                                }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Faollik koeffitsiyenti"
+                                "en" -> "Activity factor"
+                                else -> "Коэффициент активности"
+                            },
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(
+                                1.2 to "1.2",
+                                1.375 to "1.375",
+                                1.55 to "1.55",
+                                1.725 to "1.725"
+                            ).forEach { (mult, label) ->
+                                ObsidianPillTab(
+                                    text = label,
+                                    selected = calcActivity == mult,
+                                    onClick = { calcActivity = mult }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ObsidianPrimaryButton(
+                                text = when (lang) { "uz" -> "Hisoblash"; "en" -> "Calculate"; else -> "Рассчитать" },
+                                onClick = {
+                                    onAction(
+                                        BodyUiAction.OnUpdateBmiParams(
+                                            gender = calcGender,
+                                            age = calcAgeInput.toIntOrNull() ?: state.age,
+                                            heightCm = calcHeightInput.toDoubleOrNull() ?: state.heightCm,
+                                            weightKg = calcWeightInput.toDoubleOrNull() ?: state.latestWeightKg,
+                                            activityMultiplier = calcActivity
+                                        )
+                                    )
+                                }
+                            )
+                            ObsidianOutlineButton(
+                                text = strings.navyBodyFatTitle,
+                                onClick = { isAnthropometrySheetOpen = true }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(18.dp))
+
+                        Text(
+                            text = "${formatOneDecimal(state.bmi)}",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "${strings.bodyBmi} · кг/м²",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Text(
+                            text = "${state.bmrCalories}",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "BMR · ккал/сутки",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Text(
+                            text = "${state.tdeeCalories}",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "${strings.bodyTdee} · ккал/сутки",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Hisob-kitob ko'rsatkichlari, tibbiy xulosa emas"
+                                "en" -> "Reference estimates, not medical advice"
+                                else -> "Расчётные ориентиры, не медицинское заключение"
+                            },
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+                    }
+                }
+
+                // Targets Card — Figma 11
+                item(key = "goals_card", contentType = "goals") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = when (lang) { "uz" -> "Maqsadlar"; "en" -> "Goals"; else -> "Цели" },
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Ovqatlanish rejimi"
+                                "en" -> "Nutrition mode"
+                                else -> "Режим питания"
+                            },
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ObsidianPillTab(
+                                text = when (lang) { "uz" -> "Pasaytirish"; "en" -> "Cut (-20%)"; else -> "Снижение" },
+                                selected = dietMode == DietMode.CUT,
+                                onClick = { dietMode = DietMode.CUT }
+                            )
+                            ObsidianPillTab(
+                                text = when (lang) { "uz" -> "Saqlash"; "en" -> "Maintain"; else -> "Поддержание" },
+                                selected = dietMode == DietMode.MAINTAIN,
+                                onClick = { dietMode = DietMode.MAINTAIN }
+                            )
+                            ObsidianPillTab(
+                                text = when (lang) { "uz" -> "Oshirish"; "en" -> "Bulk (+12%)"; else -> "Набор" },
+                                selected = dietMode == DietMode.BULK,
+                                onClick = { dietMode = DietMode.BULK }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        val targetKcal = when (dietMode) {
+                            DietMode.CUT -> (state.tdeeCalories * 0.80).roundToInt()
+                            DietMode.MAINTAIN -> state.tdeeCalories
+                            DietMode.BULK -> (state.tdeeCalories * 1.12).roundToInt()
+                        }
+                        Text(
+                            text = "$targetKcal ккал",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = EmeraldNeon
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        val modeLabel = when (dietMode) {
+                            DietMode.CUT -> when (lang) { "uz" -> "Pasaytirish"; "en" -> "Fat loss"; else -> "Снижение" }
+                            DietMode.MAINTAIN -> when (lang) { "uz" -> "Saqlash"; "en" -> "Maintenance"; else -> "Поддержание" }
+                            DietMode.BULK -> when (lang) { "uz" -> "Oshirish"; "en" -> "Surplus"; else -> "Набор" }
+                        }
+                        Text(
+                            text = "$modeLabel · ${when (lang) { "uz" -> "kuniga"; "en" -> "per day"; else -> "в сутки" }}",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        ObsidianLabeledField(
+                            label = "${when (lang) { "uz" -> "Maqsadli vazn"; "en" -> "Target weight"; else -> "Целевой вес" }}, ${strings.unitKg}",
+                            value = targetWeightInput,
+                            onValueChange = { targetWeightInput = it },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            placeholder = "75"
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        ObsidianPrimaryButton(
+                            text = when (lang) {
+                                "uz" -> "Maqsadni saqlash"
+                                "en" -> "Save target"
+                                else -> "Сохранить цели"
+                            },
+                            onClick = {
+                                onAction(BodyUiAction.OnSaveTargetWeight(targetWeightInput.toDoubleOrNull()))
+                            }
+                        )
+                    }
+                }
+
+                item(key = "bottom_spacer", contentType = "spacer") {
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
-        }
-
-        item(key = "log_button") {
-            PrimaryAthleticButton(
-                text = "+ Записать взвешивание и замеры",
-                onClick = { onAction(BodyUiAction.OnOpenAddDialog) },
-                icon = Icons.Default.Add
-            )
-        }
-
-        item(key = "history_header") {
-            Text(
-                text = "ИСТОРИЯ ВЗВЕШИВАНИЙ (${state.measurements.size})",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextMuted,
-                letterSpacing = 1.sp
-            )
-        }
-
-        items(
-            items = state.measurements,
-            key = { it.id.ifBlank { it.loggedDate } }
-        ) { m ->
-            BodyMeasurementRow(
-                measurement = m,
-                onDelete = {
-                    val dateKey = m.loggedDate.ifBlank {
-                        PlatformBridge.formatDate(m.dateEpochMs, "yyyy-MM-dd")
-                    }
-                    onAction(BodyUiAction.OnDeleteMeasurement(dateKey))
-                }
-            )
-        }
-
-        item(key = "spacer_bottom") {
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
 
 @Composable
-private fun BodyTargetProgressCard(
-    startWeight: Double,
-    currentWeight: Double,
-    targetWeight: Double?,
-    onEditTarget: () -> Unit
+private fun BodyTrendLineChart(
+    points: List<Pair<String, Double>>,
+    unitLabel: String
 ) {
-    AthleticCard(
-        backgroundColor = DarkSurfaceVariant,
-        borderColor = BorderHighlight
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Flag, contentDescription = null, tint = EmeraldLight, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "ЦЕЛЕВОЙ ВЕС АТЛЕТА",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldLight
-                    )
-                }
+    val minVal = points.minOf { it.second }
+    val maxVal = points.maxOf { it.second }
+    val padding = ((maxVal - minVal) * 0.25).coerceAtLeast(0.5)
+    val low = minVal - padding
+    val high = maxVal + padding
+    val range = (high - low).coerceAtLeast(1.0)
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { onEditTarget() }
-                ) {
-                    Icon(Icons.Default.Edit, contentDescription = null, tint = EmeraldLight, modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (targetWeight != null) "Цель: $targetWeight кг" else "Задать цель",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldLight
-                    )
-                }
-            }
-
-            if (targetWeight != null && targetWeight > 0) {
-                val totalDiff = abs(targetWeight - startWeight).coerceAtLeast(0.5)
-                val remaining = abs(targetWeight - currentWeight)
-                val progress = (1.0 - (remaining / totalDiff)).toFloat().coerceIn(0.05f, 1.0f)
-
-                Spacer(modifier = Modifier.height(10.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Старт: $startWeight кг", fontSize = 12.sp, color = TextSecondary)
-                    Text("Сейчас: $currentWeight кг", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    Text("Цель: $targetWeight кг", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = EmeraldNeon)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    color = EmeraldNeon,
-                    trackColor = DarkSurfaceHigh
-                )
-            } else {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Установите целевой вес для сушки или набора мышечной массы, чтобы отслеживать прогресс.",
-                    fontSize = 12.sp,
-                    color = TextSecondary
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun BMICalculatorInteractiveCard(
-    state: BodyUiState,
-    onUpdateParams: (String, Int, Double, Double, Double) -> Unit
-) {
-    var ageText by remember(state.age) { mutableStateOf(state.age.toString()) }
-    var heightText by remember(state.heightCm) { mutableStateOf(state.heightCm.toInt().toString()) }
-    var weightText by remember(state.latestWeightKg) { mutableStateOf(state.latestWeightKg.toString()) }
-
-    val cutKcal = (state.tdeeCalories * 0.80).roundToInt()
-    val bulkKcal = (state.tdeeCalories * 1.12).roundToInt()
-
-    AthleticCard(
-        backgroundColor = DarkSurface,
-        borderColor = BorderHighlight
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = unitLabel, fontSize = 11.sp, color = TextMuted)
             Text(
-                text = "КАЛЬКУЛЯТОР ИМТ, BMR И НОРМЫ КБЖУ (MIFFLIN-ST JEOR)",
+                text = "${formatOneDecimal(points.first().second)} → ${formatOneDecimal(points.last().second)} $unitLabel",
                 fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = EmeraldLight
+                color = EmeraldNeon,
+                fontWeight = FontWeight.Medium
             )
+        }
 
-            Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("male" to "Мужчина", "female" to "Женщина").forEach { (gKey, gLabel) ->
-                    FilterChip(
-                        selected = state.gender == gKey,
-                        onClick = {
-                            onUpdateParams(gKey, state.age, state.heightCm, state.latestWeightKg, state.activityMultiplier)
-                        },
-                        label = { Text(gLabel, fontSize = 12.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldSubtle,
-                            selectedLabelColor = EmeraldNeon
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier
+                    .width(42.dp)
+                    .height(130.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                OutlinedTextField(
-                    value = ageText,
-                    onValueChange = { v ->
-                        ageText = v
-                        v.toIntOrNull()?.let { a ->
-                            onUpdateParams(state.gender, a, state.heightCm, state.latestWeightKg, state.activityMultiplier)
-                        }
-                    },
-                    label = { Text("Возраст") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = heightText,
-                    onValueChange = { v ->
-                        heightText = v
-                        v.toDoubleOrNull()?.let { h ->
-                            onUpdateParams(state.gender, state.age, h, state.latestWeightKg, state.activityMultiplier)
-                        }
-                    },
-                    label = { Text("Рост (см)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = weightText,
-                    onValueChange = { v ->
-                        weightText = v
-                        v.toDoubleOrNull()?.let { w ->
-                            onUpdateParams(state.gender, state.age, state.heightCm, w, state.activityMultiplier)
-                        }
-                    },
-                    label = { Text("Вес (кг)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
+                Text(text = formatOneDecimal(high), fontSize = 10.sp, color = TextMuted)
+                Text(text = formatOneDecimal((high + low) / 2.0), fontSize = 10.sp, color = TextMuted)
+                Text(text = formatOneDecimal(low), fontSize = 10.sp, color = TextMuted)
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                val activities = listOf(
-                    1.2 to "Сидячий (1.2)",
-                    1.375 to "1-3 трен. (1.375)",
-                    1.55 to "3-5 трен. (1.55)",
-                    1.725 to "6-7 трен. (1.725)"
-                )
-                items(activities) { (mult, label) ->
-                    FilterChip(
-                        selected = state.activityMultiplier == mult,
-                        onClick = {
-                            onUpdateParams(state.gender, state.age, state.heightCm, state.latestWeightKg, mult)
-                        },
-                        label = { Text(label, fontSize = 11.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldSubtle,
-                            selectedLabelColor = EmeraldNeon
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(130.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(ObsidianWell)
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
-                        .padding(10.dp)
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                        Text("Сушка (-20%)", fontSize = 10.sp, color = TextSecondary)
-                        Text("$cutKcal ккал", fontSize = 14.sp, fontWeight = FontWeight.Black, color = AmberWarm)
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val w = size.width
+                    val h = size.height
+
+                    // Horizontal guide lines
+                    listOf(0f, 0.5f, 1f).forEach { frac ->
+                        val y = frac * h
+                        drawLine(
+                            color = BorderDivider,
+                            start = Offset(0f, y),
+                            end = Offset(w, y),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                    }
+
+                    val stepX = if (points.size > 1) w / (points.size - 1).toFloat() else w / 2f
+                    val coords = points.mapIndexed { idx, (_, value) ->
+                        val x = if (points.size == 1) w / 2f else idx * stepX
+                        val normY = ((value - low) / range).toFloat().coerceIn(0f, 1f)
+                        val y = h - (normY * (h - 16.dp.toPx())) - 8.dp.toPx()
+                        Offset(x, y)
+                    }
+
+                    if (coords.size > 1) {
+                        val path = Path().apply {
+                            moveTo(coords.first().x, coords.first().y)
+                            coords.drop(1).forEach { pt -> lineTo(pt.x, pt.y) }
+                        }
+                        drawPath(
+                            path = path,
+                            color = EmeraldNeon,
+                            style = Stroke(
+                                width = 2.5.dp.toPx(),
+                                cap = StrokeCap.Round,
+                                join = StrokeJoin.Round
+                            )
+                        )
+                    }
+
+                    coords.forEach { pt ->
+                        drawCircle(
+                            color = DarkBackground,
+                            radius = 5.dp.toPx(),
+                            center = pt
+                        )
+                        drawCircle(
+                            color = EmeraldNeon,
+                            radius = 3.5.dp.toPx(),
+                            center = pt
+                        )
                     }
                 }
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(ObsidianWell)
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
-                        .padding(10.dp)
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                        Text("Поддержка", fontSize = 10.sp, color = TextSecondary)
-                        Text("${state.tdeeCalories} ккал", fontSize = 14.sp, fontWeight = FontWeight.Black, color = EmeraldNeon)
-                    }
-                }
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(ObsidianWell)
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
-                        .padding(10.dp)
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                        Text("Масса (+12%)", fontSize = 10.sp, color = TextSecondary)
-                        Text("$bulkKcal ккал", fontSize = 14.sp, fontWeight = FontWeight.Black, color = InfoAccent)
-                    }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 42.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            points.forEach { (dateLabel, value) ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = formatOneDecimal(value),
+                        fontSize = 10.sp,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = dateLabel,
+                        fontSize = 10.sp,
+                        color = TextMuted
+                    )
                 }
             }
         }
@@ -589,49 +1030,61 @@ private fun BMICalculatorInteractiveCard(
 }
 
 @Composable
-private fun BodyMeasurementRow(
+private fun BodyMeasurementCleanRow(
     measurement: BodyMeasurement,
+    unitLabel: String,
+    lang: String,
     onDelete: () -> Unit
 ) {
     val dateStr = measurement.loggedDate.ifBlank {
         PlatformBridge.formatDate(measurement.dateEpochMs, "dd MMM yyyy")
     }
-
-    AthleticCard(backgroundColor = DarkSurfaceVariant) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = dateStr, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                val extras = buildList {
-                    measurement.bodyFatPercentage?.let { add("Жир: $it%") }
-                    measurement.waistCm?.let { add("Талия: ${it.toInt()}см") }
-                    measurement.chestCm?.let { add("Грудь: ${it.toInt()}см") }
-                    measurement.bicepsCm?.let { add("Бицепс: ${it.toInt()}см") }
-                }
-                Text(
-                    text = if (extras.isNotEmpty()) extras.joinToString(" • ") else "ИМТ: ${measurement.bmi}",
-                    fontSize = 12.sp,
-                    color = TextSecondary
-                )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = dateStr,
+                fontSize = 13.sp,
+                color = TextSecondary
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "${formatOneDecimal(measurement.weightKg)} $unitLabel",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
+            )
+            val extras = buildList {
+                measurement.bodyFatPercentage?.let { add("${when (lang) { "uz" -> "Yog'"; "en" -> "BF"; else -> "Жир" }}: $it%") }
+                measurement.waistCm?.let { add("${when (lang) { "uz" -> "Bel"; "en" -> "Waist"; else -> "Талия" }}: ${it.toInt()} см") }
+                measurement.chestCm?.let { add("${when (lang) { "uz" -> "Ko'krak"; "en" -> "Chest"; else -> "Грудь" }}: ${it.toInt()} см") }
+                measurement.bicepsCm?.let { add("${when (lang) { "uz" -> "Qo'l"; "en" -> "Arm"; else -> "Бицепс" }}: ${it.toInt()} см") }
             }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            if (extras.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "${measurement.weightKg} кг",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = EmeraldNeon
+                    text = extras.joinToString(" · "),
+                    fontSize = 12.sp,
+                    color = TextMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-                IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.Delete, contentDescription = "Удалить", tint = TextMuted, modifier = Modifier.size(16.dp))
-                }
             }
         }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        ObsidianOutlineButton(
+            text = when (lang) { "uz" -> "O'chirish"; "en" -> "Delete"; else -> "Удалить" },
+            onClick = onDelete,
+            textColor = CrimsonRed,
+            borderColor = CrimsonRed.copy(alpha = 0.45f)
+        )
     }
 }
 
@@ -640,12 +1093,14 @@ private fun BodyMeasurementRow(
 private fun AddMeasurementBottomSheet(
     defaultWeight: Double,
     defaultHeight: Double,
+    unitLabel: String,
+    lang: String,
     onSave: (Double, Double, Double?, Double?, Double?, Double?, String) -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var weightInput by remember { mutableStateOf(defaultWeight.toString()) }
-    var heightInput by remember { mutableStateOf(defaultHeight.toInt().toString()) }
+    var weightInput by remember { mutableStateOf(formatOneDecimal(defaultWeight)) }
+    var heightInput by remember { mutableStateOf(defaultHeight.roundToInt().toString()) }
     var bodyFatInput by remember { mutableStateOf("") }
     var waistInput by remember { mutableStateOf("") }
     var chestInput by remember { mutableStateOf("") }
@@ -655,103 +1110,117 @@ private fun AddMeasurementBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface
+        containerColor = DarkSurface,
+        contentColor = TextPrimary
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Записать вес и замеры тела", fontSize = 18.sp, fontWeight = FontWeight.Black, color = TextPrimary)
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Vazn va tana o'lchamlarini yozish"
+                        "en" -> "Log Weight & Measurements"
+                        else -> "Записать вес и замеры тела"
+                    },
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
                 IconButton(onClick = onDismiss) {
                     Icon(Icons.Default.Close, contentDescription = null, tint = TextSecondary)
                 }
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ObsidianLabeledField(
+                    label = "${when (lang) { "uz" -> "Vazn"; "en" -> "Weight"; else -> "Вес" }} ($unitLabel)",
                     value = weightInput,
                     onValueChange = { weightInput = it },
-                    label = { Text("Вес (кг)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
+                ObsidianLabeledField(
+                    label = when (lang) { "uz" -> "Yog' %"; "en" -> "Body fat %"; else -> "% жира" },
                     value = bodyFatInput,
                     onValueChange = { bodyFatInput = it },
-                    label = { Text("% жира (опц.)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
+                    placeholder = "—",
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ObsidianLabeledField(
+                    label = when (lang) { "uz" -> "Bel, sm"; "en" -> "Waist, cm"; else -> "Талия, см" },
                     value = waistInput,
                     onValueChange = { waistInput = it },
-                    label = { Text("Талия (см)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
+                    placeholder = "—",
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
+                ObsidianLabeledField(
+                    label = when (lang) { "uz" -> "Ko'krak, sm"; "en" -> "Chest, cm"; else -> "Грудь, см" },
                     value = chestInput,
                     onValueChange = { chestInput = it },
-                    label = { Text("Грудь (см)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = bicepsInput,
-                    onValueChange = { bicepsInput = it },
-                    label = { Text("Бицепс (см)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
+                    placeholder = "—",
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            OutlinedTextField(
-                value = notesInput,
-                onValueChange = { notesInput = it },
-                label = { Text("Заметка (напр. утром натощак)") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+            ObsidianLabeledField(
+                label = when (lang) { "uz" -> "Biceps, sm"; "en" -> "Biceps, cm"; else -> "Бицепс, см" },
+                value = bicepsInput,
+                onValueChange = { bicepsInput = it },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                placeholder = "—"
             )
 
-            Button(
-                onClick = {
-                    val w = weightInput.toDoubleOrNull() ?: defaultWeight
-                    val h = heightInput.toDoubleOrNull() ?: defaultHeight
-                    onSave(
-                        w,
-                        h,
-                        bodyFatInput.toDoubleOrNull(),
-                        waistInput.toDoubleOrNull(),
-                        chestInput.toDoubleOrNull(),
-                        bicepsInput.toDoubleOrNull(),
-                        notesInput.trim()
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = EmeraldNeon, contentColor = Color.Black)
-            ) {
-                Text("Сохранить замер", fontWeight = FontWeight.Bold)
-            }
+            ObsidianLabeledField(
+                label = when (lang) { "uz" -> "Eslatma"; "en" -> "Note"; else -> "Заметка" },
+                value = notesInput,
+                onValueChange = { notesInput = it },
+                placeholder = when (lang) {
+                    "uz" -> "Ertalab och qoringa"
+                    "en" -> "Morning fasted"
+                    else -> "Утром натощак"
+                }
+            )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ObsidianOutlineButton(
+                    text = when (lang) { "uz" -> "Bekor"; "en" -> "Cancel"; else -> "Отмена" },
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    fillWidth = true
+                )
+                ObsidianPrimaryButton(
+                    text = when (lang) { "uz" -> "Saqlash"; "en" -> "Save"; else -> "Сохранить замер" },
+                    onClick = {
+                        onSave(
+                            weightInput.toDoubleOrNull() ?: defaultWeight,
+                            heightInput.toDoubleOrNull() ?: defaultHeight,
+                            bodyFatInput.toDoubleOrNull(),
+                            waistInput.toDoubleOrNull(),
+                            chestInput.toDoubleOrNull(),
+                            bicepsInput.toDoubleOrNull(),
+                            notesInput.trim()
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                    fillWidth = true
+                )
+            }
         }
     }
 }
@@ -760,36 +1229,57 @@ private fun AddMeasurementBottomSheet(
 private fun TargetWeightDialog(
     currentTarget: Double?,
     latestWeight: Double,
+    unitLabel: String,
+    lang: String,
     onSave: (Double?) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var input by remember { mutableStateOf((currentTarget ?: latestWeight).toString()) }
+    var input by remember { mutableStateOf(formatOneDecimal(currentTarget ?: latestWeight)) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Целевой вес (кг)", color = TextPrimary, fontWeight = FontWeight.Bold) },
+        containerColor = DarkSurface,
+        titleContentColor = TextPrimary,
+        textContentColor = TextSecondary,
+        title = {
+            Text(
+                text = when (lang) {
+                    "uz" -> "Maqsadli vazn ($unitLabel)"
+                    "en" -> "Target weight ($unitLabel)"
+                    else -> "Целевой вес ($unitLabel)"
+                },
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
+            )
+        },
         text = {
-            OutlinedTextField(
+            ObsidianLabeledField(
+                label = "$unitLabel",
                 value = input,
                 onValueChange = { input = it },
-                label = { Text("Целевой вес в кг") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true
+                placeholder = "75"
             )
         },
         confirmButton = {
-            Button(
-                onClick = { onSave(input.toDoubleOrNull()) },
-                colors = ButtonDefaults.buttonColors(containerColor = EmeraldNeon, contentColor = Color.Black)
-            ) {
-                Text("Сохранить", fontWeight = FontWeight.Bold)
-            }
+            ObsidianPrimaryButton(
+                text = when (lang) { "uz" -> "Saqlash"; "en" -> "Save"; else -> "Сохранить" },
+                onClick = { onSave(input.toDoubleOrNull()) }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Отмена", color = TextSecondary)
-            }
-        },
-        containerColor = DarkSurface
+            ObsidianOutlineButton(
+                text = when (lang) { "uz" -> "Bekor"; "en" -> "Cancel"; else -> "Отмена" },
+                onClick = onDismiss
+            )
+        }
     )
+}
+
+private fun formatOneDecimal(value: Double): String {
+    val scaled = (value * 10.0).roundToInt()
+    val intPart = scaled / 10
+    val frac = abs(scaled % 10)
+    return if (frac == 0) "$intPart" else "$intPart.$frac"
 }

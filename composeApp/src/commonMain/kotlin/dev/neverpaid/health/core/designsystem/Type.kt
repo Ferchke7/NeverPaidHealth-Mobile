@@ -9,10 +9,18 @@ import androidx.compose.ui.unit.sp
 val AthleticTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 30.sp,
+        lineHeight = 38.sp,
+        letterSpacing = (-0.5).sp,
+        color = TextPrimary
+    ),
+    headlineLarge = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 28.sp,
         lineHeight = 36.sp,
-        letterSpacing = (-0.6).sp,
+        letterSpacing = (-0.4).sp,
         color = TextPrimary
     ),
     headlineMedium = TextStyle(
@@ -20,21 +28,21 @@ val AthleticTypography = Typography(
         fontWeight = FontWeight.SemiBold,
         fontSize = 24.sp,
         lineHeight = 30.sp,
-        letterSpacing = (-0.5).sp,
+        letterSpacing = (-0.4).sp,
         color = TextPrimary
     ),
     titleLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp,
-        lineHeight = 26.sp,
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
         letterSpacing = (-0.3).sp,
         color = TextPrimary
     ),
     titleMedium = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 15.sp,
+        fontWeight = FontWeight.Medium,
+        fontSize = 16.sp,
         lineHeight = 22.sp,
         color = TextPrimary
     ),
@@ -54,7 +62,7 @@ val AthleticTypography = Typography(
     ),
     labelLarge = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         color = TextPrimary
@@ -62,8 +70,8 @@ val AthleticTypography = Typography(
     labelSmall = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
+        fontSize = 12.sp,
         lineHeight = 16.sp,
-        color = TextMuted
+        color = TextSecondary
     )
 )

@@ -1,49 +1,25 @@
 package dev.neverpaid.health.features.nutrition
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.LocalDrink
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -54,38 +30,49 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.neverpaid.health.core.designsystem.AmberWarm
-import dev.neverpaid.health.core.designsystem.AthleticCard
-import dev.neverpaid.health.core.designsystem.BorderHighlight
-import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
-import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.EmeraldSubtle
-import dev.neverpaid.health.core.designsystem.InfoAccent
-import dev.neverpaid.health.core.designsystem.ObsidianWell
-import dev.neverpaid.health.core.designsystem.SecondaryAthleticButton
+import dev.neverpaid.health.core.designsystem.ObsidianCard
+import dev.neverpaid.health.core.designsystem.ObsidianDivider
+import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
+import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
+import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
+import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
+import dev.neverpaid.health.core.designsystem.ObsidianPillTab
+import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
+import dev.neverpaid.health.core.designsystem.ObsidianProgressBar
+import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
+import dev.neverpaid.health.core.designsystem.ObsidianWhiteButton
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
-import dev.neverpaid.health.core.designsystem.MacronutrientDonutGauge
-import dev.neverpaid.health.core.designsystem.MacroTargetProgress
-import dev.neverpaid.health.core.designsystem.WaterHydrationWave
-import dev.neverpaid.health.domain.model.FastingProtocol
-import dev.neverpaid.health.domain.model.FastingSession
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.core.platform.rememberImagePickerLauncher
+import dev.neverpaid.health.domain.model.FastingProtocol
+import dev.neverpaid.health.domain.model.FastingSession
+import dev.neverpaid.health.domain.model.MealLog
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.math.round
+
+private enum class FoodInputMode {
+    NONE,
+    PHOTO,
+    TEXT,
+    MANUAL
+}
 
 private val mealTypeOptions = listOf(
     "breakfast" to "Завтрак",
@@ -95,12 +82,10 @@ private val mealTypeOptions = listOf(
 )
 
 private val quickFoodPrompts = listOf(
-    "Куриная грудка 200г с рисом 150г и овощами",
-    "Овсянка 80г на молоке с бананом и скуп протеина",
-    "Плов с говядиной 300г и салат ачучук",
-    "3 жареных яйца, 2 тоста и авокадо",
-    "Творог 5% 200г с мёдом и орехами",
-    "Протеиновый коктейль на воде + банан"
+    "Куриная грудка 200г с рисом 150г",
+    "Овсянка 80г с бананом и протеином",
+    "Плов с говядиной 300г и салат",
+    "Творог 5% 200г с орехами"
 )
 
 @Composable
@@ -129,17 +114,28 @@ fun NutritionRoute(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NutritionScreen(
     state: NutritionUiState,
     onAction: (NutritionUiAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalDudaStrings.current
+    val tz = remember { TimeZone.currentSystemDefault() }
+    val todayStr = remember { Clock.System.now().toLocalDateTime(tz).date.toString() }
+
     val pickPhoto = rememberImagePickerLauncher { base64, _ ->
         onAction(NutritionUiAction.OnPhotoPicked(base64))
     }
 
+    var inputMode by remember { mutableStateOf(FoodInputMode.NONE) }
+    var editingMealId by remember { mutableStateOf<String?>(null) }
+    var draftPortionGrams by remember { mutableStateOf("200") }
     var isFoodCatalogSheetOpen by remember { mutableStateOf(false) }
+    var showWaterResetConfirm by remember { mutableStateOf(false) }
+    var showFastingWidget by remember { mutableStateOf(false) }
+
     var activeFastingSession by remember {
         mutableStateOf<FastingSession?>(
             FastingSession(
@@ -152,6 +148,10 @@ fun NutritionScreen(
     }
 
     val caloriesProgress = (state.totalCalories.toFloat() / state.targetCalories.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
+    val proteinProgress = (state.totalProtein.toFloat() / state.targetProtein.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
+    val carbsProgress = (state.totalCarbs.toFloat() / state.targetCarbs.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
+    val fatsProgress = (state.totalFats.toFloat() / state.targetFats.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
+    val waterProgress = (state.waterMl.toFloat() / state.targetWaterMl.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
 
     if (isFoodCatalogSheetOpen) {
         FoodDatabaseBottomSheet(
@@ -170,774 +170,723 @@ fun NutritionScreen(
         )
     }
 
-    if (state.isAddMealSheetOpen) {
-        AddMealBottomSheet(
-            mealType = state.newMealType,
-            mealName = state.newMealName,
-            calories = state.newMealCalories,
-            protein = state.newMealProtein,
-            fats = state.newMealFats,
-            carbs = state.newMealCarbs,
-            onMealTypeChanged = { onAction(NutritionUiAction.OnMealTypeChanged(it)) },
-            onMealNameChanged = { onAction(NutritionUiAction.OnMealNameChanged(it)) },
-            onCaloriesChanged = { onAction(NutritionUiAction.OnMealCaloriesChanged(it)) },
-            onProteinChanged = { onAction(NutritionUiAction.OnMealProteinChanged(it)) },
-            onFatsChanged = { onAction(NutritionUiAction.OnMealFatsChanged(it)) },
-            onCarbsChanged = { onAction(NutritionUiAction.OnMealCarbsChanged(it)) },
-            isSaving = state.isSavingMeal,
-            onSave = { onAction(NutritionUiAction.OnSaveMeal) },
-            onDismiss = { onAction(NutritionUiAction.OnCloseAddMealSheet) }
-        )
+    if (state.isLoading && state.meals.isEmpty() && state.totalCalories == 0) {
+        LazyColumn(
+            modifier = modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            item(key = "header") {
+                ObsidianPageHeader(
+                    title = "Питание",
+                    subtitle = "Приёмы пищи, макросы и вода"
+                )
+            }
+            item(key = "loading") {
+                ObsidianLoadingCard(
+                    title = "Питание",
+                    hint = strings.stateLoadingHint
+                )
+            }
+        }
+        return
     }
 
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = 20.dp,
+            end = 20.dp,
+            top = 8.dp,
+            bottom = 110.dp
+        ),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item(key = "header") {
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Питание и ИИ-Анализ КБЖУ",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Black,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "Сфотографируйте блюдо или опишите текстом для мгновенного расчёта макросов",
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-                }
-            }
-        }
-
-        // Date Switcher Bar
-        item(key = "date_switcher") {
-            AthleticCard(backgroundColor = DarkSurface) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { onAction(NutritionUiAction.OnShiftDateDays(-1)) }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "Пред. день",
-                            tint = TextPrimary
-                        )
-                    }
-                    Text(
-                        text = "📅 ${state.selectedDate}",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldLight
-                    )
-                    IconButton(onClick = { onAction(NutritionUiAction.OnShiftDateDays(1)) }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = "След. день",
-                            tint = TextPrimary
-                        )
-                    }
-                }
-            }
-        }
-
-        // Concentric Macronutrient Donut Gauge
-        item(key = "energy_donut_gauge") {
-            MacronutrientDonutGauge(
-                progress = MacroTargetProgress(
-                    currentCalories = state.totalCalories.toDouble(),
-                    targetCalories = state.targetCalories.toDouble(),
-                    currentProteinGrams = state.totalProtein.toDouble(),
-                    targetProteinGrams = state.targetProtein.toDouble(),
-                    currentCarbsGrams = state.totalCarbs.toDouble(),
-                    targetCarbsGrams = state.targetCarbs.toDouble(),
-                    currentFatsGrams = state.totalFats.toDouble(),
-                    targetFatsGrams = state.targetFats.toDouble()
-                )
+        item(key = "page_header", contentType = "header") {
+            ObsidianPageHeader(
+                title = "Питание",
+                subtitle = "Приёмы пищи, макросы и вода"
             )
         }
 
-        // Energy & Macros Card
-        item(key = "energy_hero") {
-            AthleticCard(
-                backgroundColor = DarkSurfaceVariant,
-                borderColor = BorderHighlight
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "КАЛОРИЙНОСТЬ РАЦИОНА",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextMuted,
-                                letterSpacing = 1.sp
-                            )
-                            Row(verticalAlignment = Alignment.Bottom) {
-                                Text(
-                                    text = "${state.totalCalories}",
-                                    fontSize = 28.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = " / ${state.targetCalories} ккал",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextSecondary,
-                                    modifier = Modifier.padding(bottom = 3.dp, start = 4.dp)
-                                )
-                            }
-                        }
+        // Date Header & Nav
+        item(key = "date_nav_block", contentType = "date_nav") {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = formatFullDateWithWeekday(state.selectedDate),
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
 
-                        val remaining = (state.targetCalories - state.totalCalories).coerceAtLeast(0)
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(EmeraldSubtle)
-                                .border(width = 1.dp, color = BorderHighlight, shape = RoundedCornerShape(12.dp))
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = "Осталось $remaining ккал",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = EmeraldLight
-                            )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ObsidianOutlineButton(
+                        text = "← Назад",
+                        onClick = { onAction(NutritionUiAction.OnShiftDateDays(-1)) }
+                    )
+                    ObsidianOutlineButton(
+                        text = "Сегодня",
+                        onClick = { onAction(NutritionUiAction.OnSelectDate(todayStr)) }
+                    )
+                    ObsidianOutlineButton(
+                        text = "Вперёд →",
+                        onClick = { onAction(NutritionUiAction.OnShiftDateDays(1)) }
+                    )
+                }
+
+                Text(
+                    text = "Часовой пояс профиля · ${tz.id}",
+                    fontSize = 12.sp,
+                    color = TextMuted
+                )
+            }
+        }
+
+        // Card 1: Daily Balance
+        item(key = "daily_balance_card", contentType = "balance") {
+            ObsidianCard {
+                Text(
+                    text = "Дневной баланс",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                BalanceMetricRow(
+                    headline = "${state.totalCalories} / ${state.targetCalories} ккал",
+                    label = "Энергия",
+                    progress = caloriesProgress
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+                BalanceMetricRow(
+                    headline = "${state.totalProtein} / ${state.targetProtein} г",
+                    label = "Белки",
+                    progress = proteinProgress
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+                BalanceMetricRow(
+                    headline = "${state.totalCarbs} / ${state.targetCarbs} г",
+                    label = "Углеводы",
+                    progress = carbsProgress
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+                BalanceMetricRow(
+                    headline = "${state.totalFats} / ${state.targetFats} г",
+                    label = "Жиры",
+                    progress = fatsProgress
+                )
+            }
+        }
+
+        // Card 2: Meals Log (Divided List)
+        item(key = "meals_card", contentType = "meals") {
+            ObsidianCard {
+                Text(
+                    text = "Приёмы пищи",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${state.meals.size} записи · ${formatSpacedInt(state.totalCalories)} ккал",
+                    fontSize = 13.sp,
+                    color = TextSecondary
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (state.meals.isEmpty()) {
+                    ObsidianInnerWell {
+                        Text(
+                            text = "Записей за ${state.selectedDate} пока нет",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Выберите способ добавления еды ниже — по фото, текстом или вручную.",
+                            fontSize = 13.sp,
+                            color = TextSecondary
+                        )
+                    }
+                } else {
+                    state.meals.forEachIndexed { idx, meal ->
+                        MealLogRowItem(
+                            meal = meal,
+                            tz = tz,
+                            onEdit = {
+                                editingMealId = meal.id
+                                onAction(NutritionUiAction.OnMealTypeChanged(meal.mealType))
+                                onAction(NutritionUiAction.OnMealNameChanged(meal.name))
+                                onAction(NutritionUiAction.OnMealCaloriesChanged(meal.calories.toString()))
+                                onAction(NutritionUiAction.OnMealProteinChanged(meal.proteinG.toInt().toString()))
+                                onAction(NutritionUiAction.OnMealCarbsChanged(meal.carbsG.toInt().toString()))
+                                onAction(NutritionUiAction.OnMealFatsChanged(meal.fatsG.toInt().toString()))
+                                inputMode = FoodInputMode.MANUAL
+                            },
+                            onRepeat = {
+                                onAction(NutritionUiAction.OnMealTypeChanged(meal.mealType))
+                                onAction(NutritionUiAction.OnMealNameChanged(meal.name))
+                                onAction(NutritionUiAction.OnMealCaloriesChanged(meal.calories.toString()))
+                                onAction(NutritionUiAction.OnMealProteinChanged(meal.proteinG.toInt().toString()))
+                                onAction(NutritionUiAction.OnMealCarbsChanged(meal.carbsG.toInt().toString()))
+                                onAction(NutritionUiAction.OnMealFatsChanged(meal.fatsG.toInt().toString()))
+                                onAction(NutritionUiAction.OnSaveMeal)
+                            },
+                            onDelete = { onAction(NutritionUiAction.OnDeleteMeal(meal.id)) }
+                        )
+                        if (idx < state.meals.lastIndex) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            ObsidianDivider()
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
+                }
+            }
+        }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-                    LinearProgressIndicator(
-                        progress = { caloriesProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp)),
+        // Card 3: Hydration
+        item(key = "water_card", contentType = "water") {
+            val portions = state.waterMl / 250
+            ObsidianCard {
+                Text(
+                    text = "Вода",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "${formatLiters(state.waterMl)} / ${formatLiters(state.targetWaterMl)} л",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "$portions порций по 250 мл",
+                    fontSize = 13.sp,
+                    color = TextSecondary
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                ObsidianProgressBar(
+                    progress = waterProgress,
+                    color = EmeraldNeon
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ObsidianPrimaryButton(
+                        text = "+ 250 мл",
+                        onClick = { onAction(NutritionUiAction.OnAddWater(250)) }
+                    )
+                    ObsidianOutlineButton(
+                        text = "− 250 мл",
+                        enabled = state.waterMl >= 250,
+                        onClick = { onAction(NutritionUiAction.OnAddWater(-250)) }
+                    )
+                    ObsidianOutlineButton(
+                        text = "Сбросить",
+                        enabled = state.waterMl > 0,
+                        onClick = { showWaterResetConfirm = true }
+                    )
+                }
+            }
+        }
+
+        // Card 4: Add Food Mode Picker
+        item(key = "add_food_card", contentType = "add_food") {
+            ObsidianCard {
+                Text(
+                    text = "Добавить еду",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Выберите удобный способ ввода",
+                    fontSize = 13.sp,
+                    color = TextSecondary
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ObsidianPillTab(
+                        text = "По фото",
+                        selected = inputMode == FoodInputMode.PHOTO,
+                        onClick = {
+                            inputMode = if (inputMode == FoodInputMode.PHOTO) FoodInputMode.NONE else FoodInputMode.PHOTO
+                        }
+                    )
+                    ObsidianPillTab(
+                        text = "Текстом",
+                        selected = inputMode == FoodInputMode.TEXT,
+                        onClick = {
+                            inputMode = if (inputMode == FoodInputMode.TEXT) FoodInputMode.NONE else FoodInputMode.TEXT
+                        }
+                    )
+                    ObsidianPillTab(
+                        text = "Вручную",
+                        selected = inputMode == FoodInputMode.MANUAL,
+                        onClick = {
+                            editingMealId = null
+                            inputMode = if (inputMode == FoodInputMode.MANUAL) FoodInputMode.NONE else FoodInputMode.MANUAL
+                        }
+                    )
+                    ObsidianOutlineButton(
+                        text = "База продуктов",
+                        onClick = { isFoodCatalogSheetOpen = true }
+                    )
+                }
+            }
+        }
+
+        // Card 5: Draft / AI Recognition Card (1:1 Figma 08 Bottom Card)
+        if (inputMode != FoodInputMode.NONE || state.aiAnalysisPreview != null) {
+            item(key = "draft_card", contentType = "draft") {
+                val preview = state.aiAnalysisPreview
+                val showFormFields = preview != null || inputMode == FoodInputMode.MANUAL || editingMealId != null
+
+                ObsidianCard {
+                    Text(
+                        text = if (preview != null) "ИИ-распознавание" else "Черновик",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
                         color = EmeraldNeon,
-                        trackColor = DarkSurfaceHigh,
+                        letterSpacing = 0.8.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = if (editingMealId != null) {
+                            "Редактирование записи"
+                        } else if (showFormFields) {
+                            "Проверьте черновик"
+                        } else if (inputMode == FoodInputMode.PHOTO) {
+                            "Распознать по фото"
+                        } else {
+                            "Распознать по описанию"
+                        },
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = if (preview != null && preview.aiNotes.isNotBlank()) {
+                            preview.aiNotes
+                        } else if (showFormFields) {
+                            "Проверьте продукты, порцию и КБЖУ перед добавлением."
+                        } else {
+                            "Прикрепите фото или опишите блюдо — ИИ рассчитает калории и макросы."
+                        },
+                        fontSize = 13.sp,
+                        color = TextSecondary
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    // Meal type selector
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        MacroCard(
-                            title = "Белки",
-                            current = "${state.totalProtein} г",
-                            target = "${state.targetProtein} г",
-                            color = EmeraldNeon,
-                            modifier = Modifier.weight(1f)
+                        val activeType = if (showFormFields && preview == null) state.newMealType else state.selectedMealType
+                        mealTypeOptions.forEach { (typeKey, typeLabel) ->
+                            ObsidianPillTab(
+                                text = typeLabel,
+                                selected = activeType == typeKey,
+                                onClick = {
+                                    onAction(NutritionUiAction.OnSelectAnalyzerMealType(typeKey))
+                                    onAction(NutritionUiAction.OnMealTypeChanged(typeKey))
+                                }
+                            )
+                        }
+                    }
+
+                    if (!showFormFields && inputMode == FoodInputMode.PHOTO) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ObsidianOutlineButton(
+                                text = if (state.selectedPhotoBase64 != null) "Фото выбрано ✓" else "Выбрать фото",
+                                onClick = pickPhoto
+                            )
+                            if (state.selectedPhotoBase64 != null) {
+                                ObsidianOutlineButton(
+                                    text = "Убрать фото",
+                                    onClick = { onAction(NutritionUiAction.OnClearPhoto) }
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ObsidianLabeledField(
+                            label = "Комментарий (необязательно)",
+                            value = state.aiDescriptionInput,
+                            onValueChange = { onAction(NutritionUiAction.OnAiDescriptionChanged(it)) },
+                            placeholder = "Например: 200г курицы без кожи и рис"
                         )
-                        MacroCard(
-                            title = "Жиры",
-                            current = "${state.totalFats} г",
-                            target = "${state.targetFats} г",
-                            color = AmberWarm,
-                            modifier = Modifier.weight(1f)
+                        Spacer(modifier = Modifier.height(14.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ObsidianPrimaryButton(
+                                text = if (state.isAiAnalyzing) "Анализ..." else "Рассчитать КБЖУ",
+                                enabled = !state.isAiAnalyzing && (state.selectedPhotoBase64 != null || state.aiDescriptionInput.isNotBlank()),
+                                onClick = { onAction(NutritionUiAction.OnRunAiAnalysis) }
+                            )
+                            ObsidianOutlineButton(
+                                text = strings.cancel,
+                                onClick = { inputMode = FoodInputMode.NONE }
+                            )
+                        }
+                    } else if (!showFormFields && inputMode == FoodInputMode.TEXT) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        ObsidianLabeledField(
+                            label = "Опишите блюдо",
+                            value = state.aiDescriptionInput,
+                            onValueChange = { onAction(NutritionUiAction.OnAiDescriptionChanged(it)) },
+                            placeholder = "Овсянка 80г на молоке с бананом",
+                            singleLine = false
                         )
-                        MacroCard(
-                            title = "Углеводы",
-                            current = "${state.totalCarbs} г",
-                            target = "${state.targetCarbs} г",
-                            color = InfoAccent,
-                            modifier = Modifier.weight(1f)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            quickFoodPrompts.forEach { prompt ->
+                                ObsidianPillTab(
+                                    text = prompt,
+                                    selected = state.aiDescriptionInput == prompt,
+                                    onClick = { onAction(NutritionUiAction.OnAiDescriptionChanged(prompt)) }
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(14.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ObsidianPrimaryButton(
+                                text = if (state.isAiAnalyzing) "Анализ..." else "Рассчитать КБЖУ",
+                                enabled = !state.isAiAnalyzing && state.aiDescriptionInput.isNotBlank(),
+                                onClick = { onAction(NutritionUiAction.OnRunAiAnalysis) }
+                            )
+                            ObsidianOutlineButton(
+                                text = strings.cancel,
+                                onClick = { inputMode = FoodInputMode.NONE }
+                            )
+                        }
+                    } else if (showFormFields) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        ObsidianLabeledField(
+                            label = "Название",
+                            value = state.newMealName,
+                            onValueChange = { onAction(NutritionUiAction.OnMealNameChanged(it)) },
+                            placeholder = "Йогурт с ягодами"
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            ObsidianLabeledField(
+                                label = "Порция, г",
+                                value = draftPortionGrams,
+                                onValueChange = { draftPortionGrams = it.filter { c -> c.isDigit() } },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                            ObsidianLabeledField(
+                                label = "Калории, ккал",
+                                value = state.newMealCalories,
+                                onValueChange = { onAction(NutritionUiAction.OnMealCaloriesChanged(it.filter { c -> c.isDigit() })) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            ObsidianLabeledField(
+                                label = "Белки, г",
+                                value = state.newMealProtein,
+                                onValueChange = { onAction(NutritionUiAction.OnMealProteinChanged(it.filter { c -> c.isDigit() || c == '.' })) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                modifier = Modifier.weight(1f)
+                            )
+                            ObsidianLabeledField(
+                                label = "Углеводы, г",
+                                value = state.newMealCarbs,
+                                onValueChange = { onAction(NutritionUiAction.OnMealCarbsChanged(it.filter { c -> c.isDigit() || c == '.' })) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            ObsidianLabeledField(
+                                label = "Жиры, г",
+                                value = state.newMealFats,
+                                onValueChange = { onAction(NutritionUiAction.OnMealFatsChanged(it.filter { c -> c.isDigit() || c == '.' })) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                modifier = Modifier.weight(1f)
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(
+                            text = "Черновик ещё не включён в дневной итог.",
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ObsidianPrimaryButton(
+                                text = if (state.isSavingMeal) "Сохранение..." else "Подтвердить",
+                                enabled = !state.isSavingMeal && state.newMealName.isNotBlank() && state.newMealCalories.isNotBlank(),
+                                onClick = {
+                                    val oldId = editingMealId
+                                    if (preview != null) {
+                                        onAction(NutritionUiAction.OnConfirmAiPreview)
+                                    } else {
+                                        onAction(NutritionUiAction.OnSaveMeal)
+                                    }
+                                    if (!oldId.isNullOrBlank()) {
+                                        onAction(NutritionUiAction.OnDeleteMeal(oldId))
+                                    }
+                                    editingMealId = null
+                                    inputMode = FoodInputMode.NONE
+                                }
+                            )
+                            ObsidianOutlineButton(
+                                text = strings.cancel,
+                                onClick = {
+                                    editingMealId = null
+                                    if (preview != null) onAction(NutritionUiAction.OnDismissAiPreview)
+                                    inputMode = FoodInputMode.NONE
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
 
-        // AI Photo & Text Food Scanner Card (1:1 with NutritionPage.tsx)
-        item(key = "ai_scanner_card") {
-            AthleticCard(
-                backgroundColor = DarkSurface,
-                borderColor = BorderHighlight
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = EmeraldNeon,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "ИИ-Сканер блюда (Фото / Текст)",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Black,
-                                color = TextPrimary
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Meal type selector chips
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(mealTypeOptions, key = { it.first }) { (key, label) ->
-                            FilterChip(
-                                selected = state.selectedMealType == key,
-                                onClick = { onAction(NutritionUiAction.OnSelectAnalyzerMealType(key)) },
-                                label = { Text(label, fontSize = 12.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = EmeraldSubtle,
-                                    selectedLabelColor = EmeraldLight,
-                                    containerColor = DarkSurfaceVariant,
-                                    labelColor = TextSecondary
-                                )
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Photo picker button
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = pickPhoto,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(44.dp),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CameraAlt,
-                                contentDescription = null,
-                                tint = EmeraldLight,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (state.selectedPhotoBase64 != null) "Фото прикреплено ✓" else "Загрузить фото еды",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = EmeraldLight
-                            )
-                        }
-
-                        if (state.selectedPhotoBase64 != null) {
-                            IconButton(onClick = { onAction(NutritionUiAction.OnClearPhoto) }) {
-                                Icon(Icons.Default.Close, contentDescription = "Убрать фото", tint = TextSecondary)
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextField(
-                        value = state.aiDescriptionInput,
-                        onValueChange = { onAction(NutritionUiAction.OnAiDescriptionChanged(it)) },
-                        placeholder = {
-                            Text(
-                                "Опишите блюдо (напр. «250г плова и салат») или комментарий к фото...",
-                                color = TextMuted,
-                                fontSize = 12.sp
+        // Toggleable Fasting Tracker Card (preserves full fasting workflow)
+        item(key = "fasting_section", contentType = "fasting") {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                ObsidianOutlineButton(
+                    text = if (showFastingWidget) "Скрыть интервальное голодание" else "Интервальное голодание 16/8",
+                    onClick = { showFastingWidget = !showFastingWidget }
+                )
+                AnimatedVisibility(visible = showFastingWidget) {
+                    FastingTrackerView(
+                        activeSession = activeFastingSession,
+                        onStartFast = { protocol ->
+                            activeFastingSession = FastingSession(
+                                id = PlatformBridge.generateUuid(),
+                                protocol = protocol,
+                                startTimeEpochMs = PlatformBridge.currentTimeMillis(),
+                                targetDurationHours = protocol.fastHours.toDouble()
                             )
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = ObsidianWell,
-                            unfocusedContainerColor = ObsidianWell,
-                            focusedBorderColor = EmeraldNeon,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Quick Food Chips
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        items(quickFoodPrompts) { prompt ->
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(ObsidianWell)
-                                    .border(1.dp, BorderSubtle, RoundedCornerShape(8.dp))
-                                    .clickable { onAction(NutritionUiAction.OnAiDescriptionChanged(prompt)) }
-                                    .padding(horizontal = 10.dp, vertical = 5.dp)
-                            ) {
-                                Text(prompt, fontSize = 11.sp, color = TextSecondary)
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Button(
-                        onClick = { onAction(NutritionUiAction.OnRunAiAnalysis) },
-                        enabled = !state.isAiAnalyzing && (state.aiDescriptionInput.isNotBlank() || state.selectedPhotoBase64 != null),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(46.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = EmeraldNeon,
-                            contentColor = Color.Black
-                        )
-                    ) {
-                        if (state.isAiAnalyzing) {
-                            CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("ИИ рассчитывает КБЖУ...", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        } else {
-                            Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Рассчитать КБЖУ с помощью ИИ", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        }
-                    }
-
-                    // AI Analysis Result Preview Card
-                    if (state.aiAnalysisPreview != null) {
-                        val preview = state.aiAnalysisPreview!!
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(DarkSurfaceVariant)
-                                .border(1.dp, EmeraldNeon, RoundedCornerShape(12.dp))
-                                .padding(14.dp)
-                        ) {
-                            Column {
-                                Text(
-                                    text = "РЕЗУЛЬТАТ ИИ-АНАЛИЗА",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = EmeraldLight
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = preview.title.ifBlank { preview.name },
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = "${preview.calories} ккал • Б: ${preview.proteinG.toInt()}г • Ж: ${preview.fatsG.toInt()}г • У: ${preview.carbsG.toInt()}г",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = EmeraldNeon
-                                )
-                                if (preview.foodItems.isNotEmpty()) {
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    preview.foodItems.forEach { item ->
-                                        Text(
-                                            text = "• ${item.name} (${item.portion}): ${item.calories} ккал",
-                                            fontSize = 11.sp,
-                                            color = TextSecondary
-                                        )
-                                    }
-                                }
-                                if (preview.aiNotes.isNotBlank()) {
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = preview.aiNotes,
-                                        fontSize = 11.sp,
-                                        color = TextMuted
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedButton(
-                                        onClick = { onAction(NutritionUiAction.OnDismissAiPreview) },
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Text("Отмена", fontSize = 12.sp)
-                                    }
-                                    Button(
-                                        onClick = { onAction(NutritionUiAction.OnConfirmAiPreview) },
-                                        enabled = !state.isSavingMeal,
-                                        modifier = Modifier.weight(1.4f),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = EmeraldNeon,
-                                            contentColor = Color.Black
-                                        )
-                                    ) {
-                                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Записать в рацион", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Intermittent Fasting Tracker
-        item(key = "fasting_tracker") {
-            FastingTrackerView(
-                activeSession = activeFastingSession,
-                onStartFast = { protocol ->
-                    activeFastingSession = FastingSession(
-                        id = PlatformBridge.generateUuid(),
-                        protocol = protocol,
-                        startTimeEpochMs = PlatformBridge.currentTimeMillis(),
-                        targetDurationHours = protocol.fastHours.toDouble()
-                    )
-                },
-                onEndFast = {
-                    activeFastingSession = null
-                }
-            )
-        }
-
-        // Hydration Animated Wave Vessel
-        item(key = "water_wave_card") {
-            WaterHydrationWave(
-                currentMl = state.waterMl,
-                targetMl = state.targetWaterMl,
-                onAddWater = { ml -> onAction(NutritionUiAction.OnAddWater(ml)) }
-            )
-        }
-
-        // Meals Header
-        item(key = "meals_header") {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "ЗАПИСИ ПИТАНИЯ (${state.meals.size})",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextMuted,
-                    letterSpacing = 1.sp
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "+ База продуктов (150+)",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = InfoAccent,
-                        modifier = Modifier.clickable { isFoodCatalogSheetOpen = true }
-                    )
-                    Text(
-                        text = "+ Ввести вручную",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldLight,
-                        modifier = Modifier.clickable { onAction(NutritionUiAction.OnOpenAddMealSheet) }
+                        onEndFast = { activeFastingSession = null }
                     )
                 }
             }
-        }
-
-        if (state.meals.isEmpty()) {
-            item(key = "empty_meals") {
-                AthleticCard(backgroundColor = DarkSurface) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Записей за ${state.selectedDate} пока нет", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("Используйте ИИ-сканер выше или добавьте приём пищи вручную", fontSize = 12.sp, color = TextSecondary)
-                    }
-                }
-            }
-        } else {
-            items(state.meals, key = { it.id }) { meal ->
-                AthleticCard(
-                    backgroundColor = DarkSurface,
-                    borderColor = BorderSubtle
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(DarkSurfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Restaurant,
-                                    contentDescription = null,
-                                    tint = EmeraldLight,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = meal.name,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                                val mealTypeRu = mealTypeOptions.find { it.first == meal.mealType.lowercase() }?.second ?: meal.mealType
-                                Text(
-                                    text = "$mealTypeRu • Б: ${meal.proteinG}г • Ж: ${meal.fatsG}г • У: ${meal.carbsG}г",
-                                    fontSize = 11.sp,
-                                    color = TextSecondary
-                                )
-                            }
-                        }
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "${meal.calories} ккал",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = EmeraldNeon
-                            )
-
-                            IconButton(
-                                onClick = { onAction(NutritionUiAction.OnDeleteMeal(meal.id)) },
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete",
-                                    tint = TextMuted,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        item(key = "add_meal_button") {
-            SecondaryAthleticButton(
-                text = "+ Добавить приём пищи вручную",
-                onClick = { onAction(NutritionUiAction.OnOpenAddMealSheet) },
-                icon = Icons.Default.Add
-            )
-        }
-
-        item(key = "bottom_spacer") {
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
-}
 
-@Composable
-private fun MacroCard(
-    title: String,
-    current: String,
-    target: String,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    AthleticCard(
-        backgroundColor = DarkSurface,
-        borderColor = BorderSubtle,
-        modifier = modifier
-    ) {
-        Column(
-            modifier = Modifier.padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+    if (showWaterResetConfirm) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showWaterResetConfirm = false },
+            sheetState = sheetState,
+            containerColor = DarkSurface,
+            contentColor = TextPrimary
         ) {
-            Text(
-                text = title,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextSecondary
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = current,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Black,
-                color = color
-            )
-            Text(
-                text = "из $target",
-                fontSize = 10.sp,
-                color = TextMuted
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddMealBottomSheet(
-    mealType: String,
-    mealName: String,
-    calories: String,
-    protein: String,
-    fats: String,
-    carbs: String,
-    onMealTypeChanged: (String) -> Unit,
-    onMealNameChanged: (String) -> Unit,
-    onCaloriesChanged: (String) -> Unit,
-    onProteinChanged: (String) -> Unit,
-    onFatsChanged: (String) -> Unit,
-    onCarbsChanged: (String) -> Unit,
-    isSaving: Boolean,
-    onSave: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = DarkSurface
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 10.dp)
-        ) {
-            Text(
-                text = "Добавить приём пищи вручную",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(mealTypeOptions) { (type, label) ->
-                    val isSelected = type == mealType
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { onMealTypeChanged(type) },
-                        label = { Text(label) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldSubtle,
-                            selectedLabelColor = EmeraldNeon
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            OutlinedTextField(
-                value = mealName,
-                onValueChange = onMealNameChanged,
-                label = { Text("Название продукта или блюда") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = ObsidianWell,
-                    unfocusedContainerColor = ObsidianWell,
-                    focusedBorderColor = EmeraldNeon,
-                    unfocusedBorderColor = BorderSubtle,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
-                )
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = calories,
-                    onValueChange = onCaloriesChanged,
-                    label = { Text("Ккал") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                OutlinedTextField(
-                    value = protein,
-                    onValueChange = onProteinChanged,
-                    label = { Text("Белки (г)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = fats,
-                    onValueChange = onFatsChanged,
-                    label = { Text("Жиры (г)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                OutlinedTextField(
-                    value = carbs,
-                    onValueChange = onCarbsChanged,
-                    label = { Text("Углеводы (г)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Button(
-                onClick = onSave,
-                enabled = !isSaving && mealName.isNotBlank() && calories.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = EmeraldNeon,
-                    contentColor = DarkBackground
-                ),
-                shape = RoundedCornerShape(12.dp),
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .padding(horizontal = 24.dp, vertical = 12.dp)
             ) {
-                Text(text = "Сохранить", fontWeight = FontWeight.Bold)
+                Text(
+                    text = "СБРОС ВОДЫ",
+                    fontSize = 11.sp,
+                    color = TextMuted,
+                    letterSpacing = 0.8.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Сбросить счётчик воды за ${state.selectedDate}?",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+                ObsidianDivider()
+                Spacer(modifier = Modifier.height(14.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ObsidianOutlineButton(
+                        text = strings.cancel,
+                        onClick = { showWaterResetConfirm = false }
+                    )
+                    ObsidianWhiteButton(
+                        text = "Сбросить",
+                        onClick = {
+                            if (state.waterMl > 0) {
+                                onAction(NutritionUiAction.OnAddWater(-state.waterMl))
+                            }
+                            showWaterResetConfirm = false
+                        }
+                    )
+                }
+                Spacer(modifier = Modifier.height(24.dp))
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
+}
+
+@Composable
+private fun BalanceMetricRow(
+    headline: String,
+    label: String,
+    progress: Float
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = headline,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary
+        )
+        Text(
+            text = label,
+            fontSize = 13.sp,
+            color = TextSecondary
+        )
+        ObsidianProgressBar(
+            progress = progress,
+            color = EmeraldNeon
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun MealLogRowItem(
+    meal: MealLog,
+    tz: TimeZone,
+    onEdit: () -> Unit,
+    onRepeat: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val mealTypeRu = mealTypeOptions.find { it.first.equals(meal.mealType, ignoreCase = true) }?.second ?: meal.mealType
+    val timeStr = remember(meal.loggedAt) {
+        runCatching {
+            val ldt = Instant.parse(meal.loggedAt).toLocalDateTime(tz)
+            "${ldt.hour.toString().padStart(2, '0')}:${ldt.minute.toString().padStart(2, '0')}"
+        }.getOrNull() ?: ""
+    }
+    val metaLine = if (timeStr.isNotBlank()) "$mealTypeRu · $timeStr" else mealTypeRu
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = metaLine,
+            fontSize = 12.sp,
+            color = TextMuted
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = meal.name,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Medium,
+            color = TextPrimary
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "${meal.calories} ккал",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Б ${meal.proteinG.toInt()} г · У ${meal.carbsG.toInt()} г · Ж ${meal.fatsG.toInt()} г",
+            fontSize = 13.sp,
+            color = TextSecondary
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ObsidianOutlineButton(text = "Изменить", onClick = onEdit)
+            ObsidianOutlineButton(text = "Повторить", onClick = onRepeat)
+            ObsidianOutlineButton(text = "Удалить", onClick = onDelete)
+        }
+    }
+}
+
+private fun formatFullDateWithWeekday(isoDate: String): String {
+    return runCatching {
+        val d = LocalDate.parse(isoDate)
+        val weekday = when (d.dayOfWeek) {
+            DayOfWeek.MONDAY -> "Понедельник"
+            DayOfWeek.TUESDAY -> "Вторник"
+            DayOfWeek.WEDNESDAY -> "Среда"
+            DayOfWeek.THURSDAY -> "Четверг"
+            DayOfWeek.FRIDAY -> "Пятница"
+            DayOfWeek.SATURDAY -> "Суббота"
+            DayOfWeek.SUNDAY -> "Воскресенье"
+            else -> ""
+        }
+        val months = listOf(
+            "января", "февраля", "марта", "апреля", "мая", "июня",
+            "июля", "августа", "сентября", "октября", "ноября", "декабря"
+        )
+        val month = months.getOrElse(d.monthNumber - 1) { "" }
+        "$weekday, ${d.dayOfMonth} $month ${d.year}"
+    }.getOrElse { isoDate }
+}
+
+private fun formatLiters(ml: Int): String {
+    val l = round((ml / 1000.0) * 10.0) / 10.0
+    return l.toString().replace('.', ',')
+}
+
+private fun formatSpacedInt(value: Int): String {
+    val raw = value.toString()
+    if (raw.length <= 3) return raw
+    val sb = StringBuilder()
+    var count = 0
+    for (i in raw.length - 1 downTo 0) {
+        sb.append(raw[i])
+        count++
+        if (count % 3 == 0 && i > 0) sb.append(' ')
+    }
+    return sb.reverse().toString()
 }

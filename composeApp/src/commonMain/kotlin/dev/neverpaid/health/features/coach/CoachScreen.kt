@@ -2,10 +2,12 @@ package dev.neverpaid.health.features.coach
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,27 +19,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ElectricBolt
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.TrendingUp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,32 +34,41 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.neverpaid.health.core.designsystem.AthleticCard
 import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
-import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldDark
 import dev.neverpaid.health.core.designsystem.EmeraldLight
 import dev.neverpaid.health.core.designsystem.EmeraldNeon
 import dev.neverpaid.health.core.designsystem.EmeraldSubtle
-import dev.neverpaid.health.core.designsystem.ObsidianWell
+import dev.neverpaid.health.core.designsystem.ObsidianCard
+import dev.neverpaid.health.core.designsystem.ObsidianDivider
+import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
+import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
+import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
+import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
+import dev.neverpaid.health.core.designsystem.ObsidianPillTab
+import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
+import dev.neverpaid.health.core.designsystem.ObsidianProgressBar
+import dev.neverpaid.health.core.designsystem.ObsidianTextField
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.designsystem.TextSoft
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.core.platform.rememberImagePickerLauncher
 import dev.neverpaid.health.domain.model.ChatMessage
 import dev.neverpaid.health.domain.model.SuggestedWorkoutPlan
 import kotlinx.serialization.json.Json
+import kotlin.math.roundToInt
 
 private val workoutJsonParser = Json { ignoreUnknownKeys = true; isLenient = true }
 
@@ -107,24 +103,25 @@ fun CoachRoute(
         }
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = DarkBackground
-    ) { innerPadding ->
-        CoachScreen(
-            state = state,
-            onAction = viewModel::onAction,
-            modifier = Modifier.padding(innerPadding)
-        )
-    }
+    CoachScreen(
+        state = state,
+        onAction = viewModel::onAction,
+        modifier = modifier
+    )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CoachScreen(
     state: CoachUiState,
     onAction: (CoachUiAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalDudaStrings.current
+    val lang = strings.languageCode
+    @Suppress("DEPRECATION")
+    val clipboard = LocalClipboardManager.current
+
     var isReadinessSurveyOpen by remember { mutableStateOf(false) }
 
     if (isReadinessSurveyOpen) {
@@ -145,440 +142,706 @@ fun CoachScreen(
     }
 
     val quickPrompts = listOf(
-        "Составь тренировку на сегодня с учётом восстановления",
-        "Как пробить плато в жиме штанги лёжа?",
-        "Рассчитай рацион на сушку без потери силы",
-        "Оцени мою готовность ЦНС и перегрузку"
+        when (lang) {
+            "uz" -> "Tiklanish"
+            "en" -> "Recovery"
+            else -> "Восстановление"
+        } to when (lang) {
+            "uz" -> "Tiklanish va MNS holatimni baholang"
+            "en" -> "Assess my recovery and CNS readiness"
+            else -> "Оцени моё восстановление и готовность ЦНС"
+        },
+        when (lang) {
+            "uz" -> "Plato"
+            "en" -> "Plateau"
+            else -> "Плато"
+        } to when (lang) {
+            "uz" -> "Shtanga bosishda platoni qanday yengish mumkin?"
+            "en" -> "How do I break through a bench press plateau?"
+            else -> "Как преодолеть плато в жиме штанги лёжа?"
+        },
+        when (lang) {
+            "uz" -> "Bugungi reja"
+            "en" -> "Today plan"
+            else -> "План на сегодня"
+        } to when (lang) {
+            "uz" -> "Bugungi tiklanish asosida mashg'ulot tuzing"
+            "en" -> "Build today's workout based on my recovery"
+            else -> "Составь тренировку на сегодня с учётом восстановления"
+        },
+        when (lang) {
+            "uz" -> "Ratsion"
+            "en" -> "Cut macros"
+            else -> "Сушка"
+        } to when (lang) {
+            "uz" -> "Kuch yo'qotmasdan quritish uchun ratsion hisoblang"
+            "en" -> "Calculate cutting macros without losing strength"
+            else -> "Рассчитай рацион на сушку без потери силы"
+        }
     )
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
+            .background(DarkBackground)
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "AI Тренер duda.uz",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Black,
-                    color = TextPrimary
-                )
-                Text(
-                    text = "Индекс готовности ЦНС • Прогрессивная перегрузка • Генератор тренировок",
-                    fontSize = 12.sp,
-                    color = TextSecondary
-                )
-            }
-
-            IconButton(
-                onClick = { onAction(CoachUiAction.OnClearChatHistory) }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Очистить чат",
-                    tint = TextSecondary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // CNS & Progressive Overload Card
-        AthleticCard(
-            backgroundColor = DarkSurfaceVariant,
-            borderColor = EmeraldDark
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(EmeraldSubtle),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.TrendingUp,
-                                contentDescription = null,
-                                tint = EmeraldNeon,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "ГОТОВНОСТЬ ЦНС: ${state.insight.cnsScore}/100 (${state.insight.readinessLevel})",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = EmeraldNeon
-                            )
-                            Text(
-                                text = state.insight.progressiveOverloadTarget,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                        }
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(EmeraldDark.copy(alpha = 0.3f))
-                            .border(1.dp, EmeraldNeon, RoundedCornerShape(8.dp))
-                            .clickable { isReadinessSurveyOpen = true }
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = "Опрос ЦНС",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = EmeraldNeon
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Quick action chips
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(quickPrompts) { prompt ->
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(DarkSurfaceVariant)
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(16.dp))
-                        .clickable { onAction(CoachUiAction.OnQuickPromptClick(prompt)) }
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(text = prompt, fontSize = 11.sp, color = EmeraldLight, fontWeight = FontWeight.SemiBold)
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Chat Message Feed
         LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            if (state.insight.suggestedWorkout != null) {
-                item(key = "insight_suggested_workout") {
-                    CoachSuggestedWorkoutCard(
-                        plan = state.insight.suggestedWorkout!!,
-                        onStartWorkout = { onAction(CoachUiAction.OnStartSuggestedWorkout(it)) },
-                        onSaveRoutine = { onAction(CoachUiAction.OnSaveSuggestedRoutine(it)) }
+            // Header — Figma 10
+            item(key = "header", contentType = "header") {
+                ObsidianPageHeader(
+                    title = strings.navCoach,
+                    subtitle = when (lang) {
+                        "uz" -> "Mashg'ulotlar va tiklanishda yordamchingiz"
+                        "en" -> "Your assistant for training and recovery"
+                        else -> "Ваш помощник в тренировках и восстановлении"
+                    }
+                )
+            }
+
+            // Advisory Subheader — Figma 10
+            item(key = "advisory_note", contentType = "note") {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Tahlil va tavsiyalar"
+                            "en" -> "Training & recovery context"
+                            else -> "Оценка состояния и нагрузка"
+                        },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = EmeraldNeon
+                    )
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Tavsiyalar mashg'ulot tarixiga asoslanadi va shifokor ko'rigini almashtirmaydi."
+                            "en" -> "Guidance reflects your training history and does not replace self-assessment or medical advice."
+                            else -> "Подсказки основаны на ваших данных тренировок, не заменяют оценку самочувствия и не являются медицинской рекомендацией."
+                        },
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp,
+                        color = TextMuted
                     )
                 }
             }
 
-            items(
-                items = state.chatMessages,
-                key = { it.id }
-            ) { msg ->
-                ChatMessageBubble(
-                    message = msg,
-                    onStartSuggestedWorkout = { onAction(CoachUiAction.OnStartSuggestedWorkout(it)) },
-                    onSaveSuggestedRoutine = { onAction(CoachUiAction.OnSaveSuggestedRoutine(it)) }
-                )
-            }
-
-            if (state.isSending) {
-                item {
-                    Row(
-                        modifier = Modifier.padding(start = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CircularProgressIndicator(
-                            color = EmeraldNeon,
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
+            if (state.isLoading && state.chatMessages.isEmpty()) {
+                item(key = "loading_card", contentType = "loading") {
+                    ObsidianLoadingCard(
+                        title = strings.stateLoadingTitle,
+                        hint = strings.stateLoadingHint,
+                        kicker = "01 · ${strings.navCoach}"
+                    )
+                }
+            } else {
+                // Card 1: Readiness & ACWR Card — Figma 10
+                item(key = "readiness_card", contentType = "readiness") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = state.insight.readinessLevel,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = EmeraldNeon
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "ИИ-Тренер анализирует ваши данные...", fontSize = 12.sp, color = TextMuted)
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Bugungi tayyorgarlik"
+                                "en" -> "Readiness today"
+                                else -> "Готовность сегодня"
+                            },
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = "${state.insight.cnsScore} / 100",
+                            fontSize = 36.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "CNS · tiklanish indeksi"
+                                "en" -> "CNS · recovery index"
+                                else -> "CNS · индекс готовности"
+                            },
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextSoft
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        ObsidianProgressBar(
+                            progress = (state.insight.cnsScore / 100f).coerceIn(0f, 1f),
+                            heightDp = 6,
+                            color = EmeraldNeon
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = state.insight.statusMessage,
+                            fontSize = 12.sp,
+                            lineHeight = 18.sp,
+                            color = TextMuted
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        val weeklyTons = ((state.insight.weeklyVolumeKg / 1000.0) * 10.0).roundToInt() / 10.0
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = when (lang) {
+                                    "uz" -> "Haftalik yuklama"
+                                    "en" -> "Weekly load"
+                                    else -> "Нагрузка за неделю"
+                                },
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "${state.insight.weeklyWorkoutsCount} · $weeklyTons т",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = EmeraldNeon
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Oxirgi mashg'ulotdan beri: ${state.insight.daysSinceLastTrain} kun"
+                                "en" -> "Days since last session: ${state.insight.daysSinceLastTrain}"
+                                else -> "Дней с прошлой тренировки: ${state.insight.daysSinceLastTrain}"
+                            },
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ObsidianPillTab(
+                                text = when (lang) {
+                                    "uz" -> "MNS so'rovi"
+                                    "en" -> "CNS Check-in"
+                                    else -> "Опрос ЦНС"
+                                },
+                                selected = true,
+                                onClick = { isReadinessSurveyOpen = true }
+                            )
+                            quickPrompts.take(2).forEach { (label, prompt) ->
+                                ObsidianPillTab(
+                                    text = label,
+                                    selected = false,
+                                    onClick = { onAction(CoachUiAction.OnQuickPromptClick(prompt)) }
+                                )
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+                // Card 2: Progressive Overload Recommendation — Figma 10
+                val topTarget = state.insight.overloadTargets.firstOrNull()
+                item(key = "overload_card", contentType = "overload") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Tavsiya · yuklama"
+                                "en" -> "Coach · overload target"
+                                else -> "Рекомендация · прогрессия"
+                            },
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = EmeraldNeon
+                        )
 
-        if (state.attachedImageBase64 != null) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(EmeraldSubtle)
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("📸 Фото прикреплено к сообщению", fontSize = 12.sp, color = EmeraldLight, fontWeight = FontWeight.Bold)
-                IconButton(onClick = { onAction(CoachUiAction.OnClearAttachedPhoto) }, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        if (topTarget != null) {
+                            Text(
+                                text = topTarget.exerciseName,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "${topTarget.lastWeightKg} → ${topTarget.targetWeightKg} ${strings.unitKg}",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = topTarget.reason.ifBlank {
+                                    "${topTarget.lastReps} → ${topTarget.targetReps} повторений"
+                                },
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp,
+                                color = TextSecondary
+                            )
+                        } else {
+                            Text(
+                                text = when (lang) {
+                                    "uz" -> "Bosqichma-bosqich og'irlik oshirish"
+                                    "en" -> "Next progressive overload step"
+                                    else -> "Следующий шаг в прогрессии"
+                                },
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = state.insight.progressiveOverloadTarget,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = EmeraldNeon
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = when (lang) {
+                                    "uz" -> "Oxirgi yondashuvlar barqaror texnika va og'riqsiz bajarilganda yuklamani oshiring."
+                                    "en" -> "Increase load only when recent sets are clean, controlled, and pain-free."
+                                    else -> "Повышайте вес только если последние подходы выполнены с устойчивой техникой и без дискомфорта."
+                                },
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp,
+                                color = TextSecondary
+                            )
+                        }
+                    }
                 }
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-        }
 
-        // Input bar with Photo Attachment + Text + Send
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = pickPhoto,
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(DarkSurfaceVariant)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CameraAlt,
-                    contentDescription = "Прикрепить фото",
-                    tint = EmeraldLight,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+                // Card 3: Suggested Workout Preview Card — Figma 10
+                state.insight.suggestedWorkout?.let { plan ->
+                    item(key = "insight_suggested_workout", contentType = "suggested_workout") {
+                        CoachSuggestedWorkoutCard(
+                            plan = plan,
+                            unitLabel = strings.unitKg,
+                            lang = lang,
+                            onStartWorkout = { onAction(CoachUiAction.OnStartSuggestedWorkout(plan)) },
+                            onSaveRoutine = { onAction(CoachUiAction.OnSaveSuggestedRoutine(plan)) }
+                        )
+                    }
+                }
 
-            Spacer(modifier = Modifier.width(8.dp))
+                // Card 4: Discussion & Chat Composer Card — Figma 10
+                item(key = "coach_chat_card", contentType = "chat") {
+                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Mashg'ulotingizni muhokama qilamiz"
+                                "en" -> "Discuss your training"
+                                else -> "Обсудим вашу тренировку"
+                            },
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
 
-            OutlinedTextField(
-                value = state.inputMessage,
-                onValueChange = { onAction(CoachUiAction.OnInputMessageChanged(it)) },
-                placeholder = { Text(text = "Спросите тренера или попросите сплит...", color = TextMuted, fontSize = 13.sp) },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = ObsidianWell,
-                    unfocusedContainerColor = ObsidianWell,
-                    focusedBorderColor = EmeraldNeon,
-                    unfocusedBorderColor = BorderSubtle,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
-                ),
-                maxLines = 3
-            )
+                        Spacer(modifier = Modifier.height(4.dp))
 
-            Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "AI murabbiy · ${state.chatMessages.size} xabar"
+                                "en" -> "AI Coach · ${state.chatMessages.size} messages"
+                                else -> "AI Тренер duda.uz · ${state.chatMessages.size} сообщений"
+                            },
+                            fontSize = 12.sp,
+                            color = EmeraldNeon
+                        )
 
-            val canSend = state.inputMessage.isNotBlank() || state.attachedImageBase64 != null
-            Box(
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(CircleShape)
-                    .background(if (canSend) EmeraldNeon else DarkSurfaceHigh)
-                    .clickable(enabled = canSend && !state.isSending) {
-                        onAction(CoachUiAction.OnSendMessage)
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Send,
-                    contentDescription = "Send",
-                    tint = if (canSend) DarkBackground else TextMuted,
-                    modifier = Modifier.size(20.dp)
-                )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        if (state.chatMessages.isNotEmpty()) {
+                            ObsidianOutlineButton(
+                                text = when (lang) {
+                                    "uz" -> "Tarixni tozalash"
+                                    "en" -> "Clear history"
+                                    else -> "Очистить историю"
+                                },
+                                onClick = { onAction(CoachUiAction.OnClearChatHistory) }
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+
+                        // Quick prompts bar
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(quickPrompts, key = { it.first }) { (label, prompt) ->
+                                ObsidianPillTab(
+                                    text = label,
+                                    selected = false,
+                                    onClick = { onAction(CoachUiAction.OnQuickPromptClick(prompt)) }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        if (state.chatMessages.isEmpty()) {
+                            ObsidianInnerWell {
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "AI murabbiyga savol bering"
+                                        "en" -> "Ask the AI coach anything"
+                                        else -> "Задайте вопрос тренеру"
+                                    },
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextPrimary
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "Tezkor savol tugmasini bosing yoki texnika tahlili uchun foto biriktiring."
+                                        "en" -> "Tap a quick prompt above or attach a form/physique photo for analysis."
+                                        else -> "Выберите быстрый вопрос выше, спросите о прогрессии или прикрепите фото для разбора."
+                                    },
+                                    fontSize = 12.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                state.chatMessages.forEach { msg ->
+                                    ChatMessageBlock(
+                                        message = msg,
+                                        unitLabel = strings.unitKg,
+                                        lang = lang,
+                                        onCopy = { copyText ->
+                                            clipboard.setText(AnnotatedString(copyText))
+                                            PlatformBridge.showToast(
+                                                when (lang) {
+                                                    "uz" -> "Javob nusxalandi"
+                                                    "en" -> "Reply copied"
+                                                    else -> "Ответ скопирован"
+                                                }
+                                            )
+                                        },
+                                        onStartSuggestedWorkout = { onAction(CoachUiAction.OnStartSuggestedWorkout(it)) },
+                                        onSaveSuggestedRoutine = { onAction(CoachUiAction.OnSaveSuggestedRoutine(it)) }
+                                    )
+                                }
+                            }
+                        }
+
+                        if (state.isSending) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                CircularProgressIndicator(
+                                    color = EmeraldNeon,
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "AI murabbiy ma'lumotlarni tahlil qilmoqda..."
+                                        "en" -> "AI coach is analyzing..."
+                                        else -> "ИИ-Тренер анализирует ваши данные..."
+                                    },
+                                    fontSize = 12.sp,
+                                    color = TextMuted
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        ObsidianDivider()
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        if (state.attachedImageBase64 != null) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(EmeraldSubtle)
+                                    .border(1.dp, BorderHighlight, RoundedCornerShape(10.dp))
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "Rasm biriktirildi"
+                                        "en" -> "Photo attached"
+                                        else -> "Фото прикреплено к сообщению"
+                                    },
+                                    fontSize = 12.sp,
+                                    color = EmeraldLight,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                IconButton(
+                                    onClick = { onAction(CoachUiAction.OnClearAttachedPhoto) },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = null,
+                                        tint = TextSecondary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                        }
+
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Savolingiz"
+                                "en" -> "Your question"
+                                else -> "Ваш вопрос"
+                            },
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        ObsidianTextField(
+                            value = state.inputMessage,
+                            onValueChange = { onAction(CoachUiAction.OnInputMessageChanged(it)) },
+                            placeholder = when (lang) {
+                                "uz" -> "Mashg'ulot haqida so'rang"
+                                "en" -> "Ask about your workout"
+                                else -> "Спросите о тренировке"
+                            },
+                            singleLine = false,
+                            minLines = 1
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val canSend = state.inputMessage.isNotBlank() || state.attachedImageBase64 != null
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ObsidianOutlineButton(
+                                text = when (lang) {
+                                    "uz" -> "Foto biriktirish"
+                                    "en" -> "Attach photo"
+                                    else -> "Прикрепить фото"
+                                },
+                                onClick = pickPhoto
+                            )
+                            ObsidianPrimaryButton(
+                                text = when (lang) {
+                                    "uz" -> "Yuborish"
+                                    "en" -> "Send"
+                                    else -> "Отправить"
+                                },
+                                onClick = { onAction(CoachUiAction.OnSendMessage) },
+                                enabled = canSend && !state.isSending
+                            )
+                        }
+                    }
+                }
+
+                item(key = "bottom_spacer", contentType = "spacer") {
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ChatMessageBubble(
+private fun ChatMessageBlock(
     message: ChatMessage,
+    unitLabel: String,
+    lang: String,
+    onCopy: (String) -> Unit,
     onStartSuggestedWorkout: (SuggestedWorkoutPlan) -> Unit,
     onSaveSuggestedRoutine: (SuggestedWorkoutPlan) -> Unit
 ) {
     val isUser = message.isUser
-    val alignment = if (isUser) Alignment.End else Alignment.Start
-    val bg = if (isUser) EmeraldSubtle else DarkSurface
-
     val (cleanedText, embeddedWorkout) = remember(message.text) {
         if (isUser) message.text to null else extractEmbeddedWorkoutPlan(message.text)
     }
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = alignment
-    ) {
-        if (!isUser) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 4.dp, start = 4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ElectricBolt,
-                    contentDescription = null,
-                    tint = EmeraldNeon,
-                    modifier = Modifier.size(12.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "AI Тренер duda.uz",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = EmeraldNeon
-                )
-            }
-        }
-
-        if (cleanedText.isNotBlank()) {
-            Box(
-                modifier = Modifier
-                    .clip(
-                        RoundedCornerShape(
-                            topStart = 16.dp,
-                            topEnd = 16.dp,
-                            bottomStart = if (isUser) 16.dp else 4.dp,
-                            bottomEnd = if (isUser) 4.dp else 16.dp
-                        )
-                    )
-                    .background(bg)
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
-            ) {
-                Text(
-                    text = cleanedText,
-                    fontSize = 14.sp,
-                    color = TextPrimary,
-                    lineHeight = 20.sp
-                )
-            }
-        }
-
-        if (embeddedWorkout != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            CoachSuggestedWorkoutCard(
-                plan = embeddedWorkout,
-                onStartWorkout = onStartSuggestedWorkout,
-                onSaveRoutine = onSaveSuggestedRoutine
+    if (isUser) {
+        ObsidianInnerWell {
+            Text(
+                text = when (lang) { "uz" -> "Siz"; "en" -> "You"; else -> "Вы" },
+                fontSize = 12.sp,
+                color = TextMuted
             )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = cleanedText,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                color = TextPrimary
+            )
+        }
+    } else {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (cleanedText.isNotBlank()) {
+                val shape = RoundedCornerShape(10.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(shape)
+                        .background(DarkBackground)
+                        .border(1.dp, BorderSubtle, shape)
+                        .padding(14.dp)
+                ) {
+                    Text(
+                        text = when (lang) { "uz" -> "AI Murabbiy"; "en" -> "AI Coach"; else -> "AI Тренер" },
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = EmeraldNeon
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = cleanedText,
+                        fontSize = 14.sp,
+                        lineHeight = 21.sp,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    ObsidianOutlineButton(
+                        text = when (lang) {
+                            "uz" -> "Javobni nusxalash"
+                            "en" -> "Copy reply"
+                            else -> "Копировать ответ"
+                        },
+                        onClick = { onCopy(cleanedText) }
+                    )
+                }
+            }
+
+            val attachedPlan = message.suggestedWorkout ?: embeddedWorkout
+            if (attachedPlan != null) {
+                CoachSuggestedWorkoutCard(
+                    plan = attachedPlan,
+                    unitLabel = unitLabel,
+                    lang = lang,
+                    onStartWorkout = { onStartSuggestedWorkout(attachedPlan) },
+                    onSaveRoutine = { onSaveSuggestedRoutine(attachedPlan) }
+                )
+            }
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CoachSuggestedWorkoutCard(
     plan: SuggestedWorkoutPlan,
-    onStartWorkout: (SuggestedWorkoutPlan) -> Unit,
-    onSaveRoutine: (SuggestedWorkoutPlan) -> Unit
+    unitLabel: String,
+    lang: String,
+    onStartWorkout: () -> Unit,
+    onSaveRoutine: () -> Unit
 ) {
-    AthleticCard(
+    ObsidianCard(
         backgroundColor = DarkSurface,
-        borderColor = BorderHighlight
+        borderColor = BorderSubtle,
+        contentPadding = PaddingValues(20.dp)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = null,
-                    tint = EmeraldLight,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "ПЕРСОНАЛЬНЫЙ ПЛАН ОТ ИИ-ТРЕНЕРА",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = EmeraldLight
-                )
-            }
+        Text(
+            text = when (lang) {
+                "uz" -> "Tavsiya etilgan mashg'ulot"
+                "en" -> "Coach · workout option"
+                else -> "Вариант тренировки"
+            },
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = EmeraldNeon
+        )
 
-            Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
+        Text(
+            text = plan.title.ifBlank {
+                when (lang) { "uz" -> "Shaxsiy mashg'ulot"; "en" -> "Suggested Session"; else -> "Персональная тренировка" }
+            },
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary
+        )
+
+        if (plan.rationale.isNotBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = plan.title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Black,
-                color = TextPrimary
+                text = plan.rationale,
+                fontSize = 13.sp,
+                color = TextSecondary
             )
-            if (plan.rationale.isNotBlank()) {
-                Text(
-                    text = plan.rationale,
-                    fontSize = 12.sp,
-                    color = TextSecondary
-                )
-            }
+        }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
+        if (plan.exercises.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(12.dp))
             plan.exercises.forEachIndexed { idx, ex ->
+                if (idx > 0) ObsidianDivider()
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 3.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "${idx + 1}. ${ex.exerciseName}",
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
                         color = TextPrimary,
                         modifier = Modifier.weight(1f)
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    val weightText = if (ex.targetWeightKg > 0.0) " · ${ex.targetWeightKg} $unitLabel" else ""
                     Text(
-                        text = "${ex.sets} × ${ex.repsMin}–${ex.repsMax}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
+                        text = "${ex.sets} × ${ex.repsMin}$weightText",
+                        fontSize = 13.sp,
                         color = EmeraldNeon
                     )
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { onSaveRoutine(plan) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(40.dp),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(15.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("В шаблон", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-
-                Button(
-                    onClick = { onStartWorkout(plan) },
-                    modifier = Modifier
-                        .weight(1.3f)
-                        .height(40.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = EmeraldNeon,
-                        contentColor = Color.Black
-                    )
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Начать сейчас", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            }
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ObsidianPrimaryButton(
+                text = when (lang) { "uz" -> "Boshlash"; "en" -> "Start"; else -> "Начать" },
+                onClick = onStartWorkout
+            )
+            ObsidianOutlineButton(
+                text = when (lang) {
+                    "uz" -> "Reja sifatida saqlash"
+                    "en" -> "Save as routine"
+                    else -> "Сохранить как план"
+                },
+                onClick = onSaveRoutine
+            )
         }
     }
 }

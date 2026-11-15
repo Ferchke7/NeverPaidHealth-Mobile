@@ -6,37 +6,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -48,29 +32,34 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.neverpaid.health.core.designsystem.AthleticCard
 import dev.neverpaid.health.core.designsystem.BorderSubtle
-import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldLight
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.EmeraldSubtle
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
-import dev.neverpaid.health.core.designsystem.InfoAccent
-import dev.neverpaid.health.core.designsystem.ObsidianWell
+import dev.neverpaid.health.core.designsystem.ObsidianCard
+import dev.neverpaid.health.core.designsystem.ObsidianDivider
+import dev.neverpaid.health.core.designsystem.ObsidianEmptyCard
+import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
+import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
+import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
+import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
+import dev.neverpaid.health.core.designsystem.ObsidianPillTab
+import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
+import dev.neverpaid.health.core.designsystem.ObsidianTextField
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.designsystem.TextSoft
 import dev.neverpaid.health.core.designsystem.localizeEquipmentName
 import dev.neverpaid.health.core.designsystem.localizeMuscleName
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.domain.model.Exercise
@@ -103,29 +92,93 @@ fun ExercisesRoute(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ExercisesScreen(
     state: ExercisesUiState,
     onAction: (ExercisesUiAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalDudaStrings.current
+    val lang = when (strings.navWorkouts) {
+        "Mashg'ulotlar" -> "uz"
+        "Workouts" -> "en"
+        else -> "ru"
+    }
+
     val muscles = listOf(
-        "All" to "Все мышцы",
-        "chest" to "Грудь",
-        "back" to "Спина",
-        "legs" to "Ноги",
-        "shoulders" to "Плечи",
-        "arms" to "Руки",
-        "core" to "Пресс"
+        "All" to when (lang) {
+            "uz" -> "barchasi"
+            "en" -> "all"
+            else -> "все"
+        },
+        "chest" to when (lang) {
+            "uz" -> "ko'krak"
+            "en" -> "chest"
+            else -> "грудь"
+        },
+        "back" to when (lang) {
+            "uz" -> "orqa"
+            "en" -> "back"
+            else -> "спина"
+        },
+        "legs" to when (lang) {
+            "uz" -> "oyoqlar"
+            "en" -> "legs"
+            else -> "ноги"
+        },
+        "shoulders" to when (lang) {
+            "uz" -> "yelkalar"
+            "en" -> "shoulders"
+            else -> "плечи"
+        },
+        "arms" to when (lang) {
+            "uz" -> "qo'llar"
+            "en" -> "arms"
+            else -> "руки"
+        },
+        "core" to when (lang) {
+            "uz" -> "press"
+            "en" -> "core"
+            else -> "пресс"
+        }
     )
     val equipments = listOf(
-        "All" to "Любой инвентарь",
-        "barbell" to "Штанга",
-        "dumbbell" to "Гантели",
-        "cable" to "Блок",
-        "machine" to "Тренажёр",
-        "bodyweight" to "Свой вес"
+        "All" to when (lang) {
+            "uz" -> "barchasi"
+            "en" -> "all"
+            else -> "всё"
+        },
+        "barbell" to when (lang) {
+            "uz" -> "shtanga"
+            "en" -> "barbell"
+            else -> "штанга"
+        },
+        "dumbbell" to when (lang) {
+            "uz" -> "gantel"
+            "en" -> "dumbbell"
+            else -> "гантели"
+        },
+        "cable" to when (lang) {
+            "uz" -> "blok"
+            "en" -> "cable"
+            else -> "блок"
+        },
+        "machine" to when (lang) {
+            "uz" -> "trenajyor"
+            "en" -> "machine"
+            else -> "тренажёр"
+        },
+        "bodyweight" to when (lang) {
+            "uz" -> "tana vazni"
+            "en" -> "bodyweight"
+            else -> "свой вес"
+        }
     )
+
+    var showMuscleFilter by remember { mutableStateOf(false) }
+    var showEquipFilter by remember { mutableStateOf(false) }
+    var expandedTechniqueId by remember { mutableStateOf<String?>(null) }
 
     if (state.selectedExerciseDetail != null) {
         ExerciseInfoBottomSheet(
@@ -140,6 +193,7 @@ fun ExercisesScreen(
     if (state.isEditorOpen) {
         CustomExerciseEditorBottomSheet(
             existing = state.editingExercise,
+            lang = lang,
             onSave = { req ->
                 onAction(ExercisesUiAction.OnSaveCustomExercise(req, state.editingExercise?.id))
             },
@@ -147,272 +201,525 @@ fun ExercisesScreen(
         )
     }
 
-    Column(
+    val selectedMuscleLabel = muscles.find { it.first.equals(state.selectedMuscle, ignoreCase = true) }?.second ?: muscles.first().second
+    val selectedEquipLabel = equipments.find { it.first.equals(state.selectedEquipment, ignoreCase = true) }?.second ?: equipments.first().second
+
+    val catalogExercises = remember(state.exercises) { state.exercises.filter { !it.isCustom } }
+    val customExercises = remember(state.exercises) { state.exercises.filter { it.isCustom } }
+
+    LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
+            .background(DarkBackground),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 112.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Spacer(modifier = Modifier.height(6.dp))
+        item(key = "header", contentType = "header") {
+            ObsidianPageHeader(
+                title = strings.navExercises,
+                subtitle = when (lang) {
+                    "uz" -> "Harakatlar katalogi va bajarish texnikasi"
+                    "en" -> "Movement catalog and execution cues"
+                    else -> "Каталог движений и техника выполнения"
+                }
+            )
+        }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
+        item(key = "controls", contentType = "controls") {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ObsidianTextField(
+                        value = state.searchQuery,
+                        onValueChange = { onAction(ExercisesUiAction.OnSearchQueryChanged(it)) },
+                        placeholder = when (lang) {
+                            "uz" -> "Mashq qidirish"
+                            "en" -> "Search exercises"
+                            else -> "Поиск упражнения"
+                        },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    ObsidianPrimaryButton(
+                        text = when (lang) {
+                            "uz" -> "O'zimniki"
+                            "en" -> "Create custom"
+                            else -> "Создать своё"
+                        },
+                        onClick = { onAction(ExercisesUiAction.OnOpenEditor(null)) }
+                    )
+                }
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ObsidianOutlineButton(
+                        text = when (lang) {
+                            "uz" -> "Mushaklar: $selectedMuscleLabel"
+                            "en" -> "Muscles: $selectedMuscleLabel"
+                            else -> "Мышцы: $selectedMuscleLabel"
+                        },
+                        onClick = {
+                            showMuscleFilter = !showMuscleFilter
+                            if (showMuscleFilter) showEquipFilter = false
+                        }
+                    )
+                    ObsidianOutlineButton(
+                        text = when (lang) {
+                            "uz" -> "Jihoz: $selectedEquipLabel"
+                            "en" -> "Equipment: $selectedEquipLabel"
+                            else -> "Оборудование: $selectedEquipLabel"
+                        },
+                        onClick = {
+                            showEquipFilter = !showEquipFilter
+                            if (showEquipFilter) showMuscleFilter = false
+                        }
+                    )
+                }
+
+                if (showMuscleFilter) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        muscles.forEach { (key, label) ->
+                            ObsidianPillTab(
+                                text = label.replaceFirstChar { it.uppercase() },
+                                selected = state.selectedMuscle.equals(key, ignoreCase = true),
+                                onClick = {
+                                    onAction(ExercisesUiAction.OnSelectMuscle(key))
+                                    showMuscleFilter = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                if (showEquipFilter) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        equipments.forEach { (key, label) ->
+                            ObsidianPillTab(
+                                text = label.replaceFirstChar { it.uppercase() },
+                                selected = state.selectedEquipment.equals(key, ignoreCase = true),
+                                onClick = {
+                                    onAction(ExercisesUiAction.OnSelectEquipment(key))
+                                    showEquipFilter = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ObsidianPillTab(
+                        text = when (lang) {
+                            "uz" -> "Barcha mashqlar"
+                            "en" -> "All exercises"
+                            else -> "Все упражнения"
+                        },
+                        selected = state.selectedTab == "all",
+                        onClick = { onAction(ExercisesUiAction.OnSelectTab("all")) }
+                    )
+                    ObsidianPillTab(
+                        text = when (lang) {
+                            "uz" -> "O'zimniki"
+                            "en" -> "Custom"
+                            else -> "Свои"
+                        },
+                        selected = state.selectedTab == "custom",
+                        onClick = { onAction(ExercisesUiAction.OnSelectTab("custom")) }
+                    )
+                }
+            }
+        }
+
+        item(key = "library_heading", contentType = "section_heading") {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "База упражнений",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Black,
+                    text = when (lang) {
+                        "uz" -> "Mashqlar kutubxonasi"
+                        "en" -> "Exercise library"
+                        else -> "Библиотека упражнений"
+                    },
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
                     color = TextPrimary
                 )
                 Text(
-                    text = "Техника выполнения, биомеханика и свои движения",
-                    fontSize = 12.sp,
+                    text = when (lang) {
+                        "uz" -> "${state.exercises.size} mashq · Kuch · Vazn va takrorlar"
+                        "en" -> "${state.exercises.size} exercises · Strength · Weight & reps"
+                        else -> "${state.exercises.size} упражнений · Силовые · Вес и повторения"
+                    },
+                    fontSize = 13.sp,
+                    color = TextSecondary
+                )
+            }
+        }
+
+        if (state.isLoading && state.exercises.isEmpty()) {
+            item(key = "loading", contentType = "loading") {
+                ObsidianLoadingCard(
+                    title = strings.stateLoadingTitle,
+                    hint = strings.stateLoadingHint,
+                    kicker = "03 · ${strings.navExercises}"
+                )
+            }
+        } else if (state.exercises.isEmpty()) {
+            item(key = "empty", contentType = "empty") {
+                ObsidianEmptyCard(
+                    title = when (lang) {
+                        "uz" -> "Mashqlar topilmadi"
+                        "en" -> "No exercises found"
+                        else -> "Упражнения не найдены"
+                    },
+                    description = when (lang) {
+                        "uz" -> "Filtrni o'zgartiring yoki yangi mashq qo'shing."
+                        "en" -> "Try adjusting filters or create a custom movement."
+                        else -> "Измените параметры фильтра или создайте собственное упражнение."
+                    },
+                    primaryActionLabel = when (lang) {
+                        "uz" -> "O'zimniki yaratish"
+                        "en" -> "Create custom"
+                        else -> "Создать своё"
+                    },
+                    onPrimaryAction = { onAction(ExercisesUiAction.OnOpenEditor(null)) }
+                )
+            }
+        } else {
+            if (catalogExercises.isNotEmpty()) {
+                itemsIndexed(
+                    items = catalogExercises,
+                    key = { _, ex -> ex.id },
+                    contentType = { _, _ -> "catalog_row" }
+                ) { index, ex ->
+                    GroupedCatalogExerciseRow(
+                        exercise = ex,
+                        isFirst = index == 0,
+                        isLast = index == catalogExercises.lastIndex,
+                        isExpanded = expandedTechniqueId == ex.id,
+                        lang = lang,
+                        onToggleTechnique = {
+                            expandedTechniqueId = if (expandedTechniqueId == ex.id) null else ex.id
+                        },
+                        onAddToWorkout = { onAction(ExercisesUiAction.OnStartWorkoutWithExercise(ex)) },
+                        onInspectFull = { onAction(ExercisesUiAction.OnSelectExercise(ex)) }
+                    )
+                }
+            }
+
+            if (customExercises.isNotEmpty()) {
+                itemsIndexed(
+                    items = customExercises,
+                    key = { _, ex -> "custom_${ex.id}" },
+                    contentType = { _, _ -> "custom_card" }
+                ) { _, ex ->
+                    CustomExerciseCard(
+                        exercise = ex,
+                        isExpanded = expandedTechniqueId == ex.id,
+                        lang = lang,
+                        onToggleTechnique = {
+                            expandedTechniqueId = if (expandedTechniqueId == ex.id) null else ex.id
+                        },
+                        onAddToWorkout = { onAction(ExercisesUiAction.OnStartWorkoutWithExercise(ex)) },
+                        onEdit = { onAction(ExercisesUiAction.OnOpenEditor(ex)) },
+                        onDelete = { onAction(ExercisesUiAction.OnDeleteCustomExercise(ex.id)) },
+                        onInspectFull = { onAction(ExercisesUiAction.OnSelectExercise(ex)) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun GroupedCatalogExerciseRow(
+    exercise: Exercise,
+    isFirst: Boolean,
+    isLast: Boolean,
+    isExpanded: Boolean,
+    lang: String,
+    onToggleTechnique: () -> Unit,
+    onAddToWorkout: () -> Unit,
+    onInspectFull: () -> Unit
+) {
+    val shape = RoundedCornerShape(
+        topStart = if (isFirst) 14.dp else 0.dp,
+        topEnd = if (isFirst) 14.dp else 0.dp,
+        bottomStart = if (isLast) 14.dp else 0.dp,
+        bottomEnd = if (isLast) 14.dp else 0.dp
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(DarkSurface, shape)
+            .border(1.dp, BorderSubtle, shape)
+            .drawWithContent {
+                drawContent()
+                val stroke = 1.dp.toPx()
+                if (!isFirst) {
+                    drawLine(
+                        color = DarkSurface,
+                        start = Offset(stroke, stroke / 2f),
+                        end = Offset(size.width - stroke, stroke / 2f),
+                        strokeWidth = stroke * 1.6f
+                    )
+                }
+                if (!isLast) {
+                    drawLine(
+                        color = DarkSurface,
+                        start = Offset(stroke, size.height - stroke / 2f),
+                        end = Offset(size.width - stroke, size.height - stroke / 2f),
+                        strokeWidth = stroke * 1.6f
+                    )
+                }
+            }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onInspectFull() },
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = exercise.name,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextPrimary
+                )
+                Text(
+                    text = "${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}",
+                    fontSize = 13.sp,
                     color = TextSecondary
                 )
             }
 
-            Button(
-                onClick = { onAction(ExercisesUiAction.OnOpenEditor(null)) },
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = EmeraldNeon,
-                    contentColor = Color.Black
-                ),
-                modifier = Modifier.height(38.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Своё упр.", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Tab Switcher: Все / Мои упражнения
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(DarkSurfaceVariant)
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            listOf("all" to "Все упражнения", "custom" to "Мои упражнения").forEach { (key, label) ->
-                val selected = state.selectedTab == key
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (selected) EmeraldNeon else Color.Transparent)
-                        .clickable { onAction(ExercisesUiAction.OnSelectTab(key)) }
-                        .padding(vertical = 7.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = label,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (selected) Color.Black else TextSecondary
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        OutlinedTextField(
-            value = state.searchQuery,
-            onValueChange = { onAction(ExercisesUiAction.OnSearchQueryChanged(it)) },
-            placeholder = { Text(text = "Поиск по названию или мышце...", color = TextMuted, fontSize = 13.sp) },
-            leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = TextMuted) },
-            trailingIcon = {
-                if (state.searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { onAction(ExercisesUiAction.OnSearchQueryChanged("")) }) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Clear", tint = TextMuted)
-                    }
-                }
-            },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = ObsidianWell,
-                unfocusedContainerColor = ObsidianWell,
-                focusedBorderColor = EmeraldNeon,
-                unfocusedBorderColor = BorderSubtle,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
-            )
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(muscles, key = { it.first }) { (key, label) ->
-                val isSelected = state.selectedMuscle.equals(key, ignoreCase = true)
-                FilterChipPill(
-                    text = label,
-                    isSelected = isSelected,
-                    onClick = { onAction(ExercisesUiAction.OnSelectMuscle(key)) }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(equipments, key = { it.first }) { (key, label) ->
-                val isSelected = state.selectedEquipment.equals(key, ignoreCase = true)
-                FilterChipPill(
-                    text = label,
-                    isSelected = isSelected,
-                    onClick = { onAction(ExercisesUiAction.OnSelectEquipment(key)) },
-                    selectedColor = InfoAccent
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        if (state.isLoading && state.exercises.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = EmeraldNeon)
-            }
-        } else if (state.exercises.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "Упражнения не найдены", color = TextSecondary)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(
-                    items = state.exercises,
-                    key = { it.id }
-                ) { ex ->
-                    ExerciseCatalogItem(
-                        exercise = ex,
-                        onClick = { onAction(ExercisesUiAction.OnSelectExercise(ex)) },
-                        onEdit = if (ex.isCustom) {
-                            { onAction(ExercisesUiAction.OnOpenEditor(ex)) }
-                        } else null,
-                        onDelete = if (ex.isCustom) {
-                            { onAction(ExercisesUiAction.OnDeleteCustomExercise(ex.id)) }
-                        } else null
-                    )
-                }
-                item { Spacer(modifier = Modifier.height(24.dp)) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun FilterChipPill(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    selectedColor: Color = EmeraldNeon
-) {
-    val bg = if (isSelected) selectedColor.copy(alpha = 0.2f) else DarkSurfaceVariant
-    val border = if (isSelected) selectedColor else BorderSubtle
-    val txt = if (isSelected) selectedColor else TextSecondary
-
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(bg)
-            .border(1.dp, border, RoundedCornerShape(20.dp))
-            .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 6.dp)
-    ) {
-        Text(text = text, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = txt)
-    }
-}
-
-@Composable
-private fun ExerciseCatalogItem(
-    exercise: Exercise,
-    onClick: () -> Unit,
-    onEdit: (() -> Unit)?,
-    onDelete: (() -> Unit)?
-) {
-    AthleticCard(
-        modifier = Modifier.clickable { onClick() },
-        backgroundColor = DarkSurfaceVariant
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(DarkSurfaceHigh),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.FitnessCenter,
-                        contentDescription = null,
-                        tint = EmeraldNeon,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = exercise.name,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "${localizeMuscleName(exercise.primaryMuscle)} • ${localizeEquipmentName(exercise.equipment)}",
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-                }
+                ObsidianOutlineButton(
+                    text = if (isExpanded) {
+                        when (lang) {
+                            "uz" -> "Texnikani yopish"
+                            "en" -> "Hide cues"
+                            else -> "Скрыть технику"
+                        }
+                    } else {
+                        when (lang) {
+                            "uz" -> "Texnika"
+                            "en" -> "Technique"
+                            else -> "Техника"
+                        }
+                    },
+                    onClick = onToggleTechnique
+                )
+                ObsidianPrimaryButton(
+                    text = when (lang) {
+                        "uz" -> "Qo'shish"
+                        "en" -> "Add"
+                        else -> "Добавить"
+                    },
+                    onClick = onAddToWorkout
+                )
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (onEdit != null) {
-                    IconButton(onClick = onEdit, modifier = Modifier.size(30.dp)) {
-                        Icon(Icons.Default.Edit, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
-                    }
-                }
-                if (onDelete != null) {
-                    IconButton(onClick = onDelete, modifier = Modifier.size(30.dp)) {
-                        Icon(Icons.Default.Delete, contentDescription = null, tint = CrimsonRed, modifier = Modifier.size(16.dp))
-                    }
-                }
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = "Details",
-                    tint = EmeraldLight,
-                    modifier = Modifier.size(20.dp)
+            if (isExpanded) {
+                ExpandedTechniquePanel(
+                    exercise = exercise,
+                    lang = lang,
+                    onAddToWorkout = onAddToWorkout,
+                    onInspectFull = onInspectFull
                 )
             }
         }
+
+        if (!isLast) {
+            ObsidianDivider(
+                modifier = Modifier.padding(horizontal = 24.dp),
+                color = BorderSubtle
+            )
+        }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CustomExerciseCard(
+    exercise: Exercise,
+    isExpanded: Boolean,
+    lang: String,
+    onToggleTechnique: () -> Unit,
+    onAddToWorkout: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    onInspectFull: () -> Unit
+) {
+    ObsidianCard(
+        backgroundColor = DarkSurface,
+        borderColor = BorderSubtle
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = exercise.name,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
+            )
+            Text(
+                text = when (lang) {
+                    "uz" -> "Shaxsiy mashq · ${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}"
+                    "en" -> "Custom exercise · ${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}"
+                    else -> "Своё упражнение · ${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}"
+                },
+                fontSize = 13.sp,
+                color = TextSecondary
+            )
+        }
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ObsidianOutlineButton(
+                text = if (isExpanded) {
+                    when (lang) {
+                        "uz" -> "Texnikani yopish"
+                        "en" -> "Hide cues"
+                        else -> "Скрыть технику"
+                    }
+                } else {
+                    when (lang) {
+                        "uz" -> "Texnika"
+                        "en" -> "Technique"
+                        else -> "Техника"
+                    }
+                },
+                onClick = onToggleTechnique
+            )
+            ObsidianPrimaryButton(
+                text = when (lang) {
+                    "uz" -> "Qo'shish"
+                    "en" -> "Add"
+                    else -> "Добавить"
+                },
+                onClick = onAddToWorkout
+            )
+            ObsidianOutlineButton(
+                text = when (lang) {
+                    "uz" -> "Tahrirlash"
+                    "en" -> "Edit"
+                    else -> "Изменить"
+                },
+                onClick = onEdit
+            )
+            ObsidianOutlineButton(
+                text = when (lang) {
+                    "uz" -> "O'chirish"
+                    "en" -> "Delete"
+                    else -> "Удалить"
+                },
+                onClick = onDelete
+            )
+        }
+
+        if (isExpanded) {
+            ExpandedTechniquePanel(
+                exercise = exercise,
+                lang = lang,
+                onAddToWorkout = onAddToWorkout,
+                onInspectFull = onInspectFull
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ExpandedTechniquePanel(
+    exercise: Exercise,
+    lang: String,
+    onAddToWorkout: () -> Unit,
+    onInspectFull: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(DarkSurfaceHigh)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            text = when (lang) {
+                "uz" -> "Texnika · ${exercise.name}"
+                "en" -> "Technique · ${exercise.name}"
+                else -> "Техника · ${exercise.name}"
+            },
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary
+        )
+        Text(
+            text = exercise.instructions.ifBlank {
+                when (lang) {
+                    "uz" -> "Asosiy: ${localizeMuscleName(exercise.primaryMuscle)}. Jihoz: ${localizeEquipmentName(exercise.equipment)}."
+                    "en" -> "Primary: ${localizeMuscleName(exercise.primaryMuscle)}. Equipment: ${localizeEquipmentName(exercise.equipment)}."
+                    else -> "Основные: ${localizeMuscleName(exercise.primaryMuscle)}. Оборудование: ${localizeEquipmentName(exercise.equipment)}."
+                }
+            },
+            fontSize = 13.sp,
+            lineHeight = 19.sp,
+            color = TextSoft
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ObsidianPrimaryButton(
+                text = when (lang) {
+                    "uz" -> "Mashg'ulotga qo'shish"
+                    "en" -> "Add to workout"
+                    else -> "Добавить в тренировку"
+                },
+                onClick = onAddToWorkout
+            )
+            ObsidianOutlineButton(
+                text = when (lang) {
+                    "uz" -> "Batafsil va rekordlar"
+                    "en" -> "Details & records"
+                    else -> "История и детали"
+                },
+                onClick = onInspectFull
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun CustomExerciseEditorBottomSheet(
     existing: Exercise?,
+    lang: String,
     onSave: (SaveExerciseRequestDto) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -420,104 +727,148 @@ private fun CustomExerciseEditorBottomSheet(
     var name by remember { mutableStateOf(existing?.name ?: "") }
     var primaryMuscle by remember { mutableStateOf(existing?.primaryMuscle ?: "chest") }
     var equipment by remember { mutableStateOf(existing?.equipment ?: "barbell") }
-    var category by remember { mutableStateOf(existing?.category ?: "compound") }
+    val category by remember { mutableStateOf(existing?.category ?: "compound") }
     var instructions by remember { mutableStateOf(existing?.instructions ?: "") }
 
     val muscleChoices = listOf(
-        "chest" to "Грудь",
-        "back" to "Спина",
-        "legs" to "Ноги",
-        "shoulders" to "Плечи",
-        "arms" to "Руки",
-        "core" to "Пресс"
+        "chest" to when (lang) { "uz" -> "Ko'krak"; "en" -> "Chest"; else -> "Грудь" },
+        "back" to when (lang) { "uz" -> "Orqa"; "en" -> "Back"; else -> "Спина" },
+        "legs" to when (lang) { "uz" -> "Oyoqlar"; "en" -> "Legs"; else -> "Ноги" },
+        "shoulders" to when (lang) { "uz" -> "Yelkalar"; "en" -> "Shoulders"; else -> "Плечи" },
+        "arms" to when (lang) { "uz" -> "Qo'llar"; "en" -> "Arms"; else -> "Руки" },
+        "core" to when (lang) { "uz" -> "Press"; "en" -> "Core"; else -> "Пресс" }
     )
     val equipmentChoices = listOf(
-        "barbell" to "Штанга",
-        "dumbbell" to "Гантели",
-        "machine" to "Тренажёр",
-        "cable" to "Блок",
-        "bodyweight" to "Свой вес"
+        "barbell" to when (lang) { "uz" -> "Shtanga"; "en" -> "Barbell"; else -> "Штанга" },
+        "dumbbell" to when (lang) { "uz" -> "Gantel"; "en" -> "Dumbbell"; else -> "Гантели" },
+        "machine" to when (lang) { "uz" -> "Trenajyor"; "en" -> "Machine"; else -> "Тренажёр" },
+        "cable" to when (lang) { "uz" -> "Blok"; "en" -> "Cable"; else -> "Блок" },
+        "bodyweight" to when (lang) { "uz" -> "Tana vazni"; "en" -> "Bodyweight"; else -> "Свой вес" }
     )
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface
+        containerColor = DarkSurface,
+        contentColor = TextPrimary
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 10.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = if (existing != null) "Изменить упражнение" else "Создать своё упражнение",
+                text = if (existing != null) {
+                    when (lang) {
+                        "uz" -> "Mashqni tahrirlash"
+                        "en" -> "Edit exercise"
+                        else -> "Изменить упражнение"
+                    }
+                } else {
+                    when (lang) {
+                        "uz" -> "Yangi mashq yaratish"
+                        "en" -> "Create custom exercise"
+                        else -> "Создать своё упражнение"
+                    }
+                },
                 fontSize = 18.sp,
-                fontWeight = FontWeight.Black,
+                fontWeight = FontWeight.SemiBold,
                 color = TextPrimary
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
+            ObsidianLabeledField(
+                label = when (lang) {
+                    "uz" -> "Mashq nomi"
+                    "en" -> "Exercise name"
+                    else -> "Название упражнения"
+                },
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Название упражнения") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                placeholder = when (lang) {
+                    "uz" -> "Masalan: Pauzali jim"
+                    "en" -> "e.g. Pause bench press"
+                    else -> "Например: Жим с паузой"
+                }
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text("Целевая мышечная группа", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMuted)
-            Spacer(modifier = Modifier.height(6.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(muscleChoices) { (key, label) ->
-                    FilterChip(
-                        selected = primaryMuscle == key,
-                        onClick = { primaryMuscle = key },
-                        label = { Text(label) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldSubtle,
-                            selectedLabelColor = EmeraldNeon
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Maqsadli mushak guruhi"
+                        "en" -> "Primary muscle"
+                        else -> "Целевая мышечная группа"
+                    },
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextSecondary
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    muscleChoices.forEach { (key, label) ->
+                        ObsidianPillTab(
+                            text = label,
+                            selected = primaryMuscle == key,
+                            onClick = { primaryMuscle = key }
                         )
-                    )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text("Оборудование", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMuted)
-            Spacer(modifier = Modifier.height(6.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(equipmentChoices) { (key, label) ->
-                    FilterChip(
-                        selected = equipment == key,
-                        onClick = { equipment = key },
-                        label = { Text(label) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldSubtle,
-                            selectedLabelColor = EmeraldNeon
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Jihoz"
+                        "en" -> "Equipment"
+                        else -> "Оборудование"
+                    },
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextSecondary
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    equipmentChoices.forEach { (key, label) ->
+                        ObsidianPillTab(
+                            text = label,
+                            selected = equipment == key,
+                            onClick = { equipment = key }
                         )
-                    )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            OutlinedTextField(
+            ObsidianLabeledField(
+                label = when (lang) {
+                    "uz" -> "Bajarish texnikasi bo'yicha eslatmalar"
+                    "en" -> "Technique cues"
+                    else -> "Заметки по технике выполнения"
+                },
                 value = instructions,
                 onValueChange = { instructions = it },
-                label = { Text("Заметки по технике выполнения") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                placeholder = when (lang) {
+                    "uz" -> "Tirsak holati, pauza, nafas..."
+                    "en" -> "Elbow path, pause, tempo..."
+                    else -> "Положение локтей, пауза, темп..."
+                },
+                singleLine = false,
+                minLines = 2
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
+            ObsidianPrimaryButton(
+                text = when (lang) {
+                    "uz" -> "Saqlash"
+                    "en" -> "Save exercise"
+                    else -> "Сохранить упражнение"
+                },
+                enabled = name.isNotBlank(),
+                fillWidth = true,
                 onClick = {
-                    if (name.isBlank()) return@Button
+                    if (name.isBlank()) return@ObsidianPrimaryButton
                     onSave(
                         SaveExerciseRequestDto(
                             name = name.trim(),
@@ -527,21 +878,10 @@ private fun CustomExerciseEditorBottomSheet(
                             instructions = instructions.trim()
                         )
                     )
-                },
-                enabled = name.isNotBlank(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = EmeraldNeon,
-                    contentColor = Color.Black
-                )
-            ) {
-                Text("Сохранить упражнение", fontWeight = FontWeight.Bold)
-            }
+                }
+            )
 
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
