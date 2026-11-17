@@ -135,8 +135,8 @@ data class MacroTargetProgress(
 fun InteractiveVolumeChart(
     dataPoints: List<VolumeDataPoint>,
     modifier: Modifier = Modifier,
-    lineColor: Color = EmeraldNeon,
-    gradientStartColor: Color = EmeraldGlow,
+    lineColor: Color = AccentLime,
+    gradientStartColor: Color = AccentLimeGlow,
     gradientEndColor: Color = Color.Transparent,
     gridColor: Color = BorderSubtle,
     textColor: Color = TextSecondary
@@ -199,7 +199,7 @@ fun InteractiveVolumeChart(
                         text = "${((activePoint?.volumeKg ?: 0.0)).toInt()} ${strings.unitKg}",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = if (activePoint?.isPersonalRecord == true) AmberGold else EmeraldNeon
+                        color = if (activePoint?.isPersonalRecord == true) AmberGold else AccentLime
                     )
                 }
 
@@ -591,9 +591,9 @@ fun ConsistencyHeatmap84Day(
                             val y = d * (cellSize + gap)
 
                             val color = when (entry.tier) {
-                                1 -> EmeraldDark.copy(alpha = 0.45f)
-                                2 -> EmeraldNeon.copy(alpha = 0.70f)
-                                3 -> EmeraldNeon
+                                1 -> AccentLimeDark.copy(alpha = 0.45f)
+                                2 -> AccentLime.copy(alpha = 0.70f)
+                                3 -> AccentLime
                                 4 -> AmberGold
                                 else -> DarkSurfaceElevated
                             }
@@ -632,7 +632,7 @@ fun ConsistencyHeatmap84Day(
                     Text(
                         text = "${selectedDay?.date}: ${selectedDay?.workoutCount} ${strings.workoutsDone} (${selectedDay?.volumeKg?.toInt()} kg)",
                         style = MaterialTheme.typography.labelSmall,
-                        color = EmeraldNeon,
+                        color = AccentLime,
                         fontWeight = FontWeight.SemiBold
                     )
                 } else {
@@ -650,9 +650,9 @@ fun ConsistencyHeatmap84Day(
                 ) {
                     listOf(
                         DarkSurfaceElevated,
-                        EmeraldDark.copy(alpha = 0.45f),
-                        EmeraldNeon.copy(alpha = 0.70f),
-                        EmeraldNeon,
+                        AccentLimeDark.copy(alpha = 0.45f),
+                        AccentLime.copy(alpha = 0.70f),
+                        AccentLime,
                         AmberGold
                     ).forEach { col ->
                         Box(
@@ -742,7 +742,7 @@ fun MacronutrientDonutGauge(
                     // 1. Outer Ring: Calories (Emerald Neon)
                     val calSweep = animCalorieProgress * 360f
                     drawArc(
-                        color = if (animCalorieProgress > 1.0f) AmberWarm else EmeraldNeon,
+                        color = if (animCalorieProgress > 1.0f) AmberWarm else AccentLime,
                         startAngle = -90f,
                         sweepAngle = calSweep,
                         useCenter = false,
@@ -957,7 +957,7 @@ fun WaterHydrationWave(
                     .fillMaxWidth()
                     .height(90.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(ObsidianWell)
+                    .background(GymWell)
                     .border(1.dp, BorderDivider, RoundedCornerShape(10.dp))
                     .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
             ) {
@@ -1015,7 +1015,7 @@ fun WaterHydrationWave(
 
                     // Target Line Indicator at 100%
                     drawLine(
-                        color = EmeraldNeon.copy(alpha = 0.5f),
+                        color = AccentLime.copy(alpha = 0.5f),
                         start = Offset(0f, 6.dp.toPx()),
                         end = Offset(w, 6.dp.toPx()),
                         strokeWidth = 1.dp.toPx(),

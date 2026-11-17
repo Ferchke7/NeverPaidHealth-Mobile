@@ -64,22 +64,22 @@ import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.EmeraldLight
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.EmeraldSubtle
-import dev.neverpaid.health.core.designsystem.ObsidianCard
-import dev.neverpaid.health.core.designsystem.ObsidianDivider
-import dev.neverpaid.health.core.designsystem.ObsidianEmptyCard
-import dev.neverpaid.health.core.designsystem.ObsidianInkOnLight
-import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
-import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
-import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
-import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
-import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
-import dev.neverpaid.health.core.designsystem.ObsidianPillTab
-import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
-import dev.neverpaid.health.core.designsystem.ObsidianProgressBar
-import dev.neverpaid.health.core.designsystem.ObsidianWhiteButton
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymEmptyCard
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
+import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymLabeledField
+import dev.neverpaid.health.core.designsystem.GymLoadingCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymProgressBar
+import dev.neverpaid.health.core.designsystem.GymWhiteButton
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -210,7 +210,7 @@ fun TodoScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             item(key = "page_header", contentType = "header") {
-                ObsidianPageHeader(
+                GymPageHeader(
                     title = strings.todoTitle,
                     subtitle = strings.todoSubtitle
                 )
@@ -218,16 +218,15 @@ fun TodoScreen(
 
             if (state.isLoading && state.allTasks.isEmpty()) {
                 item(key = "loading_card", contentType = "loading") {
-                    ObsidianLoadingCard(
+                    GymLoadingCard(
                         title = strings.stateLoadingTitle,
-                        hint = strings.stateLoadingHint,
-                        kicker = "01 · ${strings.todoTitle}"
+                        hint = strings.stateLoadingHint
                     )
                 }
             } else {
                 // Date Navigation & 7-Day Strip (Figma 09)
                 item(key = "date_strip", contentType = "date_strip") {
-                    ObsidianCard(contentPadding = PaddingValues(18.dp)) {
+                    GymCard(contentPadding = PaddingValues(18.dp)) {
                         Text(
                             text = formatFullPlanDate(activeDate, lang),
                             fontSize = 18.sp,
@@ -241,7 +240,7 @@ fun TodoScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = when (lang) {
                                     "uz" -> "← Oldinga"
                                     "en" -> "← Back"
@@ -249,7 +248,7 @@ fun TodoScreen(
                                 },
                                 onClick = { onAction(TodoUiAction.OnSelectDate(shiftIsoDate(activeDate, -1))) }
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = when (lang) {
                                     "uz" -> "Bugun"
                                     "en" -> "Today"
@@ -257,7 +256,7 @@ fun TodoScreen(
                                 },
                                 onClick = { onAction(TodoUiAction.OnSelectDate(currentTodayIso())) }
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = when (lang) {
                                     "uz" -> "Keyingi →"
                                     "en" -> "Forward →"
@@ -265,7 +264,7 @@ fun TodoScreen(
                                 },
                                 onClick = { onAction(TodoUiAction.OnSelectDate(shiftIsoDate(activeDate, 1))) }
                             )
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) {
                                     "uz" -> "Odatlar (${habits.count { it.isCompletedOn(activeDate) }}/${habits.size})"
                                     "en" -> "Habits (${habits.count { it.isCompletedOn(activeDate) }}/${habits.size})"
@@ -285,12 +284,12 @@ fun TodoScreen(
                                 state.calendarDays.forEach { day ->
                                     val dayShape = RoundedCornerShape(10.dp)
                                     val bgColor = when {
-                                        day.isSelected -> EmeraldSubtle
+                                        day.isSelected -> AccentLimeSubtle
                                         else -> DarkBackground
                                     }
                                     val borderColor = when {
                                         day.isSelected -> BorderHighlight
-                                        day.isToday -> EmeraldNeon.copy(alpha = 0.45f)
+                                        day.isToday -> AccentLime.copy(alpha = 0.45f)
                                         else -> BorderSubtle
                                     }
                                     Column(
@@ -309,7 +308,7 @@ fun TodoScreen(
                                             text = day.dayName.take(2),
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Medium,
-                                            color = if (day.isSelected) EmeraldNeon else TextMuted,
+                                            color = if (day.isSelected) AccentLime else TextMuted,
                                             maxLines = 1
                                         )
                                         Spacer(modifier = Modifier.height(3.dp))
@@ -318,7 +317,7 @@ fun TodoScreen(
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             fontFamily = FontFamily.Default,
-                                            color = if (day.isSelected) EmeraldLight else TextPrimary
+                                            color = if (day.isSelected) AccentLime else TextPrimary
                                         )
                                     }
                                 }
@@ -330,7 +329,7 @@ fun TodoScreen(
                 // Toggleable Habit Tracker section (preserves existing capability without cluttering Figma baseline)
                 if (showHabitsSection) {
                     item(key = "habits_section", contentType = "habits") {
-                        ObsidianCard(contentPadding = PaddingValues(18.dp)) {
+                        GymCard(contentPadding = PaddingValues(18.dp)) {
                             HabitTrackerView(
                                 habits = habits,
                                 currentDateIso = activeDate,
@@ -360,7 +359,7 @@ fun TodoScreen(
 
                 // Card 1: Checklist ("Небольшие шаги каждый день") — Figma 09
                 item(key = "checklist_card", contentType = "checklist") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = when (lang) {
                                 "uz" -> "Har kuni kichik qadamlar"
@@ -391,10 +390,10 @@ fun TodoScreen(
                         } else {
                             0f
                         }
-                        ObsidianProgressBar(
+                        GymProgressBar(
                             progress = progress,
                             heightDp = 6,
-                            color = EmeraldNeon
+                            color = AccentLime
                         )
 
                         Spacer(modifier = Modifier.height(14.dp))
@@ -410,7 +409,7 @@ fun TodoScreen(
 
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             items(categories, key = { it.first }) { (key, label) ->
-                                ObsidianPillTab(
+                                GymPillTab(
                                     text = label,
                                     selected = state.selectedCategoryFilter == key,
                                     onClick = { onAction(TodoUiAction.OnSelectCategoryFilter(key)) }
@@ -420,7 +419,7 @@ fun TodoScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        ObsidianPrimaryButton(
+                        GymPrimaryButton(
                             text = "+ ${strings.todoAddTask}",
                             onClick = { onAction(TodoUiAction.OnOpenTaskModal(null)) },
                             fillWidth = true
@@ -429,7 +428,7 @@ fun TodoScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         if (state.tasksForSelectedDate.isEmpty()) {
-                            ObsidianInnerWell {
+                            GymInnerWell {
                                 Text(
                                     text = when (lang) {
                                         "uz" -> "Tanlangan kun uchun vazifalar yo'q"
@@ -454,7 +453,7 @@ fun TodoScreen(
                         } else {
                             state.tasksForSelectedDate.forEachIndexed { index, task ->
                                 if (index > 0) {
-                                    ObsidianDivider()
+                                    GymDivider()
                                 }
                                 val isCompleted = task.isCompletedOn(activeDate)
                                 TodoChecklistRow(
@@ -508,7 +507,7 @@ fun TodoScreen(
 
                 // Card 2: Focus Timer ("Время для фокуса") — Figma 09
                 item(key = "focus_timer_card", contentType = "focus_timer") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = when (lang) {
                                 "uz" -> "Fokus vaqti"
@@ -526,7 +525,7 @@ fun TodoScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) { "uz" -> "Pomodoro"; "en" -> "Pomodoro"; else -> "Помодоро" },
                                 selected = focusMode == FocusMode.POMODORO,
                                 onClick = {
@@ -536,7 +535,7 @@ fun TodoScreen(
                                     timerSecondsLeft = if (focusPhase == FocusPhase.WORK) 25 * 60 else 5 * 60
                                 }
                             )
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) { "uz" -> "Taymer"; "en" -> "Timer"; else -> "Таймер" },
                                 selected = focusMode == FocusMode.TIMER,
                                 onClick = {
@@ -546,7 +545,7 @@ fun TodoScreen(
                                     timerSecondsLeft = 15 * 60
                                 }
                             )
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) { "uz" -> "Sekundomer"; "en" -> "Stopwatch"; else -> "Секундомер" },
                                 selected = focusMode == FocusMode.STOPWATCH,
                                 onClick = {
@@ -561,7 +560,7 @@ fun TodoScreen(
                         if (focusMode == FocusMode.POMODORO) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                ObsidianPillTab(
+                                GymPillTab(
                                     text = when (lang) { "uz" -> "Ish"; "en" -> "Work"; else -> "Работа" },
                                     selected = focusPhase == FocusPhase.WORK,
                                     onClick = {
@@ -570,7 +569,7 @@ fun TodoScreen(
                                         timerSecondsLeft = 25 * 60
                                     }
                                 )
-                                ObsidianPillTab(
+                                GymPillTab(
                                     text = when (lang) { "uz" -> "Tanaffus"; "en" -> "Break"; else -> "Перерыв" },
                                     selected = focusPhase == FocusPhase.BREAK,
                                     onClick = {
@@ -633,7 +632,7 @@ fun TodoScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianWhiteButton(
+                            GymWhiteButton(
                                 text = when {
                                     isTimerRunning -> when (lang) { "uz" -> "Faol"; "en" -> "Running"; else -> "Идёт" }
                                     hasStartedSession -> when (lang) { "uz" -> "Davom etish"; "en" -> "Resume"; else -> "Продолжить" }
@@ -645,12 +644,12 @@ fun TodoScreen(
                                 },
                                 enabled = !isTimerRunning
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = strings.todoPomodoroPause,
                                 onClick = { isTimerRunning = false },
                                 enabled = isTimerRunning
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = strings.todoPomodoroReset,
                                 onClick = {
                                     isTimerRunning = false
@@ -664,7 +663,7 @@ fun TodoScreen(
                                     }
                                 }
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = when {
                                     lang == "uz" -> if (soundEnabled) "Ovoz: yoq." else "Ovoz: o'ch."
                                     lang == "en" -> if (soundEnabled) "Sound: on" else "Sound: off"
@@ -714,7 +713,7 @@ fun TodoScreen(
 
                 // Card 4: Activity Log ("Журнал активности") — Figma 09
                 item(key = "activity_log_card", contentType = "activity_log") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = when (lang) {
                                 "uz" -> "Faoliyat jurnali"
@@ -731,7 +730,7 @@ fun TodoScreen(
                         val completedForDay = state.tasksForSelectedDate.filter { it.isCompletedOn(activeDate) }
 
                         if (state.activityLogs.isEmpty() && completedForDay.isEmpty()) {
-                            ObsidianInnerWell {
+                            GymInnerWell {
                                 Text(
                                     text = when (lang) {
                                         "uz" -> "Hozircha yozuvlar yo'q"
@@ -744,7 +743,7 @@ fun TodoScreen(
                             }
                         } else {
                             state.activityLogs.take(8).forEachIndexed { idx, log ->
-                                if (idx > 0) ObsidianDivider()
+                                if (idx > 0) GymDivider()
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -765,7 +764,7 @@ fun TodoScreen(
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             fontFamily = FontFamily.Default,
-                                            color = EmeraldNeon
+                                            color = AccentLime
                                         )
                                         Spacer(modifier = Modifier.width(12.dp))
                                         Text(
@@ -789,7 +788,7 @@ fun TodoScreen(
 
                             completedForDay.take(5).forEachIndexed { idx, task ->
                                 if (state.activityLogs.isNotEmpty() || idx > 0) {
-                                    ObsidianDivider()
+                                    GymDivider()
                                 }
                                 Row(
                                     modifier = Modifier
@@ -807,7 +806,7 @@ fun TodoScreen(
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             fontFamily = FontFamily.Default,
-                                            color = EmeraldNeon
+                                            color = AccentLime
                                         )
                                         Spacer(modifier = Modifier.width(12.dp))
                                         Text(
@@ -827,7 +826,7 @@ fun TodoScreen(
                                             else -> "Выполнена"
                                         },
                                         fontSize = 12.sp,
-                                        color = EmeraldNeon
+                                        color = AccentLime
                                     )
                                 }
                             }
@@ -906,7 +905,7 @@ private fun TodoChecklistRow(
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
-                            tint = ObsidianInkOnLight,
+                            tint = GymInkOnLight,
                             modifier = Modifier.size(15.dp)
                         )
                     }
@@ -931,7 +930,7 @@ private fun TodoChecklistRow(
                 Text(
                     text = "$catLabel · ${task.durationMinutes} мин · $statusLabel",
                     fontSize = 12.sp,
-                    color = if (isCompleted) EmeraldNeon else TextSecondary
+                    color = if (isCompleted) AccentLime else TextSecondary
                 )
                 if (task.notes.isNotBlank()) {
                     Spacer(modifier = Modifier.height(2.dp))
@@ -953,15 +952,15 @@ private fun TodoChecklistRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) { "uz" -> "Tahrirlash"; "en" -> "Edit"; else -> "Изменить" },
                 onClick = onEdit
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) { "uz" -> "Ko'chirish"; "en" -> "Move +1d"; else -> "Перенести" },
                 onClick = onMoveTomorrow
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) { "uz" -> "Jurnal / Fokus"; "en" -> "Focus"; else -> "Журнал" },
                 onClick = onStartFocus
             )
@@ -985,7 +984,7 @@ private fun InlineTaskEditorCard(
     var durationText by remember(task.id) { mutableStateOf(task.durationMinutes.toString()) }
     var priority by remember(task.id) { mutableStateOf(task.priority) }
 
-    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+    GymCard(contentPadding = PaddingValues(20.dp)) {
         Text(
             text = when (lang) {
                 "uz" -> "Vazifani tahrirlash"
@@ -999,7 +998,7 @@ private fun InlineTaskEditorCard(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        ObsidianLabeledField(
+        GymLabeledField(
             label = strings.todoTaskTitleLabel,
             value = title,
             onValueChange = { title = it },
@@ -1008,7 +1007,7 @@ private fun InlineTaskEditorCard(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        ObsidianLabeledField(
+        GymLabeledField(
             label = when (lang) { "uz" -> "Sana"; "en" -> "Date"; else -> "Дата" },
             value = date,
             onValueChange = { date = it },
@@ -1029,7 +1028,7 @@ private fun InlineTaskEditorCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             listOf("workout", "nutrition", "supplement", "work", "recovery").forEach { key ->
-                ObsidianPillTab(
+                GymPillTab(
                     text = localizeTodoCategory(key, lang),
                     selected = category == key,
                     onClick = { category = key }
@@ -1039,7 +1038,7 @@ private fun InlineTaskEditorCard(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        ObsidianLabeledField(
+        GymLabeledField(
             label = when (lang) {
                 "uz" -> "Davomiyligi, min"
                 "en" -> "Duration, min"
@@ -1062,7 +1061,7 @@ private fun InlineTaskEditorCard(
         Spacer(modifier = Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("low", "medium", "high").forEach { p ->
-                ObsidianPillTab(
+                GymPillTab(
                     text = localizePriority(p, lang),
                     selected = priority == p,
                     onClick = { priority = p }
@@ -1076,7 +1075,7 @@ private fun InlineTaskEditorCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianPrimaryButton(
+            GymPrimaryButton(
                 text = strings.save,
                 onClick = {
                     if (title.isNotBlank()) {
@@ -1096,13 +1095,13 @@ private fun InlineTaskEditorCard(
                 },
                 enabled = title.isNotBlank()
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = strings.delete,
                 onClick = onDelete,
                 textColor = CrimsonRed,
                 borderColor = CrimsonRed.copy(alpha = 0.5f)
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = strings.cancel,
                 onClick = onCancel
             )
@@ -1207,7 +1206,7 @@ private fun CreateOrEditTaskBottomSheet(
                 Spacer(modifier = Modifier.height(8.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(quickTemplates, key = { it.first }) { (tplTitle, tplNotes, tplCat) ->
-                        ObsidianPillTab(
+                        GymPillTab(
                             text = "+ $tplTitle",
                             selected = false,
                             onClick = {
@@ -1222,7 +1221,7 @@ private fun CreateOrEditTaskBottomSheet(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            ObsidianLabeledField(
+            GymLabeledField(
                 label = strings.todoTaskTitleLabel,
                 value = title,
                 onValueChange = { title = it },
@@ -1231,7 +1230,7 @@ private fun CreateOrEditTaskBottomSheet(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            ObsidianLabeledField(
+            GymLabeledField(
                 label = strings.todoTargetLabel,
                 value = notes,
                 onValueChange = { notes = it },
@@ -1241,14 +1240,14 @@ private fun CreateOrEditTaskBottomSheet(
             Spacer(modifier = Modifier.height(10.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ObsidianLabeledField(
+                GymLabeledField(
                     label = when (lang) { "uz" -> "Sana"; "en" -> "Date"; else -> "Дата" },
                     value = scheduledDate,
                     onValueChange = { scheduledDate = it },
                     placeholder = "YYYY-MM-DD",
                     modifier = Modifier.weight(1f)
                 )
-                ObsidianLabeledField(
+                GymLabeledField(
                     label = when (lang) { "uz" -> "Vaqt"; "en" -> "Time"; else -> "Время" },
                     value = scheduledTime,
                     onValueChange = { scheduledTime = it },
@@ -1259,7 +1258,7 @@ private fun CreateOrEditTaskBottomSheet(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            ObsidianLabeledField(
+            GymLabeledField(
                 label = when (lang) {
                     "uz" -> "Davomiyligi, min"
                     "en" -> "Duration, min"
@@ -1285,7 +1284,7 @@ private fun CreateOrEditTaskBottomSheet(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 listOf("workout", "nutrition", "supplement", "work", "recovery").forEach { key ->
-                    ObsidianPillTab(
+                    GymPillTab(
                         text = localizeTodoCategory(key, lang),
                         selected = category == key,
                         onClick = { category = key }
@@ -1304,7 +1303,7 @@ private fun CreateOrEditTaskBottomSheet(
             Spacer(modifier = Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("low", "medium", "high").forEach { key ->
-                    ObsidianPillTab(
+                    GymPillTab(
                         text = localizePriority(key, lang),
                         selected = priority == key,
                         onClick = { priority = key }
@@ -1329,7 +1328,7 @@ private fun CreateOrEditTaskBottomSheet(
                     onCheckedChange = { repeatDaily = it },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = DarkBackground,
-                        checkedTrackColor = EmeraldNeon,
+                        checkedTrackColor = AccentLime,
                         uncheckedThumbColor = TextSecondary,
                         uncheckedTrackColor = DarkSurfaceHigh
                     )
@@ -1343,20 +1342,20 @@ private fun CreateOrEditTaskBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 if (onDelete != null) {
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = strings.delete,
                         onClick = onDelete,
                         textColor = CrimsonRed,
                         borderColor = CrimsonRed.copy(alpha = 0.5f)
                     )
                 }
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = strings.cancel,
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f),
                     fillWidth = true
                 )
-                ObsidianPrimaryButton(
+                GymPrimaryButton(
                     text = strings.save,
                     onClick = {
                         if (title.isNotBlank()) {

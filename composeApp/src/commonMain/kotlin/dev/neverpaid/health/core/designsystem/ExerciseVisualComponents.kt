@@ -56,11 +56,11 @@ enum class ExerciseThumbnailSize(val dpSize: Dp, val iconSize: Dp, val cornerRad
 private fun muscleTintColor(muscle: String?): Color = when (muscle?.lowercase()?.trim()) {
     "chest" -> CrimsonRed
     "back", "lats", "middle back", "lower back" -> InfoAccent
-    "quads", "quadriceps", "hamstrings", "glutes", "legs", "calves" -> EmeraldLight
+    "quads", "quadriceps", "hamstrings", "glutes", "legs", "calves" -> AccentLime
     "shoulders" -> AmberGold
-    "biceps", "triceps", "arms", "forearms" -> EmeraldNeon
+    "biceps", "triceps", "arms", "forearms" -> AccentLime
     "core", "abs", "abdominals" -> AmberWarm
-    else -> EmeraldLight
+    else -> AccentLime
 }
 
 @Composable
@@ -88,7 +88,7 @@ fun ExerciseThumbnail(
         modifier = modifier
             .size(size.dpSize)
             .clip(shape)
-            .background(ObsidianWell)
+            .background(GymWell)
             .border(1.dp, BorderDivider, shape)
             .let { base -> if (onClick != null) base.clickable(onClick = onClick) else base },
         contentAlignment = Alignment.Center
@@ -175,7 +175,7 @@ fun AnimatedExerciseFramesCard(
                     text = phaseHeader,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = EmeraldLight,
+                    color = AccentLime,
                     modifier = Modifier.weight(1f)
                 )
                 Row(
@@ -202,14 +202,14 @@ fun AnimatedExerciseFramesCard(
                                 Icon(
                                     imageVector = if (isAutoPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                     contentDescription = if (isAutoPlaying) pauseLabel else animLabel,
-                                    tint = if (isAutoPlaying) EmeraldLight else TextSecondary,
+                                    tint = if (isAutoPlaying) AccentLime else TextSecondary,
                                     modifier = Modifier.size(13.dp)
                                 )
                                 Text(
                                     text = if (isAutoPlaying) pauseLabel else animLabel,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = if (isAutoPlaying) EmeraldLight else TextSecondary
+                                    color = if (isAutoPlaying) AccentLime else TextSecondary
                                 )
                             }
                         }
@@ -220,7 +220,7 @@ fun AnimatedExerciseFramesCard(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(if (selected) EmeraldNeon else DarkSurfaceHigh)
+                                .background(if (selected) AccentLime else DarkSurfaceHigh)
                                 .clickable {
                                     isAutoPlaying = false
                                     activeFrame = idx
@@ -231,7 +231,7 @@ fun AnimatedExerciseFramesCard(
                                 text = label,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (selected) ObsidianInkOnLight else TextSecondary
+                                color = if (selected) GymInkOnLight else TextSecondary
                             )
                         }
                     }
@@ -245,13 +245,13 @@ fun AnimatedExerciseFramesCard(
                     .fillMaxWidth()
                     .aspectRatio(4f / 3f)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(ObsidianWell)
+                    .background(GymWell)
                     .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
             } else {
                 Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(ObsidianWell)
+                    .background(GymWell)
                     .border(1.dp, BorderDivider, RoundedCornerShape(12.dp))
                     .padding(16.dp)
             }
@@ -303,7 +303,7 @@ fun AnimatedExerciseFramesCard(
                                     Icon(
                                         imageVector = if (isAutoPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                         contentDescription = null,
-                                        tint = EmeraldLight,
+                                        tint = AccentLime,
                                         modifier = Modifier.size(12.dp)
                                     )
                                     Text(
@@ -320,7 +320,7 @@ fun AnimatedExerciseFramesCard(
                     frame0State.isLoading -> {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator(
-                                color = EmeraldNeon,
+                                color = AccentLime,
                                 strokeWidth = 2.dp,
                                 modifier = Modifier.size(28.dp)
                             )
@@ -342,7 +342,7 @@ fun AnimatedExerciseFramesCard(
                             Icon(
                                 imageVector = Icons.Default.FitnessCenter,
                                 contentDescription = null,
-                                tint = if (activeFrame == 0) EmeraldLight else AmberWarm,
+                                tint = if (activeFrame == 0) AccentLime else AmberWarm,
                                 modifier = Modifier.size(36.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))

@@ -50,18 +50,18 @@ import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
+import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
-import dev.neverpaid.health.core.designsystem.ObsidianCard
-import dev.neverpaid.health.core.designsystem.ObsidianDivider
-import dev.neverpaid.health.core.designsystem.ObsidianEmptyCard
-import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
-import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
-import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
-import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
-import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
-import dev.neverpaid.health.core.designsystem.ObsidianWhiteButton
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymEmptyCard
+import dev.neverpaid.health.core.designsystem.GymLoadingCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymWhiteButton
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -157,13 +157,13 @@ fun HistoryScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item(key = "header") {
-                ObsidianPageHeader(
+                GymPageHeader(
                     title = strings.historyTitle,
                     subtitle = "Тренировки, календарь и регулярность"
                 )
             }
             item(key = "loading") {
-                ObsidianLoadingCard(
+                GymLoadingCard(
                     title = strings.historyTitle,
                     hint = strings.stateLoadingHint
                 )
@@ -183,7 +183,7 @@ fun HistoryScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item(key = "header", contentType = "header") {
-            ObsidianPageHeader(
+            GymPageHeader(
                 title = strings.historyTitle,
                 subtitle = "Тренировки, календарь и регулярность"
             )
@@ -191,7 +191,7 @@ fun HistoryScreen(
 
         // Card 1: Monthly KPI & Export
         item(key = "kpi_card", contentType = "kpi") {
-            ObsidianCard {
+            GymCard {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -236,14 +236,14 @@ fun HistoryScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = monthHeaderLabel,
                         onClick = {
                             displayedMonth = LocalDate(today.year, today.monthNumber, 1)
                             selectedDate = today
                         }
                     )
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = "Экспорт",
                         onClick = { showExportSheet = true }
                     )
@@ -285,7 +285,7 @@ fun HistoryScreen(
 
         // Card 3: Chronological Divided Workout Log
         item(key = "sessions_card", contentType = "sessions") {
-            ObsidianCard {
+            GymCard {
                 Text(
                     text = "Тренировки",
                     fontSize = 20.sp,
@@ -295,7 +295,7 @@ fun HistoryScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 if (state.workouts.isEmpty()) {
-                    ObsidianInnerWell {
+                    GymInnerWell {
                         Text(
                             text = "История тренировок пока пуста",
                             fontSize = 15.sp,
@@ -310,7 +310,7 @@ fun HistoryScreen(
                         )
                     }
                 } else if (monthWorkouts.isEmpty()) {
-                    ObsidianInnerWell {
+                    GymInnerWell {
                         Text(
                             text = "Нет тренировок за $monthHeaderLabel",
                             fontSize = 15.sp,
@@ -324,7 +324,7 @@ fun HistoryScreen(
                             color = TextSecondary
                         )
                         Spacer(modifier = Modifier.height(10.dp))
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = "К последней тренировке",
                             onClick = {
                                 val latest = state.workouts.maxByOrNull { it.startTimeEpochMs }
@@ -363,19 +363,19 @@ fun HistoryScreen(
                             )
                             Spacer(modifier = Modifier.height(10.dp))
 
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = if (isExpanded) "Свернуть детали" else "Показать детали",
                                 onClick = { onAction(HistoryUiAction.OnToggleWorkoutExpand(workout.id)) }
                             )
 
                             AnimatedVisibility(visible = isExpanded) {
                                 Column(modifier = Modifier.padding(top = 12.dp)) {
-                                    ObsidianInnerWell {
+                                    GymInnerWell {
                                         Text(
                                             text = workout.title.ifBlank { "Детализация тренировки" },
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Medium,
-                                            color = EmeraldNeon
+                                            color = AccentLime
                                         )
                                         Spacer(modifier = Modifier.height(10.dp))
 
@@ -418,13 +418,13 @@ fun HistoryScreen(
                                             )
                                             if (exIdx < workout.exercises.lastIndex) {
                                                 Spacer(modifier = Modifier.height(10.dp))
-                                                ObsidianDivider()
+                                                GymDivider()
                                                 Spacer(modifier = Modifier.height(10.dp))
                                             }
                                         }
 
                                         Spacer(modifier = Modifier.height(10.dp))
-                                        ObsidianDivider()
+                                        GymDivider()
                                         Spacer(modifier = Modifier.height(10.dp))
                                         Text(
                                             text = "Общий объём · ${formatSpacedInt(workout.totalVolume)} кг",
@@ -440,11 +440,11 @@ fun HistoryScreen(
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        ObsidianPrimaryButton(
+                                        GymPrimaryButton(
                                             text = "Повторить",
                                             onClick = { onAction(HistoryUiAction.OnRepeatWorkout(workout)) }
                                         )
-                                        ObsidianOutlineButton(
+                                        GymOutlineButton(
                                             text = strings.delete,
                                             onClick = { workoutPendingDelete = workout }
                                         )
@@ -455,14 +455,14 @@ fun HistoryScreen(
 
                         if (idx < shownWorkouts.lastIndex) {
                             Spacer(modifier = Modifier.height(16.dp))
-                            ObsidianDivider()
+                            GymDivider()
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
 
                     if (monthWorkouts.size > shownWorkouts.size) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = "Загрузить ещё",
                             onClick = { visibleLimit += 6 }
                         )
@@ -516,7 +516,7 @@ fun HistoryScreen(
                 Text(
                     text = "ЭКСПОРТ АРХИВА",
                     fontSize = 11.sp,
-                    color = EmeraldNeon,
+                    color = AccentLime,
                     letterSpacing = 0.8.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -527,7 +527,7 @@ fun HistoryScreen(
                     color = TextPrimary
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                ObsidianInnerWell {
+                GymInnerWell {
                     Text(
                         text = csvPayload.lines().take(12).joinToString("\n"),
                         fontSize = 12.sp,
@@ -539,7 +539,7 @@ fun HistoryScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    ObsidianPrimaryButton(
+                    GymPrimaryButton(
                         text = "Скопировать CSV",
                         onClick = {
                             clipboard.setText(AnnotatedString(csvPayload))
@@ -547,7 +547,7 @@ fun HistoryScreen(
                             showExportSheet = false
                         }
                     )
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = strings.cancel,
                         onClick = { showExportSheet = false }
                     )
@@ -591,17 +591,17 @@ fun HistoryScreen(
                     color = TextSecondary
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                ObsidianDivider()
+                GymDivider()
                 Spacer(modifier = Modifier.height(16.dp))
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = strings.cancel,
                         onClick = { workoutPendingDelete = null }
                     )
-                    ObsidianWhiteButton(
+                    GymWhiteButton(
                         text = strings.delete,
                         onClick = {
                             onAction(HistoryUiAction.OnDeleteWorkout(pendingDelete.id))
@@ -649,7 +649,7 @@ private fun HistoryMonthCalendarCard(
         }
     }
 
-    ObsidianCard {
+    GymCard {
         Text(
             text = monthTitle,
             fontSize = 20.sp,
@@ -662,9 +662,9 @@ private fun HistoryMonthCalendarCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianOutlineButton(text = "←", onClick = onPrevMonth)
-            ObsidianOutlineButton(text = "Сегодня", onClick = onToday)
-            ObsidianOutlineButton(text = "→", onClick = onNextMonth)
+            GymOutlineButton(text = "←", onClick = onPrevMonth)
+            GymOutlineButton(text = "Сегодня", onClick = onToday)
+            GymOutlineButton(text = "→", onClick = onNextMonth)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -701,11 +701,11 @@ private fun HistoryMonthCalendarCard(
                             val isSelected = selectedDate == date
                             val isToday = date == today
 
-                            val bg = if (hasWorkout) EmeraldNeon else DarkBackground
+                            val bg = if (hasWorkout) AccentLime else DarkBackground
                             val borderColor = when {
                                 isSelected -> TextPrimary
-                                isToday -> EmeraldNeon
-                                hasWorkout -> EmeraldNeon
+                                isToday -> AccentLime
+                                hasWorkout -> AccentLime
                                 else -> BorderSubtle
                             }
                             val borderWidth = if (isSelected) 2.dp else 1.dp
@@ -748,7 +748,7 @@ private fun HistoryMonthCalendarCard(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(EmeraldNeon)
+                        .background(AccentLime)
                 )
                 Text(
                     text = "Тренировка",
@@ -797,7 +797,7 @@ private fun HistoryYearlyHeatmapCard(
         }
     }
 
-    ObsidianCard {
+    GymCard {
         Text(
             text = "Год в тренировках",
             fontSize = 20.sp,
@@ -824,8 +824,8 @@ private fun HistoryYearlyHeatmapCard(
                         val count = workoutsCountByDate[day] ?: 0
                         val cellColor = when {
                             day > today -> DarkBackground
-                            count >= 2 -> EmeraldNeon
-                            count == 1 -> EmeraldNeon.copy(alpha = 0.72f)
+                            count >= 2 -> AccentLime
+                            count == 1 -> AccentLime.copy(alpha = 0.72f)
                             else -> DarkSurfaceHigh
                         }
                         Box(
@@ -858,12 +858,12 @@ private fun HistoryYearlyHeatmapCard(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(EmeraldNeon)
+                        .background(AccentLime)
                 )
                 Text(
                     text = "Есть тренировка",
                     fontSize = 12.sp,
-                    color = EmeraldNeon
+                    color = AccentLime
                 )
             }
         }

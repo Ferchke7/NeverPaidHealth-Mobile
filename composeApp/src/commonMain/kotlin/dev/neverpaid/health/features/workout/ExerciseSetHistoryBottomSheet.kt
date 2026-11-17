@@ -56,13 +56,13 @@ import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.EmeraldDark
-import dev.neverpaid.health.core.designsystem.EmeraldLight
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.EmeraldSubtle
+import dev.neverpaid.health.core.designsystem.AccentLimeDark
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.InfoAccent
 import dev.neverpaid.health.core.designsystem.InfoAccentLight
-import dev.neverpaid.health.core.designsystem.ObsidianWell
+import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -147,13 +147,13 @@ fun ExerciseSetHistoryBottomSheet(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(EmeraldSubtle),
+                            .background(AccentLimeSubtle),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.FitnessCenter,
                             contentDescription = null,
-                            tint = EmeraldNeon,
+                            tint = AccentLime,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -202,7 +202,7 @@ fun ExerciseSetHistoryBottomSheet(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(ObsidianWell)
+                        .background(GymWell)
                         .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                         .padding(vertical = 8.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -227,22 +227,22 @@ fun ExerciseSetHistoryBottomSheet(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(ObsidianWell)
+                        .background(GymWell)
                         .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                         .padding(vertical = 8.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = EmeraldNeon, modifier = Modifier.size(12.dp))
+                        Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = AccentLime, modifier = Modifier.size(12.dp))
                         Spacer(modifier = Modifier.width(3.dp))
-                        Text(text = strings.bestWeight, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = EmeraldNeon)
+                        Text(text = strings.bestWeight, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = AccentLime)
                     }
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = if (prSummary.bestWeightKg > 0) "${prSummary.bestWeightKg.toInt()}×${prSummary.bestReps}" else "—",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Black,
-                        color = EmeraldLight
+                        color = AccentLime
                     )
                     Text(text = "max reps", fontSize = 9.sp, color = TextMuted)
                 }
@@ -252,7 +252,7 @@ fun ExerciseSetHistoryBottomSheet(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(ObsidianWell)
+                        .background(GymWell)
                         .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                         .padding(vertical = 8.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -286,7 +286,7 @@ fun ExerciseSetHistoryBottomSheet(
                         onClick = { selectedSetFilter = null },
                         label = { Text("${strings.allSetsTab} (${history.size})", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldNeon,
+                            selectedContainerColor = AccentLime,
                             selectedLabelColor = DarkBackground,
                             containerColor = DarkSurfaceHigh,
                             labelColor = TextSecondary
@@ -301,7 +301,7 @@ fun ExerciseSetHistoryBottomSheet(
                         onClick = { selectedSetFilter = setNum },
                         label = { Text("Сет #$setNum ($count)", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldNeon,
+                            selectedContainerColor = AccentLime,
                             selectedLabelColor = DarkBackground,
                             containerColor = DarkSurfaceHigh,
                             labelColor = TextSecondary
@@ -342,7 +342,7 @@ fun ExerciseSetHistoryBottomSheet(
                             text = strings.sortByBest,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (sortBy == "best") EmeraldLight else TextMuted
+                            color = if (sortBy == "best") AccentLime else TextMuted
                         )
                     }
 
@@ -357,7 +357,7 @@ fun ExerciseSetHistoryBottomSheet(
                             text = strings.sortByDate,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (sortBy == "date") EmeraldLight else TextMuted
+                            color = if (sortBy == "date") AccentLime else TextMuted
                         )
                     }
                 }
@@ -400,7 +400,7 @@ fun ExerciseSetHistoryBottomSheet(
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(10.dp),
-                            color = ObsidianWell,
+                            color = GymWell,
                             border = androidx.compose.foundation.BorderStroke(
                                 1.dp,
                                 if (rank == 0 && sortBy == "best") AmberWarm.copy(alpha = 0.55f) else BorderSubtle
@@ -439,14 +439,14 @@ fun ExerciseSetHistoryBottomSheet(
                                                 Box(
                                                     modifier = Modifier
                                                         .clip(RoundedCornerShape(4.dp))
-                                                        .background(EmeraldNeon.copy(alpha = 0.12f))
+                                                        .background(AccentLime.copy(alpha = 0.12f))
                                                         .padding(horizontal = 4.dp, vertical = 2.dp)
                                                 ) {
                                                     Text(
                                                         text = "1RM: ${dev.neverpaid.health.core.math.StrengthCalculator.formatWeight(record.e1rmKg, isKgUnit)}",
                                                         fontSize = 9.sp,
                                                         fontWeight = FontWeight.Bold,
-                                                        color = EmeraldLight
+                                                        color = AccentLime
                                                     )
                                                 }
                                             }
@@ -495,7 +495,7 @@ fun ExerciseSetHistoryBottomSheet(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(if (isApplied) EmeraldNeon else DarkSurfaceHigh)
+                                        .background(if (isApplied) AccentLime else DarkSurfaceHigh)
                                         .clickable {
                                             appliedKey = key
                                             onApplyValues(record.weightKg, record.reps)
@@ -508,7 +508,7 @@ fun ExerciseSetHistoryBottomSheet(
                                         Icon(
                                             imageVector = if (isApplied) Icons.Default.Check else Icons.Default.ArrowDownward,
                                             contentDescription = strings.applyRecord,
-                                            tint = if (isApplied) DarkBackground else EmeraldNeon,
+                                            tint = if (isApplied) DarkBackground else AccentLime,
                                             modifier = Modifier.size(13.dp)
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))

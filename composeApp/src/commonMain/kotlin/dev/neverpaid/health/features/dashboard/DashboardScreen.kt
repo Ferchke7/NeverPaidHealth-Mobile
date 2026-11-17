@@ -7,16 +7,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.designsystem.BorderDivider
-import dev.neverpaid.health.core.designsystem.ObsidianCard
-import dev.neverpaid.health.core.designsystem.ObsidianDivider
-import dev.neverpaid.health.core.designsystem.ObsidianEmptyCard
-import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
-import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
-import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
-import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
-import dev.neverpaid.health.core.designsystem.ObsidianPillTab
-import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
-import dev.neverpaid.health.core.designsystem.ObsidianTextField
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymEmptyCard
+import dev.neverpaid.health.core.designsystem.GymLabeledField
+import dev.neverpaid.health.core.designsystem.GymLoadingCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.TextSoft
 
 import androidx.compose.foundation.background
@@ -99,14 +99,14 @@ import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldLight
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.EmeraldSubtle
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
-import dev.neverpaid.health.core.designsystem.ObsidianWell
+import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
 import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
@@ -221,10 +221,9 @@ fun DashboardScreen(
                 .background(DarkBackground)
                 .padding(horizontal = 20.dp, vertical = 24.dp)
         ) {
-            ObsidianLoadingCard(
+            GymLoadingCard(
                 title = strings.stateLoadingTitle,
-                hint = strings.stateLoadingHint,
-                kicker = "01 · ${strings.navWorkouts}"
+                hint = strings.stateLoadingHint
             )
         }
         return
@@ -259,7 +258,7 @@ fun DashboardScreen(
     ) {
         // 1. Page Header ("Тренировки" / "Ваши программы и шаблоны")
         item(key = "page_header", contentType = "header") {
-            ObsidianPageHeader(
+            GymPageHeader(
                 title = strings.navWorkouts,
                 subtitle = when (lang) {
                     "uz" -> "Dasturlar va shablonlaringiz"
@@ -288,7 +287,7 @@ fun DashboardScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ObsidianPrimaryButton(
+                GymPrimaryButton(
                     text = when (lang) {
                         "uz" -> "Bo'sh mashg'ulotni boshlash"
                         "en" -> "Start empty workout"
@@ -296,7 +295,7 @@ fun DashboardScreen(
                     },
                     onClick = { onAction(DashboardUiAction.OnStartEmptyWorkoutClick) }
                 )
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = when (lang) {
                         "uz" -> "Yangi shablon"
                         "en" -> "New template"
@@ -342,7 +341,7 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ObsidianTextField(
+                    GymTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
                         placeholder = when (lang) {
@@ -353,7 +352,7 @@ fun DashboardScreen(
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = when (sortMode) {
                             "prebuilt" -> when (lang) {
                                 "uz" -> "Tartib: baza"
@@ -386,7 +385,7 @@ fun DashboardScreen(
         // 6. Templates List
         if (combinedRoutines.isEmpty()) {
             item(key = "empty_templates", contentType = "empty") {
-                ObsidianEmptyCard(
+                GymEmptyCard(
                     title = when (lang) {
                         "uz" -> "Shablonlar topilmadi"
                         "en" -> "No templates found"
@@ -460,8 +459,8 @@ private fun ActiveWorkoutBannerCard(
     lang: String,
     onResumeClick: () -> Unit
 ) {
-    ObsidianCard(
-        backgroundColor = EmeraldSubtle,
+    GymCard(
+        backgroundColor = AccentLimeSubtle,
         borderColor = BorderHighlight
     ) {
         Text(
@@ -473,7 +472,7 @@ private fun ActiveWorkoutBannerCard(
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
             letterSpacing = 0.8.sp,
-            color = EmeraldNeon
+            color = AccentLime
         )
         Text(
             text = title,
@@ -490,7 +489,7 @@ private fun ActiveWorkoutBannerCard(
             fontSize = 14.sp,
             color = TextSecondary
         )
-        ObsidianPrimaryButton(
+        GymPrimaryButton(
             text = when (lang) {
                 "uz" -> "Davom etish"
                 "en" -> "Resume workout"
@@ -517,7 +516,7 @@ private fun ActiveProgramScheduleSection(
     val currentDayNumber = bundle?.userProgram?.currentDayNumber ?: 1
 
     if (program == null) {
-        ObsidianCard(
+        GymCard(
             backgroundColor = DarkSurface,
             borderColor = BorderSubtle
         ) {
@@ -530,7 +529,7 @@ private fun ActiveProgramScheduleSection(
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
                 letterSpacing = 0.8.sp,
-                color = EmeraldNeon
+                color = AccentLime
             )
             Text(
                 text = when (lang) {
@@ -551,7 +550,7 @@ private fun ActiveProgramScheduleSection(
                 fontSize = 14.sp,
                 color = TextSecondary
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) {
                     "uz" -> "Dasturlarni ochish"
                     "en" -> "Browse programs"
@@ -569,7 +568,7 @@ private fun ActiveProgramScheduleSection(
         ?: days.firstOrNull()
     var showDaySelector by remember { mutableStateOf(false) }
 
-    ObsidianCard(
+    GymCard(
         backgroundColor = DarkSurface,
         borderColor = BorderSubtle
     ) {
@@ -582,7 +581,7 @@ private fun ActiveProgramScheduleSection(
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
             letterSpacing = 0.8.sp,
-            color = EmeraldNeon
+            color = AccentLime
         )
 
         Text(
@@ -622,7 +621,7 @@ private fun ActiveProgramScheduleSection(
         ) {
             if (selectedDay != null) {
                 if (selectedDay.isRestDay || selectedDay.exercises.isEmpty()) {
-                    ObsidianPrimaryButton(
+                    GymPrimaryButton(
                         text = when (lang) {
                             "uz" -> "Dam olishni o'tkazish"
                             "en" -> "Skip rest day"
@@ -631,7 +630,7 @@ private fun ActiveProgramScheduleSection(
                         onClick = onSkipRestDay
                     )
                 } else {
-                    ObsidianPrimaryButton(
+                    GymPrimaryButton(
                         text = when (lang) {
                             "uz" -> "Mashg'ulotni boshlash"
                             "en" -> "Start workout"
@@ -642,7 +641,7 @@ private fun ActiveProgramScheduleSection(
                 }
             }
 
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) {
                     "uz" -> "Kunni tanlash"
                     "en" -> "Choose day"
@@ -651,7 +650,7 @@ private fun ActiveProgramScheduleSection(
                 onClick = { showDaySelector = !showDaySelector }
             )
 
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) {
                     "uz" -> "Dasturni ochish"
                     "en" -> "Open program"
@@ -662,7 +661,7 @@ private fun ActiveProgramScheduleSection(
         }
 
         if (showDaySelector && days.isNotEmpty()) {
-            ObsidianDivider(color = BorderSubtle)
+            GymDivider(color = BorderSubtle)
 
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -670,7 +669,7 @@ private fun ActiveProgramScheduleSection(
             ) {
                 days.forEach { day ->
                     val isSelected = day.dayNumber == (selectedDay?.dayNumber ?: 1)
-                    ObsidianPillTab(
+                    GymPillTab(
                         text = when (lang) {
                             "uz" -> "${day.dayNumber}-kun"
                             "en" -> "Day ${day.dayNumber}"
@@ -732,7 +731,7 @@ private fun RoutineCardItem(
     onDelete: (() -> Unit)?
 ) {
     val estimatedMinutes = (routine.exercises.sumOf { it.targetSets } * 3).coerceAtLeast(20)
-    ObsidianCard(
+    GymCard(
         backgroundColor = DarkSurface,
         borderColor = BorderSubtle
     ) {
@@ -764,7 +763,7 @@ private fun RoutineCardItem(
         }
 
         if (routine.exercises.isNotEmpty()) {
-            ObsidianDivider(color = BorderSubtle)
+            GymDivider(color = BorderSubtle)
 
             Column(
                 modifier = Modifier
@@ -796,19 +795,19 @@ private fun RoutineCardItem(
                     Text(
                         text = "+${routine.exercises.size - 5} ещё",
                         fontSize = 13.sp,
-                        color = EmeraldLight
+                        color = AccentLime
                     )
                 }
             }
         }
 
-        ObsidianDivider(color = BorderSubtle)
+        GymDivider(color = BorderSubtle)
 
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianPrimaryButton(
+            GymPrimaryButton(
                 text = when (lang) {
                     "uz" -> "Boshlash"
                     "en" -> "Start"
@@ -816,7 +815,7 @@ private fun RoutineCardItem(
                 },
                 onClick = onStart
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = if (isCustom) {
                     when (lang) {
                         "uz" -> "Tahrirlash"
@@ -834,7 +833,7 @@ private fun RoutineCardItem(
                     if (isCustom && onEdit != null) onEdit() else onPreview()
                 }
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) {
                     "uz" -> "Nusxalash"
                     "en" -> "Duplicate"
@@ -843,7 +842,7 @@ private fun RoutineCardItem(
                 onClick = onDuplicate
             )
             if (isCustom && onDelete != null) {
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = when (lang) {
                         "uz" -> "O'chirish"
                         "en" -> "Delete"
@@ -946,7 +945,7 @@ private fun RoutineDetailBottomSheet(
                                     Text(
                                         text = "${ex.targetSets} подходов × ${ex.targetRepsMin}–${ex.targetRepsMax} повторений",
                                         fontSize = 12.sp,
-                                        color = EmeraldLight
+                                        color = AccentLime
                                     )
                                 }
                             }
@@ -990,7 +989,7 @@ private fun RoutineDetailBottomSheet(
                         .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = EmeraldNeon,
+                        containerColor = AccentLime,
                         contentColor = Color.Black
                     )
                 ) {
@@ -1052,9 +1051,9 @@ private fun RoutineEditorBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = ObsidianWell,
-                    unfocusedContainerColor = ObsidianWell,
-                    focusedBorderColor = EmeraldNeon,
+                    focusedContainerColor = GymWell,
+                    unfocusedContainerColor = GymWell,
+                    focusedBorderColor = AccentLime,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary
@@ -1071,9 +1070,9 @@ private fun RoutineEditorBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = ObsidianWell,
-                    unfocusedContainerColor = ObsidianWell,
-                    focusedBorderColor = EmeraldNeon,
+                    focusedContainerColor = GymWell,
+                    unfocusedContainerColor = GymWell,
+                    focusedBorderColor = AccentLime,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary
@@ -1094,9 +1093,9 @@ private fun RoutineEditorBottomSheet(
                     color = TextMuted
                 )
                 TextButton(onClick = { onAction(DashboardUiAction.OnOpenExercisePicker) }) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = EmeraldLight, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Add, contentDescription = null, tint = AccentLime, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Добавить упражнение", color = EmeraldLight, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("Добавить упражнение", color = AccentLime, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
 
@@ -1237,7 +1236,7 @@ fun TrainingHubQuickActions(
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
-                        tint = EmeraldNeon,
+                        tint = AccentLime,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(

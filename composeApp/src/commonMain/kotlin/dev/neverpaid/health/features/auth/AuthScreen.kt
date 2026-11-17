@@ -4,13 +4,13 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import dev.neverpaid.health.core.designsystem.BorderDivider
 import dev.neverpaid.health.core.designsystem.CrimsonRed
-import dev.neverpaid.health.core.designsystem.ObsidianCard
-import dev.neverpaid.health.core.designsystem.ObsidianDivider
-import dev.neverpaid.health.core.designsystem.ObsidianInkOnLight
-import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
-import dev.neverpaid.health.core.designsystem.ObsidianPillTab
-import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
-import dev.neverpaid.health.core.designsystem.ObsidianTextField
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.TextSoft
 
 import androidx.compose.foundation.background
@@ -72,15 +72,15 @@ import dev.neverpaid.health.core.designsystem.CrimsonSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DudaBrandLogo
-import dev.neverpaid.health.core.designsystem.EmeraldLight
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.EmeraldSubtle
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.GoogleBrandBlue
 import dev.neverpaid.health.core.designsystem.GoogleBrandGreen
 import dev.neverpaid.health.core.designsystem.GoogleBrandRed
 import dev.neverpaid.health.core.designsystem.GoogleBrandYellow
-import dev.neverpaid.health.core.designsystem.ObsidianInkOnLight
-import dev.neverpaid.health.core.designsystem.ObsidianWell
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
+import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -229,7 +229,7 @@ fun AuthScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 listOf("ru" to "RU", "uz" to "UZ", "en" to "EN").forEach { (code, label) ->
-                    ObsidianPillTab(
+                    GymPillTab(
                         text = label,
                         selected = lang == code,
                         onClick = { onAction(AuthUiAction.OnSelectLanguage(code)) }
@@ -248,7 +248,7 @@ fun AuthScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Card 1: Primary Native Login Card
-            ObsidianCard(
+            GymCard(
                 backgroundColor = DarkSurface,
                 borderColor = BorderSubtle
             ) {
@@ -291,8 +291,8 @@ fun AuthScreen(
                     onClick = onTriggerGoogleSignIn,
                     enabled = !state.isLoading,
                     shape = RoundedCornerShape(10.dp),
-                    color = EmeraldNeon,
-                    contentColor = ObsidianInkOnLight
+                    color = AccentLime,
+                    contentColor = GymInkOnLight
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
@@ -301,7 +301,7 @@ fun AuthScreen(
                     ) {
                         if (state.isLoading) {
                             CircularProgressIndicator(
-                                color = ObsidianInkOnLight,
+                                color = GymInkOnLight,
                                 modifier = Modifier.size(16.dp),
                                 strokeWidth = 2.dp
                             )
@@ -316,7 +316,7 @@ fun AuthScreen(
                             },
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
-                            color = ObsidianInkOnLight
+                            color = GymInkOnLight
                         )
                     }
                 }
@@ -339,7 +339,7 @@ fun AuthScreen(
                     }
                 }
 
-                ObsidianDivider(color = BorderSubtle)
+                GymDivider(color = BorderSubtle)
 
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     WelcomeFeatureLine(
@@ -382,7 +382,7 @@ fun AuthScreen(
             }
 
             // Card 2: Guest Mode (Native Offline)
-            ObsidianCard(
+            GymCard(
                 backgroundColor = DarkSurface,
                 borderColor = BorderSubtle
             ) {
@@ -406,7 +406,7 @@ fun AuthScreen(
                     lineHeight = 20.sp,
                     color = TextSecondary
                 )
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = when (lang) {
                         "uz" -> "Mehmon sifatida davom etish"
                         "en" -> "Continue as guest"
@@ -418,7 +418,7 @@ fun AuthScreen(
             }
 
             // Card 3: Token Login (Native Only) + Browser OAuth Fallback
-            ObsidianCard(
+            GymCard(
                 backgroundColor = DarkSurface,
                 borderColor = BorderSubtle
             ) {
@@ -454,7 +454,7 @@ fun AuthScreen(
                         fontWeight = FontWeight.Medium,
                         color = TextSecondary
                     )
-                    ObsidianTextField(
+                    GymTextField(
                         value = state.tokenInput,
                         onValueChange = { onAction(AuthUiAction.OnTokenInputChanged(it)) },
                         placeholder = when (lang) {
@@ -487,7 +487,7 @@ fun AuthScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = when (lang) {
                             "uz" -> "Token bilan kirish"
                             "en" -> "Sign in with token"
@@ -496,7 +496,7 @@ fun AuthScreen(
                         enabled = !state.isLoading,
                         onClick = { onAction(AuthUiAction.OnSubmitTokenClick) }
                     )
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = when (lang) {
                             "uz" -> "Brauzerda kirish"
                             "en" -> "Browser login"

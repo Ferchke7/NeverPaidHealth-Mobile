@@ -66,24 +66,24 @@ import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.EmeraldSubtle
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
 import dev.neverpaid.health.core.designsystem.InteractivePlateCalculator
-import dev.neverpaid.health.core.designsystem.ObsidianCard
-import dev.neverpaid.health.core.designsystem.ObsidianDivider
-import dev.neverpaid.health.core.designsystem.ObsidianEmptyCard
-import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
-import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
-import dev.neverpaid.health.core.designsystem.ObsidianPillTab
-import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
-import dev.neverpaid.health.core.designsystem.ObsidianProgressBar
-import dev.neverpaid.health.core.designsystem.ObsidianTextField
-import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
-import dev.neverpaid.health.core.designsystem.ObsidianWhiteButton
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymEmptyCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymProgressBar
+import dev.neverpaid.health.core.designsystem.GymTextField
+import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymWhiteButton
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -414,12 +414,12 @@ fun WorkoutScreen(
                     .padding(innerPadding)
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                ObsidianPageHeader(
+                GymPageHeader(
                     title = strings.navWorkouts,
                     subtitle = "Нет активной сессии"
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                ObsidianEmptyCard(
+                GymEmptyCard(
                     title = "Тренировка не запущена",
                     description = "Выберите шаблон на вкладке «Тренировки» или начните пустую сессию."
                 )
@@ -459,7 +459,7 @@ fun WorkoutScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item(key = "page_header", contentType = "header") {
-                ObsidianPageHeader(
+                GymPageHeader(
                     title = "Тренировка",
                     subtitle = workout.title.ifBlank { "Свободная тренировка" }
                 )
@@ -467,7 +467,7 @@ fun WorkoutScreen(
 
             // Card 1: Session Metrics & Controls (1:1 Figma 04)
             item(key = "session_summary_card", contentType = "summary") {
-                ObsidianCard {
+                GymCard {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -529,15 +529,15 @@ fun WorkoutScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ObsidianPrimaryButton(
+                        GymPrimaryButton(
                             text = strings.workoutFinish,
                             onClick = onRequestFinish
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = strings.workoutDiscard,
                             onClick = onRequestDiscard
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = if (showSessionNoteEditor) "Скрыть заметку" else "Заметка сессии",
                             onClick = { showSessionNoteEditor = !showSessionNoteEditor }
                         )
@@ -546,7 +546,7 @@ fun WorkoutScreen(
                     AnimatedVisibility(visible = showSessionNoteEditor) {
                         Column {
                             Spacer(modifier = Modifier.height(14.dp))
-                            ObsidianDivider()
+                            GymDivider()
                             Spacer(modifier = Modifier.height(14.dp))
                             Text(
                                 text = "Название / заметка тренировки",
@@ -554,7 +554,7 @@ fun WorkoutScreen(
                                 color = TextSecondary
                             )
                             Spacer(modifier = Modifier.height(6.dp))
-                            ObsidianTextField(
+                            GymTextField(
                                 value = sessionTitleDraft,
                                 onValueChange = {
                                     sessionTitleDraft = it
@@ -575,12 +575,12 @@ fun WorkoutScreen(
                     exit = fadeOut() + slideOutVertically()
                 ) {
                     val lastCompleted = remember(workout) { findLastCompletedSetInfo(workout) }
-                    ObsidianCard {
+                    GymCard {
                         Text(
                             text = "01 / ОТДЫХ",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = EmeraldNeon,
+                            color = AccentLime,
                             letterSpacing = 0.8.sp
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -606,14 +606,14 @@ fun WorkoutScreen(
                         Spacer(modifier = Modifier.height(10.dp))
                         val progress = (state.restTimerSecondsRemaining.toFloat() / restTotalSeconds.coerceAtLeast(1).toFloat())
                             .coerceIn(0f, 1f)
-                        ObsidianProgressBar(
+                        GymProgressBar(
                             progress = progress,
-                            color = EmeraldNeon
+                            color = AccentLime
                         )
 
                         if (lastCompleted != null) {
                             Spacer(modifier = Modifier.height(14.dp))
-                            ObsidianDivider()
+                            GymDivider()
                             Spacer(modifier = Modifier.height(14.dp))
                             Text(
                                 text = lastCompleted.exerciseName,
@@ -648,19 +648,19 @@ fun WorkoutScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = "−15 сек",
                                 onClick = { onAction(WorkoutUiAction.OnRestTimerAddSeconds(-15)) }
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = "+30 сек",
                                 onClick = { onAction(WorkoutUiAction.OnRestTimerAddSeconds(30)) }
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = "Пропустить",
                                 onClick = { onAction(WorkoutUiAction.OnRestTimerSkip) }
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = "Отдых ${formatCountdown(restPresetSeconds)}",
                                 onClick = onCycleRestPreset
                             )
@@ -671,7 +671,7 @@ fun WorkoutScreen(
 
             if (workout.exercises.isEmpty()) {
                 item(key = "empty_exercises_card", contentType = "empty") {
-                    ObsidianEmptyCard(
+                    GymEmptyCard(
                         title = "Упражнений пока нет",
                         description = "Добавьте упражнения из каталога, чтобы начать фиксировать подходы и тоннаж.",
                         primaryActionLabel = strings.workoutAddExercise,
@@ -721,7 +721,7 @@ fun WorkoutScreen(
                 if (workout.exercises.size > 2 && !showAllExercises) {
                     val remaining = workout.exercises.size - 2
                     item(key = "show_more_card", contentType = "show_more") {
-                        ObsidianCard {
+                        GymCard {
                             Text(
                                 text = "Ещё $remaining упражнения",
                                 fontSize = 18.sp,
@@ -735,7 +735,7 @@ fun WorkoutScreen(
                                 color = TextSecondary
                             )
                             Spacer(modifier = Modifier.height(14.dp))
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = "Показать ещё $remaining",
                                 onClick = { showAllExercises = true }
                             )
@@ -744,7 +744,7 @@ fun WorkoutScreen(
                 }
 
                 item(key = "add_exercise_footer", contentType = "footer") {
-                    ObsidianCard {
+                    GymCard {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -765,7 +765,7 @@ fun WorkoutScreen(
                                 )
                             }
                             Spacer(modifier = Modifier.width(12.dp))
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = "+ Добавить",
                                 onClick = { onAction(WorkoutUiAction.OnOpenExercisePicker) }
                             )
@@ -836,7 +836,7 @@ private fun WorkoutExerciseCard(
     val totalPadded = totalExercises.coerceAtLeast(1).toString().padStart(2, '0')
     val muscleUpper = localizeMuscleName(exercise.primaryMuscleGroup).uppercase()
 
-    ObsidianCard {
+    GymCard {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -872,7 +872,7 @@ private fun WorkoutExerciseCard(
                     Text(
                         text = "Личный рекорд · ${formatCleanWeight(prW)} $unitLabel × ${prRecord.reps}",
                         fontSize = 13.sp,
-                        color = EmeraldNeon,
+                        color = AccentLime,
                         modifier = Modifier.clickable(onClick = onInspect)
                     )
                 } else {
@@ -892,11 +892,11 @@ private fun WorkoutExerciseCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = "Заменить",
                 onClick = onSwap
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = "Убрать",
                 onClick = onRemove
             )
@@ -904,16 +904,16 @@ private fun WorkoutExerciseCard(
 
         if (exercise.notes.isNotBlank() || editingNotes) {
             Spacer(modifier = Modifier.height(14.dp))
-            ObsidianInnerWell {
+            GymInnerWell {
                 Text(
                     text = if (exercise.notes.isNotBlank()) "Заметка · 1 активна" else "Заметка к упражнению",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = EmeraldNeon
+                    color = AccentLime
                 )
                 if (editingNotes) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    ObsidianTextField(
+                    GymTextField(
                         value = noteDraft,
                         onValueChange = { noteDraft = it },
                         placeholder = "Пауза 1 сек в нижней точке, лопатки сведены",
@@ -924,7 +924,7 @@ private fun WorkoutExerciseCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ObsidianPrimaryButton(
+                        GymPrimaryButton(
                             text = strings.save,
                             onClick = {
                                 onUpdateNotes(noteDraft.trim())
@@ -932,7 +932,7 @@ private fun WorkoutExerciseCard(
                                 noteExpanded = noteDraft.isNotBlank()
                             }
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = strings.cancel,
                             onClick = {
                                 noteDraft = exercise.notes
@@ -955,11 +955,11 @@ private fun WorkoutExerciseCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = if (noteExpanded) "Свернуть" else "Открыть",
                             onClick = { noteExpanded = !noteExpanded }
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = "Комментировать",
                             onClick = {
                                 noteExpanded = true
@@ -989,7 +989,7 @@ private fun WorkoutExerciseCard(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 setTypeOrder.forEachIndexed { targetIdx, typeKey ->
-                    ObsidianPillTab(
+                    GymPillTab(
                         text = setTypeLabels[targetIdx],
                         selected = activeSet.setType == typeKey,
                         onClick = {
@@ -1049,7 +1049,7 @@ private fun WorkoutExerciseCard(
                 else -> "${set.setNumber}"
             }
             val displayColor = when {
-                set.id == activeSet?.id -> EmeraldNeon
+                set.id == activeSet?.id -> AccentLime
                 set.setType == "warmup" -> AmberWarm
                 else -> TextPrimary
             }
@@ -1090,7 +1090,7 @@ private fun WorkoutExerciseCard(
             )
 
             if (sIdx < exercise.sets.lastIndex) {
-                ObsidianDivider()
+                GymDivider()
             }
         }
 
@@ -1107,7 +1107,7 @@ private fun WorkoutExerciseCard(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 listOf(8, 6, 4).forEach { repsPreset ->
-                    ObsidianPillTab(
+                    GymPillTab(
                         text = "$repsPreset",
                         selected = activeSet.reps == repsPreset,
                         onClick = { onUpdateReps(activeSet.id, repsPreset) }
@@ -1126,16 +1126,16 @@ private fun WorkoutExerciseCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = "+ Подход",
                 onClick = onAddSet
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = "+ Разминка",
                 onClick = onOpenWarmup
             )
             if (exercise.equipment.lowercase() in setOf("barbell", "ez_bar", "smith_machine", "machine")) {
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = "Блины",
                     onClick = { onOpenPlates(activeSet?.id ?: "", plateWeightKg) }
                 )
@@ -1148,11 +1148,11 @@ private fun WorkoutExerciseCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = "Отдых · ${formatCountdown(restPresetSeconds)}",
                 onClick = onOpenRest
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = "Заметка",
                 onClick = {
                     noteExpanded = true
@@ -1195,7 +1195,7 @@ private fun WorkoutSetRow(
         if (isKgUnit) set.previousWeightKg else StrengthCalculator.kgToLbs(set.previousWeightKg)
     } else 0.0
 
-    val inputBorder = if (set.isCompleted) EmeraldNeon.copy(alpha = 0.45f) else BorderSubtle
+    val inputBorder = if (set.isCompleted) AccentLime.copy(alpha = 0.45f) else BorderSubtle
 
     Column(
         modifier = Modifier
@@ -1248,7 +1248,7 @@ private fun WorkoutSetRow(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     ),
-                    cursorBrush = SolidColor(EmeraldNeon),
+                    cursorBrush = SolidColor(AccentLime),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     decorationBox = { inner ->
                         if (weightText.isEmpty()) {
@@ -1284,7 +1284,7 @@ private fun WorkoutSetRow(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     ),
-                    cursorBrush = SolidColor(EmeraldNeon),
+                    cursorBrush = SolidColor(AccentLime),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     decorationBox = { inner ->
                         if (repsText.isEmpty()) {
@@ -1301,10 +1301,10 @@ private fun WorkoutSetRow(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(if (set.isCompleted) EmeraldNeon else DarkBackground)
+                    .background(if (set.isCompleted) AccentLime else DarkBackground)
                     .border(
                         width = 1.dp,
-                        color = if (set.isCompleted) EmeraldNeon else BorderSubtle,
+                        color = if (set.isCompleted) AccentLime else BorderSubtle,
                         shape = RoundedCornerShape(8.dp)
                     )
                     .clickable(onClick = onToggleComplete),
@@ -1351,7 +1351,7 @@ private fun WorkoutSetRow(
                 Text(
                     text = "История",
                     fontSize = 11.sp,
-                    color = EmeraldNeon,
+                    color = AccentLime,
                     modifier = Modifier.clickable(onClick = onOpenHistory)
                 )
                 if (canDelete) {
@@ -1402,7 +1402,7 @@ private fun WorkoutRestModalSheet(
                 text = "01 / ОТДЫХ",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = EmeraldNeon,
+                color = AccentLime,
                 letterSpacing = 0.8.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -1426,14 +1426,14 @@ private fun WorkoutRestModalSheet(
                 color = TextSecondary
             )
             Spacer(modifier = Modifier.height(12.dp))
-            ObsidianProgressBar(
+            GymProgressBar(
                 progress = (secondsRemaining.toFloat() / totalSeconds.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f),
-                color = EmeraldNeon
+                color = AccentLime
             )
 
             if (lastCompleted != null) {
                 Spacer(modifier = Modifier.height(16.dp))
-                ObsidianDivider()
+                GymDivider()
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = lastCompleted.exerciseName,
@@ -1467,19 +1467,19 @@ private fun WorkoutRestModalSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = "−15 сек",
                     onClick = { onAddSeconds(-15) }
                 )
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = "+30 сек",
                     onClick = { onAddSeconds(30) }
                 )
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = "Пропустить",
                     onClick = onSkip
                 )
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = "Настроить отдых (${formatCountdown(restPresetSeconds)})",
                     onClick = onCyclePreset
                 )
@@ -1565,17 +1565,17 @@ private fun WorkoutFinishModalSheet(
                         color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(18.dp))
-                    ObsidianDivider()
+                    GymDivider()
                     Spacer(modifier = Modifier.height(18.dp))
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ObsidianPrimaryButton(
+                        GymPrimaryButton(
                             text = "Вернуться к тренировке",
                             onClick = onDismiss
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = "Сохранить только отмеченные",
                             onClick = onProceedToSummary
                         )
@@ -1587,7 +1587,7 @@ private fun WorkoutFinishModalSheet(
                         text = "02 / ЗАВЕРШЕНИЕ",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = EmeraldNeon,
+                        color = AccentLime,
                         letterSpacing = 0.8.sp
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -1651,7 +1651,7 @@ private fun WorkoutFinishModalSheet(
 
                     if (workout.exercises.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(14.dp))
-                        ObsidianDivider()
+                        GymDivider()
                         workout.exercises.forEachIndexed { idx, ex ->
                             val exCompleted = ex.sets.count { it.isCompleted }
                             val exVol = ex.sets.filter { it.isCompleted }.sumOf { it.weightKg * it.reps }
@@ -1675,10 +1675,10 @@ private fun WorkoutFinishModalSheet(
                                 )
                             }
                             if (idx < workout.exercises.lastIndex) {
-                                ObsidianDivider()
+                                GymDivider()
                             }
                         }
-                        ObsidianDivider()
+                        GymDivider()
                     }
 
                     Spacer(modifier = Modifier.height(18.dp))
@@ -1686,12 +1686,12 @@ private fun WorkoutFinishModalSheet(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ObsidianPrimaryButton(
+                        GymPrimaryButton(
                             text = if (isFinishing) "Сохранение..." else strings.save,
                             onClick = onConfirmSave,
                             enabled = !isFinishing
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = "Вернуться к тренировке",
                             onClick = onDismiss
                         )
@@ -1745,17 +1745,17 @@ private fun WorkoutDiscardModalSheet(
                 color = TextSecondary
             )
             Spacer(modifier = Modifier.height(18.dp))
-            ObsidianDivider()
+            GymDivider()
             Spacer(modifier = Modifier.height(18.dp))
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = strings.cancel,
                     onClick = onDismiss
                 )
-                ObsidianWhiteButton(
+                GymWhiteButton(
                     text = "Сбросить тренировку",
                     onClick = onConfirmDiscard
                 )

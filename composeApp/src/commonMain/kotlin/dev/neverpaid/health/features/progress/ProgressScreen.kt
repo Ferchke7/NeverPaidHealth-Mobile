@@ -57,17 +57,17 @@ import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
+import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.InteractiveAnatomyHeatmap
-import dev.neverpaid.health.core.designsystem.ObsidianCard
-import dev.neverpaid.health.core.designsystem.ObsidianDivider
-import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
-import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
-import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
-import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
-import dev.neverpaid.health.core.designsystem.ObsidianPillTab
-import dev.neverpaid.health.core.designsystem.ObsidianProgressBar
-import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymLabeledField
+import dev.neverpaid.health.core.designsystem.GymLoadingCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymProgressBar
+import dev.neverpaid.health.core.designsystem.GymInnerWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -140,13 +140,13 @@ fun ProgressScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item(key = "header") {
-                ObsidianPageHeader(
+                GymPageHeader(
                     title = strings.progressTitle,
                     subtitle = "Динамика силы и персональные рекорды"
                 )
             }
             item(key = "loading") {
-                ObsidianLoadingCard(
+                GymLoadingCard(
                     title = strings.progressTitle,
                     hint = strings.stateLoadingHint
                 )
@@ -178,7 +178,7 @@ fun ProgressScreen(
             } else {
                 "Нагрузка, тоннаж и силовые стандарты"
             }
-            ObsidianPageHeader(
+            GymPageHeader(
                 title = headerTitle,
                 subtitle = headerSubtitle
             )
@@ -190,7 +190,7 @@ fun ProgressScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 topTabs.forEachIndexed { idx, label ->
-                    ObsidianPillTab(
+                    GymPillTab(
                         text = label,
                         selected = state.selectedTab == idx,
                         onClick = { onAction(ProgressUiAction.OnSelectTab(idx)) }
@@ -221,11 +221,11 @@ fun ProgressScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = "История тренировок",
                             onClick = onNavigateToHistory
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = "Метрики тела",
                             onClick = onNavigateToBody
                         )
@@ -251,11 +251,11 @@ fun ProgressScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = "История тренировок",
                             onClick = onNavigateToHistory
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = "1RM & Стандарты",
                             onClick = { onAction(ProgressUiAction.OnSelectTab(2)) }
                         )
@@ -272,11 +272,11 @@ fun ProgressScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = "История тренировок",
                             onClick = onNavigateToHistory
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = "Прогрессия & PR",
                             onClick = { onAction(ProgressUiAction.OnSelectTab(0)) }
                         )
@@ -336,7 +336,7 @@ private fun KpiStatCard(
     label: String,
     modifier: Modifier = Modifier
 ) {
-    ObsidianCard(modifier = modifier) {
+    GymCard(modifier = modifier) {
         Text(
             text = value,
             fontSize = 26.sp,
@@ -420,7 +420,7 @@ private fun ExerciseProgressionCard(
         round(((currentMax - firstVal) / firstVal) * 100.0).toInt()
     } else 0
 
-    ObsidianCard {
+    GymCard {
         Text(
             text = "Прогрессия упражнения",
             fontSize = 20.sp,
@@ -429,7 +429,7 @@ private fun ExerciseProgressionCard(
         )
         Spacer(modifier = Modifier.height(12.dp))
 
-        ObsidianOutlineButton(
+        GymOutlineButton(
             text = selectedExerciseName,
             onClick = { showExerciseSelectorSheet = true }
         )
@@ -441,7 +441,7 @@ private fun ExerciseProgressionCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             listOf("Вес снаряда", "Расчётный 1RM", "Объём").forEachIndexed { idx, label ->
-                ObsidianPillTab(
+                GymPillTab(
                     text = label,
                     selected = metricIndex == idx,
                     onClick = { metricIndex = idx }
@@ -456,7 +456,7 @@ private fun ExerciseProgressionCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             listOf("1 мес", "3 мес", "Все").forEachIndexed { idx, label ->
-                ObsidianPillTab(
+                GymPillTab(
                     text = label,
                     selected = rangeIndex == idx,
                     onClick = { rangeIndex = idx }
@@ -467,7 +467,7 @@ private fun ExerciseProgressionCard(
         Spacer(modifier = Modifier.height(16.dp))
 
         if (values.isEmpty()) {
-            ObsidianInnerWell {
+            GymInnerWell {
                 Text(
                     text = "Нет данных за выбранный период",
                     fontSize = 14.sp,
@@ -482,7 +482,7 @@ private fun ExerciseProgressionCard(
                 )
             }
         } else {
-            ObsidianLineChart(
+            GymLineChart(
                 labels = samples.map { it.dateLabel },
                 values = values,
                 unitLabel = "кг"
@@ -514,7 +514,7 @@ private fun ExerciseProgressionCard(
                         text = "$sign$deltaPct%",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = EmeraldNeon
+                        color = AccentLime
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -577,11 +577,11 @@ private fun ExerciseProgressionCard(
                             text = name,
                             fontSize = 15.sp,
                             fontWeight = if (name == selectedExerciseName) FontWeight.SemiBold else FontWeight.Normal,
-                            color = if (name == selectedExerciseName) EmeraldNeon else TextPrimary
+                            color = if (name == selectedExerciseName) AccentLime else TextPrimary
                         )
                     }
                     if (idx < exerciseNames.lastIndex) {
-                        ObsidianDivider()
+                        GymDivider()
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
@@ -591,7 +591,7 @@ private fun ExerciseProgressionCard(
 }
 
 @Composable
-private fun ObsidianLineChart(
+private fun GymLineChart(
     labels: List<String>,
     values: List<Double>,
     unitLabel: String
@@ -669,7 +669,7 @@ private fun ObsidianLineChart(
                 }
                 drawPath(
                     path = linePath,
-                    color = EmeraldNeon,
+                    color = AccentLime,
                     style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
                 )
             }
@@ -678,7 +678,7 @@ private fun ObsidianLineChart(
             val step = if (coords.size > 6) (coords.size / 5).coerceAtLeast(1) else 1
             coords.forEachIndexed { idx, pt ->
                 drawCircle(
-                    color = EmeraldNeon,
+                    color = AccentLime,
                     radius = 4.dp.toPx(),
                     center = pt
                 )
@@ -737,7 +737,7 @@ private fun PersonalRecordsSectionCard(
         else enriched.filter { it.muscleBucket == selectedFilter }
     }
 
-    ObsidianCard {
+    GymCard {
         Text(
             text = "Личные рекорды",
             fontSize = 20.sp,
@@ -757,7 +757,7 @@ private fun PersonalRecordsSectionCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             filterTabs.forEach { tab ->
-                ObsidianPillTab(
+                GymPillTab(
                     text = tab,
                     selected = selectedFilter == tab,
                     onClick = { selectedFilter = tab }
@@ -766,7 +766,7 @@ private fun PersonalRecordsSectionCard(
         }
 
         Spacer(modifier = Modifier.height(14.dp))
-        ObsidianDivider()
+        GymDivider()
 
         if (filtered.isEmpty()) {
             Spacer(modifier = Modifier.height(14.dp))
@@ -847,7 +847,7 @@ private fun PersonalRecordsSectionCard(
                     }
                 }
                 if (idx < filtered.lastIndex) {
-                    ObsidianDivider()
+                    GymDivider()
                 }
             }
         }
@@ -884,7 +884,7 @@ private fun WeeklyBalanceCard(
         )
     }
 
-    ObsidianCard {
+    GymCard {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -904,7 +904,7 @@ private fun WeeklyBalanceCard(
                     color = TextSecondary
                 )
             }
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = if (showAnatomyMap) "Скрыть карту" else "Карта мышц",
                 onClick = { showAnatomyMap = !showAnatomyMap }
             )
@@ -945,18 +945,18 @@ private fun WeeklyBalanceCard(
                             text = "$sets / 12–16 сетов",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
-                            color = if (isOptimal) EmeraldNeon else TextPrimary
+                            color = if (isOptimal) AccentLime else TextPrimary
                         )
                     }
                     Text(
                         text = statusText,
                         fontSize = 12.sp,
-                        color = if (isOptimal) EmeraldNeon else TextMuted
+                        color = if (isOptimal) AccentLime else TextMuted
                     )
                     Spacer(modifier = Modifier.height(2.dp))
-                    ObsidianProgressBar(
+                    GymProgressBar(
                         progress = (sets / 16f).coerceIn(0f, 1f),
-                        color = EmeraldNeon
+                        color = AccentLime
                     )
                 }
             }
@@ -1019,7 +1019,7 @@ private fun TonnageTrendCard(
     val avgVol = if (bars.isNotEmpty()) totalVol / bars.size else 0.0
     val peakVol = bars.maxOfOrNull { it.volumeKg } ?: 0.0
 
-    ObsidianCard {
+    GymCard {
         Text(
             text = "Тоннаж",
             fontSize = 20.sp,
@@ -1032,12 +1032,12 @@ private fun TonnageTrendCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianPillTab(
+            GymPillTab(
                 text = "По неделям",
                 selected = modeIndex == 0,
                 onClick = { modeIndex = 0 }
             )
-            ObsidianPillTab(
+            GymPillTab(
                 text = "По тренировкам",
                 selected = modeIndex == 1,
                 onClick = { modeIndex = 1 }
@@ -1082,7 +1082,7 @@ private fun TonnageTrendCard(
         Spacer(modifier = Modifier.height(16.dp))
 
         if (bars.isEmpty() || bars.all { it.volumeKg <= 0.0 }) {
-            ObsidianInnerWell {
+            GymInnerWell {
                 Text(
                     text = "Пока нет данных о тоннаже",
                     fontSize = 14.sp,
@@ -1090,7 +1090,7 @@ private fun TonnageTrendCard(
                 )
             }
         } else {
-            ObsidianTonnageBarChart(samples = bars)
+            GymTonnageBarChart(samples = bars)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -1103,7 +1103,7 @@ private fun TonnageTrendCard(
 }
 
 @Composable
-private fun ObsidianTonnageBarChart(samples: List<TonnageBarSample>) {
+private fun GymTonnageBarChart(samples: List<TonnageBarSample>) {
     val textMeasurer = rememberTextMeasurer()
     val axisStyle = TextStyle(fontSize = 10.sp, color = TextMuted)
     val valStyle = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
@@ -1155,7 +1155,7 @@ private fun ObsidianTonnageBarChart(samples: List<TonnageBarSample>) {
                 val barTop = topPad + chartH - barH
 
                 drawRoundRect(
-                    color = EmeraldNeon,
+                    color = AccentLime,
                     topLeft = Offset(barLeft, barTop),
                     size = Size(barW, barH),
                     cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
@@ -1236,7 +1236,7 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
     val primary1RM = round((if (useBrzycki) brzycki1RM else epley1RM) * 10.0) / 10.0
     val compare1RM = round((if (useBrzycki) epley1RM else brzycki1RM) * 10.0) / 10.0
 
-    ObsidianCard {
+    GymCard {
         Text(
             text = "1RM & Стандарты",
             fontSize = 20.sp,
@@ -1251,7 +1251,7 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
         )
         Spacer(modifier = Modifier.height(14.dp))
 
-        ObsidianOutlineButton(
+        GymOutlineButton(
             text = selectedStandard.name,
             onClick = { showStandardSheet = true }
         )
@@ -1262,14 +1262,14 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            ObsidianLabeledField(
+            GymLabeledField(
                 label = "Вес снаряда, кг",
                 value = weightText,
                 onValueChange = { weightText = it.filter { c -> c.isDigit() || c == '.' || c == ',' } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.weight(1f)
             )
-            ObsidianLabeledField(
+            GymLabeledField(
                 label = "Повторения",
                 value = repsText,
                 onValueChange = { repsText = it.filter { c -> c.isDigit() } },
@@ -1284,12 +1284,12 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianPillTab(
+            GymPillTab(
                 text = "Brzycki",
                 selected = useBrzycki,
                 onClick = { useBrzycki = true }
             )
-            ObsidianPillTab(
+            GymPillTab(
                 text = "Epley",
                 selected = !useBrzycki,
                 onClick = { useBrzycki = false }
@@ -1302,7 +1302,7 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
             text = "${formatCleanKg(primary1RM)} кг",
             fontSize = 32.sp,
             fontWeight = FontWeight.SemiBold,
-            color = EmeraldNeon
+            color = AccentLime
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
@@ -1443,10 +1443,10 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
                         Text(
                             text = std.name,
                             fontSize = 15.sp,
-                            color = if (std.name == selectedStandard.name) EmeraldNeon else TextPrimary
+                            color = if (std.name == selectedStandard.name) AccentLime else TextPrimary
                         )
                     }
-                    if (idx < standardsCatalog.lastIndex) ObsidianDivider()
+                    if (idx < standardsCatalog.lastIndex) GymDivider()
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -1466,7 +1466,7 @@ private fun StrengthStandardCell(
         Text(
             text = numberLabel,
             fontSize = 11.sp,
-            color = if (achieved) EmeraldNeon else TextMuted
+            color = if (achieved) AccentLime else TextMuted
         )
         Spacer(modifier = Modifier.height(3.dp))
         Row(
@@ -1478,7 +1478,7 @@ private fun StrengthStandardCell(
                 text = levelName,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
-                color = if (achieved) EmeraldNeon else TextPrimary
+                color = if (achieved) AccentLime else TextPrimary
             )
             Text(
                 text = "$thresholdKg кг",
@@ -1492,7 +1492,7 @@ private fun StrengthStandardCell(
                 .fillMaxWidth()
                 .height(2.dp)
                 .clip(RoundedCornerShape(1.dp))
-                .background(if (achieved) EmeraldNeon else DarkSurfaceHigh)
+                .background(if (achieved) AccentLime else DarkSurfaceHigh)
         )
     }
 }

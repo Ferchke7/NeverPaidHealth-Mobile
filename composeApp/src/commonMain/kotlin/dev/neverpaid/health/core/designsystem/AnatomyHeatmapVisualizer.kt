@@ -118,7 +118,7 @@ enum class VolumeStatus(
 ) {
     UNTRAINED("Не тренировалась", "Shug'ullanilmagan", "Untrained", DarkSurfaceHigh),
     UNDER_TRAINED("Ниже оптимального", "Optimaldan past", "Maintenance / Low", AmberWarm),
-    OPTIMAL("Оптимальный рост (Hypertrophy)", "Optimal o'sish", "Optimal Hypertrophy", EmeraldNeon),
+    OPTIMAL("Оптимальный рост (Hypertrophy)", "Optimal o'sish", "Optimal Hypertrophy", AccentLime),
     OVER_REACHED("Высокое утомление", "Yuqori charchoq", "Overreaching / High Fatigue", CrimsonRed)
 }
 
@@ -194,7 +194,7 @@ fun InteractiveAnatomyHeatmap(
                         onClick = { isFrontView = true },
                         label = { Text("Спереди", fontSize = 11.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldNeon,
+                            selectedContainerColor = AccentLime,
                             selectedLabelColor = DarkBackground,
                             containerColor = DarkSurfaceVariant,
                             labelColor = TextPrimary
@@ -205,7 +205,7 @@ fun InteractiveAnatomyHeatmap(
                         onClick = { isFrontView = false },
                         label = { Text("Сзади", fontSize = 11.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldNeon,
+                            selectedContainerColor = AccentLime,
                             selectedLabelColor = DarkBackground,
                             containerColor = DarkSurfaceVariant,
                             labelColor = TextPrimary
@@ -733,7 +733,7 @@ private fun MuscleDetailBottomSheet(
                             text = "Оптимум: ${zone.maxOptimalWeeklySets} подх.",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = EmeraldLight
+                            color = AccentLime
                         )
                     }
                 }
@@ -751,7 +751,7 @@ private fun MuscleDetailBottomSheet(
                         text = "ФИЗИОЛОГИЧЕСКИЙ ПРОТОКОЛ ВОССТАНОВЛЕНИЯ",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = EmeraldNeon,
+                        color = AccentLime,
                         letterSpacing = 1.sp
                     )
                     Text(

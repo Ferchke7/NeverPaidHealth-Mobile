@@ -52,7 +52,7 @@ import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
+import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.InfoAccent
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
@@ -114,7 +114,7 @@ fun FastingTrackerView(
                     Icon(
                         imageVector = Icons.Default.HourglassBottom,
                         contentDescription = null,
-                        tint = if (isFasting) EmeraldNeon else AmberWarm,
+                        tint = if (isFasting) AccentLime else AmberWarm,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
@@ -127,14 +127,14 @@ fun FastingTrackerView(
 
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = if (isFasting) EmeraldNeon.copy(alpha = 0.15f) else DarkSurfaceElevated,
-                    border = BorderStroke(1.dp, if (isFasting) EmeraldNeon.copy(alpha = 0.4f) else BorderSubtle)
+                    color = if (isFasting) AccentLime.copy(alpha = 0.15f) else DarkSurfaceElevated,
+                    border = BorderStroke(1.dp, if (isFasting) AccentLime.copy(alpha = 0.4f) else BorderSubtle)
                 ) {
                     Text(
                         text = if (isFasting) strings.fastingStatusFast else strings.fastingStatusEating,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = if (isFasting) EmeraldNeon else TextSecondary,
+                        color = if (isFasting) AccentLime else TextSecondary,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
@@ -164,8 +164,8 @@ fun FastingTrackerView(
                             onClick = { selectedProtocol = proto },
                             label = { Text(proto.title, style = MaterialTheme.typography.labelSmall) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = EmeraldNeon.copy(alpha = 0.2f),
-                                selectedLabelColor = EmeraldNeon,
+                                selectedContainerColor = AccentLime.copy(alpha = 0.2f),
+                                selectedLabelColor = AccentLime,
                                 containerColor = DarkSurfaceElevated,
                                 labelColor = TextSecondary
                             ),
@@ -173,7 +173,7 @@ fun FastingTrackerView(
                                 enabled = true,
                                 selected = selectedProtocol == proto,
                                 borderColor = BorderSubtle,
-                                selectedBorderColor = EmeraldNeon
+                                selectedBorderColor = AccentLime
                             )
                         )
                     }
@@ -186,7 +186,7 @@ fun FastingTrackerView(
                     modifier = Modifier.fillMaxWidth().height(44.dp),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = EmeraldNeon,
+                        containerColor = AccentLime,
                         contentColor = DarkBackground
                     )
                 ) {
@@ -209,7 +209,7 @@ fun FastingTrackerView(
                         CircularProgressIndicator(
                             progress = { animProgress },
                             modifier = Modifier.fillMaxSize(),
-                            color = EmeraldNeon,
+                            color = AccentLime,
                             trackColor = DarkSurfaceElevated,
                             strokeWidth = 8.dp,
                             strokeCap = StrokeCap.Round
@@ -224,7 +224,7 @@ fun FastingTrackerView(
                             Text(
                                 text = "${elapsedHours.toInt()} ч",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = EmeraldNeon
+                                color = AccentLime
                             )
                         }
                     }
@@ -252,7 +252,7 @@ fun FastingTrackerView(
                             text = stageTitle,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
-                            color = if (elapsedHours >= 16.0) InfoAccent else EmeraldNeon
+                            color = if (elapsedHours >= 16.0) InfoAccent else AccentLime
                         )
 
                         Text(

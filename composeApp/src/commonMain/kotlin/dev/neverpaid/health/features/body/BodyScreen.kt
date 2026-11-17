@@ -54,17 +54,17 @@ import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.ObsidianCard
-import dev.neverpaid.health.core.designsystem.ObsidianDivider
-import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
-import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
-import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
-import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
-import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
-import dev.neverpaid.health.core.designsystem.ObsidianPillTab
-import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
-import dev.neverpaid.health.core.designsystem.ObsidianProgressBar
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymLabeledField
+import dev.neverpaid.health.core.designsystem.GymLoadingCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymProgressBar
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -202,7 +202,7 @@ fun BodyScreen(
         ) {
             // Header — Figma 11
             item(key = "header", contentType = "header") {
-                ObsidianPageHeader(
+                GymPageHeader(
                     title = strings.bodyTitle,
                     subtitle = strings.bodySubtitle
                 )
@@ -210,21 +210,20 @@ fun BodyScreen(
 
             if (state.isLoading && state.measurements.isEmpty()) {
                 item(key = "loading_card", contentType = "loading") {
-                    ObsidianLoadingCard(
+                    GymLoadingCard(
                         title = strings.stateLoadingTitle,
-                        hint = strings.stateLoadingHint,
-                        kicker = "01 · ${strings.bodyTitle}"
+                        hint = strings.stateLoadingHint
                     )
                 }
             } else {
                 // Summary KPI Stack (3 cards) — Figma 11
                 item(key = "kpi_current_weight", contentType = "kpi") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = "${formatOneDecimal(state.latestWeightKg)} ${strings.unitKg}",
                             fontSize = 30.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = EmeraldNeon
+                            color = AccentLime
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
@@ -236,7 +235,7 @@ fun BodyScreen(
                 }
 
                 item(key = "kpi_target_weight", contentType = "kpi") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -263,7 +262,7 @@ fun BodyScreen(
                                     color = TextSecondary
                                 )
                             }
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = when (lang) {
                                     "uz" -> "O'zgartirish"
                                     "en" -> "Edit"
@@ -278,13 +277,13 @@ fun BodyScreen(
                             val remaining = abs(target - state.latestWeightKg)
                             val progress = (1.0 - (remaining / totalDiff)).toFloat().coerceIn(0.04f, 1f)
                             Spacer(modifier = Modifier.height(12.dp))
-                            ObsidianProgressBar(progress = progress, heightDp = 6, color = EmeraldNeon)
+                            GymProgressBar(progress = progress, heightDp = 6, color = AccentLime)
                         }
                     }
                 }
 
                 item(key = "kpi_sma_weight", contentType = "kpi") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         val sma = state.movingAverage7DayKg ?: state.latestWeightKg
                         Text(
                             text = "${formatOneDecimal(sma)} ${strings.unitKg}",
@@ -303,7 +302,7 @@ fun BodyScreen(
 
                 // Weight & Body Composition Dynamics Chart Card — Figma 11
                 item(key = "dynamics_chart_card", contentType = "chart") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = when (lang) {
                                 "uz" -> "Vazn dinamikasi"
@@ -318,17 +317,17 @@ fun BodyScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) { "uz" -> "Vazn"; "en" -> "Weight"; else -> "Вес" },
                                 selected = chartMetric == BodyChartMetric.WEIGHT,
                                 onClick = { chartMetric = BodyChartMetric.WEIGHT }
                             )
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) { "uz" -> "Bel"; "en" -> "Waist"; else -> "Обхваты" },
                                 selected = chartMetric == BodyChartMetric.WAIST,
                                 onClick = { chartMetric = BodyChartMetric.WAIST }
                             )
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) { "uz" -> "Yog', %"; "en" -> "Body fat %"; else -> "Жир, %" },
                                 selected = chartMetric == BodyChartMetric.BODY_FAT,
                                 onClick = { chartMetric = BodyChartMetric.BODY_FAT }
@@ -362,7 +361,7 @@ fun BodyScreen(
                         }
 
                         if (series.isEmpty()) {
-                            ObsidianInnerWell {
+                            GymInnerWell {
                                 Text(
                                     text = when (lang) {
                                         "uz" -> "Grafik uchun o'lchovlar yo'q"
@@ -398,7 +397,7 @@ fun BodyScreen(
 
                 // Recent Measurements List Card — Figma 11
                 item(key = "recent_measurements_card", contentType = "measurements") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = when (lang) {
                                 "uz" -> "Oxirgi o'lchovlar"
@@ -413,7 +412,7 @@ fun BodyScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         if (state.measurements.isEmpty()) {
-                            ObsidianInnerWell {
+                            GymInnerWell {
                                 Text(
                                     text = when (lang) {
                                         "uz" -> "O'lchovlar tarixi bo'sh"
@@ -426,7 +425,7 @@ fun BodyScreen(
                             }
                         } else {
                             state.measurements.take(10).forEachIndexed { index, m ->
-                                if (index > 0) ObsidianDivider()
+                                if (index > 0) GymDivider()
                                 BodyMeasurementCleanRow(
                                     measurement = m,
                                     unitLabel = strings.unitKg,
@@ -445,7 +444,7 @@ fun BodyScreen(
 
                 // Inline Add Measurement Card — Figma 11
                 item(key = "add_measurement_card", contentType = "add_measurement") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = when (lang) {
                                 "uz" -> "O'lchov qo'shish"
@@ -459,7 +458,7 @@ fun BodyScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        ObsidianLabeledField(
+                        GymLabeledField(
                             label = "${when (lang) { "uz" -> "Vazn"; "en" -> "Weight"; else -> "Вес" }}, ${strings.unitKg}",
                             value = weightInput,
                             onValueChange = { weightInput = it },
@@ -483,7 +482,7 @@ fun BodyScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = when (lang) { "uz" -> "Bel, sm"; "en" -> "Waist, cm"; else -> "Талия, см" },
                                 value = waistInput,
                                 onValueChange = { waistInput = it },
@@ -491,7 +490,7 @@ fun BodyScreen(
                                 placeholder = "—",
                                 modifier = Modifier.weight(1f)
                             )
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = when (lang) { "uz" -> "Ko'krak, sm"; "en" -> "Chest, cm"; else -> "Грудь, см" },
                                 value = chestInput,
                                 onValueChange = { chestInput = it },
@@ -504,7 +503,7 @@ fun BodyScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = when (lang) { "uz" -> "Qo'l, sm"; "en" -> "Arms, cm"; else -> "Руки, см" },
                                 value = bicepsInput,
                                 onValueChange = { bicepsInput = it },
@@ -512,7 +511,7 @@ fun BodyScreen(
                                 placeholder = "—",
                                 modifier = Modifier.weight(1f)
                             )
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = when (lang) { "uz" -> "Yog', % · ixtiyoriy"; "en" -> "Body fat % · optional"; else -> "Жир, % · необязательно" },
                                 value = bodyFatInput,
                                 onValueChange = { bodyFatInput = it },
@@ -524,7 +523,7 @@ fun BodyScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        ObsidianLabeledField(
+                        GymLabeledField(
                             label = when (lang) { "uz" -> "Eslatma"; "en" -> "Note"; else -> "Заметка" },
                             value = notesInput,
                             onValueChange = { notesInput = it },
@@ -541,7 +540,7 @@ fun BodyScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianPrimaryButton(
+                            GymPrimaryButton(
                                 text = when (lang) {
                                     "uz" -> "O'lchovni saqlash"
                                     "en" -> "Save measurement"
@@ -568,7 +567,7 @@ fun BodyScreen(
                                     notesInput = ""
                                 }
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = when (lang) { "uz" -> "Tozalash"; "en" -> "Reset"; else -> "Очистить" },
                                 onClick = {
                                     weightInput = formatOneDecimal(state.latestWeightKg)
@@ -596,7 +595,7 @@ fun BodyScreen(
 
                 // Calculator Card (BMI / BMR / TDEE + Navy BF% & Adonis Sheet) — Figma 11
                 item(key = "calculator_card", contentType = "calculator") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = when (lang) {
                                 "uz" -> "Kalkulyator"
@@ -611,7 +610,7 @@ fun BodyScreen(
                         Spacer(modifier = Modifier.height(14.dp))
 
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = strings.bodyHeight,
                                 value = calcHeightInput,
                                 onValueChange = { calcHeightInput = it },
@@ -619,7 +618,7 @@ fun BodyScreen(
                                 placeholder = "178",
                                 modifier = Modifier.weight(1f)
                             )
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = "${when (lang) { "uz" -> "Vazn"; "en" -> "Weight"; else -> "Вес" }}, ${strings.unitKg}",
                                 value = calcWeightInput,
                                 onValueChange = { calcWeightInput = it },
@@ -631,7 +630,7 @@ fun BodyScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        ObsidianLabeledField(
+                        GymLabeledField(
                             label = when (lang) { "uz" -> "Yosh, yil"; "en" -> "Age, yrs"; else -> "Возраст, лет" },
                             value = calcAgeInput,
                             onValueChange = { calcAgeInput = it.filter { c -> c.isDigit() } },
@@ -649,7 +648,7 @@ fun BodyScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) { "uz" -> "Erkak"; "en" -> "Male"; else -> "Мужской" },
                                 selected = calcGender == "male",
                                 onClick = {
@@ -665,7 +664,7 @@ fun BodyScreen(
                                     )
                                 }
                             )
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) { "uz" -> "Ayol"; "en" -> "Female"; else -> "Женский" },
                                 selected = calcGender == "female",
                                 onClick = {
@@ -706,7 +705,7 @@ fun BodyScreen(
                                 1.55 to "1.55",
                                 1.725 to "1.725"
                             ).forEach { (mult, label) ->
-                                ObsidianPillTab(
+                                GymPillTab(
                                     text = label,
                                     selected = calcActivity == mult,
                                     onClick = { calcActivity = mult }
@@ -720,7 +719,7 @@ fun BodyScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianPrimaryButton(
+                            GymPrimaryButton(
                                 text = when (lang) { "uz" -> "Hisoblash"; "en" -> "Calculate"; else -> "Рассчитать" },
                                 onClick = {
                                     onAction(
@@ -734,7 +733,7 @@ fun BodyScreen(
                                     )
                                 }
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = strings.navyBodyFatTitle,
                                 onClick = { isAnthropometrySheetOpen = true }
                             )
@@ -797,7 +796,7 @@ fun BodyScreen(
 
                 // Targets Card — Figma 11
                 item(key = "goals_card", contentType = "goals") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = when (lang) { "uz" -> "Maqsadlar"; "en" -> "Goals"; else -> "Цели" },
                             fontSize = 18.sp,
@@ -822,17 +821,17 @@ fun BodyScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) { "uz" -> "Pasaytirish"; "en" -> "Cut (-20%)"; else -> "Снижение" },
                                 selected = dietMode == DietMode.CUT,
                                 onClick = { dietMode = DietMode.CUT }
                             )
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) { "uz" -> "Saqlash"; "en" -> "Maintain"; else -> "Поддержание" },
                                 selected = dietMode == DietMode.MAINTAIN,
                                 onClick = { dietMode = DietMode.MAINTAIN }
                             )
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) { "uz" -> "Oshirish"; "en" -> "Bulk (+12%)"; else -> "Набор" },
                                 selected = dietMode == DietMode.BULK,
                                 onClick = { dietMode = DietMode.BULK }
@@ -850,7 +849,7 @@ fun BodyScreen(
                             text = "$targetKcal ккал",
                             fontSize = 30.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = EmeraldNeon
+                            color = AccentLime
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         val modeLabel = when (dietMode) {
@@ -866,7 +865,7 @@ fun BodyScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        ObsidianLabeledField(
+                        GymLabeledField(
                             label = "${when (lang) { "uz" -> "Maqsadli vazn"; "en" -> "Target weight"; else -> "Целевой вес" }}, ${strings.unitKg}",
                             value = targetWeightInput,
                             onValueChange = { targetWeightInput = it },
@@ -876,7 +875,7 @@ fun BodyScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        ObsidianPrimaryButton(
+                        GymPrimaryButton(
                             text = when (lang) {
                                 "uz" -> "Maqsadni saqlash"
                                 "en" -> "Save target"
@@ -918,7 +917,7 @@ private fun BodyTrendLineChart(
             Text(
                 text = "${formatOneDecimal(points.first().second)} → ${formatOneDecimal(points.last().second)} $unitLabel",
                 fontSize = 11.sp,
-                color = EmeraldNeon,
+                color = AccentLime,
                 fontWeight = FontWeight.Medium
             )
         }
@@ -977,7 +976,7 @@ private fun BodyTrendLineChart(
                         }
                         drawPath(
                             path = path,
-                            color = EmeraldNeon,
+                            color = AccentLime,
                             style = Stroke(
                                 width = 2.5.dp.toPx(),
                                 cap = StrokeCap.Round,
@@ -993,7 +992,7 @@ private fun BodyTrendLineChart(
                             center = pt
                         )
                         drawCircle(
-                            color = EmeraldNeon,
+                            color = AccentLime,
                             radius = 3.5.dp.toPx(),
                             center = pt
                         )
@@ -1079,7 +1078,7 @@ private fun BodyMeasurementCleanRow(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        ObsidianOutlineButton(
+        GymOutlineButton(
             text = when (lang) { "uz" -> "O'chirish"; "en" -> "Delete"; else -> "Удалить" },
             onClick = onDelete,
             textColor = CrimsonRed,
@@ -1142,14 +1141,14 @@ private fun AddMeasurementBottomSheet(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ObsidianLabeledField(
+                GymLabeledField(
                     label = "${when (lang) { "uz" -> "Vazn"; "en" -> "Weight"; else -> "Вес" }} ($unitLabel)",
                     value = weightInput,
                     onValueChange = { weightInput = it },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f)
                 )
-                ObsidianLabeledField(
+                GymLabeledField(
                     label = when (lang) { "uz" -> "Yog' %"; "en" -> "Body fat %"; else -> "% жира" },
                     value = bodyFatInput,
                     onValueChange = { bodyFatInput = it },
@@ -1160,7 +1159,7 @@ private fun AddMeasurementBottomSheet(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ObsidianLabeledField(
+                GymLabeledField(
                     label = when (lang) { "uz" -> "Bel, sm"; "en" -> "Waist, cm"; else -> "Талия, см" },
                     value = waistInput,
                     onValueChange = { waistInput = it },
@@ -1168,7 +1167,7 @@ private fun AddMeasurementBottomSheet(
                     placeholder = "—",
                     modifier = Modifier.weight(1f)
                 )
-                ObsidianLabeledField(
+                GymLabeledField(
                     label = when (lang) { "uz" -> "Ko'krak, sm"; "en" -> "Chest, cm"; else -> "Грудь, см" },
                     value = chestInput,
                     onValueChange = { chestInput = it },
@@ -1178,7 +1177,7 @@ private fun AddMeasurementBottomSheet(
                 )
             }
 
-            ObsidianLabeledField(
+            GymLabeledField(
                 label = when (lang) { "uz" -> "Biceps, sm"; "en" -> "Biceps, cm"; else -> "Бицепс, см" },
                 value = bicepsInput,
                 onValueChange = { bicepsInput = it },
@@ -1186,7 +1185,7 @@ private fun AddMeasurementBottomSheet(
                 placeholder = "—"
             )
 
-            ObsidianLabeledField(
+            GymLabeledField(
                 label = when (lang) { "uz" -> "Eslatma"; "en" -> "Note"; else -> "Заметка" },
                 value = notesInput,
                 onValueChange = { notesInput = it },
@@ -1198,13 +1197,13 @@ private fun AddMeasurementBottomSheet(
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = when (lang) { "uz" -> "Bekor"; "en" -> "Cancel"; else -> "Отмена" },
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f),
                     fillWidth = true
                 )
-                ObsidianPrimaryButton(
+                GymPrimaryButton(
                     text = when (lang) { "uz" -> "Saqlash"; "en" -> "Save"; else -> "Сохранить замер" },
                     onClick = {
                         onSave(
@@ -1254,7 +1253,7 @@ private fun TargetWeightDialog(
             )
         },
         text = {
-            ObsidianLabeledField(
+            GymLabeledField(
                 label = "$unitLabel",
                 value = input,
                 onValueChange = { input = it },
@@ -1263,13 +1262,13 @@ private fun TargetWeightDialog(
             )
         },
         confirmButton = {
-            ObsidianPrimaryButton(
+            GymPrimaryButton(
                 text = when (lang) { "uz" -> "Saqlash"; "en" -> "Save"; else -> "Сохранить" },
                 onClick = { onSave(input.toDoubleOrNull()) }
             )
         },
         dismissButton = {
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) { "uz" -> "Bekor"; "en" -> "Cancel"; else -> "Отмена" },
                 onClick = onDismiss
             )

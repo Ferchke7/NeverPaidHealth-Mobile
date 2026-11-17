@@ -44,20 +44,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.ObsidianWell
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.rememberBase64ImageBitmap
-import dev.neverpaid.health.core.designsystem.ObsidianCard
-import dev.neverpaid.health.core.designsystem.ObsidianDivider
-import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
-import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
-import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
-import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
-import dev.neverpaid.health.core.designsystem.ObsidianPillTab
-import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
-import dev.neverpaid.health.core.designsystem.ObsidianProgressBar
-import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
-import dev.neverpaid.health.core.designsystem.ObsidianWhiteButton
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymLabeledField
+import dev.neverpaid.health.core.designsystem.GymLoadingCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymProgressBar
+import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymWhiteButton
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -186,13 +186,13 @@ fun NutritionScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item(key = "header") {
-                ObsidianPageHeader(
+                GymPageHeader(
                     title = "Питание",
                     subtitle = "Приёмы пищи, макросы и вода"
                 )
             }
             item(key = "loading") {
-                ObsidianLoadingCard(
+                GymLoadingCard(
                     title = "Питание",
                     hint = strings.stateLoadingHint
                 )
@@ -212,7 +212,7 @@ fun NutritionScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item(key = "page_header", contentType = "header") {
-            ObsidianPageHeader(
+            GymPageHeader(
                 title = "Питание",
                 subtitle = "Приёмы пищи, макросы и вода"
             )
@@ -232,15 +232,15 @@ fun NutritionScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = "← Назад",
                         onClick = { onAction(NutritionUiAction.OnShiftDateDays(-1)) }
                     )
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = "Сегодня",
                         onClick = { onAction(NutritionUiAction.OnSelectDate(todayStr)) }
                     )
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = "Вперёд →",
                         onClick = { onAction(NutritionUiAction.OnShiftDateDays(1)) }
                     )
@@ -256,7 +256,7 @@ fun NutritionScreen(
 
         // Card 1: Daily Balance
         item(key = "daily_balance_card", contentType = "balance") {
-            ObsidianCard {
+            GymCard {
                 Text(
                     text = "Дневной баланс",
                     fontSize = 20.sp,
@@ -293,7 +293,7 @@ fun NutritionScreen(
 
         // Card 2: Meals Log (Divided List)
         item(key = "meals_card", contentType = "meals") {
-            ObsidianCard {
+            GymCard {
                 Text(
                     text = "Приёмы пищи",
                     fontSize = 20.sp,
@@ -309,7 +309,7 @@ fun NutritionScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (state.meals.isEmpty()) {
-                    ObsidianInnerWell {
+                    GymInnerWell {
                         Text(
                             text = "Записей за ${state.selectedDate} пока нет",
                             fontSize = 14.sp,
@@ -351,7 +351,7 @@ fun NutritionScreen(
                         )
                         if (idx < state.meals.lastIndex) {
                             Spacer(modifier = Modifier.height(16.dp))
-                            ObsidianDivider()
+                            GymDivider()
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
@@ -362,7 +362,7 @@ fun NutritionScreen(
         // Card 3: Hydration
         item(key = "water_card", contentType = "water") {
             val portions = state.waterMl / 250
-            ObsidianCard {
+            GymCard {
                 Text(
                     text = "Вода",
                     fontSize = 20.sp,
@@ -383,25 +383,25 @@ fun NutritionScreen(
                     color = TextSecondary
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                ObsidianProgressBar(
+                GymProgressBar(
                     progress = waterProgress,
-                    color = EmeraldNeon
+                    color = AccentLime
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    ObsidianPrimaryButton(
+                    GymPrimaryButton(
                         text = "+ 250 мл",
                         onClick = { onAction(NutritionUiAction.OnAddWater(250)) }
                     )
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = "− 250 мл",
                         enabled = state.waterMl >= 250,
                         onClick = { onAction(NutritionUiAction.OnAddWater(-250)) }
                     )
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = "Сбросить",
                         enabled = state.waterMl > 0,
                         onClick = { showWaterResetConfirm = true }
@@ -412,7 +412,7 @@ fun NutritionScreen(
 
         // Card 4: Add Food Mode Picker
         item(key = "add_food_card", contentType = "add_food") {
-            ObsidianCard {
+            GymCard {
                 Text(
                     text = "Добавить еду",
                     fontSize = 20.sp,
@@ -431,21 +431,21 @@ fun NutritionScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    ObsidianPillTab(
+                    GymPillTab(
                         text = "По фото",
                         selected = inputMode == FoodInputMode.PHOTO,
                         onClick = {
                             inputMode = if (inputMode == FoodInputMode.PHOTO) FoodInputMode.NONE else FoodInputMode.PHOTO
                         }
                     )
-                    ObsidianPillTab(
+                    GymPillTab(
                         text = "Текстом",
                         selected = inputMode == FoodInputMode.TEXT,
                         onClick = {
                             inputMode = if (inputMode == FoodInputMode.TEXT) FoodInputMode.NONE else FoodInputMode.TEXT
                         }
                     )
-                    ObsidianPillTab(
+                    GymPillTab(
                         text = "Вручную",
                         selected = inputMode == FoodInputMode.MANUAL,
                         onClick = {
@@ -453,7 +453,7 @@ fun NutritionScreen(
                             inputMode = if (inputMode == FoodInputMode.MANUAL) FoodInputMode.NONE else FoodInputMode.MANUAL
                         }
                     )
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = "База продуктов",
                         onClick = { isFoodCatalogSheetOpen = true }
                     )
@@ -467,12 +467,12 @@ fun NutritionScreen(
                 val preview = state.aiAnalysisPreview
                 val showFormFields = preview != null || inputMode == FoodInputMode.MANUAL || editingMealId != null
 
-                ObsidianCard {
+                GymCard {
                     Text(
                         text = if (preview != null) "ИИ-распознавание" else "Черновик",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
-                        color = EmeraldNeon,
+                        color = AccentLime,
                         letterSpacing = 0.8.sp
                     )
                     Spacer(modifier = Modifier.height(6.dp))
@@ -512,7 +512,7 @@ fun NutritionScreen(
                     ) {
                         val activeType = if (showFormFields && preview == null) state.newMealType else state.selectedMealType
                         mealTypeOptions.forEach { (typeKey, typeLabel) ->
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = typeLabel,
                                 selected = activeType == typeKey,
                                 onClick = {
@@ -529,12 +529,12 @@ fun NutritionScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = if (state.selectedPhotoBase64 != null) "Фото выбрано ✓" else "Выбрать фото",
                                 onClick = pickPhoto
                             )
                             if (state.selectedPhotoBase64 != null) {
-                                ObsidianOutlineButton(
+                                GymOutlineButton(
                                     text = "Убрать фото",
                                     onClick = { onAction(NutritionUiAction.OnClearPhoto) }
                                 )
@@ -552,13 +552,13 @@ fun NutritionScreen(
                                         .fillMaxWidth()
                                         .height(160.dp)
                                         .clip(RoundedCornerShape(10.dp))
-                                        .background(ObsidianWell)
+                                        .background(GymWell)
                                         .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                                 )
                             }
                         }
                         Spacer(modifier = Modifier.height(12.dp))
-                        ObsidianLabeledField(
+                        GymLabeledField(
                             label = "Комментарий (необязательно)",
                             value = state.aiDescriptionInput,
                             onValueChange = { onAction(NutritionUiAction.OnAiDescriptionChanged(it)) },
@@ -569,19 +569,19 @@ fun NutritionScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianPrimaryButton(
+                            GymPrimaryButton(
                                 text = if (state.isAiAnalyzing) "Анализ..." else "Рассчитать КБЖУ",
                                 enabled = !state.isAiAnalyzing && (state.selectedPhotoBase64 != null || state.aiDescriptionInput.isNotBlank()),
                                 onClick = { onAction(NutritionUiAction.OnRunAiAnalysis) }
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = strings.cancel,
                                 onClick = { inputMode = FoodInputMode.NONE }
                             )
                         }
                     } else if (!showFormFields && inputMode == FoodInputMode.TEXT) {
                         Spacer(modifier = Modifier.height(14.dp))
-                        ObsidianLabeledField(
+                        GymLabeledField(
                             label = "Опишите блюдо",
                             value = state.aiDescriptionInput,
                             onValueChange = { onAction(NutritionUiAction.OnAiDescriptionChanged(it)) },
@@ -594,7 +594,7 @@ fun NutritionScreen(
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             quickFoodPrompts.forEach { prompt ->
-                                ObsidianPillTab(
+                                GymPillTab(
                                     text = prompt,
                                     selected = state.aiDescriptionInput == prompt,
                                     onClick = { onAction(NutritionUiAction.OnAiDescriptionChanged(prompt)) }
@@ -606,19 +606,19 @@ fun NutritionScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianPrimaryButton(
+                            GymPrimaryButton(
                                 text = if (state.isAiAnalyzing) "Анализ..." else "Рассчитать КБЖУ",
                                 enabled = !state.isAiAnalyzing && state.aiDescriptionInput.isNotBlank(),
                                 onClick = { onAction(NutritionUiAction.OnRunAiAnalysis) }
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = strings.cancel,
                                 onClick = { inputMode = FoodInputMode.NONE }
                             )
                         }
                     } else if (showFormFields) {
                         Spacer(modifier = Modifier.height(14.dp))
-                        ObsidianLabeledField(
+                        GymLabeledField(
                             label = "Название",
                             value = state.newMealName,
                             onValueChange = { onAction(NutritionUiAction.OnMealNameChanged(it)) },
@@ -629,14 +629,14 @@ fun NutritionScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = "Порция, г",
                                 value = draftPortionGrams,
                                 onValueChange = { draftPortionGrams = it.filter { c -> c.isDigit() } },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 modifier = Modifier.weight(1f)
                             )
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = "Калории, ккал",
                                 value = state.newMealCalories,
                                 onValueChange = { onAction(NutritionUiAction.OnMealCaloriesChanged(it.filter { c -> c.isDigit() })) },
@@ -649,14 +649,14 @@ fun NutritionScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = "Белки, г",
                                 value = state.newMealProtein,
                                 onValueChange = { onAction(NutritionUiAction.OnMealProteinChanged(it.filter { c -> c.isDigit() || c == '.' })) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 modifier = Modifier.weight(1f)
                             )
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = "Углеводы, г",
                                 value = state.newMealCarbs,
                                 onValueChange = { onAction(NutritionUiAction.OnMealCarbsChanged(it.filter { c -> c.isDigit() || c == '.' })) },
@@ -666,7 +666,7 @@ fun NutritionScreen(
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = "Жиры, г",
                                 value = state.newMealFats,
                                 onValueChange = { onAction(NutritionUiAction.OnMealFatsChanged(it.filter { c -> c.isDigit() || c == '.' })) },
@@ -687,7 +687,7 @@ fun NutritionScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianPrimaryButton(
+                            GymPrimaryButton(
                                 text = if (state.isSavingMeal) "Сохранение..." else "Подтвердить",
                                 enabled = !state.isSavingMeal && state.newMealName.isNotBlank() && state.newMealCalories.isNotBlank(),
                                 onClick = {
@@ -704,7 +704,7 @@ fun NutritionScreen(
                                     inputMode = FoodInputMode.NONE
                                 }
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = strings.cancel,
                                 onClick = {
                                     editingMealId = null
@@ -721,7 +721,7 @@ fun NutritionScreen(
         // Toggleable Fasting Tracker Card (preserves full fasting workflow)
         item(key = "fasting_section", contentType = "fasting") {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = if (showFastingWidget) "Скрыть интервальное голодание" else "Интервальное голодание 16/8",
                     onClick = { showFastingWidget = !showFastingWidget }
                 )
@@ -770,17 +770,17 @@ fun NutritionScreen(
                     color = TextPrimary
                 )
                 Spacer(modifier = Modifier.height(14.dp))
-                ObsidianDivider()
+                GymDivider()
                 Spacer(modifier = Modifier.height(14.dp))
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = strings.cancel,
                         onClick = { showWaterResetConfirm = false }
                     )
-                    ObsidianWhiteButton(
+                    GymWhiteButton(
                         text = "Сбросить",
                         onClick = {
                             if (state.waterMl > 0) {
@@ -814,9 +814,9 @@ private fun BalanceMetricRow(
             fontSize = 13.sp,
             color = TextSecondary
         )
-        ObsidianProgressBar(
+        GymProgressBar(
             progress = progress,
-            color = EmeraldNeon
+            color = AccentLime
         )
     }
 }
@@ -870,9 +870,9 @@ private fun MealLogRowItem(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianOutlineButton(text = "Изменить", onClick = onEdit)
-            ObsidianOutlineButton(text = "Повторить", onClick = onRepeat)
-            ObsidianOutlineButton(text = "Удалить", onClick = onDelete)
+            GymOutlineButton(text = "Изменить", onClick = onEdit)
+            GymOutlineButton(text = "Повторить", onClick = onRepeat)
+            GymOutlineButton(text = "Удалить", onClick = onDelete)
         }
     }
 }

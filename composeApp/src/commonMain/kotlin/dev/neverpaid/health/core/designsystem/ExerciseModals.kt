@@ -158,9 +158,9 @@ fun ExercisePickerBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = ObsidianWell,
-                    unfocusedContainerColor = ObsidianWell,
-                    focusedBorderColor = EmeraldNeon,
+                    focusedContainerColor = GymWell,
+                    unfocusedContainerColor = GymWell,
+                    focusedBorderColor = AccentLime,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary
@@ -183,8 +183,8 @@ fun ExercisePickerBottomSheet(
                             )
                         },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldSubtle,
-                            selectedLabelColor = EmeraldLight,
+                            selectedContainerColor = AccentLimeSubtle,
+                            selectedLabelColor = AccentLime,
                             containerColor = DarkSurfaceVariant,
                             labelColor = TextSecondary
                         )
@@ -261,7 +261,7 @@ fun ExercisePickerBottomSheet(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(EmeraldNeon)
+                                        .background(AccentLime)
                                         .padding(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
                                     Text(
@@ -337,14 +337,14 @@ fun ExerciseInfoBottomSheet(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(EmeraldSubtle)
+                                .background(AccentLimeSubtle)
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
                                 text = localizeMuscleName(exercise.primaryMuscle),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = EmeraldLight
+                                color = AccentLime
                             )
                         }
                         Box(
@@ -363,7 +363,7 @@ fun ExerciseInfoBottomSheet(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(EmeraldSubtle)
+                                .background(AccentLimeSubtle)
                                 .border(1.dp, BorderHighlight, RoundedCornerShape(6.dp))
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
@@ -371,7 +371,7 @@ fun ExerciseInfoBottomSheet(
                                 text = if (exercise.category == "isolation") "Изолирующее" else "Базовое",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = EmeraldLight
+                                color = AccentLime
                             )
                         }
                     }
@@ -415,14 +415,14 @@ fun ExerciseInfoBottomSheet(
                         modifier = Modifier
                             .size(22.dp)
                             .clip(CircleShape)
-                            .background(EmeraldSubtle),
+                            .background(AccentLimeSubtle),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "${idx + 1}",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = EmeraldLight
+                            color = AccentLime
                         )
                     }
                     Spacer(modifier = Modifier.width(10.dp))
@@ -479,8 +479,8 @@ fun WorkoutSummaryBottomSheet(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)
-                    .background(EmeraldSubtle)
-                    .border(2.dp, EmeraldNeon, CircleShape),
+                    .background(AccentLimeSubtle)
+                    .border(2.dp, AccentLime, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -502,7 +502,7 @@ fun WorkoutSummaryBottomSheet(
             Text(
                 text = workout.title,
                 fontSize = 14.sp,
-                color = EmeraldLight,
+                color = AccentLime,
                 fontWeight = FontWeight.Bold
             )
 
@@ -528,7 +528,7 @@ fun WorkoutSummaryBottomSheet(
                         title = "Тоннаж",
                         value = StrengthCalculator.formatVolume(workout.totalVolume),
                         unit = "кг",
-                        accentColor = EmeraldNeon
+                        accentColor = AccentLime
                     )
                     StatCounter(
                         title = "Подходы",
@@ -552,7 +552,7 @@ fun WorkoutSummaryBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
-                            .background(ObsidianWell)
+                            .background(GymWell)
                             .border(1.dp, BorderDivider, RoundedCornerShape(10.dp))
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -570,7 +570,7 @@ fun WorkoutSummaryBottomSheet(
                                 text = "Лучший: ${bestSet.weightKg.toInt()} кг × ${bestSet.reps}",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = EmeraldLight
+                                color = AccentLime
                             )
                         }
                     }
@@ -586,7 +586,7 @@ fun WorkoutSummaryBottomSheet(
                     .height(50.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = EmeraldNeon,
+                    containerColor = AccentLime,
                     contentColor = Color.Black
                 )
             ) {

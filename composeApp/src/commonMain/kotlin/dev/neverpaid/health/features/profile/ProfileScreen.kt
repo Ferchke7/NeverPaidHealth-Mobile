@@ -55,19 +55,19 @@ import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.EmeraldLight
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.EmeraldSubtle
-import dev.neverpaid.health.core.designsystem.ObsidianCard
-import dev.neverpaid.health.core.designsystem.ObsidianDivider
-import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
-import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
-import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
-import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
-import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
-import dev.neverpaid.health.core.designsystem.ObsidianPillTab
-import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
-import dev.neverpaid.health.core.designsystem.ObsidianTextField
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymLabeledField
+import dev.neverpaid.health.core.designsystem.GymLoadingCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -130,7 +130,7 @@ fun ProfileScreen(
         ) {
             // Header — Figma 12
             item(key = "header", contentType = "header") {
-                ObsidianPageHeader(
+                GymPageHeader(
                     title = strings.profileTitle,
                     subtitle = when (lang) {
                         "uz" -> "Sozlamalar, ma'lumotlar va maqsadlar"
@@ -142,10 +142,9 @@ fun ProfileScreen(
 
             if (state.isLoading && state.user == null) {
                 item(key = "loading_card", contentType = "loading") {
-                    ObsidianLoadingCard(
+                    GymLoadingCard(
                         title = strings.stateLoadingTitle,
-                        hint = strings.stateLoadingHint,
-                        kicker = "01 · ${strings.profileTitle}"
+                        hint = strings.stateLoadingHint
                     )
                 }
             }
@@ -154,9 +153,9 @@ fun ProfileScreen(
             if (state.errorMessage != null || state.successMessage != null) {
                 item(key = "status_banner", contentType = "banner") {
                     val isError = state.errorMessage != null
-                    val accent = if (isError) CrimsonRed else EmeraldNeon
-                    ObsidianCard(
-                        backgroundColor = if (isError) DarkSurface else EmeraldSubtle,
+                    val accent = if (isError) CrimsonRed else AccentLime
+                    GymCard(
+                        backgroundColor = if (isError) DarkSurface else AccentLimeSubtle,
                         borderColor = if (isError) CrimsonRed.copy(alpha = 0.5f) else BorderHighlight,
                         contentPadding = PaddingValues(14.dp)
                     ) {
@@ -190,7 +189,7 @@ fun ProfileScreen(
 
             // Card 1: Account & Language — Figma 12
             item(key = "account_card", contentType = "account") {
-                ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                GymCard(contentPadding = PaddingValues(20.dp)) {
                     Text(
                         text = when (lang) { "uz" -> "Akkaunt"; "en" -> "Account"; else -> "Аккаунт" },
                         fontSize = 18.sp,
@@ -230,7 +229,7 @@ fun ProfileScreen(
                         color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    ObsidianInnerWell {
+                    GymInnerWell {
                         Text(
                             text = displayName,
                             fontSize = 15.sp,
@@ -241,7 +240,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     if (state.isGuest) {
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = when (lang) {
                                 "uz" -> "Google orqali kirish"
                                 "en" -> "Sign in with Google"
@@ -250,7 +249,7 @@ fun ProfileScreen(
                             onClick = { onAction(ProfileUiAction.OnLogoutClick) }
                         )
                     } else {
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = when (lang) {
                                 "uz" -> "Ma'lumotlarni yangilash"
                                 "en" -> "Sync account"
@@ -271,7 +270,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         languages.forEach { (code, label) ->
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = label,
                                 selected = state.languageCode.equals(code, ignoreCase = true),
                                 onClick = { onAction(ProfileUiAction.OnSelectLanguage(code)) }
@@ -283,7 +282,7 @@ fun ProfileScreen(
 
             // Card 2: Training Preferences — Figma 12
             item(key = "training_prefs_card", contentType = "training_prefs") {
-                ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                GymCard(contentPadding = PaddingValues(20.dp)) {
                     Text(
                         text = when (lang) {
                             "uz" -> "Mashg'ulotlar"
@@ -305,12 +304,12 @@ fun ProfileScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ObsidianPillTab(
+                        GymPillTab(
                             text = "KG",
                             selected = state.useKilograms,
                             onClick = { onAction(ProfileUiAction.OnToggleUnits(true)) }
                         )
-                        ObsidianPillTab(
+                        GymPillTab(
                             text = "LB",
                             selected = !state.useKilograms,
                             onClick = { onAction(ProfileUiAction.OnToggleUnits(false)) }
@@ -331,7 +330,7 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         restOptions.forEach { secs ->
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = "$secs ${when (lang) { "uz" -> "son"; "en" -> "s"; else -> "с" }}",
                                 selected = state.defaultRestSeconds == secs,
                                 onClick = { onAction(ProfileUiAction.OnSelectDefaultRest(secs)) }
@@ -340,7 +339,7 @@ fun ProfileScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    ObsidianDivider()
+                    GymDivider()
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
@@ -363,7 +362,7 @@ fun ProfileScreen(
                             onCheckedChange = { onAction(ProfileUiAction.OnToggleSound(it)) },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = DarkBackground,
-                                checkedTrackColor = EmeraldNeon,
+                                checkedTrackColor = AccentLime,
                                 uncheckedThumbColor = TextSecondary,
                                 uncheckedTrackColor = DarkSurfaceHigh
                             )
@@ -388,7 +387,7 @@ fun ProfileScreen(
                             onCheckedChange = { onAction(ProfileUiAction.OnToggleVibration(it)) },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = DarkBackground,
-                                checkedTrackColor = EmeraldNeon,
+                                checkedTrackColor = AccentLime,
                                 uncheckedThumbColor = TextSecondary,
                                 uncheckedTrackColor = DarkSurfaceHigh
                             )
@@ -405,7 +404,7 @@ fun ProfileScreen(
                 val computedKcal = (pVal * 4) + (cVal * 4) + (fVal * 9)
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = when (lang) {
                                 "uz" -> "Ovqatlanish maqsadlari va parametrlar"
@@ -429,7 +428,7 @@ fun ProfileScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        ObsidianLabeledField(
+                        GymLabeledField(
                             label = when (lang) { "uz" -> "Oqsillar, g"; "en" -> "Protein, g"; else -> "Белки, г" },
                             value = state.proteinTargetInput,
                             onValueChange = { onAction(ProfileUiAction.OnUpdateProteinTarget(it)) },
@@ -439,7 +438,7 @@ fun ProfileScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        ObsidianLabeledField(
+                        GymLabeledField(
                             label = when (lang) { "uz" -> "Uglevodlar, g"; "en" -> "Carbs, g"; else -> "Углеводы, г" },
                             value = state.carbsTargetInput,
                             onValueChange = { onAction(ProfileUiAction.OnUpdateCarbsTarget(it)) },
@@ -449,7 +448,7 @@ fun ProfileScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        ObsidianLabeledField(
+                        GymLabeledField(
                             label = when (lang) { "uz" -> "Yog'lar, g"; "en" -> "Fats, g"; else -> "Жиры, г" },
                             value = state.fatsTargetInput,
                             onValueChange = { onAction(ProfileUiAction.OnUpdateFatsTarget(it)) },
@@ -474,7 +473,7 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(14.dp))
 
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = when (lang) {
                                     "uz" -> "Kaloriya / kun"
                                     "en" -> "Calories / day"
@@ -485,7 +484,7 @@ fun ProfileScreen(
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 modifier = Modifier.weight(1f)
                             )
-                            ObsidianLabeledField(
+                            GymLabeledField(
                                 label = when (lang) {
                                     "uz" -> "Suv maqsadi, ml"
                                     "en" -> "Water goal, ml"
@@ -499,7 +498,7 @@ fun ProfileScreen(
                         }
                     }
 
-                    ObsidianPrimaryButton(
+                    GymPrimaryButton(
                         text = when (lang) {
                             "uz" -> "Sozlamalarni saqlash"
                             "en" -> "Save preferences"
@@ -524,7 +523,7 @@ fun ProfileScreen(
             // Card 4: Data, App & Confirmed Logout — Figma 12
             item(key = "data_app_card", contentType = "data_app") {
                 val stats = state.platformStats
-                ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                GymCard(contentPadding = PaddingValues(20.dp)) {
                     Text(
                         text = when (lang) {
                             "uz" -> "Ma'lumotlar va ilova"
@@ -538,7 +537,7 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    ObsidianInnerWell {
+                    GymInnerWell {
                         val tons = (stats.totalVolumeKg / 1000.0).toInt()
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -567,7 +566,7 @@ fun ProfileScreen(
                         color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    ObsidianInnerWell {
+                    GymInnerWell {
                         Text(
                             text = "https://duda.uz/api/v1",
                             fontSize = 14.sp,
@@ -576,11 +575,11 @@ fun ProfileScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    ObsidianDivider()
+                    GymDivider()
                     Spacer(modifier = Modifier.height(14.dp))
 
                     if (state.isGuest) {
-                        ObsidianPrimaryButton(
+                        GymPrimaryButton(
                             text = when (lang) {
                                 "uz" -> "Akkauntga kirish"
                                 "en" -> "Sign in"
@@ -590,7 +589,7 @@ fun ProfileScreen(
                             fillWidth = true
                         )
                     } else if (!isLogoutConfirmOpen) {
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = strings.profileLogout,
                             onClick = { isLogoutConfirmOpen = true },
                             fillWidth = true,
@@ -620,13 +619,13 @@ fun ProfileScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = strings.cancel,
                                 onClick = { isLogoutConfirmOpen = false },
                                 modifier = Modifier.weight(1f),
                                 fillWidth = true
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = strings.profileLogout,
                                 onClick = {
                                     isLogoutConfirmOpen = false
@@ -644,7 +643,7 @@ fun ProfileScreen(
 
             // Card 5: Community Feedback & Ideas — Figma 12
             item(key = "feedback_card", contentType = "feedback") {
-                ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                GymCard(contentPadding = PaddingValues(20.dp)) {
                     Text(
                         text = when (lang) {
                             "uz" -> "duda.uz ni yaxshilashga yordam bering"
@@ -679,7 +678,7 @@ fun ProfileScreen(
                     )
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    ObsidianTextField(
+                    GymTextField(
                         value = state.feedbackMessage,
                         onValueChange = { onAction(ProfileUiAction.OnUpdateFeedbackMessage(it)) },
                         placeholder = when (lang) {
@@ -697,7 +696,7 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = when (lang) {
                                 "uz" -> "Taklif yuborish"
                                 "en" -> "Send suggestion"
@@ -706,7 +705,7 @@ fun ProfileScreen(
                             onClick = { onAction(ProfileUiAction.OnSubmitFeedback) },
                             enabled = !state.isSubmittingFeedback && state.feedbackMessage.isNotBlank()
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = when (lang) {
                                 "uz" -> "Kategoriya bilan yuborish"
                                 "en" -> "Full form"
@@ -717,7 +716,7 @@ fun ProfileScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    ObsidianDivider()
+                    GymDivider()
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
@@ -743,7 +742,7 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = if (isCommunityListExpanded) {
                             when (lang) { "uz" -> "Ro'yxatni yopish"; "en" -> "Hide ideas"; else -> "Скрыть идеи" }
                         } else {
@@ -766,7 +765,7 @@ fun ProfileScreen(
                                 "bug" to when (lang) { "uz" -> "Xatolar"; "en" -> "Bugs"; else -> "Баги" },
                                 "praise" to when (lang) { "uz" -> "Fikrlar"; "en" -> "Praise"; else -> "Отзывы" }
                             ).forEach { (key, label) ->
-                                ObsidianPillTab(
+                                GymPillTab(
                                     text = label,
                                     selected = state.selectedFeedbackFilter == key,
                                     onClick = { onAction(ProfileUiAction.OnSelectFeedbackFilter(key)) }
@@ -777,7 +776,7 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         if (filteredFeedback.isEmpty()) {
-                            ObsidianInnerWell {
+                            GymInnerWell {
                                 Text(
                                     text = when (lang) {
                                         "uz" -> "Bu bo'limda hali yozuvlar yo'q"
@@ -790,7 +789,7 @@ fun ProfileScreen(
                             }
                         } else {
                             filteredFeedback.forEachIndexed { idx, item ->
-                                if (idx > 0) ObsidianDivider()
+                                if (idx > 0) GymDivider()
                                 FeedbackItemCleanRow(
                                     item = item,
                                     lang = lang,
@@ -852,7 +851,7 @@ fun ProfileScreen(
                         "bug" to when (lang) { "uz" -> "Xato"; "en" -> "Bug"; else -> "Баг" },
                         "praise" to when (lang) { "uz" -> "Fikr"; "en" -> "Praise"; else -> "Отзыв" }
                     ).forEach { (catKey, catLabel) ->
-                        ObsidianPillTab(
+                        GymPillTab(
                             text = catLabel,
                             selected = state.feedbackCategory == catKey,
                             onClick = { onAction(ProfileUiAction.OnSelectFeedbackCategory(catKey)) }
@@ -884,7 +883,7 @@ fun ProfileScreen(
                     }
                 }
 
-                ObsidianTextField(
+                GymTextField(
                     value = state.feedbackMessage,
                     onValueChange = { onAction(ProfileUiAction.OnUpdateFeedbackMessage(it)) },
                     placeholder = when (lang) {
@@ -897,13 +896,13 @@ fun ProfileScreen(
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = strings.cancel,
                         onClick = { onAction(ProfileUiAction.OnCloseFeedbackModal) },
                         modifier = Modifier.weight(1f),
                         fillWidth = true
                     )
-                    ObsidianPrimaryButton(
+                    GymPrimaryButton(
                         text = if (state.isSubmittingFeedback) strings.loading else when (lang) {
                             "uz" -> "Yuborish"
                             "en" -> "Submit"
@@ -927,7 +926,7 @@ private fun StatCol(label: String, value: String) {
             text = value,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
-            color = EmeraldNeon
+            color = AccentLime
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
@@ -964,7 +963,7 @@ private fun FeedbackItemCleanRow(
             Text(
                 text = "${item.userName.ifBlank { "Атлет" }} · $categoryLabel",
                 fontSize = 12.sp,
-                color = EmeraldNeon,
+                color = AccentLime,
                 fontWeight = FontWeight.Medium
             )
             Text(
@@ -989,7 +988,7 @@ private fun FeedbackItemCleanRow(
             Row(
                 modifier = Modifier
                     .clip(shape)
-                    .background(if (item.upvotedByMe) EmeraldSubtle else DarkBackground)
+                    .background(if (item.upvotedByMe) AccentLimeSubtle else DarkBackground)
                     .border(
                         1.dp,
                         if (item.upvotedByMe) BorderHighlight else BorderSubtle,
@@ -1003,14 +1002,14 @@ private fun FeedbackItemCleanRow(
                 Icon(
                     imageVector = Icons.Default.ThumbUp,
                     contentDescription = null,
-                    tint = if (item.upvotedByMe) EmeraldNeon else TextSecondary,
+                    tint = if (item.upvotedByMe) AccentLime else TextSecondary,
                     modifier = Modifier.size(14.dp)
                 )
                 Text(
                     text = item.upvotes.toString(),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = if (item.upvotedByMe) EmeraldLight else TextSecondary
+                    color = if (item.upvotedByMe) AccentLime else TextSecondary
                 )
             }
         }

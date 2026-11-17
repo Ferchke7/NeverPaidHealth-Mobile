@@ -2,66 +2,68 @@ package dev.neverpaid.health.core.designsystem
 
 import androidx.compose.ui.graphics.Color
 
-// Obsidian Architecture Dark Palette (1:1 match with duda.uz Figma Obsidian Design System)
-val DarkBackground = Color(0xFF0A0A0A)       // #0a0a0a Canvas background & recessed inputs
-val ObsidianWell = Color(0xFF0A0A0A)         // #0a0a0a Inner wells & inputs inside cards
-val DarkSurface = Color(0xFF171717)          // #171717 Elevated cards, sheets, dialogs
-val DarkSurfaceVariant = Color(0xFF171717)   // #171717 Card surface
-val DarkSurfaceHigh = Color(0xFF262626)      // #262626 Tonal hover/wells & progress tracks
-val DarkSurfaceElevated = Color(0xFF262626)  // #262626 Elevated neutral controls
+// "Iron & Lime" gym palette: near-black canvas, soft tonal cards (no hairline outlines),
+// one electric-lime accent for every primary action, orange reserved for streaks / records.
 
-// Obsidian Emerald Accent (#34d399 Emerald-400 / #022c22 Emerald-950 / #064e3b Emerald-900)
-val EmeraldNeon = Color(0xFF34D399)          // Primary CTA fill, active highlights & lines
-val EmeraldLight = Color(0xFF34D399)         // Active nav / chip foreground
-val EmeraldPressed = Color(0xFF10B981)       // Emerald-500 pressed state
-val EmeraldDark = Color(0xFF064E3B)          // #064e3b Active Emerald-900 border/container
-val EmeraldSubtle = Color(0xFF022C22)        // #022c22 Solid Emerald-950 active container
-val EmeraldGlow = Color(0x2634D399)          // Subtle translucent chart curve fill
+// Surfaces
+val DarkBackground = Color(0xFF0B0C0F)       // App canvas
+val GymWell = Color(0xFF101216)              // Recessed wells & inputs inside cards
+val DarkSurface = Color(0xFF16181D)          // Cards, sheets, dialogs
+val DarkSurfaceVariant = Color(0xFF16181D)   // Card surface alias
+val DarkSurfaceHigh = Color(0xFF1F2228)      // Chips, inner tiles, progress tracks
+val DarkSurfaceElevated = Color(0xFF282C34)  // Raised neutral controls
 
-// Legacy aliases mapped cleanly onto Obsidian Emerald / Neutral (prevents off-palette leaks)
-val IndigoElectric = EmeraldLight
-val IndigoDark = EmeraldDark
-val IndigoSubtle = EmeraldSubtle
+// Electric lime accent
+val AccentLime = Color(0xFFC8FF3A)           // Primary CTA fill, active icons, highlights
+val AccentLimePressed = Color(0xFFA9E01F)    // Pressed state
+val AccentLimeDark = Color(0xFF4A5E12)       // Active border / strong container
+val AccentLimeSubtle = Color(0xFF1B2310)     // Tinted container behind lime content
+val AccentLimeGlow = Color(0x26C8FF3A)       // Translucent chart fills
 
-// Semantic Status & Metric Tokens
-val AmberWarm = Color(0xFFF59E0B)
-val AmberGold = Color(0xFFFBBF24)
-val AmberGoldSoft = Color(0xFFFFD54F)
-val AmberDark = Color(0xFFB45309)
-val AmberSubtle = Color(0x26F59E0B)
+// Legacy aliases (keep every screen on-palette)
+val IndigoElectric = AccentLime
+val IndigoDark = AccentLimeDark
+val IndigoSubtle = AccentLimeSubtle
 
-val InfoAccent = Color(0xFF38BDF8)
-val InfoAccentLight = Color(0xFF90CAF9)
+// Semantic status & metric tokens
+val AmberWarm = Color(0xFFFF9F1C)            // Streaks, records, warm-up
+val AmberGold = Color(0xFFFFC53D)
+val AmberGoldSoft = Color(0xFFFFD66B)
+val AmberDark = Color(0xFFB36B00)
+val AmberSubtle = Color(0x26FF9F1C)
+
+val InfoAccent = Color(0xFF4CC9F0)
+val InfoAccentLight = Color(0xFF8FDDF6)
 val CyanElectric = InfoAccent
-val PurpleAccent = EmeraldLight
+val PurpleAccent = AccentLime
 
-val CrimsonRed = Color(0xFFEF4444)
-val CrimsonDark = Color(0xFF991B1B)
-val CrimsonSubtle = Color(0x26EF4444)
+val CrimsonRed = Color(0xFFFF4D5E)
+val CrimsonDark = Color(0xFF9B1C2A)
+val CrimsonSubtle = Color(0x26FF4D5E)
 
-// Obsidian High-Contrast Neutral Typography
-val TextPrimary = Color(0xFFFAFAFA)          // #fafafa Neutral-50
-val TextSoft = Color(0xFFE5E5E5)             // #e5e5e5 Neutral-200 secondary copy
-val TextSecondary = Color(0xFFA3A3A3)        // #a3a3a3 Neutral-400
-val TextMuted = Color(0xFF737373)            // #737373 Neutral-500
+// Typography
+val TextPrimary = Color(0xFFF5F6F7)
+val TextSoft = Color(0xFFD9DCE1)
+val TextSecondary = Color(0xFF9AA0AA)
+val TextMuted = Color(0xFF6B7280)
 
-// Crisp 1dp Obsidian Hairline Borders & Dividers
-val BorderSubtle = Color(0xFF404040)         // #404040 Card & input 1dp border
-val BorderDivider = Color(0xFF262626)        // #262626 Internal card dividers & bar hairlines
-val BorderHighlight = Color(0xFF064E3B)      // #064e3b Active emerald card & chip border
+// Borders & dividers (deliberately faint; cards rely on tonal contrast, not outlines)
+val BorderSubtle = Color(0xFF262932)
+val BorderDivider = Color(0xFF1E2128)
+val BorderHighlight = AccentLimeDark
 val DarkBorder = BorderSubtle
 val AmberWarning = AmberWarm
 val BlueAccent = InfoAccent
 
-// Third-party Brand & Hardware Plate Visualization Colors (centralized in design system)
+// Third-party brand & hardware plate visualization colors (centralized in design system)
 val GoogleBrandBlue = Color(0xFF4285F4)
 val GoogleBrandRed = Color(0xFFEA4335)
 val GoogleBrandYellow = Color(0xFFFBBC05)
 val GoogleBrandGreen = Color(0xFF34A853)
 
-val BarbellShaftColor = Color(0xFF525252)
-val BarbellCollarColor = Color(0xFF737373)
-val BarbellSleeveColor = Color(0xFFA3A3A3)
+val BarbellShaftColor = Color(0xFF525862)
+val BarbellCollarColor = Color(0xFF737A86)
+val BarbellSleeveColor = Color(0xFFA3A9B3)
 val BarbellStrokeScrim = Color(0x66000000)
 val LightPlateHexColor = 0xFFF8FAFC
-val ObsidianInkOnLight = Color(0xFF0A0A0A)
+val GymInkOnLight = Color(0xFF0B0C0F)        // Dark ink used on lime / white fills

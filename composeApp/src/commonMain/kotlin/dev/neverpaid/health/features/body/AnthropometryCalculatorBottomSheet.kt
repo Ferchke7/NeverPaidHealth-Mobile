@@ -49,7 +49,7 @@ import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
+import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.InfoAccent
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
@@ -145,7 +145,7 @@ fun AnthropometryCalculatorBottomSheet(
                     Icon(
                         imageVector = Icons.Default.Straighten,
                         contentDescription = null,
-                        tint = EmeraldNeon,
+                        tint = AccentLime,
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
@@ -175,8 +175,8 @@ fun AnthropometryCalculatorBottomSheet(
                             onClick = { isMale = true },
                             selected = isMale,
                             colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = EmeraldNeon.copy(alpha = 0.2f),
-                                activeContentColor = EmeraldNeon,
+                                activeContainerColor = AccentLime.copy(alpha = 0.2f),
+                                activeContentColor = AccentLime,
                                 inactiveContainerColor = DarkSurface,
                                 inactiveContentColor = TextSecondary
                             )
@@ -188,8 +188,8 @@ fun AnthropometryCalculatorBottomSheet(
                             onClick = { isMale = false },
                             selected = !isMale,
                             colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = EmeraldNeon.copy(alpha = 0.2f),
-                                activeContentColor = EmeraldNeon,
+                                activeContainerColor = AccentLime.copy(alpha = 0.2f),
+                                activeContentColor = AccentLime,
                                 inactiveContainerColor = DarkSurface,
                                 inactiveContentColor = TextSecondary
                             )
@@ -222,7 +222,7 @@ fun AnthropometryCalculatorBottomSheet(
                                     text = "${(((navyBf?.bodyFatPercentage ?: 15.0) * 10).toInt() / 10.0)}%",
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = EmeraldNeon
+                                    color = AccentLime
                                 )
                                 Text(
                                     text = "Сухая масса: ${navyBf?.leanMassKg?.toInt() ?: 0} кг",
@@ -405,7 +405,7 @@ fun AnthropometryCalculatorBottomSheet(
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = EmeraldNeon,
+                    containerColor = AccentLime,
                     contentColor = DarkBackground
                 )
             ) {

@@ -54,7 +54,7 @@ import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
+import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -115,7 +115,7 @@ fun HabitTrackerView(
                     onClick = { showPresetSheet = true },
                     modifier = Modifier.size(32.dp)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = EmeraldNeon)
+                    Icon(Icons.Default.Add, contentDescription = null, tint = AccentLime)
                 }
             }
 
@@ -133,7 +133,7 @@ fun HabitTrackerView(
                         shape = RoundedCornerShape(10.dp),
                         border = BorderStroke(1.dp, BorderSubtle)
                     ) {
-                        Text("+ Добавить базовые привычки атлета", color = EmeraldNeon)
+                        Text("+ Добавить базовые привычки атлета", color = AccentLime)
                     }
                 }
             } else {
@@ -151,7 +151,7 @@ fun HabitTrackerView(
                                 },
                             shape = RoundedCornerShape(10.dp),
                             colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                            border = BorderStroke(1.dp, if (isDone) EmeraldNeon.copy(alpha = 0.5f) else BorderSubtle)
+                            border = BorderStroke(1.dp, if (isDone) AccentLime.copy(alpha = 0.5f) else BorderSubtle)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -170,8 +170,8 @@ fun HabitTrackerView(
                                         modifier = Modifier
                                             .size(24.dp)
                                             .clip(CircleShape)
-                                            .background(if (isDone) EmeraldNeon else DarkSurfaceElevated)
-                                            .border(1.5.dp, if (isDone) EmeraldNeon else BorderSubtle, CircleShape),
+                                            .background(if (isDone) AccentLime else DarkSurfaceElevated)
+                                            .border(1.5.dp, if (isDone) AccentLime else BorderSubtle, CircleShape),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         if (isDone) {
@@ -308,7 +308,7 @@ private fun HabitPresetsBottomSheet(
                                     maxLines = 2
                                 )
                             }
-                            Icon(Icons.Default.Add, contentDescription = null, tint = EmeraldNeon)
+                            Icon(Icons.Default.Add, contentDescription = null, tint = AccentLime)
                         }
                     }
                 }

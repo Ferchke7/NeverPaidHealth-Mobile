@@ -46,16 +46,16 @@ import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
-import dev.neverpaid.health.core.designsystem.ObsidianCard
-import dev.neverpaid.health.core.designsystem.ObsidianDivider
-import dev.neverpaid.health.core.designsystem.ObsidianEmptyCard
-import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
-import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
-import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
-import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
-import dev.neverpaid.health.core.designsystem.ObsidianPillTab
-import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
-import dev.neverpaid.health.core.designsystem.ObsidianTextField
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymEmptyCard
+import dev.neverpaid.health.core.designsystem.GymLabeledField
+import dev.neverpaid.health.core.designsystem.GymLoadingCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -218,7 +218,7 @@ fun ExercisesScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item(key = "header", contentType = "header") {
-            ObsidianPageHeader(
+            GymPageHeader(
                 title = strings.navExercises,
                 subtitle = when (lang) {
                     "uz" -> "Harakatlar katalogi va bajarish texnikasi"
@@ -235,7 +235,7 @@ fun ExercisesScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ObsidianTextField(
+                    GymTextField(
                         value = state.searchQuery,
                         onValueChange = { onAction(ExercisesUiAction.OnSearchQueryChanged(it)) },
                         placeholder = when (lang) {
@@ -246,7 +246,7 @@ fun ExercisesScreen(
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
-                    ObsidianPrimaryButton(
+                    GymPrimaryButton(
                         text = when (lang) {
                             "uz" -> "O'zimniki"
                             "en" -> "Create custom"
@@ -260,7 +260,7 @@ fun ExercisesScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = when (lang) {
                             "uz" -> "Mushaklar: $selectedMuscleLabel"
                             "en" -> "Muscles: $selectedMuscleLabel"
@@ -271,7 +271,7 @@ fun ExercisesScreen(
                             if (showMuscleFilter) showEquipFilter = false
                         }
                     )
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = when (lang) {
                             "uz" -> "Jihoz: $selectedEquipLabel"
                             "en" -> "Equipment: $selectedEquipLabel"
@@ -290,7 +290,7 @@ fun ExercisesScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         muscles.forEach { (key, label) ->
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = label.replaceFirstChar { it.uppercase() },
                                 selected = state.selectedMuscle.equals(key, ignoreCase = true),
                                 onClick = {
@@ -308,7 +308,7 @@ fun ExercisesScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         equipments.forEach { (key, label) ->
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = label.replaceFirstChar { it.uppercase() },
                                 selected = state.selectedEquipment.equals(key, ignoreCase = true),
                                 onClick = {
@@ -324,7 +324,7 @@ fun ExercisesScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    ObsidianPillTab(
+                    GymPillTab(
                         text = when (lang) {
                             "uz" -> "Barcha mashqlar"
                             "en" -> "All exercises"
@@ -333,7 +333,7 @@ fun ExercisesScreen(
                         selected = state.selectedTab == "all",
                         onClick = { onAction(ExercisesUiAction.OnSelectTab("all")) }
                     )
-                    ObsidianPillTab(
+                    GymPillTab(
                         text = when (lang) {
                             "uz" -> "O'zimniki"
                             "en" -> "Custom"
@@ -372,15 +372,14 @@ fun ExercisesScreen(
 
         if (state.isLoading && state.exercises.isEmpty()) {
             item(key = "loading", contentType = "loading") {
-                ObsidianLoadingCard(
+                GymLoadingCard(
                     title = strings.stateLoadingTitle,
-                    hint = strings.stateLoadingHint,
-                    kicker = "03 · ${strings.navExercises}"
+                    hint = strings.stateLoadingHint
                 )
             }
         } else if (state.exercises.isEmpty()) {
             item(key = "empty", contentType = "empty") {
-                ObsidianEmptyCard(
+                GymEmptyCard(
                     title = when (lang) {
                         "uz" -> "Mashqlar topilmadi"
                         "en" -> "No exercises found"
@@ -534,7 +533,7 @@ private fun GroupedCatalogExerciseRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = if (isExpanded) {
                         when (lang) {
                             "uz" -> "Texnikani yopish"
@@ -550,7 +549,7 @@ private fun GroupedCatalogExerciseRow(
                     },
                     onClick = onToggleTechnique
                 )
-                ObsidianPrimaryButton(
+                GymPrimaryButton(
                     text = when (lang) {
                         "uz" -> "Qo'shish"
                         "en" -> "Add"
@@ -571,7 +570,7 @@ private fun GroupedCatalogExerciseRow(
         }
 
         if (!isLast) {
-            ObsidianDivider(
+            GymDivider(
                 modifier = Modifier.padding(horizontal = 24.dp),
                 color = BorderSubtle
             )
@@ -591,7 +590,7 @@ private fun CustomExerciseCard(
     onDelete: () -> Unit,
     onInspectFull: () -> Unit
 ) {
-    ObsidianCard(
+    GymCard(
         backgroundColor = DarkSurface,
         borderColor = BorderSubtle
     ) {
@@ -636,7 +635,7 @@ private fun CustomExerciseCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = if (isExpanded) {
                     when (lang) {
                         "uz" -> "Texnikani yopish"
@@ -652,7 +651,7 @@ private fun CustomExerciseCard(
                 },
                 onClick = onToggleTechnique
             )
-            ObsidianPrimaryButton(
+            GymPrimaryButton(
                 text = when (lang) {
                     "uz" -> "Qo'shish"
                     "en" -> "Add"
@@ -660,7 +659,7 @@ private fun CustomExerciseCard(
                 },
                 onClick = onAddToWorkout
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) {
                     "uz" -> "Tahrirlash"
                     "en" -> "Edit"
@@ -668,7 +667,7 @@ private fun CustomExerciseCard(
                 },
                 onClick = onEdit
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) {
                     "uz" -> "O'chirish"
                     "en" -> "Delete"
@@ -738,7 +737,7 @@ private fun ExpandedTechniquePanel(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianPrimaryButton(
+            GymPrimaryButton(
                 text = when (lang) {
                     "uz" -> "Mashg'ulotga qo'shish"
                     "en" -> "Add to workout"
@@ -746,7 +745,7 @@ private fun ExpandedTechniquePanel(
                 },
                 onClick = onAddToWorkout
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) {
                     "uz" -> "Batafsil va rekordlar"
                     "en" -> "Details & records"
@@ -820,7 +819,7 @@ private fun CustomExerciseEditorBottomSheet(
                 color = TextPrimary
             )
 
-            ObsidianLabeledField(
+            GymLabeledField(
                 label = when (lang) {
                     "uz" -> "Mashq nomi"
                     "en" -> "Exercise name"
@@ -851,7 +850,7 @@ private fun CustomExerciseEditorBottomSheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     muscleChoices.forEach { (key, label) ->
-                        ObsidianPillTab(
+                        GymPillTab(
                             text = label,
                             selected = primaryMuscle == key,
                             onClick = { primaryMuscle = key }
@@ -876,7 +875,7 @@ private fun CustomExerciseEditorBottomSheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     equipmentChoices.forEach { (key, label) ->
-                        ObsidianPillTab(
+                        GymPillTab(
                             text = label,
                             selected = equipment == key,
                             onClick = { equipment = key }
@@ -885,7 +884,7 @@ private fun CustomExerciseEditorBottomSheet(
                 }
             }
 
-            ObsidianLabeledField(
+            GymLabeledField(
                 label = when (lang) {
                     "uz" -> "Bajarish texnikasi bo'yicha eslatmalar"
                     "en" -> "Technique cues"
@@ -902,7 +901,7 @@ private fun CustomExerciseEditorBottomSheet(
                 minLines = 2
             )
 
-            ObsidianPrimaryButton(
+            GymPrimaryButton(
                 text = when (lang) {
                     "uz" -> "Saqlash"
                     "en" -> "Save exercise"
@@ -911,7 +910,7 @@ private fun CustomExerciseEditorBottomSheet(
                 enabled = name.isNotBlank(),
                 fillWidth = true,
                 onClick = {
-                    if (name.isBlank()) return@ObsidianPrimaryButton
+                    if (name.isBlank()) return@GymPrimaryButton
                     onSave(
                         SaveExerciseRequestDto(
                             name = name.trim(),

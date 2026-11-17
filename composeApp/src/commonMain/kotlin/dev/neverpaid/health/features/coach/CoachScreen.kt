@@ -46,19 +46,19 @@ import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
-import dev.neverpaid.health.core.designsystem.EmeraldLight
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.EmeraldSubtle
-import dev.neverpaid.health.core.designsystem.ObsidianCard
-import dev.neverpaid.health.core.designsystem.ObsidianDivider
-import dev.neverpaid.health.core.designsystem.ObsidianInnerWell
-import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
-import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
-import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
-import dev.neverpaid.health.core.designsystem.ObsidianPillTab
-import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
-import dev.neverpaid.health.core.designsystem.ObsidianProgressBar
-import dev.neverpaid.health.core.designsystem.ObsidianTextField
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymLoadingCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymProgressBar
+import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -195,7 +195,7 @@ fun CoachScreen(
         ) {
             // Header — Figma 10
             item(key = "header", contentType = "header") {
-                ObsidianPageHeader(
+                GymPageHeader(
                     title = strings.navCoach,
                     subtitle = when (lang) {
                         "uz" -> "Mashg'ulotlar va tiklanishda yordamchingiz"
@@ -216,7 +216,7 @@ fun CoachScreen(
                         },
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = EmeraldNeon
+                        color = AccentLime
                     )
                     Text(
                         text = when (lang) {
@@ -233,21 +233,20 @@ fun CoachScreen(
 
             if (state.isLoading && state.chatMessages.isEmpty()) {
                 item(key = "loading_card", contentType = "loading") {
-                    ObsidianLoadingCard(
+                    GymLoadingCard(
                         title = strings.stateLoadingTitle,
-                        hint = strings.stateLoadingHint,
-                        kicker = "01 · ${strings.navCoach}"
+                        hint = strings.stateLoadingHint
                     )
                 }
             } else {
                 // Card 1: Readiness & ACWR Card — Figma 10
                 item(key = "readiness_card", contentType = "readiness") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = state.insight.readinessLevel,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            color = EmeraldNeon
+                            color = AccentLime
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -287,10 +286,10 @@ fun CoachScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        ObsidianProgressBar(
+                        GymProgressBar(
                             progress = (state.insight.cnsScore / 100f).coerceIn(0f, 1f),
                             heightDp = 6,
-                            color = EmeraldNeon
+                            color = AccentLime
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -324,7 +323,7 @@ fun CoachScreen(
                                 text = "${state.insight.weeklyWorkoutsCount} · $weeklyTons т",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = EmeraldNeon
+                                color = AccentLime
                             )
                         }
 
@@ -346,7 +345,7 @@ fun CoachScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianPillTab(
+                            GymPillTab(
                                 text = when (lang) {
                                     "uz" -> "MNS so'rovi"
                                     "en" -> "CNS Check-in"
@@ -356,7 +355,7 @@ fun CoachScreen(
                                 onClick = { isReadinessSurveyOpen = true }
                             )
                             quickPrompts.take(2).forEach { (label, prompt) ->
-                                ObsidianPillTab(
+                                GymPillTab(
                                     text = label,
                                     selected = false,
                                     onClick = { onAction(CoachUiAction.OnQuickPromptClick(prompt)) }
@@ -369,7 +368,7 @@ fun CoachScreen(
                 // Card 2: Progressive Overload Recommendation — Figma 10
                 val topTarget = state.insight.overloadTargets.firstOrNull()
                 item(key = "overload_card", contentType = "overload") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = when (lang) {
                                 "uz" -> "Tavsiya · yuklama"
@@ -378,7 +377,7 @@ fun CoachScreen(
                             },
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            color = EmeraldNeon
+                            color = AccentLime
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -422,7 +421,7 @@ fun CoachScreen(
                                 text = state.insight.progressiveOverloadTarget,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = EmeraldNeon
+                                color = AccentLime
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
@@ -454,7 +453,7 @@ fun CoachScreen(
 
                 // Card 4: Discussion & Chat Composer Card — Figma 10
                 item(key = "coach_chat_card", contentType = "chat") {
-                    ObsidianCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard(contentPadding = PaddingValues(20.dp)) {
                         Text(
                             text = when (lang) {
                                 "uz" -> "Mashg'ulotingizni muhokama qilamiz"
@@ -475,13 +474,13 @@ fun CoachScreen(
                                 else -> "AI Тренер duda.uz · ${state.chatMessages.size} сообщений"
                             },
                             fontSize = 12.sp,
-                            color = EmeraldNeon
+                            color = AccentLime
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
 
                         if (state.chatMessages.isNotEmpty()) {
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = when (lang) {
                                     "uz" -> "Tarixni tozalash"
                                     "en" -> "Clear history"
@@ -495,7 +494,7 @@ fun CoachScreen(
                         // Quick prompts bar
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             items(quickPrompts, key = { it.first }) { (label, prompt) ->
-                                ObsidianPillTab(
+                                GymPillTab(
                                     text = label,
                                     selected = false,
                                     onClick = { onAction(CoachUiAction.OnQuickPromptClick(prompt)) }
@@ -506,7 +505,7 @@ fun CoachScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         if (state.chatMessages.isEmpty()) {
-                            ObsidianInnerWell {
+                            GymInnerWell {
                                 Text(
                                     text = when (lang) {
                                         "uz" -> "AI murabbiyga savol bering"
@@ -556,7 +555,7 @@ fun CoachScreen(
                             Spacer(modifier = Modifier.height(12.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 CircularProgressIndicator(
-                                    color = EmeraldNeon,
+                                    color = AccentLime,
                                     modifier = Modifier.size(16.dp),
                                     strokeWidth = 2.dp
                                 )
@@ -574,7 +573,7 @@ fun CoachScreen(
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
-                        ObsidianDivider()
+                        GymDivider()
                         Spacer(modifier = Modifier.height(14.dp))
 
                         if (state.attachedImageBase64 != null) {
@@ -583,7 +582,7 @@ fun CoachScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(10.dp))
-                                    .background(EmeraldSubtle)
+                                    .background(AccentLimeSubtle)
                                     .border(1.dp, BorderHighlight, RoundedCornerShape(10.dp))
                                     .padding(horizontal = 12.dp, vertical = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -612,7 +611,7 @@ fun CoachScreen(
                                             else -> "Фото прикреплено к сообщению"
                                         },
                                         fontSize = 12.sp,
-                                        color = EmeraldLight,
+                                        color = AccentLime,
                                         fontWeight = FontWeight.Medium
                                     )
                                 }
@@ -643,7 +642,7 @@ fun CoachScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
 
-                        ObsidianTextField(
+                        GymTextField(
                             value = state.inputMessage,
                             onValueChange = { onAction(CoachUiAction.OnInputMessageChanged(it)) },
                             placeholder = when (lang) {
@@ -662,7 +661,7 @@ fun CoachScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = when (lang) {
                                     "uz" -> "Foto biriktirish"
                                     "en" -> "Attach photo"
@@ -670,7 +669,7 @@ fun CoachScreen(
                                 },
                                 onClick = pickPhoto
                             )
-                            ObsidianPrimaryButton(
+                            GymPrimaryButton(
                                 text = when (lang) {
                                     "uz" -> "Yuborish"
                                     "en" -> "Send"
@@ -706,7 +705,7 @@ private fun ChatMessageBlock(
     }
 
     if (isUser) {
-        ObsidianInnerWell {
+        GymInnerWell {
             Text(
                 text = when (lang) { "uz" -> "Siz"; "en" -> "You"; else -> "Вы" },
                 fontSize = 12.sp,
@@ -736,7 +735,7 @@ private fun ChatMessageBlock(
                         text = when (lang) { "uz" -> "AI Murabbiy"; "en" -> "AI Coach"; else -> "AI Тренер" },
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = EmeraldNeon
+                        color = AccentLime
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
@@ -746,7 +745,7 @@ private fun ChatMessageBlock(
                         color = TextPrimary
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = when (lang) {
                             "uz" -> "Javobni nusxalash"
                             "en" -> "Copy reply"
@@ -780,7 +779,7 @@ private fun CoachSuggestedWorkoutCard(
     onStartWorkout: () -> Unit,
     onSaveRoutine: () -> Unit
 ) {
-    ObsidianCard(
+    GymCard(
         backgroundColor = DarkSurface,
         borderColor = BorderSubtle,
         contentPadding = PaddingValues(20.dp)
@@ -793,7 +792,7 @@ private fun CoachSuggestedWorkoutCard(
             },
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
-            color = EmeraldNeon
+            color = AccentLime
         )
 
         Spacer(modifier = Modifier.height(6.dp))
@@ -819,7 +818,7 @@ private fun CoachSuggestedWorkoutCard(
         if (plan.exercises.isNotEmpty()) {
             Spacer(modifier = Modifier.height(12.dp))
             plan.exercises.forEachIndexed { idx, ex ->
-                if (idx > 0) ObsidianDivider()
+                if (idx > 0) GymDivider()
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -839,7 +838,7 @@ private fun CoachSuggestedWorkoutCard(
                     Text(
                         text = "${ex.sets} × ${ex.repsMin}$weightText",
                         fontSize = 13.sp,
-                        color = EmeraldNeon
+                        color = AccentLime
                     )
                 }
             }
@@ -851,11 +850,11 @@ private fun CoachSuggestedWorkoutCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianPrimaryButton(
+            GymPrimaryButton(
                 text = when (lang) { "uz" -> "Boshlash"; "en" -> "Start"; else -> "Начать" },
                 onClick = onStartWorkout
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) {
                     "uz" -> "Reja sifatida saqlash"
                     "en" -> "Save as routine"

@@ -12,16 +12,16 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.itemsIndexed
 import dev.neverpaid.health.core.designsystem.BorderDivider
-import dev.neverpaid.health.core.designsystem.ObsidianCard
-import dev.neverpaid.health.core.designsystem.ObsidianDivider
-import dev.neverpaid.health.core.designsystem.ObsidianEmptyCard
-import dev.neverpaid.health.core.designsystem.ObsidianLabeledField
-import dev.neverpaid.health.core.designsystem.ObsidianLoadingCard
-import dev.neverpaid.health.core.designsystem.ObsidianOutlineButton
-import dev.neverpaid.health.core.designsystem.ObsidianPageHeader
-import dev.neverpaid.health.core.designsystem.ObsidianPillTab
-import dev.neverpaid.health.core.designsystem.ObsidianPrimaryButton
-import dev.neverpaid.health.core.designsystem.ObsidianTextField
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymEmptyCard
+import dev.neverpaid.health.core.designsystem.GymLabeledField
+import dev.neverpaid.health.core.designsystem.GymLoadingCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.TextSoft
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import androidx.compose.foundation.layout.Spacer
@@ -98,14 +98,14 @@ import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldLight
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
-import dev.neverpaid.health.core.designsystem.EmeraldSubtle
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
 import dev.neverpaid.health.core.designsystem.InfoAccent
-import dev.neverpaid.health.core.designsystem.ObsidianWell
+import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
 import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
@@ -170,10 +170,9 @@ fun ProgramsScreen(
                 .background(DarkBackground)
                 .padding(horizontal = 20.dp, vertical = 24.dp)
         ) {
-            ObsidianLoadingCard(
+            GymLoadingCard(
                 title = strings.stateLoadingTitle,
-                hint = strings.stateLoadingHint,
-                kicker = "02 · ${strings.navPrograms}"
+                hint = strings.stateLoadingHint
             )
         }
         return
@@ -264,7 +263,7 @@ fun ProgramsScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item(key = "header", contentType = "header") {
-            ObsidianPageHeader(
+            GymPageHeader(
                 title = strings.navPrograms,
                 subtitle = when (lang) {
                     "uz" -> "Kutubxona, hamjamiyat va shaxsiy splitlar"
@@ -280,7 +279,7 @@ fun ProgramsScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ObsidianPillTab(
+                GymPillTab(
                     text = when (lang) {
                         "uz" -> "Kutubxona"
                         "en" -> "Library"
@@ -289,7 +288,7 @@ fun ProgramsScreen(
                     selected = state.activeTab == "official",
                     onClick = { onAction(ProgramsUiAction.OnSelectTab("official")) }
                 )
-                ObsidianPillTab(
+                GymPillTab(
                     text = when (lang) {
                         "uz" -> "Hamjamiyat"
                         "en" -> "Community"
@@ -298,7 +297,7 @@ fun ProgramsScreen(
                     selected = state.activeTab == "community",
                     onClick = { onAction(ProgramsUiAction.OnSelectTab("community")) }
                 )
-                ObsidianPillTab(
+                GymPillTab(
                     text = when (lang) {
                         "uz" -> "Mening splitlarim"
                         "en" -> "My splits"
@@ -318,7 +317,7 @@ fun ProgramsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ObsidianTextField(
+                    GymTextField(
                         value = state.searchQuery,
                         onValueChange = { onAction(ProgramsUiAction.OnSearchQueryChanged(it)) },
                         placeholder = when (lang) {
@@ -329,7 +328,7 @@ fun ProgramsScreen(
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
-                    ObsidianPrimaryButton(
+                    GymPrimaryButton(
                         text = when (lang) {
                             "uz" -> "Dastur yaratish"
                             "en" -> "Create program"
@@ -351,7 +350,7 @@ fun ProgramsScreen(
                         "custom" to when (lang) { "uz" -> "Shaxsiy"; "en" -> "Custom"; else -> "Авторский" }
                     )
                     splits.forEach { (key, label) ->
-                        ObsidianPillTab(
+                        GymPillTab(
                             text = label,
                             selected = state.selectedSplitFilter == key,
                             onClick = { onAction(ProgramsUiAction.OnSelectSplitFilter(key)) }
@@ -364,7 +363,7 @@ fun ProgramsScreen(
         // Current Active Program Card
         if (activeProgram != null) {
             item(key = "active_program_banner", contentType = "active_program") {
-                ObsidianCard(
+                GymCard(
                     backgroundColor = DarkSurface,
                     borderColor = BorderHighlight
                 ) {
@@ -377,7 +376,7 @@ fun ProgramsScreen(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         letterSpacing = 0.8.sp,
-                        color = EmeraldNeon
+                        color = AccentLime
                     )
                     Text(
                         text = "${activeProgram.title} · ${activeProgram.daysPerWeek} ${if (lang == "en") "days" else if (lang == "uz") "kun" else "дн."}",
@@ -389,7 +388,7 @@ fun ProgramsScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ObsidianPrimaryButton(
+                        GymPrimaryButton(
                             text = when (lang) {
                                 "uz" -> "Davom etish"
                                 "en" -> "Continue"
@@ -404,7 +403,7 @@ fun ProgramsScreen(
                                 }
                             }
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = when (lang) {
                                 "uz" -> "Batafsil"
                                 "en" -> "Details"
@@ -412,7 +411,7 @@ fun ProgramsScreen(
                             },
                             onClick = { onAction(ProgramsUiAction.OnOpenProgramDetail(activeProgram)) }
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = when (lang) {
                                 "uz" -> "O'chirish"
                                 "en" -> "Deactivate"
@@ -441,7 +440,7 @@ fun ProgramsScreen(
 
         if (filteredPrograms.isEmpty()) {
             item(key = "empty_programs", contentType = "empty") {
-                ObsidianEmptyCard(
+                GymEmptyCard(
                     title = when (lang) {
                         "uz" -> "Dasturlar topilmadi"
                         "en" -> "No programs found"
@@ -504,7 +503,7 @@ private fun ProgramCard(
     onOpenComments: () -> Unit,
     onOpenAuthor: () -> Unit
 ) {
-    ObsidianCard(
+    GymCard(
         backgroundColor = DarkSurface,
         borderColor = if (program.isActive) BorderHighlight else BorderSubtle
     ) {
@@ -522,7 +521,7 @@ private fun ProgramCard(
                 },
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = if (program.isActive) EmeraldNeon else TextSecondary
+                color = if (program.isActive) AccentLime else TextSecondary
             )
 
             Text(
@@ -554,25 +553,25 @@ private fun ProgramCard(
             }
         }
 
-        ObsidianDivider(color = BorderSubtle)
+        GymDivider(color = BorderSubtle)
 
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (program.isActive) {
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = when (lang) {
                         "uz" -> "O'rnatilgan"
                         "en" -> "Installed"
                         else -> "Установлена"
                     },
-                    textColor = EmeraldNeon,
+                    textColor = AccentLime,
                     borderColor = BorderHighlight,
                     onClick = onOpenDetail
                 )
             } else {
-                ObsidianPrimaryButton(
+                GymPrimaryButton(
                     text = when (lang) {
                         "uz" -> "O'rnatish"
                         "en" -> "Install"
@@ -582,7 +581,7 @@ private fun ProgramCard(
                 )
             }
 
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) {
                     "uz" -> "Batafsil"
                     "en" -> "Details"
@@ -592,7 +591,7 @@ private fun ProgramCard(
             )
 
             if (isOwn) {
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = when (lang) {
                         "uz" -> "Tahrirlash"
                         "en" -> "Edit"
@@ -600,7 +599,7 @@ private fun ProgramCard(
                     },
                     onClick = onEdit
                 )
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = when (lang) {
                         "uz" -> "O'chirish"
                         "en" -> "Delete"
@@ -612,19 +611,19 @@ private fun ProgramCard(
 
             if (isCommunityTab || program.likesCount > 0 || program.commentsCount > 0) {
                 if (program.authorName.isNotBlank()) {
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = "${if (lang == "en") "Author" else if (lang == "uz") "Muallif" else "Автор"}: ${program.authorName.replace("NeverPaidHealth", "duda.uz")}",
                         textColor = TextSecondary,
                         onClick = onOpenAuthor
                     )
                 }
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = "${if (lang == "en") "Like" else if (lang == "uz") "Yoqdi" else "Нравится"} · ${program.likesCount}",
-                    textColor = if (program.isLiked) EmeraldNeon else TextPrimary,
+                    textColor = if (program.isLiked) AccentLime else TextPrimary,
                     borderColor = if (program.isLiked) BorderHighlight else BorderSubtle,
                     onClick = onToggleLike
                 )
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = "${if (lang == "en") "Comments" else if (lang == "uz") "Fikrlar" else "Комментарии"} · ${program.commentsCount}",
                     onClick = onOpenComments
                 )
@@ -669,7 +668,7 @@ private fun ProgramDetailBottomSheet(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         letterSpacing = 0.8.sp,
-                        color = EmeraldNeon
+                        color = AccentLime
                     )
                     Text(
                         text = program.title,
@@ -690,28 +689,28 @@ private fun ProgramDetailBottomSheet(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         if (program.isActive) {
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = when (lang) { "uz" -> "Faolsizlantirish"; "en" -> "Deactivate"; else -> "Деактивировать" },
                                 onClick = onDeactivate
                             )
                         } else {
-                            ObsidianPrimaryButton(
+                            GymPrimaryButton(
                                 text = when (lang) { "uz" -> "Faollashtirish"; "en" -> "Activate"; else -> "Активировать" },
                                 onClick = onActivate
                             )
                         }
                         if (canEdit) {
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = when (lang) { "uz" -> "Tahrirlash"; "en" -> "Edit"; else -> "Изменить" },
                                 onClick = onEdit
                             )
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = when (lang) { "uz" -> "O'chirish"; "en" -> "Delete"; else -> "Удалить" },
                                 textColor = CrimsonRed,
                                 onClick = onDelete
                             )
                         }
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = "${if (lang == "en") "Discussion" else if (lang == "uz") "Muhokama" else "Обсуждение"} · ${program.commentsCount}",
                             onClick = onOpenComments
                         )
@@ -720,7 +719,7 @@ private fun ProgramDetailBottomSheet(
             }
 
             items(program.days.sortedBy { it.dayNumber }, key = { it.dayNumber }) { day ->
-                ObsidianCard(
+                GymCard(
                     backgroundColor = DarkBackground,
                     borderColor = BorderSubtle
                 ) {
@@ -747,7 +746,7 @@ private fun ProgramDetailBottomSheet(
                             )
                         }
                         if (!day.isRestDay && day.exercises.isNotEmpty()) {
-                            ObsidianPrimaryButton(
+                            GymPrimaryButton(
                                 text = when (lang) { "uz" -> "Boshlash"; "en" -> "Start"; else -> "Старт" },
                                 onClick = { onStartDay(day) }
                             )
@@ -755,7 +754,7 @@ private fun ProgramDetailBottomSheet(
                     }
 
                     if (day.exercises.isNotEmpty()) {
-                        ObsidianDivider(color = BorderSubtle)
+                        GymDivider(color = BorderSubtle)
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             day.exercises.forEachIndexed { idx, ex ->
                                 val num = (idx + 1).toString().padStart(2, '0')
@@ -773,7 +772,7 @@ private fun ProgramDetailBottomSheet(
                                             text = num,
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.Medium,
-                                            color = EmeraldNeon
+                                            color = AccentLime
                                         )
                                         ExerciseThumbnail(
                                             exerciseName = ex.exerciseName,
@@ -833,7 +832,7 @@ private fun AthleteProfileBottomSheet(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(EmeraldSubtle)
+                        .background(AccentLimeSubtle)
                         .border(1.dp, BorderHighlight, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
@@ -841,7 +840,7 @@ private fun AthleteProfileBottomSheet(
                         text = profile.name.take(1).uppercase(),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = EmeraldNeon
+                        color = AccentLime
                     )
                 }
                 Column {
@@ -864,7 +863,7 @@ private fun AthleteProfileBottomSheet(
             }
 
             if (profile.publicPrograms.isNotEmpty()) {
-                ObsidianDivider(color = BorderSubtle)
+                GymDivider(color = BorderSubtle)
                 Text(
                     text = when (lang) {
                         "uz" -> "Sportchi dasturlari"
@@ -895,7 +894,7 @@ private fun AthleteProfileBottomSheet(
                                 text = when (lang) { "uz" -> "Ochish →"; "en" -> "Open →"; else -> "Открыть →" },
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = EmeraldNeon
+                                color = AccentLime
                             )
                         }
                     }
@@ -1029,14 +1028,14 @@ private fun ProgramEditorBottomSheet(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                ObsidianLabeledField(
+                GymLabeledField(
                     label = when (lang) { "uz" -> "Dastur nomi"; "en" -> "Program name"; else -> "Название программы" },
                     value = title,
                     onValueChange = { title = it },
                     placeholder = "Push Pull Legs"
                 )
 
-                ObsidianLabeledField(
+                GymLabeledField(
                     label = when (lang) { "uz" -> "Tavsif"; "en" -> "Description"; else -> "Описание" },
                     value = description,
                     onValueChange = { description = it },
@@ -1063,7 +1062,7 @@ private fun ProgramEditorBottomSheet(
                     )
                 }
 
-                ObsidianDivider(color = BorderSubtle)
+                GymDivider(color = BorderSubtle)
 
                 Text(
                     text = when (lang) { "uz" -> "Dastur tuzilishi"; "en" -> "Program structure"; else -> "Структура программы" },
@@ -1078,7 +1077,7 @@ private fun ProgramEditorBottomSheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     days.forEachIndexed { idx, day ->
-                        ObsidianPillTab(
+                        GymPillTab(
                             text = "${if (lang == "en") "Day" else if (lang == "uz") "Kun" else "День"} ${day.dayNumber} · ${day.title.take(14)}",
                             selected = idx == safeDayIndex,
                             onClick = {
@@ -1094,7 +1093,7 @@ private fun ProgramEditorBottomSheet(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    ObsidianOutlineButton(
+                    GymOutlineButton(
                         text = when (lang) { "uz" -> "Kun qo'shish"; "en" -> "Add day"; else -> "Добавить день" },
                         onClick = {
                             val nextNum = days.size + 1
@@ -1104,14 +1103,14 @@ private fun ProgramEditorBottomSheet(
                         }
                     )
                     if (days.size > 1) {
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = when (lang) { "uz" -> "Keyingi kun"; "en" -> "Next day"; else -> "Следующий день" },
                             onClick = {
                                 selectedDayIndex = (safeDayIndex + 1) % days.size
                                 expandedSetsExIdx = -1
                             }
                         )
-                        ObsidianOutlineButton(
+                        GymOutlineButton(
                             text = when (lang) { "uz" -> "Kunni o'chirish"; "en" -> "Remove day"; else -> "Удалить день" },
                             textColor = CrimsonRed,
                             onClick = {
@@ -1126,11 +1125,11 @@ private fun ProgramEditorBottomSheet(
 
                 // Active Day Detail & Exercises
                 if (activeDay != null) {
-                    ObsidianCard(
+                    GymCard(
                         backgroundColor = DarkBackground,
                         borderColor = BorderSubtle
                     ) {
-                        ObsidianLabeledField(
+                        GymLabeledField(
                             label = when (lang) { "uz" -> "Kun nomi"; "en" -> "Day name"; else -> "Название дня" },
                             value = activeDay.title,
                             onValueChange = { newName ->
@@ -1150,7 +1149,7 @@ private fun ProgramEditorBottomSheet(
                         )
 
                         if (activeDay.exercises.isNotEmpty()) {
-                            ObsidianDivider(color = BorderSubtle)
+                            GymDivider(color = BorderSubtle)
 
                             activeDay.exercises.forEachIndexed { exIndex, ex ->
                                 val num = (exIndex + 1).toString().padStart(2, '0')
@@ -1163,7 +1162,7 @@ private fun ProgramEditorBottomSheet(
                                             text = num,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Medium,
-                                            color = EmeraldNeon
+                                            color = AccentLime
                                         )
                                         ExerciseThumbnail(
                                             exerciseName = ex.exerciseName,
@@ -1193,18 +1192,18 @@ private fun ProgramEditorBottomSheet(
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        ObsidianOutlineButton(
+                                        GymOutlineButton(
                                             text = when (lang) { "uz" -> "Yondashuvlar"; "en" -> "Sets"; else -> "Подходы" },
                                             borderColor = if (expandedSetsExIdx == exIndex) BorderHighlight else BorderSubtle,
                                             onClick = {
                                                 expandedSetsExIdx = if (expandedSetsExIdx == exIndex) -1 else exIndex
                                             }
                                         )
-                                        ObsidianOutlineButton(
+                                        GymOutlineButton(
                                             text = when (lang) { "uz" -> "Almashtirish"; "en" -> "Replace"; else -> "Заменить" },
                                             onClick = { replacingSlot = safeDayIndex to exIndex }
                                         )
-                                        ObsidianOutlineButton(
+                                        GymOutlineButton(
                                             text = when (lang) { "uz" -> "Olib tashlash"; "en" -> "Remove"; else -> "Убрать" },
                                             onClick = {
                                                 val updatedEx = activeDay.exercises.filterIndexed { i, _ -> i != exIndex }
@@ -1219,7 +1218,7 @@ private fun ProgramEditorBottomSheet(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
-                                            ObsidianOutlineButton(
+                                            GymOutlineButton(
                                                 text = "− подход",
                                                 onClick = {
                                                     val updated = activeDay.exercises.mapIndexed { idx, old ->
@@ -1228,7 +1227,7 @@ private fun ProgramEditorBottomSheet(
                                                     days[safeDayIndex] = activeDay.copy(exercises = updated)
                                                 }
                                             )
-                                            ObsidianOutlineButton(
+                                            GymOutlineButton(
                                                 text = "+ подход",
                                                 onClick = {
                                                     val updated = activeDay.exercises.mapIndexed { idx, old ->
@@ -1242,26 +1241,26 @@ private fun ProgramEditorBottomSheet(
                                 }
 
                                 if (exIndex != activeDay.exercises.lastIndex) {
-                                    ObsidianDivider(color = BorderDivider)
+                                    GymDivider(color = BorderDivider)
                                 }
                             }
                         }
 
-                        ObsidianDivider(color = BorderSubtle)
+                        GymDivider(color = BorderSubtle)
 
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ObsidianOutlineButton(
+                            GymOutlineButton(
                                 text = when (lang) { "uz" -> "Mashq qo'shish"; "en" -> "Add exercise"; else -> "Добавить упражнение" },
                                 onClick = { pickingForDayIndex = safeDayIndex }
                             )
-                            ObsidianPrimaryButton(
+                            GymPrimaryButton(
                                 text = when (lang) { "uz" -> "Dasturni saqlash"; "en" -> "Save program"; else -> "Сохранить программу" },
                                 enabled = title.isNotBlank(),
                                 onClick = {
-                                    if (title.isBlank()) return@ObsidianPrimaryButton
+                                    if (title.isBlank()) return@GymPrimaryButton
                                     onSave(
                                         SaveProgramRequestDto(
                                             title = title.trim(),
@@ -1379,7 +1378,7 @@ private fun ProgramCommentsBottomSheet(
                     Text(
                         text = "${if (lang == "en") "Reply to" else if (lang == "uz") "Javob" else "Ответ для"} @${replyingTo.userName}",
                         fontSize = 12.sp,
-                        color = EmeraldNeon
+                        color = AccentLime
                     )
                     IconButton(onClick = onCancelReply, modifier = Modifier.size(24.dp)) {
                         Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = TextMuted, modifier = Modifier.size(16.dp))
@@ -1394,14 +1393,14 @@ private fun ProgramCommentsBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ObsidianTextField(
+                GymTextField(
                     value = inputText,
                     onValueChange = onTextChanged,
                     placeholder = when (lang) { "uz" -> "Fikringiz..."; "en" -> "Your comment"; else -> "Ваш комментарий" },
                     modifier = Modifier.weight(1f),
                     singleLine = true
                 )
-                ObsidianPrimaryButton(
+                GymPrimaryButton(
                     text = when (lang) { "uz" -> "Yuborish"; "en" -> "Send"; else -> "Отправить" },
                     enabled = inputText.isNotBlank(),
                     onClick = onSend
@@ -1441,18 +1440,18 @@ private fun CommentItem(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = "${if (lang == "en") "Helpful" else if (lang == "uz") "Foydali" else "Полезно"} · ${comment.upvotes}",
-                textColor = if (comment.isUpvoted) EmeraldNeon else TextPrimary,
+                textColor = if (comment.isUpvoted) AccentLime else TextPrimary,
                 borderColor = if (comment.isUpvoted) BorderHighlight else BorderSubtle,
                 onClick = onUpvote
             )
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = when (lang) { "uz" -> "Javob berish"; "en" -> "Reply"; else -> "Ответить" },
                 onClick = onReply
             )
             if (canDelete) {
-                ObsidianOutlineButton(
+                GymOutlineButton(
                     text = when (lang) { "uz" -> "O'chirish"; "en" -> "Delete"; else -> "Удалить" },
                     textColor = CrimsonRed,
                     onClick = onDelete
@@ -1474,7 +1473,7 @@ private fun CommentItem(
                         text = "${reply.userName} · ${comment.userName}",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = EmeraldNeon
+                        color = AccentLime
                     )
                     Text(
                         text = reply.content,
@@ -1485,6 +1484,6 @@ private fun CommentItem(
             }
         }
 
-        ObsidianDivider(color = BorderDivider)
+        GymDivider(color = BorderDivider)
     }
 }

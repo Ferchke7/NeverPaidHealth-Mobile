@@ -33,10 +33,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.FloatingActiveWorkoutPill
 import dev.neverpaid.health.core.designsystem.FloatingFocusTimerOverlay
-import dev.neverpaid.health.core.designsystem.ObsidianBottomNavBar
-import dev.neverpaid.health.core.designsystem.ObsidianHeaderBar
-import dev.neverpaid.health.core.designsystem.ObsidianNavDestination
-import dev.neverpaid.health.core.designsystem.ObsidianSectionMenuSheet
+import dev.neverpaid.health.core.designsystem.GymBottomNavBar
+import dev.neverpaid.health.core.designsystem.GymHeaderBar
+import dev.neverpaid.health.core.designsystem.GymNavDestination
+import dev.neverpaid.health.core.designsystem.GymSectionMenuSheet
 import dev.neverpaid.health.core.designsystem.WorkoutSummaryBottomSheet
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.i18n.getDudaStrings
@@ -192,11 +192,11 @@ fun DudaMobileApp() {
 
         if (isMenuSheetOpen) {
             val highlightedRoute = if (currentScreen == Screen.ActiveWorkout) Screen.Workouts.route else currentScreen.route
-            ObsidianSectionMenuSheet(
+            GymSectionMenuSheet(
                 title = strings.menuAllSections,
                 subtitle = strings.menuAllSectionsSubtitle,
                 destinations = allMenuDestinations.map { screen ->
-                    ObsidianNavDestination(
+                    GymNavDestination(
                         route = screen.route,
                         label = getScreenTitle(screen),
                         icon = screen.icon
@@ -218,7 +218,7 @@ fun DudaMobileApp() {
                         .background(DarkBackground)
                         .statusBarsPadding()
                 ) {
-                    ObsidianHeaderBar(
+                    GymHeaderBar(
                         menuLabel = strings.menuButton,
                         hasActiveWorkout = activeWorkout != null,
                         isWorkoutScreen = isWorkoutActiveScreen,
@@ -263,9 +263,9 @@ fun DudaMobileApp() {
                         )
                     }
 
-                    ObsidianBottomNavBar(
+                    GymBottomNavBar(
                         items = mobileBottomNavItems.map { screen ->
-                            ObsidianNavDestination(
+                            GymNavDestination(
                                 route = screen.route,
                                 label = getScreenTitle(screen),
                                 icon = screen.icon

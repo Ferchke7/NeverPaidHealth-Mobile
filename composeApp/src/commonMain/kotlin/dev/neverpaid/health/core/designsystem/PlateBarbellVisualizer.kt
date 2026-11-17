@@ -165,7 +165,7 @@ fun BarbellSleeveCanvas(
                                 style = TextStyle(
                                     fontSize = if (plateHeight > 90f) 10.sp else 8.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = if (spec.colorHex == LightPlateHexColor) ObsidianInkOnLight else TextPrimary
+                                    color = if (spec.colorHex == LightPlateHexColor) GymInkOnLight else TextPrimary
                                 )
                             )
                             val textX = currentX + (plateWidth - textLayout.size.width) / 2f
@@ -241,7 +241,7 @@ fun InteractivePlateCalculator(
                         text = "${calcResult.targetWeightKg}",
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Black,
-                        color = EmeraldNeon
+                        color = AccentLime
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
@@ -257,14 +257,14 @@ fun InteractivePlateCalculator(
                             modifier = Modifier
                                 .padding(bottom = 6.dp)
                                 .background(DarkSurfaceVariant, RoundedCornerShape(6.dp))
-                                .border(1.dp, EmeraldNeon.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                .border(1.dp, AccentLime.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
                                 text = "${calcResult.percentageOf1RM}% 1ПМ",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = EmeraldLight
+                                color = AccentLime
                             )
                         }
                     }
@@ -358,7 +358,7 @@ fun InteractivePlateCalculator(
                         },
                         label = { Text("${bType.defaultWeightKg.toInt()} кг (${bType.displayNameRu.take(12)})") },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldNeon,
+                            selectedContainerColor = AccentLime,
                             selectedLabelColor = DarkBackground,
                             containerColor = DarkSurfaceVariant,
                             labelColor = TextPrimary

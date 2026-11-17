@@ -61,9 +61,9 @@ import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
+import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.InfoAccent
-import dev.neverpaid.health.core.designsystem.ObsidianWell
+import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -118,7 +118,7 @@ fun FoodDatabaseBottomSheet(
                     Icon(
                         imageVector = Icons.Default.Restaurant,
                         contentDescription = null,
-                        tint = EmeraldNeon,
+                        tint = AccentLime,
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
@@ -145,9 +145,9 @@ fun FoodDatabaseBottomSheet(
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary) },
                 shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = ObsidianWell,
-                    unfocusedContainerColor = ObsidianWell,
-                    focusedBorderColor = EmeraldNeon,
+                    focusedContainerColor = GymWell,
+                    unfocusedContainerColor = GymWell,
+                    focusedBorderColor = AccentLime,
                     unfocusedBorderColor = BorderSubtle,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary
@@ -168,8 +168,8 @@ fun FoodDatabaseBottomSheet(
                         onClick = { selectedCategory = null },
                         label = { Text("Все", style = MaterialTheme.typography.labelSmall) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldNeon.copy(alpha = 0.2f),
-                            selectedLabelColor = EmeraldNeon,
+                            selectedContainerColor = AccentLime.copy(alpha = 0.2f),
+                            selectedLabelColor = AccentLime,
                             containerColor = DarkSurfaceElevated,
                             labelColor = TextSecondary
                         ),
@@ -177,7 +177,7 @@ fun FoodDatabaseBottomSheet(
                             enabled = true,
                             selected = selectedCategory == null,
                             borderColor = BorderSubtle,
-                            selectedBorderColor = EmeraldNeon
+                            selectedBorderColor = AccentLime
                         )
                     )
                 }
@@ -197,8 +197,8 @@ fun FoodDatabaseBottomSheet(
                         onClick = { selectedCategory = if (selectedCategory == category) null else category },
                         label = { Text(catLabel, style = MaterialTheme.typography.labelSmall) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldNeon.copy(alpha = 0.2f),
-                            selectedLabelColor = EmeraldNeon,
+                            selectedContainerColor = AccentLime.copy(alpha = 0.2f),
+                            selectedLabelColor = AccentLime,
                             containerColor = DarkSurfaceElevated,
                             labelColor = TextSecondary
                         ),
@@ -206,7 +206,7 @@ fun FoodDatabaseBottomSheet(
                             enabled = true,
                             selected = selectedCategory == category,
                             borderColor = BorderSubtle,
-                            selectedBorderColor = EmeraldNeon
+                            selectedBorderColor = AccentLime
                         )
                     )
                 }
@@ -224,7 +224,7 @@ fun FoodDatabaseBottomSheet(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-                    border = BorderStroke(1.dp, EmeraldNeon)
+                    border = BorderStroke(1.dp, AccentLime)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Row(
@@ -242,7 +242,7 @@ fun FoodDatabaseBottomSheet(
                                 Text(
                                     text = "${calculated.calories.toInt()} ккал на ${grams.toInt()}г",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = EmeraldNeon,
+                                    color = AccentLime,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
@@ -334,7 +334,7 @@ fun FoodDatabaseBottomSheet(
                                 },
                                 shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = EmeraldNeon,
+                                    containerColor = AccentLime,
                                     contentColor = DarkBackground
                                 ),
                                 modifier = Modifier.height(52.dp)
@@ -367,7 +367,7 @@ fun FoodDatabaseBottomSheet(
                             },
                         shape = RoundedCornerShape(10.dp),
                         colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                        border = BorderStroke(1.dp, if (activeFoodItem?.id == food.id) EmeraldNeon else BorderSubtle)
+                        border = BorderStroke(1.dp, if (activeFoodItem?.id == food.id) AccentLime else BorderSubtle)
                     ) {
                         Row(
                             modifier = Modifier
@@ -390,7 +390,7 @@ fun FoodDatabaseBottomSheet(
                                     Text(
                                         text = "${food.caloriesPer100g.toInt()} ккал",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = EmeraldNeon
+                                        color = AccentLime
                                     )
                                     Text(
                                         text = "Б: ${food.proteinPer100g}г",

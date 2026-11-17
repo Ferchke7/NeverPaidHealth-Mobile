@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,19 +26,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -51,21 +45,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.neverpaid.health.core.math.StrengthCalculator
 
 // ============================================================================
-// Obsidian Architecture 1:1 Figma Shared Primitives
+// Gym design system: shared primitives
+// Flat tonal cards, big rounded corners, one lime accent, heavy numerals.
 // ============================================================================
 
+private val CardRadius = 20.dp
+private val ControlRadius = 16.dp
+private val TileRadius = 14.dp
+
+private fun brandWordmark(): AnnotatedString = buildAnnotatedString {
+    withStyle(SpanStyle(color = TextPrimary, fontWeight = FontWeight.Black)) { append("duda") }
+    withStyle(SpanStyle(color = AccentLime, fontWeight = FontWeight.Black)) { append(".uz") }
+}
+
 @Composable
-fun ObsidianHeaderBar(
+fun GymHeaderBar(
     menuLabel: String,
     hasActiveWorkout: Boolean = false,
     isWorkoutScreen: Boolean = false,
@@ -79,162 +88,159 @@ fun ObsidianHeaderBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
+        Text(
+            text = brandWordmark(),
+            fontSize = 24.sp,
+            letterSpacing = (-0.8).sp,
             modifier = Modifier
-                .defaultMinSize(minHeight = 44.dp)
                 .clip(RoundedCornerShape(10.dp))
                 .clickable(onClick = onLogoClick)
-                .padding(horizontal = 2.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            Text(
-                text = "duda.uz",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary,
-                letterSpacing = (-0.3).sp
-            )
-        }
+                .padding(vertical = 6.dp)
+        )
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             if (hasActiveWorkout && !isWorkoutScreen) {
                 Row(
                     modifier = Modifier
-                        .heightIn(min = 36.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(EmeraldSubtle)
-                        .border(1.dp, BorderHighlight, RoundedCornerShape(10.dp))
+                        .height(36.dp)
+                        .clip(CircleShape)
+                        .background(AccentLime)
                         .clickable(onClick = onLiveClick)
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                        .padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(6.dp)
+                            .size(7.dp)
                             .clip(CircleShape)
-                            .background(EmeraldNeon)
+                            .background(GymInkOnLight)
                     )
                     Text(
                         text = "LIVE",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = EmeraldNeon
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 0.6.sp,
+                        color = GymInkOnLight
                     )
                 }
             }
 
             if (hasFocusOpen) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(ObsidianWell)
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
-                        .clickable(onClick = onFocusClick),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Timer,
-                        contentDescription = "Focus Timer",
-                        tint = EmeraldNeon,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .defaultMinSize(minHeight = 44.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable(onClick = onMenuClick)
-                    .padding(horizontal = 10.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = menuLabel,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextPrimary
+                RoundIconButton(
+                    icon = Icons.Default.Timer,
+                    contentDescription = "Focus Timer",
+                    tint = AccentLime,
+                    onClick = onFocusClick
                 )
             }
+
+            RoundIconButton(
+                icon = Icons.Default.Apps,
+                contentDescription = menuLabel,
+                tint = TextPrimary,
+                onClick = onMenuClick
+            )
         }
     }
 }
 
-data class ObsidianNavDestination(
+@Composable
+private fun RoundIconButton(
+    icon: ImageVector,
+    contentDescription: String?,
+    tint: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(DarkSurfaceHigh)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = tint,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+data class GymNavDestination(
     val route: String,
     val label: String,
     val icon: ImageVector? = null
 )
 
 @Composable
-fun ObsidianBottomNavBar(
-    items: List<ObsidianNavDestination>,
+fun GymBottomNavBar(
+    items: List<GymNavDestination>,
     selectedRoute: String,
     onSelectRoute: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(DarkBackground)
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        color = DarkSurface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
-        Surface(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, BorderDivider, RoundedCornerShape(14.dp)),
-            shape = RoundedCornerShape(14.dp),
-            color = DarkSurface,
-            tonalElevation = 0.dp,
-            shadowElevation = 0.dp
+                .navigationBarsPadding()
+                .padding(horizontal = 8.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                items.forEach { item ->
-                    val isSelected = item.route == selectedRoute
-                    val tintColor = if (isSelected) EmeraldNeon else TextSecondary
-
-                    Column(
+            items.forEach { item ->
+                val isSelected = item.route == selectedRoute
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(TileRadius))
+                        .clickable { onSelectRoute(item.route) }
+                        .padding(vertical = 2.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .clickable { onSelectRoute(item.route) }
-                            .padding(vertical = 4.dp, horizontal = 2.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                            .width(52.dp)
+                            .height(30.dp)
+                            .clip(CircleShape)
+                            .background(if (isSelected) AccentLime else Color.Transparent),
+                        contentAlignment = Alignment.Center
                     ) {
                         if (item.icon != null) {
                             Icon(
                                 imageVector = item.icon,
                                 contentDescription = item.label,
-                                tint = tintColor,
-                                modifier = Modifier.size(20.dp)
+                                tint = if (isSelected) GymInkOnLight else TextMuted,
+                                modifier = Modifier.size(22.dp)
                             )
                         }
-                        Text(
-                            text = item.label,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = tintColor,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Center
-                        )
                     }
+                    Text(
+                        text = item.label,
+                        fontSize = 11.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) TextPrimary else TextMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
@@ -243,10 +249,10 @@ fun ObsidianBottomNavBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ObsidianSectionMenuSheet(
+fun GymSectionMenuSheet(
     title: String,
     subtitle: String,
-    destinations: List<ObsidianNavDestination>,
+    destinations: List<GymNavDestination>,
     currentRoute: String,
     onSelectRoute: (String) -> Unit,
     onDismiss: () -> Unit
@@ -257,101 +263,102 @@ fun ObsidianSectionMenuSheet(
         sheetState = sheetState,
         containerColor = DarkSurface,
         contentColor = TextPrimary,
-        shape = RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp),
-        dragHandle = null
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = title,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = subtitle,
-                        fontSize = 14.sp,
-                        color = TextSecondary
-                    )
-                }
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.size(44.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = null,
-                        tint = TextSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = title,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.5).sp,
+                    color = TextPrimary
+                )
+                if (subtitle.isNotBlank()) {
+                    Text(text = subtitle, fontSize = 14.sp, color = TextSecondary)
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                destinations.forEach { dest ->
-                    val isSelected = dest.route == currentRoute
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .defaultMinSize(minHeight = 44.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (isSelected) EmeraldSubtle else ObsidianWell)
-                            .border(
-                                width = 1.dp,
-                                color = if (isSelected) BorderHighlight else BorderSubtle,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .clickable {
-                                onSelectRoute(dest.route)
-                                onDismiss()
-                            }
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        contentAlignment = Alignment.Center
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                destinations.chunked(2).forEach { rowItems ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text(
-                            text = dest.label,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (isSelected) EmeraldNeon else TextPrimary
-                        )
+                        rowItems.forEach { dest ->
+                            val isSelected = dest.route == currentRoute
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(CardRadius))
+                                    .background(if (isSelected) AccentLime else DarkSurfaceHigh)
+                                    .clickable {
+                                        onSelectRoute(dest.route)
+                                        onDismiss()
+                                    }
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                if (dest.icon != null) {
+                                    Icon(
+                                        imageVector = dest.icon,
+                                        contentDescription = null,
+                                        tint = if (isSelected) GymInkOnLight else AccentLime,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                                Text(
+                                    text = dest.label,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) GymInkOnLight else TextPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                        if (rowItems.size == 1) Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
 
 @Composable
-fun ObsidianPageHeader(
+fun GymPageHeader(
     title: String,
     subtitle: String? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
             text = title,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Black,
             lineHeight = 36.sp,
+            letterSpacing = (-1).sp,
             color = TextPrimary
         )
         if (!subtitle.isNullOrBlank()) {
@@ -365,19 +372,144 @@ fun ObsidianPageHeader(
     }
 }
 
+/** Section heading inside a screen, with an optional lime text action on the right. */
 @Composable
-fun ObsidianCard(
+fun GymSectionTitle(
+    title: String,
+    modifier: Modifier = Modifier,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-0.4).sp,
+            color = TextPrimary,
+            modifier = Modifier.weight(1f, fill = false)
+        )
+        if (actionLabel != null && onAction != null) {
+            Text(
+                text = actionLabel,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = AccentLime,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(onClick = onAction)
+                    .padding(horizontal = 6.dp, vertical = 4.dp)
+            )
+        }
+    }
+}
+
+/** Small uppercase caption above a title. */
+@Composable
+fun GymKicker(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = AccentLime
+) {
+    Text(
+        text = text.uppercase(),
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 1.sp,
+        color = color,
+        modifier = modifier
+    )
+}
+
+/** Rounded square icon holder used in list rows and card headers. */
+@Composable
+fun GymIconBadge(
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    tint: Color = AccentLime,
+    background: Color = AccentLimeSubtle,
+    size: Dp = 44.dp
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(RoundedCornerShape(TileRadius))
+            .background(background),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(size * 0.5f)
+        )
+    }
+}
+
+/** Compact metric tile: caption, big figure, optional unit. */
+@Composable
+fun GymStatTile(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    unit: String = "",
+    valueColor: Color = TextPrimary
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(CardRadius))
+            .background(DarkSurface)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = value,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-0.5).sp,
+                color = valueColor,
+                style = TextStyle(fontFeatureSettings = "tnum")
+            )
+            if (unit.isNotEmpty()) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = unit,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextSecondary,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun GymCard(
     modifier: Modifier = Modifier,
     backgroundColor: Color = DarkSurface,
-    borderColor: Color = BorderSubtle,
-    contentPadding: PaddingValues = PaddingValues(24.dp),
+    borderColor: Color = Color.Transparent,
+    contentPadding: PaddingValues = PaddingValues(20.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, borderColor, RoundedCornerShape(14.dp)),
-        shape = RoundedCornerShape(14.dp),
+            .border(1.dp, borderColor, RoundedCornerShape(CardRadius)),
+        shape = RoundedCornerShape(CardRadius),
         color = backgroundColor,
         tonalElevation = 0.dp,
         shadowElevation = 0.dp
@@ -386,16 +518,16 @@ fun ObsidianCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(contentPadding),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
             content = content
         )
     }
 }
 
 @Composable
-fun ObsidianDivider(
+fun GymDivider(
     modifier: Modifier = Modifier,
-    color: Color = BorderSubtle
+    color: Color = BorderDivider
 ) {
     HorizontalDivider(
         modifier = modifier.fillMaxWidth(),
@@ -405,7 +537,21 @@ fun ObsidianDivider(
 }
 
 @Composable
-fun ObsidianPrimaryButton(
+private fun GymButtonLabel(text: String) {
+    Text(
+        text = text,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Bold,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
+private val ButtonPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp)
+private val ButtonMinHeight = 52.dp
+
+@Composable
+fun GymPrimaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -415,30 +561,25 @@ fun ObsidianPrimaryButton(
     Button(
         onClick = onClick,
         enabled = enabled,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(ControlRadius),
         elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = EmeraldNeon,
-            contentColor = ObsidianInkOnLight,
+            containerColor = AccentLime,
+            contentColor = GymInkOnLight,
             disabledContainerColor = DarkSurfaceHigh,
             disabledContentColor = TextMuted
         ),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+        contentPadding = ButtonPadding,
         modifier = (if (fillWidth) modifier.fillMaxWidth() else modifier)
-            .defaultMinSize(minHeight = 44.dp)
+            .defaultMinSize(minHeight = ButtonMinHeight)
     ) {
-        Text(
-            text = text,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        GymButtonLabel(text)
     }
 }
 
+/** Secondary action: tonal fill, no outline. Name kept for call-site compatibility. */
 @Composable
-fun ObsidianOutlineButton(
+fun GymOutlineButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -447,32 +588,28 @@ fun ObsidianOutlineButton(
     textColor: Color = TextPrimary,
     borderColor: Color = BorderSubtle
 ) {
-    OutlinedButton(
+    Button(
         onClick = onClick,
         enabled = enabled,
-        shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(1.dp, borderColor),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = ObsidianWell,
+        shape = RoundedCornerShape(ControlRadius),
+        elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+        border = if (borderColor == BorderSubtle) null else BorderStroke(1.dp, borderColor),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = DarkSurfaceHigh,
             contentColor = textColor,
+            disabledContainerColor = DarkSurfaceHigh,
             disabledContentColor = TextMuted
         ),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+        contentPadding = ButtonPadding,
         modifier = (if (fillWidth) modifier.fillMaxWidth() else modifier)
-            .defaultMinSize(minHeight = 44.dp)
+            .defaultMinSize(minHeight = ButtonMinHeight)
     ) {
-        Text(
-            text = text,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        GymButtonLabel(text)
     }
 }
 
 @Composable
-fun ObsidianWhiteButton(
+fun GymWhiteButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -482,30 +619,25 @@ fun ObsidianWhiteButton(
     Button(
         onClick = onClick,
         enabled = enabled,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(ControlRadius),
         elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = TextPrimary,
-            contentColor = ObsidianInkOnLight,
+            contentColor = GymInkOnLight,
             disabledContainerColor = DarkSurfaceHigh,
             disabledContentColor = TextMuted
         ),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+        contentPadding = ButtonPadding,
         modifier = (if (fillWidth) modifier.fillMaxWidth() else modifier)
-            .defaultMinSize(minHeight = 44.dp)
+            .defaultMinSize(minHeight = ButtonMinHeight)
     ) {
-        Text(
-            text = text,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        GymButtonLabel(text)
     }
 }
 
+/** Filter / tab chip: lime when selected, tonal otherwise. */
 @Composable
-fun ObsidianPillTab(
+fun GymPillTab(
     text: String,
     selected: Boolean,
     onClick: () -> Unit,
@@ -513,25 +645,25 @@ fun ObsidianPillTab(
 ) {
     Box(
         modifier = modifier
-            .defaultMinSize(minHeight = 44.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (selected) EmeraldSubtle else Color.Transparent)
+            .defaultMinSize(minHeight = 40.dp)
+            .clip(CircleShape)
+            .background(if (selected) AccentLime else DarkSurfaceHigh)
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 9.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
             fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = if (selected) EmeraldNeon else TextSecondary,
+            fontWeight = FontWeight.Bold,
+            color = if (selected) GymInkOnLight else TextSecondary,
             maxLines = 1
         )
     }
 }
 
 @Composable
-fun ObsidianTextField(
+fun GymTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
@@ -548,8 +680,8 @@ fun ObsidianTextField(
         placeholder = {
             Text(
                 text = placeholder,
-                fontSize = 14.sp,
-                color = TextSecondary
+                fontSize = 15.sp,
+                color = TextMuted
             )
         },
         singleLine = singleLine,
@@ -558,28 +690,29 @@ fun ObsidianTextField(
         visualTransformation = visualTransformation,
         trailingIcon = trailingIcon,
         textStyle = TextStyle(
-            fontSize = 14.sp,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
             color = TextPrimary,
             fontFeatureSettings = "tnum"
         ),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(ControlRadius),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = ObsidianWell,
-            unfocusedContainerColor = ObsidianWell,
-            focusedBorderColor = EmeraldNeon,
-            unfocusedBorderColor = BorderSubtle,
+            focusedContainerColor = DarkSurfaceHigh,
+            unfocusedContainerColor = DarkSurfaceHigh,
+            focusedBorderColor = AccentLime,
+            unfocusedBorderColor = Color.Transparent,
             focusedTextColor = TextPrimary,
             unfocusedTextColor = TextPrimary,
-            cursorColor = EmeraldNeon
+            cursorColor = AccentLime
         ),
         modifier = modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 48.dp)
+            .defaultMinSize(minHeight = 52.dp)
     )
 }
 
 @Composable
-fun ObsidianLabeledField(
+fun GymLabeledField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
@@ -595,11 +728,11 @@ fun ObsidianLabeledField(
     ) {
         Text(
             text = label,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
             color = TextSecondary
         )
-        ObsidianTextField(
+        GymTextField(
             value = value,
             onValueChange = onValueChange,
             placeholder = placeholder,
@@ -611,33 +744,33 @@ fun ObsidianLabeledField(
 }
 
 @Composable
-fun ObsidianInnerWell(
+fun GymInnerWell(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(ControlRadius))
             .background(DarkSurfaceHigh)
-            .padding(14.dp),
+            .padding(16.dp),
         content = content
     )
 }
 
 @Composable
-fun ObsidianProgressBar(
+fun GymProgressBar(
     progress: Float,
     modifier: Modifier = Modifier,
-    heightDp: Int = 6,
-    color: Color = EmeraldNeon
+    heightDp: Int = 8,
+    color: Color = AccentLime
 ) {
     val clamped = progress.coerceIn(0f, 1f)
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(heightDp.dp)
-            .clip(RoundedCornerShape(999.dp))
+            .clip(CircleShape)
             .background(DarkSurfaceHigh)
     ) {
         if (clamped > 0f) {
@@ -645,7 +778,7 @@ fun ObsidianProgressBar(
                 modifier = Modifier
                     .fillMaxWidth(clamped)
                     .height(heightDp.dp)
-                    .clip(RoundedCornerShape(999.dp))
+                    .clip(CircleShape)
                     .background(color)
             )
         }
@@ -653,45 +786,38 @@ fun ObsidianProgressBar(
 }
 
 @Composable
-fun ObsidianLoadingCard(
+fun GymLoadingCard(
     title: String,
     hint: String,
-    kicker: String = "01 · Загрузка",
     modifier: Modifier = Modifier
 ) {
-    ObsidianCard(modifier = modifier) {
-        Text(
-            text = kicker,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = TextSecondary
-        )
+    GymCard(modifier = modifier) {
         Text(
             text = title,
             fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.ExtraBold,
             color = TextPrimary
         )
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.55f)
                     .height(16.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(CircleShape)
                     .background(DarkSurfaceHigh)
             )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(ControlRadius))
                     .background(DarkSurfaceHigh)
             )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(ControlRadius))
                     .background(DarkSurfaceHigh)
             )
         }
@@ -704,7 +830,7 @@ fun ObsidianLoadingCard(
 }
 
 @Composable
-fun ObsidianEmptyCard(
+fun GymEmptyCard(
     title: String,
     description: String,
     primaryActionLabel: String? = null,
@@ -713,11 +839,11 @@ fun ObsidianEmptyCard(
     onSecondaryAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    ObsidianCard(modifier = modifier) {
+    GymCard(modifier = modifier) {
         Text(
             text = title,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.ExtraBold,
             color = TextPrimary
         )
         Text(
@@ -727,14 +853,14 @@ fun ObsidianEmptyCard(
             color = TextSecondary
         )
         if (primaryActionLabel != null && onPrimaryAction != null) {
-            ObsidianPrimaryButton(
+            GymPrimaryButton(
                 text = primaryActionLabel,
                 onClick = onPrimaryAction,
                 fillWidth = true
             )
         }
         if (secondaryActionLabel != null && onSecondaryAction != null) {
-            ObsidianOutlineButton(
+            GymOutlineButton(
                 text = secondaryActionLabel,
                 onClick = onSecondaryAction,
                 fillWidth = true
@@ -744,7 +870,7 @@ fun ObsidianEmptyCard(
 }
 
 // ============================================================================
-// Backward-compatible Aliases & Domain Components Updated to Obsidian 1:1
+// Domain components (names kept for existing call sites)
 // ============================================================================
 
 @Composable
@@ -753,21 +879,15 @@ fun DudaBrandLogo(
     compact: Boolean = false,
     onClick: () -> Unit = {}
 ) {
-    Row(
+    Text(
+        text = brandWordmark(),
+        fontSize = if (compact) 20.sp else 26.sp,
+        letterSpacing = (-0.8).sp,
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
             .clickable { onClick() }
-            .padding(4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "duda.uz",
-            fontWeight = FontWeight.Bold,
-            fontSize = if (compact) 18.sp else 20.sp,
-            color = TextPrimary,
-            letterSpacing = (-0.3).sp
-        )
-    }
+            .padding(4.dp)
+    )
 }
 
 @Composable
@@ -777,7 +897,7 @@ fun DudaTopHeader(
     onProfileClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    ObsidianHeaderBar(
+    GymHeaderBar(
         menuLabel = "Меню",
         onLogoClick = onLogoClick,
         onMenuClick = onProfileClick,
@@ -801,11 +921,11 @@ fun DudaQuickNavPills(
     LazyRow(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = 20.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(items, key = { it.id }) { item ->
-            ObsidianPillTab(
+            GymPillTab(
                 text = item.title,
                 selected = item.id == selectedId,
                 onClick = { onSelect(item.id) }
@@ -817,9 +937,9 @@ fun DudaQuickNavPills(
 @Composable
 fun AthleticCard(
     modifier: Modifier = Modifier,
-    shape: RoundedCornerShape = RoundedCornerShape(14.dp),
+    shape: RoundedCornerShape = RoundedCornerShape(CardRadius),
     backgroundColor: Color = DarkSurface,
-    borderColor: Color = BorderSubtle,
+    borderColor: Color = Color.Transparent,
     content: @Composable () -> Unit
 ) {
     Surface(
@@ -843,24 +963,24 @@ fun SetTypeBadge(
     onClick: () -> Unit = {}
 ) {
     val (badgeText, badgeColor, textColor) = when (type.lowercase()) {
-        "warmup", "w" -> Triple("W", AmberWarm, ObsidianInkOnLight)
-        "drop", "d" -> Triple("D", InfoAccent, ObsidianInkOnLight)
+        "warmup", "w" -> Triple("W", AmberWarm, GymInkOnLight)
+        "drop", "d" -> Triple("D", InfoAccent, GymInkOnLight)
         "failure", "f" -> Triple("F", CrimsonRed, TextPrimary)
-        else -> Triple("$setIndex", DarkSurfaceHigh, TextPrimary)
+        else -> Triple("$setIndex", DarkSurfaceElevated, TextPrimary)
     }
 
     Box(
         modifier = modifier
-            .size(32.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .size(36.dp)
+            .clip(RoundedCornerShape(12.dp))
             .background(badgeColor)
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = badgeText,
-            fontWeight = FontWeight.Bold,
-            fontSize = 13.sp,
+            fontWeight = FontWeight.Black,
+            fontSize = 14.sp,
             color = textColor
         )
     }
@@ -878,27 +998,23 @@ fun PrimaryAthleticButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 44.dp),
+            .defaultMinSize(minHeight = ButtonMinHeight),
         enabled = enabled,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(ControlRadius),
         elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = EmeraldNeon,
-            contentColor = ObsidianInkOnLight,
+            containerColor = AccentLime,
+            contentColor = GymInkOnLight,
             disabledContainerColor = DarkSurfaceHigh,
             disabledContentColor = TextMuted
         ),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)
+        contentPadding = ButtonPadding
     ) {
         if (icon != null) {
-            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(6.dp))
+            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
         }
-        Text(
-            text = text,
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp
-        )
+        GymButtonLabel(text)
     }
 }
 
@@ -910,29 +1026,27 @@ fun SecondaryAthleticButton(
     enabled: Boolean = true,
     icon: ImageVector? = null
 ) {
-    OutlinedButton(
+    Button(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 44.dp),
+            .defaultMinSize(minHeight = ButtonMinHeight),
         enabled = enabled,
-        shape = RoundedCornerShape(10.dp),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = ObsidianWell,
-            contentColor = TextPrimary
+        shape = RoundedCornerShape(ControlRadius),
+        elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = DarkSurfaceHigh,
+            contentColor = TextPrimary,
+            disabledContainerColor = DarkSurfaceHigh,
+            disabledContentColor = TextMuted
         ),
-        border = BorderStroke(1.dp, BorderSubtle),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)
+        contentPadding = ButtonPadding
     ) {
         if (icon != null) {
-            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(6.dp))
+            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
         }
-        Text(
-            text = text,
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp
-        )
+        GymButtonLabel(text)
     }
 }
 
@@ -946,19 +1060,21 @@ fun StatCounter(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
             text = title.uppercase(),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.8.sp,
             color = TextSecondary
         )
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 text = value,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 26.sp,
+                fontWeight = FontWeight.Black,
+                fontSize = 28.sp,
+                letterSpacing = (-0.5).sp,
                 color = accentColor,
                 style = TextStyle(fontFeatureSettings = "tnum")
             )
@@ -966,10 +1082,10 @@ fun StatCounter(
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = unit,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
                     color = accentColor,
-                    modifier = Modifier.padding(bottom = 2.dp)
+                    modifier = Modifier.padding(bottom = 4.dp)
                 )
             }
         }
@@ -987,42 +1103,45 @@ fun RestTimerFloatingBar(
     val seconds = secondsRemaining % 60
     val timeFormatted = StrengthCalculator.formatTime(minutes, seconds)
 
-    ObsidianCard(
+    GymCard(
         modifier = modifier.padding(16.dp),
+        backgroundColor = DarkSurfaceElevated,
         contentPadding = PaddingValues(20.dp)
     ) {
-        Text(
-            text = "01 / ОТДЫХ",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = EmeraldNeon
-        )
-        Text(
-            text = timeFormatted,
-            fontSize = 42.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary,
-            style = TextStyle(fontFeatureSettings = "tnum")
-        )
-        ObsidianProgressBar(progress = (secondsRemaining.toFloat() / 90f).coerceIn(0f, 1f))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            GymKicker(text = "Отдых")
+            Text(
+                text = timeFormatted,
+                fontSize = 44.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-1).sp,
+                color = TextPrimary,
+                style = TextStyle(fontFeatureSettings = "tnum")
+            )
+        }
+        GymProgressBar(progress = (secondsRemaining.toFloat() / 90f).coerceIn(0f, 1f))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ObsidianOutlineButton(
-                text = "−15 сек",
+            GymOutlineButton(
+                text = "−15",
                 onClick = { onAddSeconds(-15) },
                 modifier = Modifier.weight(1f)
             )
-            ObsidianOutlineButton(
-                text = "+30 сек",
+            GymOutlineButton(
+                text = "+30",
                 onClick = { onAddSeconds(30) },
                 modifier = Modifier.weight(1f)
             )
-            ObsidianOutlineButton(
+            GymPrimaryButton(
                 text = "Пропустить",
                 onClick = onSkip,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1.4f)
             )
         }
     }

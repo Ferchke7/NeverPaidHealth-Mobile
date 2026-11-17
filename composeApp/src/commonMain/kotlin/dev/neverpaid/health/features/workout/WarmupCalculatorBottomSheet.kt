@@ -44,7 +44,7 @@ import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
+import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.InteractivePlateCalculator
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
@@ -108,7 +108,7 @@ fun WarmupCalculatorBottomSheet(
                     Icon(
                         imageVector = Icons.Default.FitnessCenter,
                         contentDescription = null,
-                        tint = EmeraldNeon,
+                        tint = AccentLime,
                         modifier = Modifier.size(24.dp)
                     )
                     Column {
@@ -159,7 +159,7 @@ fun WarmupCalculatorBottomSheet(
                     Icon(
                         imageVector = Icons.Default.Speed,
                         contentDescription = null,
-                        tint = EmeraldNeon,
+                        tint = AccentLime,
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
@@ -188,8 +188,8 @@ fun WarmupCalculatorBottomSheet(
                         onClick = { selectedWarmupProtocol = protocol },
                         label = { Text(label, style = MaterialTheme.typography.labelSmall) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EmeraldNeon.copy(alpha = 0.2f),
-                            selectedLabelColor = EmeraldNeon,
+                            selectedContainerColor = AccentLime.copy(alpha = 0.2f),
+                            selectedLabelColor = AccentLime,
                             containerColor = DarkSurfaceElevated,
                             labelColor = TextSecondary
                         ),
@@ -197,7 +197,7 @@ fun WarmupCalculatorBottomSheet(
                             enabled = true,
                             selected = selectedWarmupProtocol == protocol,
                             borderColor = BorderSubtle,
-                            selectedBorderColor = EmeraldNeon
+                            selectedBorderColor = AccentLime
                         )
                     )
                 }
@@ -259,7 +259,7 @@ fun WarmupCalculatorBottomSheet(
                     .height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = EmeraldNeon,
+                    containerColor = AccentLime,
                     contentColor = DarkBackground
                 )
             ) {

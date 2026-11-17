@@ -82,7 +82,7 @@ fun FloatingActiveWorkoutPill(
             .padding(horizontal = 12.dp, vertical = 4.dp)
             .clickable { onExpand() },
         backgroundColor = DarkSurfaceVariant,
-        borderColor = EmeraldNeon
+        borderColor = AccentLime
     ) {
         Row(
             modifier = Modifier
@@ -99,7 +99,7 @@ fun FloatingActiveWorkoutPill(
                     modifier = Modifier
                         .size(10.dp)
                         .clip(CircleShape)
-                        .background(EmeraldNeon)
+                        .background(AccentLime)
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -114,7 +114,7 @@ fun FloatingActiveWorkoutPill(
                     Text(
                         text = "$formattedTime • ${workout.exercises.size} упр. • $completedSets сет.",
                         fontSize = 11.sp,
-                        color = EmeraldLight,
+                        color = AccentLime,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -124,7 +124,7 @@ fun FloatingActiveWorkoutPill(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(EmeraldNeon)
+                        .background(AccentLime)
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -188,7 +188,7 @@ fun FloatingFocusTimerOverlay(
                     Icon(
                         imageVector = Icons.Default.Timer,
                         contentDescription = null,
-                        tint = EmeraldLight,
+                        tint = AccentLime,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -205,7 +205,7 @@ fun FloatingFocusTimerOverlay(
                             text = formatted,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Black,
-                            color = EmeraldLight,
+                            color = AccentLime,
                             style = TextStyle(fontFeatureSettings = "tnum")
                         )
                     }
@@ -216,14 +216,14 @@ fun FloatingFocusTimerOverlay(
                         Icon(
                             imageVector = if (state.isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = null,
-                            tint = EmeraldNeon
+                            tint = AccentLime
                         )
                     }
                     IconButton(onClick = onCompleteSession, modifier = Modifier.size(32.dp)) {
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = "Завершить",
-                            tint = EmeraldLight
+                            tint = AccentLime
                         )
                     }
                     IconButton(onClick = { onMinimize(false) }, modifier = Modifier.size(32.dp)) {
@@ -269,7 +269,7 @@ fun FloatingFocusTimerOverlay(
                         text = "ФОКУС ТАЙМЕР",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = EmeraldLight,
+                        color = AccentLime,
                         letterSpacing = 1.sp
                     )
                     Text(
@@ -299,7 +299,7 @@ fun FloatingFocusTimerOverlay(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
-                    .background(ObsidianWell)
+                    .background(GymWell)
                     .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -315,7 +315,7 @@ fun FloatingFocusTimerOverlay(
                             .weight(1f)
                             .heightIn(min = 44.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(if (selected) EmeraldNeon else Color.Transparent)
+                            .background(if (selected) AccentLime else Color.Transparent)
                             .clickable { onSetMode(modeKey, "focus", mins.coerceAtLeast(15)) }
                             .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
@@ -324,7 +324,7 @@ fun FloatingFocusTimerOverlay(
                             text = label,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (selected) ObsidianInkOnLight else TextSecondary
+                            color = if (selected) GymInkOnLight else TextSecondary
                         )
                     }
                 }
@@ -348,7 +348,7 @@ fun FloatingFocusTimerOverlay(
                                 .weight(1f)
                                 .heightIn(min = 44.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (selected) EmeraldSubtle else ObsidianWell)
+                                .background(if (selected) AccentLimeSubtle else GymWell)
                                 .border(
                                     1.dp,
                                     if (selected) BorderHighlight else BorderSubtle,
@@ -362,7 +362,7 @@ fun FloatingFocusTimerOverlay(
                                 text = label,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (selected) EmeraldLight else TextSecondary
+                                color = if (selected) AccentLime else TextSecondary
                             )
                         }
                     }
@@ -379,7 +379,7 @@ fun FloatingFocusTimerOverlay(
                                 .weight(1f)
                                 .heightIn(min = 44.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (selected) EmeraldSubtle else ObsidianWell)
+                                .background(if (selected) AccentLimeSubtle else GymWell)
                                 .border(
                                     1.dp,
                                     if (selected) BorderHighlight else BorderSubtle,
@@ -393,7 +393,7 @@ fun FloatingFocusTimerOverlay(
                                 text = "${mins}м",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (selected) EmeraldLight else TextSecondary
+                                color = if (selected) AccentLime else TextSecondary
                             )
                         }
                     }
@@ -410,7 +410,7 @@ fun FloatingFocusTimerOverlay(
                 CircularProgressIndicator(
                     progress = { progress },
                     modifier = Modifier.size(180.dp),
-                    color = EmeraldNeon,
+                    color = AccentLime,
                     trackColor = DarkSurfaceHigh,
                     strokeWidth = 8.dp
                 )
@@ -443,7 +443,7 @@ fun FloatingFocusTimerOverlay(
                         .height(48.dp),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = ObsidianWell,
+                        containerColor = GymWell,
                         contentColor = TextPrimary
                     ),
                     border = BorderStroke(1.dp, BorderSubtle)
@@ -461,8 +461,8 @@ fun FloatingFocusTimerOverlay(
                     shape = RoundedCornerShape(10.dp),
                     elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (state.isRunning) AmberWarm else EmeraldNeon,
-                        contentColor = ObsidianInkOnLight
+                        containerColor = if (state.isRunning) AmberWarm else AccentLime,
+                        contentColor = GymInkOnLight
                     )
                 ) {
                     Icon(
@@ -488,8 +488,8 @@ fun FloatingFocusTimerOverlay(
                     .height(46.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = EmeraldSubtle,
-                    contentColor = EmeraldLight
+                    containerColor = AccentLimeSubtle,
+                    contentColor = AccentLime
                 ),
                 border = BorderStroke(1.dp, BorderHighlight)
             ) {

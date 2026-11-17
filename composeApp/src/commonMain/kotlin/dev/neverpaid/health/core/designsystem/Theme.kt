@@ -8,16 +8,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 
 private val DarkColorScheme = darkColorScheme(
-    primary = EmeraldNeon,
-    onPrimary = DarkBackground,
-    primaryContainer = EmeraldSubtle,
-    onPrimaryContainer = EmeraldLight,
-    secondary = EmeraldLight,
-    onSecondary = DarkBackground,
+    primary = AccentLime,
+    onPrimary = GymInkOnLight,
+    primaryContainer = AccentLimeSubtle,
+    onPrimaryContainer = AccentLime,
+    secondary = AccentLime,
+    onSecondary = GymInkOnLight,
     secondaryContainer = DarkSurfaceHigh,
     onSecondaryContainer = TextPrimary,
     tertiary = AmberWarm,
-    onTertiary = DarkBackground,
+    onTertiary = GymInkOnLight,
     error = CrimsonRed,
     onError = TextPrimary,
     background = DarkBackground,
@@ -30,23 +30,23 @@ private val DarkColorScheme = darkColorScheme(
     outlineVariant = BorderDivider
 )
 
-val ObsidianShapes = Shapes(
-    extraSmall = RoundedCornerShape(6.dp),
-    small = RoundedCornerShape(10.dp),
-    medium = RoundedCornerShape(14.dp),
-    large = RoundedCornerShape(14.dp),
-    extraLarge = RoundedCornerShape(20.dp)
+val GymShapes = Shapes(
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(28.dp)
 )
 
 @Composable
 fun NeverPaidHealthTheme(
-    darkTheme: Boolean = true, // Obsidian Architecture dark default
+    darkTheme: Boolean = true, // Gym UI is dark-only
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
         colorScheme = DarkColorScheme,
         typography = AthleticTypography,
-        shapes = ObsidianShapes,
+        shapes = GymShapes,
         content = content
     )
 }

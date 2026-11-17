@@ -48,9 +48,9 @@ import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
-import dev.neverpaid.health.core.designsystem.EmeraldNeon
+import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.InfoAccent
-import dev.neverpaid.health.core.designsystem.ObsidianWell
+import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -116,7 +116,7 @@ fun ReadinessSurveyModal(
                     Icon(
                         imageVector = Icons.Default.MonitorHeart,
                         contentDescription = null,
-                        tint = EmeraldNeon,
+                        tint = AccentLime,
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
@@ -138,9 +138,9 @@ fun ReadinessSurveyModal(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(containerColor = ObsidianWell),
+                colors = CardDefaults.cardColors(containerColor = GymWell),
                 border = BorderStroke(1.dp, when (tempAssessment.tier) {
-                    ReadinessTier.PEAK_READINESS -> EmeraldNeon
+                    ReadinessTier.PEAK_READINESS -> AccentLime
                     ReadinessTier.NORMAL_READINESS -> InfoAccent
                     ReadinessTier.MILD_FATIGUE -> AmberWarm
                     ReadinessTier.CRITICAL_RECOVERY -> CrimsonRed
@@ -162,7 +162,7 @@ fun ReadinessSurveyModal(
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = when (tempAssessment.tier) {
-                                ReadinessTier.PEAK_READINESS -> EmeraldNeon
+                                ReadinessTier.PEAK_READINESS -> AccentLime
                                 ReadinessTier.NORMAL_READINESS -> InfoAccent
                                 ReadinessTier.MILD_FATIGUE -> AmberWarm
                                 ReadinessTier.CRITICAL_RECOVERY -> CrimsonRed
@@ -201,8 +201,8 @@ fun ReadinessSurveyModal(
                 valueRange = 4f..11f,
                 steps = 13,
                 colors = SliderDefaults.colors(
-                    thumbColor = EmeraldNeon,
-                    activeTrackColor = EmeraldNeon,
+                    thumbColor = AccentLime,
+                    activeTrackColor = AccentLime,
                     inactiveTrackColor = DarkSurfaceElevated
                 )
             )
@@ -253,7 +253,7 @@ fun ReadinessSurveyModal(
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = EmeraldNeon,
+                    containerColor = AccentLime,
                     contentColor = DarkBackground
                 )
             ) {
@@ -288,8 +288,8 @@ private fun SurveyRatingRow(
                     onClick = { onValueChange(value) },
                     selected = currentValue == value,
                     colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = EmeraldNeon.copy(alpha = 0.2f),
-                        activeContentColor = EmeraldNeon,
+                        activeContainerColor = AccentLime.copy(alpha = 0.2f),
+                        activeContentColor = AccentLime,
                         inactiveContainerColor = DarkSurface,
                         inactiveContentColor = TextSecondary
                     )
