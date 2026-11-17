@@ -1,14 +1,13 @@
 package dev.neverpaid.health.features.nutrition
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -23,24 +22,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -51,19 +37,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.neverpaid.health.core.designsystem.AmberGold
-import dev.neverpaid.health.core.designsystem.BorderSubtle
-import dev.neverpaid.health.core.designsystem.DarkBackground
+import androidx.compose.ui.unit.sp
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
+import dev.neverpaid.health.core.designsystem.AmberWarm
+import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
+import dev.neverpaid.health.core.designsystem.GymIconBadge
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.InfoAccent
-import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -96,14 +88,26 @@ fun FoodDatabaseBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkBackground,
-        dragHandle = null
+        containerColor = DarkSurface,
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 20.dp)
-                .navigationBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Header Row
             Row(
@@ -113,241 +117,228 @@ fun FoodDatabaseBottomSheet(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Restaurant,
-                        contentDescription = null,
+                    GymIconBadge(
+                        icon = Icons.Default.Restaurant,
                         tint = AccentLime,
-                        modifier = Modifier.size(24.dp)
+                        background = AccentLimeSubtle,
+                        size = 40.dp
                     )
-                    Text(
-                        text = "База продуктов атлета (150+)",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = "База продуктов",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-0.5).sp,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "${filteredFoods.size} продуктов · на 100 г",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextSecondary,
+                            style = TextStyle(fontFeatureSettings = "tnum")
+                        )
+                    }
                 }
 
-                IconButton(onClick = onDismiss) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = strings.cancel, tint = TextMuted)
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(DarkSurfaceHigh)
+                        .clickable(onClick = onDismiss),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = strings.cancel,
+                        tint = TextSecondary,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-
             // Search TextField
-            OutlinedTextField(
+            GymTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Поиск (курица, рис, творог, лосось...)", style = MaterialTheme.typography.bodyMedium, color = TextMuted) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary) },
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = GymWell,
-                    unfocusedContainerColor = GymWell,
-                    focusedBorderColor = AccentLime,
-                    unfocusedBorderColor = BorderSubtle,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
-                ),
-                singleLine = true
+                placeholder = "Поиск (курица, рис, творог, лосось...)"
             )
-
-            Spacer(modifier = Modifier.height(10.dp))
 
             // Category Chips Row
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                item {
-                    FilterChip(
+                item(key = "cat_all") {
+                    GymPillTab(
+                        text = "Все",
                         selected = selectedCategory == null,
-                        onClick = { selectedCategory = null },
-                        label = { Text("Все", style = MaterialTheme.typography.labelSmall) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentLime.copy(alpha = 0.2f),
-                            selectedLabelColor = AccentLime,
-                            containerColor = DarkSurfaceElevated,
-                            labelColor = TextSecondary
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = selectedCategory == null,
-                            borderColor = BorderSubtle,
-                            selectedBorderColor = AccentLime
-                        )
+                        onClick = { selectedCategory = null }
                     )
                 }
-                items(FoodCategory.values()) { category ->
+                items(FoodCategory.values(), key = { it.name }) { category ->
                     val catLabel = when (category) {
                         FoodCategory.PROTEIN_SOURCE -> "Белки"
                         FoodCategory.COMPLEX_CARBS -> "Углеводы"
                         FoodCategory.HEALTHY_FATS -> "Жиры"
-                        FoodCategory.DAIRY_EGGS -> "Молочные и яйца"
-                        FoodCategory.FRUITS_BERRIES -> "Фрукты/ягоды"
-                        FoodCategory.VEGETABLES_GREENS -> "Овощи/зелень"
+                        FoodCategory.DAIRY_EGGS -> "Молочные"
+                        FoodCategory.FRUITS_BERRIES -> "Фрукты"
+                        FoodCategory.VEGETABLES_GREENS -> "Овощи"
                         FoodCategory.SPORTS_SUPPLEMENTS -> "Спортпит"
                         FoodCategory.PRE_WORKOUT_SNACKS -> "Перекусы"
                     }
-                    FilterChip(
+                    GymPillTab(
+                        text = catLabel,
                         selected = selectedCategory == category,
-                        onClick = { selectedCategory = if (selectedCategory == category) null else category },
-                        label = { Text(catLabel, style = MaterialTheme.typography.labelSmall) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentLime.copy(alpha = 0.2f),
-                            selectedLabelColor = AccentLime,
-                            containerColor = DarkSurfaceElevated,
-                            labelColor = TextSecondary
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = selectedCategory == category,
-                            borderColor = BorderSubtle,
-                            selectedBorderColor = AccentLime
-                        )
+                        onClick = {
+                            selectedCategory = if (selectedCategory == category) null else category
+                        }
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(14.dp))
 
             // Portion Adjuster if food is selected
             if (activeFoodItem != null) {
                 val currentItem = activeFoodItem!!
                 val grams = portionGramsText.toDoubleOrNull() ?: 100.0
                 val calculated = currentItem.calculateNutrients(grams)
+                val adjusterShape = RoundedCornerShape(20.dp)
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-                    border = BorderStroke(1.dp, AccentLime)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(adjusterShape)
+                        .background(DarkSurfaceHigh)
+                        .border(1.dp, BorderHighlight, adjusterShape)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = currentItem.localizedName(strings.languageCode),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = "${calculated.calories.toInt()} ккал на ${grams.toInt()}г",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = AccentLime,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-
-                            IconButton(onClick = { activeFoodItem = null }) {
-                                Icon(Icons.Default.Close, contentDescription = null, tint = TextMuted)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Macros Row
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = "Б: ${calculated.protein.toInt()}г",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = InfoAccent,
-                                fontWeight = FontWeight.Bold
+                                text = currentItem.localizedName(strings.languageCode),
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = TextPrimary
                             )
-                            Text(
-                                text = "Ж: ${calculated.fats.toInt()}г",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "У: ${calculated.carbs.toInt()}г",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = AmberGold,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Standard portions quick picker
-                        if (currentItem.servingPortions.isNotEmpty()) {
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                items(currentItem.servingPortions) { portion ->
-                                    Surface(
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = DarkSurfaceElevated,
-                                        border = BorderStroke(1.dp, BorderSubtle),
-                                        modifier = Modifier.clickable {
-                                            portionGramsText = portion.grams.toInt().toString()
-                                        }
-                                    ) {
-                                        Text(
-                                            text = portion.label,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = TextSecondary,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
-                                        )
-                                    }
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(10.dp))
-                        }
-
-                        // Grams input + Log button
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = portionGramsText,
-                                onValueChange = { portionGramsText = it },
-                                modifier = Modifier.weight(1f),
-                                label = { Text("Граммы (г)", style = MaterialTheme.typography.labelSmall) },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                shape = RoundedCornerShape(8.dp),
-                                singleLine = true
-                            )
-
-                            FilledTonalButton(
-                                onClick = {
-                                    onFoodSelected(
-                                        currentItem.localizedName(strings.languageCode),
-                                        calculated.calories,
-                                        calculated.protein,
-                                        calculated.carbs,
-                                        calculated.fats
-                                    )
-                                    onDismiss()
-                                },
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = AccentLime,
-                                    contentColor = DarkBackground
-                                ),
-                                modifier = Modifier.height(52.dp)
+                            Row(
+                                verticalAlignment = Alignment.Bottom,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Добавить", fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "${calculated.calories.toInt()}",
+                                    fontSize = 28.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = (-0.8).sp,
+                                    color = AccentLime,
+                                    style = TextStyle(fontFeatureSettings = "tnum")
+                                )
+                                Text(
+                                    text = "ккал · ${grams.toInt()} г",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondary,
+                                    style = TextStyle(fontFeatureSettings = "tnum"),
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(DarkSurface)
+                                .clickable { activeFoodItem = null },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = null,
+                                tint = TextSecondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+
+                    // Macros Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        MacroPillBadge(
+                            label = "Белки",
+                            value = "${calculated.protein.toInt()} г",
+                            color = AccentLime,
+                            modifier = Modifier.weight(1f)
+                        )
+                        MacroPillBadge(
+                            label = "Углеводы",
+                            value = "${calculated.carbs.toInt()} г",
+                            color = InfoAccent,
+                            modifier = Modifier.weight(1f)
+                        )
+                        MacroPillBadge(
+                            label = "Жиры",
+                            value = "${calculated.fats.toInt()} г",
+                            color = AmberWarm,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    // Standard portions quick picker
+                    if (currentItem.servingPortions.isNotEmpty()) {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(currentItem.servingPortions, key = { it.label }) { portion ->
+                                val portionStr = portion.grams.toInt().toString()
+                                GymPillTab(
+                                    text = portion.label,
+                                    selected = portionGramsText == portionStr,
+                                    onClick = { portionGramsText = portionStr }
+                                )
                             }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                    // Grams input + Log button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        GymTextField(
+                            value = portionGramsText,
+                            onValueChange = { input -> portionGramsText = input.filter { it.isDigit() } },
+                            placeholder = "Граммы (г)",
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        GymPrimaryButton(
+                            text = "Добавить",
+                            onClick = {
+                                onFoodSelected(
+                                    currentItem.localizedName(strings.languageCode),
+                                    calculated.calories,
+                                    calculated.protein,
+                                    calculated.carbs,
+                                    calculated.fats
+                                )
+                                onDismiss()
+                            }
+                        )
+                    }
+                }
             }
 
             // Food Catalog List
@@ -357,69 +348,124 @@ fun FoodDatabaseBottomSheet(
                     .height(320.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(filteredFoods) { food ->
-                    Card(
+                items(
+                    items = filteredFoods,
+                    key = { it.id }
+                ) { food ->
+                    val isSelected = activeFoodItem?.id == food.id
+                    val rowShape = RoundedCornerShape(16.dp)
+
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clip(rowShape)
+                            .background(if (isSelected) AccentLimeSubtle else DarkSurfaceHigh)
+                            .then(
+                                if (isSelected) {
+                                    Modifier.border(1.dp, BorderHighlight, rowShape)
+                                } else {
+                                    Modifier
+                                }
+                            )
                             .clickable {
                                 activeFoodItem = food
                                 portionGramsText = "100"
-                            },
-                        shape = RoundedCornerShape(10.dp),
-                        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                        border = BorderStroke(1.dp, if (activeFoodItem?.id == food.id) AccentLime else BorderSubtle)
+                            }
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = food.localizedName(strings.languageCode),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "Б ${food.proteinPer100g} · У ${food.carbsPer100g} · Ж ${food.fatsPer100g} г",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecondary,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Column(horizontalAlignment = Alignment.End) {
                                 Text(
-                                    text = food.localizedName(strings.languageCode),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = TextPrimary
+                                    text = "${food.caloriesPer100g.toInt()}",
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = AccentLime,
+                                    style = TextStyle(fontFeatureSettings = "tnum")
                                 )
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.padding(top = 2.dp)
-                                ) {
-                                    Text(
-                                        text = "${food.caloriesPer100g.toInt()} ккал",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = AccentLime
-                                    )
-                                    Text(
-                                        text = "Б: ${food.proteinPer100g}г",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = InfoAccent
-                                    )
-                                    Text(
-                                        text = "У: ${food.carbsPer100g}г",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = AmberGold
-                                    )
-                                    Text(
-                                        text = "Ж: ${food.fatsPer100g}г",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = TextSecondary
-                                    )
-                                }
+                                Text(
+                                    text = "ккал",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextMuted
+                                )
                             }
 
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                tint = TextSecondary,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isSelected) AccentLime else DarkSurfaceElevated),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = if (isSelected) GymInkOnLight else TextPrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MacroPillBadge(
+    label: String,
+    value: String,
+    color: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(DarkSurface)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextSecondary
+        )
+        Text(
+            text = value,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Black,
+            color = color,
+            style = TextStyle(fontFeatureSettings = "tnum")
+        )
     }
 }

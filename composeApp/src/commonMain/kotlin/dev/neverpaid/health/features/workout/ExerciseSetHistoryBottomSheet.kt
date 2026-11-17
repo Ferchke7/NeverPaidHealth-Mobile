@@ -1,7 +1,6 @@
 package dev.neverpaid.health.features.workout
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,21 +21,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -47,21 +42,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.neverpaid.health.core.designsystem.AmberGoldSoft
-import dev.neverpaid.health.core.designsystem.AmberWarm
-import dev.neverpaid.health.core.designsystem.BorderSubtle
-import dev.neverpaid.health.core.designsystem.DarkBackground
-import dev.neverpaid.health.core.designsystem.DarkSurface
-import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.AccentLimeDark
-import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
-import dev.neverpaid.health.core.designsystem.InfoAccent
-import dev.neverpaid.health.core.designsystem.InfoAccentLight
+import dev.neverpaid.health.core.designsystem.AmberWarm
+import dev.neverpaid.health.core.designsystem.DarkSurface
+import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
+import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
+import dev.neverpaid.health.core.designsystem.GymIconBadge
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
@@ -69,6 +64,7 @@ import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.math.HistoricalSetRecord
 import dev.neverpaid.health.core.math.SetHistoryCalculator
+import dev.neverpaid.health.core.math.StrengthCalculator
 import dev.neverpaid.health.core.platform.PlatformBridge
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -126,12 +122,24 @@ fun ExerciseSetHistoryBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        dragHandle = null
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .navigationBarsPadding()
         ) {
             // Header
             Row(
@@ -143,174 +151,202 @@ fun ExerciseSetHistoryBottomSheet(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(AccentLimeSubtle),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.FitnessCenter,
-                            contentDescription = null,
-                            tint = AccentLime,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                    GymIconBadge(
+                        icon = Icons.Default.FitnessCenter,
+                        tint = AccentLime,
+                        background = AccentLimeSubtle,
+                        size = 42.dp
+                    )
 
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
 
                     Column {
                         Text(
                             text = exerciseName,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-0.4).sp,
+                            color = TextPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = strings.historyModalTitle,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = TextSecondary
                         )
                     }
                 }
 
-                IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(DarkSurfaceHigh)
+                        .clickable(onClick = onDismiss),
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
                         tint = TextSecondary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // PR Summary Strip
+            // Flat tonal PR Summary Strip (zero borders)
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(DarkBackground)
-                    .border(1.dp, BorderSubtle, RoundedCornerShape(14.dp))
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // Card 1: All-Time PR 1RM
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(GymWell)
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
-                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(DarkSurfaceHigh)
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = AmberWarm, modifier = Modifier.size(12.dp))
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Text(text = strings.allTimePR, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = AmberWarm)
+                        Icon(
+                            imageVector = Icons.Default.EmojiEvents,
+                            contentDescription = null,
+                            tint = AmberWarm,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = strings.allTimePR,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AmberWarm,
+                            maxLines = 1
+                        )
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = if (prSummary.best1RMKg > 0) dev.neverpaid.health.core.math.StrengthCalculator.formatWeight(prSummary.best1RMKg, isKgUnit) else "—",
-                        fontSize = 14.sp,
+                        text = if (prSummary.best1RMKg > 0) {
+                            StrengthCalculator.formatWeight(prSummary.best1RMKg, isKgUnit)
+                        } else {
+                            "—"
+                        },
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Black,
-                        color = AmberGoldSoft
+                        color = TextPrimary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
-                    Text(text = "1RM", fontSize = 9.sp, color = TextMuted)
+                    Text(text = "1RM", fontSize = 10.sp, color = TextMuted)
                 }
 
                 // Card 2: Best Weight x Reps
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(GymWell)
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
-                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(DarkSurfaceHigh)
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = AccentLime, modifier = Modifier.size(12.dp))
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Text(text = strings.bestWeight, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = AccentLime)
+                        Icon(
+                            imageVector = Icons.Default.LocalFireDepartment,
+                            contentDescription = null,
+                            tint = AccentLime,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = strings.bestWeight,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentLime,
+                            maxLines = 1
+                        )
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = if (prSummary.bestWeightKg > 0) "${prSummary.bestWeightKg.toInt()}×${prSummary.bestReps}" else "—",
-                        fontSize = 14.sp,
+                        text = if (prSummary.bestWeightKg > 0) {
+                            "${prSummary.bestWeightKg.toInt()}×${prSummary.bestReps}"
+                        } else {
+                            "—"
+                        },
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Black,
-                        color = AccentLime
+                        color = AccentLime,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
-                    Text(text = "max reps", fontSize = 9.sp, color = TextMuted)
+                    Text(text = "max reps", fontSize = 10.sp, color = TextMuted)
                 }
 
                 // Card 3: Total Completed Sets
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(GymWell)
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
-                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(DarkSurfaceHigh)
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = InfoAccent, modifier = Modifier.size(12.dp))
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Text(text = strings.totalCompleted, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = InfoAccent)
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            tint = TextSecondary,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = strings.totalCompleted,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondary,
+                            maxLines = 1
+                        )
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "${prSummary.totalSets}",
-                        fontSize = 14.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Black,
-                        color = InfoAccentLight
+                        color = TextPrimary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
-                    Text(text = "подходов", fontSize = 9.sp, color = TextMuted)
+                    Text(text = "подходов", fontSize = 10.sp, color = TextMuted)
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Filter Tabs (All Sets / Set 1 / Set 2...)
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {
-                    FilterChip(
+                    GymPillTab(
+                        text = "${strings.allSetsTab} (${history.size})",
                         selected = selectedSetFilter == null,
-                        onClick = { selectedSetFilter = null },
-                        label = { Text("${strings.allSetsTab} (${history.size})", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentLime,
-                            selectedLabelColor = DarkBackground,
-                            containerColor = DarkSurfaceHigh,
-                            labelColor = TextSecondary
-                        )
+                        onClick = { selectedSetFilter = null }
                     )
                 }
 
                 items(availableSetNumbers) { setNum ->
                     val count = history.count { it.setNumber == setNum }
-                    FilterChip(
+                    GymPillTab(
+                        text = "Сет #$setNum ($count)",
                         selected = selectedSetFilter == setNum,
-                        onClick = { selectedSetFilter = setNum },
-                        label = { Text("Сет #$setNum ($count)", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentLime,
-                            selectedLabelColor = DarkBackground,
-                            containerColor = DarkSurfaceHigh,
-                            labelColor = TextSecondary
-                        )
+                        onClick = { selectedSetFilter = setNum }
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Sort Selector Bar
             Row(
@@ -320,62 +356,65 @@ fun ExerciseSetHistoryBottomSheet(
             ) {
                 Text(
                     text = "${displayRecords.size} записей",
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
                     color = TextMuted
                 )
 
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(DarkBackground)
-                        .padding(2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        .clip(CircleShape)
+                        .background(GymWell)
+                        .padding(3.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(if (sortBy == "best") DarkSurfaceHigh else Color.Transparent)
+                            .clip(CircleShape)
+                            .background(if (sortBy == "best") AccentLime else Color.Transparent)
                             .clickable { sortBy = "best" }
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
                             text = strings.sortByBest,
-                            fontSize = 10.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (sortBy == "best") AccentLime else TextMuted
+                            color = if (sortBy == "best") GymInkOnLight else TextSecondary
                         )
                     }
 
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(if (sortBy == "date") DarkSurfaceHigh else Color.Transparent)
+                            .clip(CircleShape)
+                            .background(if (sortBy == "date") AccentLime else Color.Transparent)
                             .clickable { sortBy = "date" }
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
                             text = strings.sortByDate,
-                            fontSize = 10.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (sortBy == "date") AccentLime else TextMuted
+                            color = if (sortBy == "date") GymInkOnLight else TextSecondary
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // List of Records
             if (displayRecords.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(160.dp),
+                        .height(160.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(DarkSurfaceHigh),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = strings.noHistoryFound,
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                         color = TextMuted
                     )
                 }
@@ -383,13 +422,14 @@ fun ExerciseSetHistoryBottomSheet(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 380.dp),
+                        .heightIn(max = 360.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(displayRecords) { record ->
                         val key = "${record.workoutId}-${record.setNumber}-${record.dateEpochMs}"
                         val isApplied = appliedKey == key
                         val rank = displayRecords.indexOf(record)
+                        val isTopBest = sortBy == "best" && rank == 0
                         val medal = when {
                             sortBy == "best" && rank == 0 -> "🥇"
                             sortBy == "best" && rank == 1 -> "🥈"
@@ -397,128 +437,122 @@ fun ExerciseSetHistoryBottomSheet(
                             else -> "#${rank + 1}"
                         }
 
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(10.dp),
-                            color = GymWell,
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                if (rank == 0 && sortBy == "best") AmberWarm.copy(alpha = 0.55f) else BorderSubtle
-                            )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(if (isTopBest) AccentLimeSubtle else DarkSurfaceHigh)
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // Left: Medal + Weight x Reps
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
                             ) {
-                                // Left: Medal + Weight x Reps
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(
-                                        text = medal,
-                                        fontSize = if (medal.startsWith("#")) 11.sp else 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextSecondary,
-                                        modifier = Modifier.width(28.dp)
-                                    )
+                                Text(
+                                    text = medal,
+                                    fontSize = if (medal.startsWith("#")) 12.sp else 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isTopBest) AccentLime else TextSecondary,
+                                    modifier = Modifier.width(30.dp),
+                                    style = TextStyle(fontFeatureSettings = "tnum")
+                                )
 
-                                    Column {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                text = "${dev.neverpaid.health.core.math.StrengthCalculator.formatWeight(record.weightKg, isKgUnit)} × ${record.reps}",
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.Black,
-                                                color = TextPrimary
-                                            )
-                                            if (record.e1rmKg > 0) {
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Box(
-                                                    modifier = Modifier
-                                                        .clip(RoundedCornerShape(4.dp))
-                                                        .background(AccentLime.copy(alpha = 0.12f))
-                                                        .padding(horizontal = 4.dp, vertical = 2.dp)
-                                                ) {
-                                                    Text(
-                                                        text = "1RM: ${dev.neverpaid.health.core.math.StrengthCalculator.formatWeight(record.e1rmKg, isKgUnit)}",
-                                                        fontSize = 9.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = AccentLime
-                                                    )
-                                                }
-                                            }
-                                        }
-
-                                        Spacer(modifier = Modifier.height(2.dp))
-
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                text = "Сет #${record.setNumber}",
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = TextSecondary
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(text = "•", fontSize = 10.sp, color = TextMuted)
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Icon(
-                                                imageVector = Icons.Default.CalendarToday,
-                                                contentDescription = null,
-                                                tint = TextMuted,
-                                                modifier = Modifier.size(10.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(3.dp))
-                                            Text(
-                                                text = PlatformBridge.formatDate(record.dateEpochMs, "dd MMM yyyy"),
-                                                fontSize = 10.sp,
-                                                color = TextMuted
-                                            )
-                                            if (record.workoutName.isNotBlank()) {
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(text = "•", fontSize = 10.sp, color = TextMuted)
-                                                Spacer(modifier = Modifier.width(4.dp))
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "${StrengthCalculator.formatWeight(record.weightKg, isKgUnit)} × ${record.reps}",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = TextPrimary,
+                                            style = TextStyle(fontFeatureSettings = "tnum")
+                                        )
+                                        if (record.e1rmKg > 0) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(CircleShape)
+                                                    .background(GymWell)
+                                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                                            ) {
                                                 Text(
-                                                    text = record.workoutName,
+                                                    text = "1RM ${StrengthCalculator.formatWeight(record.e1rmKg, isKgUnit)}",
                                                     fontSize = 10.sp,
-                                                    color = TextMuted,
-                                                    maxLines = 1
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = AccentLime,
+                                                    style = TextStyle(fontFeatureSettings = "tnum")
                                                 )
                                             }
                                         }
                                     }
-                                }
 
-                                // Right: Apply button
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (isApplied) AccentLime else DarkSurfaceHigh)
-                                        .clickable {
-                                            appliedKey = key
-                                            onApplyValues(record.weightKg, record.reps)
-                                            onDismiss()
-                                        }
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+
                                     Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "Сет #${record.setNumber}",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = TextSecondary
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
                                         Icon(
-                                            imageVector = if (isApplied) Icons.Default.Check else Icons.Default.ArrowDownward,
-                                            contentDescription = strings.applyRecord,
-                                            tint = if (isApplied) DarkBackground else AccentLime,
-                                            modifier = Modifier.size(13.dp)
+                                            imageVector = Icons.Default.CalendarToday,
+                                            contentDescription = null,
+                                            tint = TextMuted,
+                                            modifier = Modifier.size(11.dp)
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text(
-                                            text = if (isApplied) strings.applied else strings.applyRecord,
+                                            text = PlatformBridge.formatDate(record.dateEpochMs, "dd MMM yyyy"),
                                             fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = if (isApplied) DarkBackground else TextPrimary
+                                            color = TextMuted
                                         )
+                                        if (record.workoutName.isNotBlank()) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "· ${record.workoutName}",
+                                                fontSize = 11.sp,
+                                                color = TextMuted,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
                                     }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            // Right: Apply button
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isApplied) AccentLime else GymWell)
+                                    .clickable {
+                                        appliedKey = key
+                                        onApplyValues(record.weightKg, record.reps)
+                                        onDismiss()
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = if (isApplied) Icons.Default.Check else Icons.Default.ArrowDownward,
+                                        contentDescription = strings.applyRecord,
+                                        tint = if (isApplied) GymInkOnLight else AccentLime,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = if (isApplied) strings.applied else strings.applyRecord,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isApplied) GymInkOnLight else TextPrimary
+                                    )
                                 }
                             }
                         }
@@ -526,17 +560,13 @@ fun ExerciseSetHistoryBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedButton(
+            GymOutlineButton(
+                text = strings.done,
                 onClick = onDismiss,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(42.dp),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(text = strings.done, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-            }
+                fillWidth = true
+            )
         }
     }
 }

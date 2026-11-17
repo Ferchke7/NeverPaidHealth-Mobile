@@ -3,7 +3,6 @@ package dev.neverpaid.health.features.progress
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -39,39 +39,48 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeGlow
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
+import dev.neverpaid.health.core.designsystem.AmberSubtle
+import dev.neverpaid.health.core.designsystem.AmberWarm
 import dev.neverpaid.health.core.designsystem.BorderDivider
-import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
+import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.AccentLime
-import dev.neverpaid.health.core.designsystem.InteractiveAnatomyHeatmap
 import dev.neverpaid.health.core.designsystem.GymCard
 import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymInnerWell
 import dev.neverpaid.health.core.designsystem.GymLabeledField
 import dev.neverpaid.health.core.designsystem.GymLoadingCard
 import dev.neverpaid.health.core.designsystem.GymOutlineButton
 import dev.neverpaid.health.core.designsystem.GymPageHeader
 import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymProgressBar
-import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymSectionTitle
+import dev.neverpaid.health.core.designsystem.GymStatTile
+import dev.neverpaid.health.core.designsystem.InteractiveAnatomyHeatmap
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
-import dev.neverpaid.health.core.designsystem.TextSoft
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.domain.model.PersonalRecord
@@ -137,12 +146,12 @@ fun ProgressScreen(
         LazyColumn(
             modifier = modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             item(key = "header") {
                 GymPageHeader(
                     title = strings.progressTitle,
-                    subtitle = "Динамика силы и персональные рекорды"
+                    subtitle = "Динамика силы и личные рекорды"
                 )
             }
             item(key = "loading") {
@@ -169,18 +178,16 @@ fun ProgressScreen(
             top = 8.dp,
             bottom = 110.dp
         ),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item(key = "page_header", contentType = "header") {
-            val headerTitle = if (state.selectedTab == 0) strings.progressTitle else "Баланс и 1RM"
-            val headerSubtitle = if (state.selectedTab == 0) {
-                "Динамика силы и персональные рекорды"
-            } else {
-                "Нагрузка, тоннаж и силовые стандарты"
-            }
             GymPageHeader(
-                title = headerTitle,
-                subtitle = headerSubtitle
+                title = strings.progressTitle,
+                subtitle = when (state.selectedTab) {
+                    0 -> "Динамика рабочих весов и личные рекорды"
+                    1 -> "Мышечный баланс и недельный тоннаж"
+                    else -> "Расчёт 1RM и силовые ориентиры"
+                }
             )
         }
 
@@ -217,17 +224,19 @@ fun ProgressScreen(
                     )
                 }
                 item(key = "footer_links", contentType = "links") {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         GymOutlineButton(
                             text = "История тренировок",
-                            onClick = onNavigateToHistory
+                            onClick = onNavigateToHistory,
+                            modifier = Modifier.weight(1f)
                         )
                         GymOutlineButton(
                             text = "Метрики тела",
-                            onClick = onNavigateToBody
+                            onClick = onNavigateToBody,
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -247,17 +256,19 @@ fun ProgressScreen(
                     )
                 }
                 item(key = "footer_links_balance", contentType = "links") {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         GymOutlineButton(
                             text = "История тренировок",
-                            onClick = onNavigateToHistory
+                            onClick = onNavigateToHistory,
+                            modifier = Modifier.weight(1f)
                         )
                         GymOutlineButton(
                             text = "1RM & Стандарты",
-                            onClick = { onAction(ProgressUiAction.OnSelectTab(2)) }
+                            onClick = { onAction(ProgressUiAction.OnSelectTab(2)) },
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -268,17 +279,19 @@ fun ProgressScreen(
                     OneRepMaxAndStandardsCard(personalRecords = state.personalRecords)
                 }
                 item(key = "footer_links_1rm", contentType = "links") {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         GymOutlineButton(
                             text = "История тренировок",
-                            onClick = onNavigateToHistory
+                            onClick = onNavigateToHistory,
+                            modifier = Modifier.weight(1f)
                         )
                         GymOutlineButton(
                             text = "Прогрессия & PR",
-                            onClick = { onAction(ProgressUiAction.OnSelectTab(0)) }
+                            onClick = { onAction(ProgressUiAction.OnSelectTab(0)) },
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -289,11 +302,21 @@ fun ProgressScreen(
 
 @Composable
 private fun ProgressKpiGrid(state: ProgressUiState) {
-    val totalHours = remember(state.workoutHistory) {
+    val totalHoursNum = remember(state.workoutHistory) {
         val totalSec = state.workoutHistory.sumOf { it.durationSeconds.coerceAtLeast(0L) }
         val hrs = totalSec / 3600.0
         val rounded = round(hrs * 10.0) / 10.0
-        if (rounded % 1.0 == 0.0) "${rounded.toInt()} ч" else "$rounded ч"
+        if (rounded % 1.0 == 0.0) "${rounded.toInt()}" else "$rounded"
+    }
+
+    val (tonnageValue, tonnageUnit) = remember(state.totalVolumeKg) {
+        if (state.totalVolumeKg >= 1000.0) {
+            val tons = round((state.totalVolumeKg / 1000.0) * 10.0) / 10.0
+            val num = if (tons % 1.0 == 0.0) "${tons.toInt()}" else "$tons"
+            num to "т"
+        } else {
+            "${round(state.totalVolumeKg).toInt()}" to "кг"
+        }
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -301,14 +324,16 @@ private fun ProgressKpiGrid(state: ProgressUiState) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            KpiStatCard(
-                value = "${state.totalWorkouts}",
+            GymStatTile(
                 label = "Тренировки",
+                value = "${state.totalWorkouts}",
                 modifier = Modifier.weight(1f)
             )
-            KpiStatCard(
-                value = formatTonsCompact(state.totalVolumeKg),
+            GymStatTile(
                 label = "Общий тоннаж",
+                value = tonnageValue,
+                unit = tonnageUnit,
+                valueColor = AccentLime,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -316,39 +341,19 @@ private fun ProgressKpiGrid(state: ProgressUiState) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            KpiStatCard(
-                value = "${state.personalRecords.size}",
+            GymStatTile(
                 label = "Личные рекорды",
+                value = "${state.personalRecords.size}",
+                valueColor = AmberWarm,
                 modifier = Modifier.weight(1f)
             )
-            KpiStatCard(
-                value = totalHours,
-                label = "В зале",
+            GymStatTile(
+                label = "Время в зале",
+                value = totalHoursNum,
+                unit = "ч",
                 modifier = Modifier.weight(1f)
             )
         }
-    }
-}
-
-@Composable
-private fun KpiStatCard(
-    value: String,
-    label: String,
-    modifier: Modifier = Modifier
-) {
-    GymCard(modifier = modifier) {
-        Text(
-            text = value,
-            fontSize = 26.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            color = TextSecondary
-        )
     }
 }
 
@@ -421,121 +426,94 @@ private fun ExerciseProgressionCard(
     } else 0
 
     GymCard {
-        Text(
-            text = "Прогрессия упражнения",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
+        GymSectionTitle(
+            title = "Прогрессия упражнения",
+            actionLabel = "Сменить",
+            onAction = { showExerciseSelectorSheet = true }
         )
-        Spacer(modifier = Modifier.height(12.dp))
 
         GymOutlineButton(
             text = selectedExerciseName,
-            onClick = { showExerciseSelectorSheet = true }
+            onClick = { showExerciseSelectorSheet = true },
+            fillWidth = true
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            listOf("Вес снаряда", "Расчётный 1RM", "Объём").forEachIndexed { idx, label ->
-                GymPillTab(
-                    text = label,
-                    selected = metricIndex == idx,
-                    onClick = { metricIndex = idx }
-                )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf("Вес", "1RM", "Объём").forEachIndexed { idx, label ->
+                    GymPillTab(
+                        text = label,
+                        selected = metricIndex == idx,
+                        onClick = { metricIndex = idx }
+                    )
+                }
+            }
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                listOf("1М", "3М", "Все").forEachIndexed { idx, label ->
+                    GymPillTab(
+                        text = label,
+                        selected = rangeIndex == idx,
+                        onClick = { rangeIndex = idx }
+                    )
+                }
             }
         }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            listOf("1 мес", "3 мес", "Все").forEachIndexed { idx, label ->
-                GymPillTab(
-                    text = label,
-                    selected = rangeIndex == idx,
-                    onClick = { rangeIndex = idx }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         if (values.isEmpty()) {
             GymInnerWell {
                 Text(
                     text = "Нет данных за выбранный период",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Выполните хотя бы одну тренировку с «$selectedExerciseName», чтобы построить кривую прогрессии.",
+                    text = "Завершите тренировку с «$selectedExerciseName», чтобы построить график прогрессии.",
                     fontSize = 13.sp,
                     color = TextSecondary
                 )
             }
         } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                InnerMetricTile(
+                    label = "Лучший",
+                    value = "${formatCleanKg(currentMax)} кг",
+                    valueColor = TextPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+                val sign = if (deltaPct >= 0) "+" else ""
+                InnerMetricTile(
+                    label = "Динамика",
+                    value = "$sign$deltaPct%",
+                    valueColor = AccentLime,
+                    modifier = Modifier.weight(1f)
+                )
+                InnerMetricTile(
+                    label = "Старт",
+                    value = "${formatCleanKg(firstVal)} кг",
+                    valueColor = TextSecondary,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
             GymLineChart(
                 labels = samples.map { it.dateLabel },
                 values = values,
                 unitLabel = "кг"
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "${formatCleanKg(currentMax)} кг",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Текущий рекорд",
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    val sign = if (deltaPct >= 0) "+" else ""
-                    Text(
-                        text = "$sign$deltaPct%",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = AccentLime
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "От начала периода",
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "${formatCleanKg(firstVal)} кг",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
-            )
-            Text(
-                text = "Стартовый вес",
-                fontSize = 12.sp,
-                color = TextSecondary
             )
         }
     }
@@ -546,47 +524,83 @@ private fun ExerciseProgressionCard(
             onDismissRequest = { showExerciseSelectorSheet = false },
             sheetState = sheetState,
             containerColor = DarkSurface,
-            contentColor = TextPrimary
+            contentColor = TextPrimary,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = "Выбрать упражнение",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = TextPrimary
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                exerciseNames.forEachIndexed { idx, name ->
+                Spacer(modifier = Modifier.height(4.dp))
+                exerciseNames.forEach { name ->
+                    val isSelected = name == selectedExerciseName
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(if (isSelected) AccentLimeSubtle else DarkSurfaceHigh)
                             .clickable {
                                 selectedExerciseName = name
                                 showExerciseSelectorSheet = false
                             }
-                            .padding(vertical = 12.dp),
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = name,
                             fontSize = 15.sp,
-                            fontWeight = if (name == selectedExerciseName) FontWeight.SemiBold else FontWeight.Normal,
-                            color = if (name == selectedExerciseName) AccentLime else TextPrimary
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) AccentLime else TextPrimary
                         )
                     }
-                    if (idx < exerciseNames.lastIndex) {
-                        GymDivider()
-                    }
                 }
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun InnerMetricTile(
+    label: String,
+    value: String,
+    valueColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(DarkSurfaceHigh)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = value,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Black,
+            color = valueColor,
+            style = TextStyle(fontFeatureSettings = "tnum"),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -597,17 +611,15 @@ private fun GymLineChart(
     unitLabel: String
 ) {
     val textMeasurer = rememberTextMeasurer()
-    val axisStyle = TextStyle(fontSize = 10.sp, color = TextMuted)
-    val pointStyle = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
+    val axisStyle = TextStyle(fontSize = 10.sp, color = TextMuted, fontFeatureSettings = "tnum")
+    val pointStyle = TextStyle(
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Bold,
+        color = TextPrimary,
+        fontFeatureSettings = "tnum"
+    )
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = unitLabel,
-            fontSize = 11.sp,
-            color = TextMuted
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
@@ -615,7 +627,7 @@ private fun GymLineChart(
         ) {
             val leftPad = 40.dp.toPx()
             val rightPad = 18.dp.toPx()
-            val topPad = 22.dp.toPx()
+            val topPad = 24.dp.toPx()
             val bottomPad = 26.dp.toPx()
 
             val chartW = (size.width - leftPad - rightPad).coerceAtLeast(10f)
@@ -628,7 +640,6 @@ private fun GymLineChart(
             val maxVal = rawMax + span * 0.15
             val valRange = (maxVal - minVal).coerceAtLeast(1.0)
 
-            // 3 horizontal dashed lines
             val steps = 2
             for (i in 0..steps) {
                 val frac = i / steps.toFloat()
@@ -663,23 +674,46 @@ private fun GymLineChart(
             if (coords.size >= 2) {
                 val linePath = Path().apply {
                     moveTo(coords.first().x, coords.first().y)
-                    for (i in 1 until coords.size) {
-                        lineTo(coords[i].x, coords[i].y)
+                    for (i in 0 until coords.size - 1) {
+                        val p0 = coords[i]
+                        val p1 = coords[i + 1]
+                        val cp1 = Offset(p0.x + (p1.x - p0.x) / 2f, p0.y)
+                        val cp2 = Offset(p0.x + (p1.x - p0.x) / 2f, p1.y)
+                        cubicTo(cp1.x, cp1.y, cp2.x, cp2.y, p1.x, p1.y)
                     }
                 }
+                val fillPath = Path().apply {
+                    addPath(linePath)
+                    lineTo(coords.last().x, topPad + chartH)
+                    lineTo(coords.first().x, topPad + chartH)
+                    close()
+                }
+                drawPath(
+                    path = fillPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(AccentLimeGlow, Color.Transparent),
+                        startY = topPad,
+                        endY = topPad + chartH
+                    ),
+                    style = Fill
+                )
                 drawPath(
                     path = linePath,
                     color = AccentLime,
-                    style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
                 )
             }
 
-            val maxLabelPoints = coords.size.coerceAtMost(6)
             val step = if (coords.size > 6) (coords.size / 5).coerceAtLeast(1) else 1
             coords.forEachIndexed { idx, pt ->
                 drawCircle(
+                    color = DarkBackground,
+                    radius = 5.5.dp.toPx(),
+                    center = pt
+                )
+                drawCircle(
                     color = AccentLime,
-                    radius = 4.dp.toPx(),
+                    radius = 3.8.dp.toPx(),
                     center = pt
                 )
                 if (idx % step == 0 || idx == coords.lastIndex) {
@@ -738,19 +772,30 @@ private fun PersonalRecordsSectionCard(
     }
 
     GymCard {
-        Text(
-            text = "Личные рекорды",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "${filtered.size} упражнений · лучшие значения по каждому показателю",
-            fontSize = 13.sp,
-            color = TextSecondary
-        )
-        Spacer(modifier = Modifier.height(14.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            GymSectionTitle(
+                title = "Личные рекорды",
+                modifier = Modifier.weight(1f)
+            )
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(AmberSubtle)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = "${filtered.size} PR",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Black,
+                    color = AmberWarm,
+                    style = TextStyle(fontFeatureSettings = "tnum")
+                )
+            }
+        }
 
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -765,92 +810,121 @@ private fun PersonalRecordsSectionCard(
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
-        GymDivider()
-
         if (filtered.isEmpty()) {
-            Spacer(modifier = Modifier.height(14.dp))
-            Text(
-                text = "Нет зафиксированных рекордов в этой категории.",
-                fontSize = 14.sp,
-                color = TextMuted
-            )
+            GymInnerWell {
+                Text(
+                    text = "Нет зафиксированных рекордов в этой категории",
+                    fontSize = 14.sp,
+                    color = TextSecondary
+                )
+            }
         } else {
-            filtered.forEachIndexed { idx, item ->
-                val pr = item.pr
-                val maxSetVol = if (pr.maxVolumeSetKg > 0.0) pr.maxVolumeSetKg else pr.weightKg * pr.reps
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp)
-                ) {
-                    Text(
-                        text = pr.exerciseName,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                filtered.forEach { item ->
+                    val pr = item.pr
+                    val maxSetVol = if (pr.maxVolumeSetKg > 0.0) pr.maxVolumeSetKg else pr.weightKg * pr.reps
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(DarkSurfaceHigh)
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Макс. вес", fontSize = 12.sp, color = TextMuted)
-                            Spacer(modifier = Modifier.height(2.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                "${formatCleanKg(pr.weightKg)} кг",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
+                                text = pr.exerciseName,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(AmberSubtle)
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "PR · ${formatCleanKg(pr.weightKg)} кг",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = AmberWarm,
+                                    style = TextStyle(fontFeatureSettings = "tnum")
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            PrStatMetric(
+                                label = "Макс. вес",
+                                value = "${formatCleanKg(pr.weightKg)} кг",
+                                valueColor = AmberWarm,
+                                modifier = Modifier.weight(1f)
+                            )
+                            PrStatMetric(
+                                label = "Расчётный 1RM",
+                                value = "${formatCleanKg(pr.e1rmKg)} кг",
+                                valueColor = AccentLime,
+                                modifier = Modifier.weight(1f)
                             )
                         }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Расчётный 1RM", fontSize = 12.sp, color = TextMuted)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                "${formatCleanKg(pr.e1rmKg)} кг",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            PrStatMetric(
+                                label = "Объём сета",
+                                value = "${formatCleanKg(maxSetVol)} кг",
+                                valueColor = TextPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            PrStatMetric(
+                                label = "Повторения",
+                                value = "${pr.reps} повт.",
+                                valueColor = TextPrimary,
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Макс. объём сета", fontSize = 12.sp, color = TextMuted)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                "${formatCleanKg(maxSetVol)} кг",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Макс. повторений", fontSize = 12.sp, color = TextMuted)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                "${pr.reps} повт.",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                        }
-                    }
-                }
-                if (idx < filtered.lastIndex) {
-                    GymDivider()
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PrStatMetric(
+    label: String,
+    value: String,
+    valueColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = TextMuted
+        )
+        Text(
+            text = value,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Black,
+            color = valueColor,
+            style = TextStyle(fontFeatureSettings = "tnum")
+        )
     }
 }
 
@@ -894,12 +968,11 @@ private fun WeeklyBalanceCard(
                 Text(
                     text = "Недельный баланс",
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.ExtraBold,
                     color = TextPrimary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Текущая неделя · рабочие подходы",
+                    text = "Цель: 12–16 рабочих сетов на группу",
                     fontSize = 13.sp,
                     color = TextSecondary
                 )
@@ -910,17 +983,7 @@ private fun WeeklyBalanceCard(
             )
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(
-            text = "Ориентир: 12–16 сетов на группу в неделю",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             groups.forEach { (group, sets) ->
                 val statusText = when {
                     sets >= 12 -> "Оптимум"
@@ -929,31 +992,44 @@ private fun WeeklyBalanceCard(
                 }
                 val isOptimal = sets >= 12
 
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(DarkSurfaceHigh)
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = group,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = statusText,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isOptimal) AccentLime else TextMuted
+                            )
+                        }
                         Text(
-                            text = group,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "$sets / 12–16 сетов",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (isOptimal) AccentLime else TextPrimary
+                            text = "$sets / 16",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (isOptimal) AccentLime else TextPrimary,
+                            style = TextStyle(fontFeatureSettings = "tnum")
                         )
                     }
-                    Text(
-                        text = statusText,
-                        fontSize = 12.sp,
-                        color = if (isOptimal) AccentLime else TextMuted
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
                     GymProgressBar(
                         progress = (sets / 16f).coerceIn(0f, 1f),
                         color = AccentLime
@@ -962,18 +1038,8 @@ private fun WeeklyBalanceCard(
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
-        Text(
-            text = "Шкала: 0–16 сетов · зелёный столбец — фактический объём",
-            fontSize = 12.sp,
-            color = TextSecondary
-        )
-
         AnimatedVisibility(visible = showAnatomyMap) {
-            Column {
-                Spacer(modifier = Modifier.height(16.dp))
-                InteractiveAnatomyHeatmap(weeklyMuscleVolumes = muscleHypertrophySets)
-            }
+            InteractiveAnatomyHeatmap(weeklyMuscleVolumes = muscleHypertrophySets)
         }
     }
 }
@@ -1020,13 +1086,7 @@ private fun TonnageTrendCard(
     val peakVol = bars.maxOfOrNull { it.volumeKg } ?: 0.0
 
     GymCard {
-        Text(
-            text = "Тоннаж",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-        Spacer(modifier = Modifier.height(12.dp))
+        GymSectionTitle(title = "Тоннаж")
 
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1044,42 +1104,29 @@ private fun TonnageTrendCard(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = formatTonsCompact(totalVol),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                Text("Всего", fontSize = 12.sp, color = TextSecondary)
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = formatTonsCompact(avgVol),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                Text("В среднем", fontSize = 12.sp, color = TextSecondary)
-            }
+            InnerMetricTile(
+                label = "Всего",
+                value = formatTonsCompact(totalVol),
+                valueColor = TextPrimary,
+                modifier = Modifier.weight(1f)
+            )
+            InnerMetricTile(
+                label = "Средний",
+                value = formatTonsCompact(avgVol),
+                valueColor = TextPrimary,
+                modifier = Modifier.weight(1f)
+            )
+            InnerMetricTile(
+                label = "Пик",
+                value = formatTonsCompact(peakVol),
+                valueColor = AccentLime,
+                modifier = Modifier.weight(1f)
+            )
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = formatTonsCompact(peakVol),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-        Text("Пиковая тренировка", fontSize = 12.sp, color = TextSecondary)
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         if (bars.isEmpty() || bars.all { it.volumeKg <= 0.0 }) {
             GymInnerWell {
@@ -1092,98 +1139,91 @@ private fun TonnageTrendCard(
         } else {
             GymTonnageBarChart(samples = bars)
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "Столбцы — тоннаж · подписи: т · «с.» — сеты",
-            fontSize = 12.sp,
-            color = TextMuted
-        )
     }
 }
 
 @Composable
 private fun GymTonnageBarChart(samples: List<TonnageBarSample>) {
     val textMeasurer = rememberTextMeasurer()
-    val axisStyle = TextStyle(fontSize = 10.sp, color = TextMuted)
-    val valStyle = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
+    val axisStyle = TextStyle(fontSize = 10.sp, color = TextMuted, fontFeatureSettings = "tnum")
+    val valStyle = TextStyle(
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Bold,
+        color = TextPrimary,
+        fontFeatureSettings = "tnum"
+    )
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = "кг", fontSize = 11.sp, color = TextMuted)
-        Spacer(modifier = Modifier.height(4.dp))
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(210.dp)
+    ) {
+        val leftPad = 48.dp.toPx()
+        val topPad = 24.dp.toPx()
+        val bottomPad = 36.dp.toPx()
+        val chartW = (size.width - leftPad - 8.dp.toPx()).coerceAtLeast(10f)
+        val chartH = (size.height - topPad - bottomPad).coerceAtLeast(10f)
 
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(210.dp)
-        ) {
-            val leftPad = 48.dp.toPx()
-            val topPad = 24.dp.toPx()
-            val bottomPad = 36.dp.toPx()
-            val chartW = (size.width - leftPad - 8.dp.toPx()).coerceAtLeast(10f)
-            val chartH = (size.height - topPad - bottomPad).coerceAtLeast(10f)
+        val maxVal = (samples.maxOfOrNull { it.volumeKg } ?: 1000.0).coerceAtLeast(100.0)
+        val yCap = maxVal * 1.12
 
-            val maxVal = (samples.maxOfOrNull { it.volumeKg } ?: 1000.0).coerceAtLeast(100.0)
-            val yCap = maxVal * 1.12
+        for (i in 0..3) {
+            val frac = i / 3f
+            val y = topPad + chartH * (1f - frac)
+            drawLine(
+                color = BorderDivider,
+                start = Offset(leftPad, y),
+                end = Offset(leftPad + chartW, y),
+                strokeWidth = 1.dp.toPx(),
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f), 0f)
+            )
+            val tick = round(yCap * frac).toInt()
+            val m = textMeasurer.measure("$tick", axisStyle)
+            drawText(
+                textLayoutResult = m,
+                topLeft = Offset(0f, y - m.size.height / 2f)
+            )
+        }
 
-            for (i in 0..3) {
-                val frac = i / 3f
-                val y = topPad + chartH * (1f - frac)
-                drawLine(
-                    color = BorderDivider,
-                    start = Offset(leftPad, y),
-                    end = Offset(leftPad + chartW, y),
-                    strokeWidth = 1.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f), 0f)
+        val slotW = chartW / samples.size.coerceAtLeast(1)
+        val barW = (slotW * 0.50f).coerceIn(18.dp.toPx(), 44.dp.toPx())
+
+        samples.forEachIndexed { idx, sample ->
+            val centerX = leftPad + idx * slotW + slotW / 2f
+            val barLeft = centerX - barW / 2f
+            val frac = (sample.volumeKg / yCap).toFloat().coerceIn(0.05f, 1f)
+            val barH = chartH * frac
+            val barTop = topPad + chartH - barH
+
+            drawRoundRect(
+                color = AccentLime,
+                topLeft = Offset(barLeft, barTop),
+                size = Size(barW, barH),
+                cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
+            )
+
+            val topLabel = formatTonsCompact(sample.volumeKg)
+            val topMeasured = textMeasurer.measure(topLabel, valStyle)
+            drawText(
+                textLayoutResult = topMeasured,
+                topLeft = Offset(
+                    centerX - topMeasured.size.width / 2f,
+                    (barTop - topMeasured.size.height - 4.dp.toPx()).coerceAtLeast(0f)
                 )
-                val tick = round(yCap * frac).toInt()
-                val m = textMeasurer.measure("$tick", axisStyle)
+            )
+
+            val xMeasured = textMeasurer.measure(sample.label, axisStyle)
+            drawText(
+                textLayoutResult = xMeasured,
+                topLeft = Offset(centerX - xMeasured.size.width / 2f, topPad + chartH + 4.dp.toPx())
+            )
+
+            if (sample.subLabel.isNotBlank()) {
+                val sMeasured = textMeasurer.measure(sample.subLabel, axisStyle)
                 drawText(
-                    textLayoutResult = m,
-                    topLeft = Offset(0f, y - m.size.height / 2f)
+                    textLayoutResult = sMeasured,
+                    topLeft = Offset(centerX - sMeasured.size.width / 2f, topPad + chartH + 18.dp.toPx())
                 )
-            }
-
-            val slotW = chartW / samples.size.coerceAtLeast(1)
-            val barW = (slotW * 0.48f).coerceIn(16.dp.toPx(), 42.dp.toPx())
-
-            samples.forEachIndexed { idx, sample ->
-                val centerX = leftPad + idx * slotW + slotW / 2f
-                val barLeft = centerX - barW / 2f
-                val frac = (sample.volumeKg / yCap).toFloat().coerceIn(0.04f, 1f)
-                val barH = chartH * frac
-                val barTop = topPad + chartH - barH
-
-                drawRoundRect(
-                    color = AccentLime,
-                    topLeft = Offset(barLeft, barTop),
-                    size = Size(barW, barH),
-                    cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
-                )
-
-                val topLabel = formatTonsCompact(sample.volumeKg)
-                val topMeasured = textMeasurer.measure(topLabel, valStyle)
-                drawText(
-                    textLayoutResult = topMeasured,
-                    topLeft = Offset(
-                        centerX - topMeasured.size.width / 2f,
-                        (barTop - topMeasured.size.height - 4.dp.toPx()).coerceAtLeast(0f)
-                    )
-                )
-
-                val xMeasured = textMeasurer.measure(sample.label, axisStyle)
-                drawText(
-                    textLayoutResult = xMeasured,
-                    topLeft = Offset(centerX - xMeasured.size.width / 2f, topPad + chartH + 4.dp.toPx())
-                )
-
-                if (sample.subLabel.isNotBlank()) {
-                    val sMeasured = textMeasurer.measure(sample.subLabel, axisStyle)
-                    drawText(
-                        textLayoutResult = sMeasured,
-                        topLeft = Offset(centerX - sMeasured.size.width / 2f, topPad + chartH + 18.dp.toPx())
-                    )
-                }
             }
         }
     }
@@ -1237,26 +1277,17 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
     val compare1RM = round((if (useBrzycki) epley1RM else brzycki1RM) * 10.0) / 10.0
 
     GymCard {
-        Text(
-            text = "1RM & Стандарты",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
+        GymSectionTitle(
+            title = "Калькулятор 1RM",
+            actionLabel = "Упражнение",
+            onAction = { showStandardSheet = true }
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "Калькулятор одноповторного максимума",
-            fontSize = 13.sp,
-            color = TextSecondary
-        )
-        Spacer(modifier = Modifier.height(14.dp))
 
         GymOutlineButton(
             text = selectedStandard.name,
-            onClick = { showStandardSheet = true }
+            onClick = { showStandardSheet = true },
+            fillWidth = true
         )
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1278,11 +1309,9 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
             )
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             GymPillTab(
                 text = "Brzycki",
@@ -1296,43 +1325,41 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        GymInnerWell {
+            Text(
+                text = "РАСЧЁТНЫЙ МАКСИМУМ (1RM)",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.8.sp,
+                color = TextSecondary
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "${formatCleanKg(primary1RM)} кг",
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-1).sp,
+                color = AccentLime,
+                style = TextStyle(fontFeatureSettings = "tnum")
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = if (useBrzycki) {
+                    "По формуле Epley: ${formatCleanKg(compare1RM)} кг"
+                } else {
+                    "По формуле Brzycki: ${formatCleanKg(compare1RM)} кг"
+                },
+                fontSize = 13.sp,
+                color = TextSecondary
+            )
+        }
 
-        Text(
-            text = "${formatCleanKg(primary1RM)} кг",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = AccentLime
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = if (useBrzycki) {
-                "Brzycki · ${formatCleanKg(wKg)} × 36 / (37 − $reps)"
-            } else {
-                "Epley · ${formatCleanKg(wKg)} × (1 + $reps / 30)"
-            },
-            fontSize = 13.sp,
-            color = TextSecondary
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = if (useBrzycki) {
-                "Для сравнения: Epley ${formatCleanKg(compare1RM)} кг"
-            } else {
-                "Для сравнения: Brzycki ${formatCleanKg(compare1RM)} кг"
-            },
-            fontSize = 12.sp,
-            color = TextMuted
-        )
-
-        Spacer(modifier = Modifier.height(18.dp))
         Text(
             text = "Рабочие проценты",
             fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.ExtraBold,
             color = TextPrimary
         )
-        Spacer(modifier = Modifier.height(10.dp))
 
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1340,47 +1367,49 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
         ) {
             listOf(50, 60, 70, 80, 90).forEach { pct ->
                 val targetKg = round((primary1RM * (pct / 100.0)) * 10.0) / 10.0
-                Box(
+                Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(DarkBackground)
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(8.dp))
-                        .padding(horizontal = 12.dp, vertical = 9.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(DarkSurfaceHigh)
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "$pct% · ${formatCleanKg(targetKg)} кг",
+                        text = "$pct%",
                         fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextPrimary
+                        fontWeight = FontWeight.Bold,
+                        color = TextSecondary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
+                    )
+                    Text(
+                        text = "${formatCleanKg(targetKg)} кг",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Black,
+                        color = TextPrimary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        GymDivider()
+
         Text(
             text = "Силовые стандарты",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.ExtraBold,
             color = TextPrimary
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "Шкала уровней для выбранного упражнения",
-            fontSize = 13.sp,
-            color = TextSecondary
-        )
-        Spacer(modifier = Modifier.height(14.dp))
 
         val levels = listOf("Beginner", "Novice", "Intermediate", "Advanced", "Elite")
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             for (rowIdx in levels.indices step 2) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     StrengthStandardCell(
-                        numberLabel = "0${rowIdx + 1}",
                         levelName = levels[rowIdx],
                         thresholdKg = selectedStandard.thresholdsKg[rowIdx],
                         achieved = primary1RM >= selectedStandard.thresholdsKg[rowIdx],
@@ -1388,7 +1417,6 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
                     )
                     if (rowIdx + 1 < levels.size) {
                         StrengthStandardCell(
-                            numberLabel = "0${rowIdx + 2}",
                             levelName = levels[rowIdx + 1],
                             thresholdKg = selectedStandard.thresholdsKg[rowIdx + 1],
                             achieved = primary1RM >= selectedStandard.thresholdsKg[rowIdx + 1],
@@ -1400,13 +1428,6 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "Пороговые веса и текущий уровень — по существующим таблицам",
-            fontSize = 12.sp,
-            color = TextSecondary
-        )
     }
 
     if (showStandardSheet) {
@@ -1415,40 +1436,46 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
             onDismissRequest = { showStandardSheet = false },
             sheetState = sheetState,
             containerColor = DarkSurface,
-            contentColor = TextPrimary
+            contentColor = TextPrimary,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Выбрать стандарт",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    text = "Выбрать упражнение",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = TextPrimary
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                standardsCatalog.forEachIndexed { idx, std ->
+                Spacer(modifier = Modifier.height(4.dp))
+                standardsCatalog.forEach { std ->
+                    val isSelected = std.name == selectedStandard.name
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(if (isSelected) AccentLimeSubtle else DarkSurfaceHigh)
                             .clickable {
                                 selectedStandard = std
                                 showStandardSheet = false
                             }
-                            .padding(vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = std.name,
                             fontSize = 15.sp,
-                            color = if (std.name == selectedStandard.name) AccentLime else TextPrimary
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) AccentLime else TextPrimary
                         )
                     }
-                    if (idx < standardsCatalog.lastIndex) GymDivider()
                 }
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
@@ -1456,19 +1483,18 @@ private fun OneRepMaxAndStandardsCard(personalRecords: List<PersonalRecord>) {
 
 @Composable
 private fun StrengthStandardCell(
-    numberLabel: String,
     levelName: String,
     thresholdKg: Int,
     achieved: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = numberLabel,
-            fontSize = 11.sp,
-            color = if (achieved) AccentLime else TextMuted
-        )
-        Spacer(modifier = Modifier.height(3.dp))
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (achieved) AccentLimeSubtle else DarkSurfaceHigh)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1476,23 +1502,24 @@ private fun StrengthStandardCell(
         ) {
             Text(
                 text = levelName,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = if (achieved) AccentLime else TextPrimary
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (achieved) AccentLime else TextSecondary
             )
             Text(
                 text = "$thresholdKg кг",
-                fontSize = 12.sp,
-                color = TextSecondary
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Black,
+                color = if (achieved) AccentLime else TextPrimary,
+                style = TextStyle(fontFeatureSettings = "tnum")
             )
         }
-        Spacer(modifier = Modifier.height(8.dp))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(2.dp)
-                .clip(RoundedCornerShape(1.dp))
-                .background(if (achieved) AccentLime else DarkSurfaceHigh)
+                .height(4.dp)
+                .clip(CircleShape)
+                .background(if (achieved) AccentLime else DarkSurfaceElevated)
         )
     }
 }

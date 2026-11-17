@@ -4,7 +4,6 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -47,10 +46,10 @@ import dev.neverpaid.health.data.catalog.ExerciseVisualResolver
 import kotlinx.coroutines.delay
 
 enum class ExerciseThumbnailSize(val dpSize: Dp, val iconSize: Dp, val cornerRadius: Dp) {
-    XS(28.dp, 14.dp, 6.dp),
-    SM(40.dp, 18.dp, 8.dp),
-    MD(56.dp, 22.dp, 10.dp),
-    LG(72.dp, 28.dp, 12.dp)
+    XS(32.dp, 16.dp, 10.dp),
+    SM(44.dp, 20.dp, 12.dp),
+    MD(56.dp, 24.dp, 14.dp),
+    LG(72.dp, 28.dp, 16.dp)
 }
 
 private fun muscleTintColor(muscle: String?): Color = when (muscle?.lowercase()?.trim()) {
@@ -88,8 +87,7 @@ fun ExerciseThumbnail(
         modifier = modifier
             .size(size.dpSize)
             .clip(shape)
-            .background(GymWell)
-            .border(1.dp, BorderDivider, shape)
+            .background(DarkSurfaceHigh)
             .let { base -> if (onClick != null) base.clickable(onClick = onClick) else base },
         contentAlignment = Alignment.Center
     ) {
@@ -113,7 +111,7 @@ fun ExerciseThumbnail(
 }
 
 /**
- * 2-frame alternating ("туда-сюда") exercise illustration card matching web ExerciseInfoModal.tsx.
+ * 2-frame alternating ("туда-сюда") exercise illustration card.
  * Preloads both frame 0.jpg (start) and 1.jpg (peak), cycling every 1200ms while auto-playing.
  */
 @Composable
@@ -151,222 +149,207 @@ fun AnimatedExerciseFramesCard(
     }
 
     val phaseHeader = when (lang) {
-        "uz" -> if (activeFrame == 0) "1-FAZA: BOSHLANG'ICH HOLAT" else "2-FAZA: ENG YUQORI NUQTA"
-        "en" -> if (activeFrame == 0) "PHASE 1: START POSITION" else "PHASE 2: PEAK CONTRACTION"
-        else -> if (activeFrame == 0) "ФАЗА 1: ИСХОДНОЕ ПОЛОЖЕНИЕ" else "ФАЗА 2: ПИКОВОЕ СОКРАЩЕНИЕ"
+        "uz" -> if (activeFrame == 0) "BOSHLANG'ICH HOLAT" else "ENG YUQORI NUQTA"
+        "en" -> if (activeFrame == 0) "START POSITION" else "PEAK CONTRACTION"
+        else -> if (activeFrame == 0) "ИСХОДНОЕ ПОЛОЖЕНИЕ" else "ПИКОВОЕ СОКРАЩЕНИЕ"
     }
     val startLabel = when (lang) { "uz" -> "Start"; "en" -> "Start"; else -> "Старт" }
     val peakLabel = when (lang) { "uz" -> "Pik"; "en" -> "Peak"; else -> "Пик" }
-    val animLabel = when (lang) { "uz" -> "Animatsiya"; "en" -> "Play"; else -> "Анимация" }
+    val animLabel = when (lang) { "uz" -> "Avto"; "en" -> "Auto"; else -> "Авто" }
     val pauseLabel = when (lang) { "uz" -> "Pauza"; "en" -> "Pause"; else -> "Пауза" }
 
-    AthleticCard(
-        modifier = modifier,
-        backgroundColor = DarkSurfaceVariant,
-        borderColor = BorderHighlight
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(DarkSurfaceHigh)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = phaseHeader,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 0.8.sp,
+                color = AccentLime,
+                modifier = Modifier.weight(1f)
+            )
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = phaseHeader,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AccentLime,
-                    modifier = Modifier.weight(1f)
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (visualMeta.hasAnimatedFrames) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(DarkSurfaceHigh)
-                                .border(
-                                    1.dp,
-                                    if (isAutoPlaying) BorderHighlight else BorderSubtle,
-                                    RoundedCornerShape(6.dp)
-                                )
-                                .clickable { isAutoPlaying = !isAutoPlaying }
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (isAutoPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                    contentDescription = if (isAutoPlaying) pauseLabel else animLabel,
-                                    tint = if (isAutoPlaying) AccentLime else TextSecondary,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                                Text(
-                                    text = if (isAutoPlaying) pauseLabel else animLabel,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = if (isAutoPlaying) AccentLime else TextSecondary
-                                )
-                            }
-                        }
+                if (visualMeta.hasAnimatedFrames) {
+                    Row(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(if (isAutoPlaying) AccentLimeSubtle else DarkSurfaceElevated)
+                            .clickable { isAutoPlaying = !isAutoPlaying }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isAutoPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (isAutoPlaying) pauseLabel else animLabel,
+                            tint = if (isAutoPlaying) AccentLime else TextSecondary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = if (isAutoPlaying) pauseLabel else animLabel,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isAutoPlaying) AccentLime else TextSecondary
+                        )
                     }
+                }
 
-                    listOf(0 to startLabel, 1 to peakLabel).forEach { (idx, label) ->
-                        val selected = activeFrame == idx
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(if (selected) AccentLime else DarkSurfaceHigh)
-                                .clickable {
-                                    isAutoPlaying = false
-                                    activeFrame = idx
-                                }
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = label,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (selected) GymInkOnLight else TextSecondary
-                            )
-                        }
+                listOf(0 to startLabel, 1 to peakLabel).forEach { (idx, label) ->
+                    val selected = activeFrame == idx
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(if (selected) AccentLime else DarkSurfaceElevated)
+                            .clickable {
+                                isAutoPlaying = false
+                                activeFrame = idx
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = label,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (selected) GymInkOnLight else TextSecondary
+                        )
                     }
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(12.dp))
+        val viewportModifier = if (visualMeta.hasImages && (hasAnyFrame || frame0State.isLoading)) {
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(4f / 3f)
+                .clip(RoundedCornerShape(16.dp))
+                .background(GymWell)
+        } else {
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(GymWell)
+                .padding(18.dp)
+        }
 
-            val viewportModifier = if (visualMeta.hasImages && (hasAnyFrame || frame0State.isLoading)) {
-                Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(4f / 3f)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(GymWell)
-                    .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
-            } else {
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(GymWell)
-                    .border(1.dp, BorderDivider, RoundedCornerShape(12.dp))
-                    .padding(16.dp)
-            }
-
-            Box(
-                modifier = viewportModifier,
-                contentAlignment = Alignment.Center
-            ) {
-                when {
-                    hasAnyFrame -> {
-                        val shownFrameIndex = if (activeFrame == 1 && frame1State.bitmap != null) 1 else 0
-                        Crossfade(
-                            targetState = shownFrameIndex,
-                            animationSpec = tween(durationMillis = 250),
-                            label = "ExerciseFrameCrossfade"
-                        ) { frameIdx ->
-                            val bmp = if (frameIdx == 1) {
-                                frame1State.bitmap ?: frame0State.bitmap
-                            } else {
-                                frame0State.bitmap ?: frame1State.bitmap
-                            }
-                            if (bmp != null) {
-                                Image(
-                                    bitmap = bmp,
-                                    contentDescription = exerciseName,
-                                    contentScale = ContentScale.Fit,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(6.dp)
-                                )
-                            }
+        Box(
+            modifier = viewportModifier,
+            contentAlignment = Alignment.Center
+        ) {
+            when {
+                hasAnyFrame -> {
+                    val shownFrameIndex = if (activeFrame == 1 && frame1State.bitmap != null) 1 else 0
+                    Crossfade(
+                        targetState = shownFrameIndex,
+                        animationSpec = tween(durationMillis = 250),
+                        label = "ExerciseFrameCrossfade"
+                    ) { frameIdx ->
+                        val bmp = if (frameIdx == 1) {
+                            frame1State.bitmap ?: frame0State.bitmap
+                        } else {
+                            frame0State.bitmap ?: frame1State.bitmap
                         }
-
-                        if (hasTwoLoadedFrames) {
-                            Box(
+                        if (bmp != null) {
+                            Image(
+                                bitmap = bmp,
+                                contentDescription = exerciseName,
+                                contentScale = ContentScale.Fit,
                                 modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(10.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(DarkSurface)
-                                    .border(1.dp, BorderSubtle, RoundedCornerShape(8.dp))
-                                    .clickable { isAutoPlaying = !isAutoPlaying }
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = if (isAutoPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                        contentDescription = null,
-                                        tint = AccentLime,
-                                        modifier = Modifier.size(12.dp)
-                                    )
-                                    Text(
-                                        text = "${shownFrameIndex + 1} / 2",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = TextPrimary
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    frame0State.isLoading -> {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(
-                                color = AccentLime,
-                                strokeWidth = 2.dp,
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = when (lang) {
-                                    "uz" -> "Rasm yuklanmoqda..."
-                                    "en" -> "Loading illustration..."
-                                    else -> "Загружаем иллюстрацию..."
-                                },
-                                fontSize = 12.sp,
-                                color = TextSecondary
+                                    .fillMaxSize()
+                                    .padding(8.dp)
                             )
                         }
                     }
 
-                    else -> {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (hasTwoLoadedFrames) {
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(10.dp)
+                                .clip(CircleShape)
+                                .background(DarkSurface.copy(alpha = 0.9f))
+                                .clickable { isAutoPlaying = !isAutoPlaying }
+                                .padding(horizontal = 10.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             Icon(
-                                imageVector = Icons.Default.FitnessCenter,
+                                imageVector = if (isAutoPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                 contentDescription = null,
-                                tint = if (activeFrame == 0) AccentLime else AmberWarm,
-                                modifier = Modifier.size(36.dp)
+                                tint = AccentLime,
+                                modifier = Modifier.size(12.dp)
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = phaseCoachingCue(activeFrame, primaryMuscle, lang),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary,
-                                textAlign = TextAlign.Center
+                                text = "${shownFrameIndex + 1} / 2",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = TextPrimary
                             )
                         }
                     }
                 }
-            }
 
-            if (hasAnyFrame) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = phaseCoachingCue(activeFrame, primaryMuscle, lang),
-                    fontSize = 12.sp,
-                    color = TextSecondary,
-                    lineHeight = 17.sp
-                )
+                frame0State.isLoading -> {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(
+                            color = AccentLime,
+                            strokeWidth = 2.5.dp,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Rasm yuklanmoqda..."
+                                "en" -> "Loading illustration..."
+                                else -> "Загружаем иллюстрацию..."
+                            },
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+
+                else -> {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.FitnessCenter,
+                            contentDescription = null,
+                            tint = if (activeFrame == 0) AccentLime else AmberWarm,
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = phaseCoachingCue(activeFrame, primaryMuscle, lang),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
+        }
+
+        if (hasAnyFrame) {
+            Text(
+                text = phaseCoachingCue(activeFrame, primaryMuscle, lang),
+                fontSize = 12.sp,
+                color = TextSecondary,
+                lineHeight = 17.sp
+            )
         }
     }
 }

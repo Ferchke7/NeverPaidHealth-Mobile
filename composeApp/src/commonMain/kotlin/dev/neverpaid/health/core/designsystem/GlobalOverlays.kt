@@ -1,8 +1,6 @@
 package dev.neverpaid.health.core.designsystem
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Pause
@@ -34,7 +31,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -76,74 +72,67 @@ fun FloatingActiveWorkoutPill(
     val formattedTime = StrengthCalculator.formatTime(elapsedSeconds / 60, elapsedSeconds % 60)
     val completedSets = workout.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
 
-    AthleticCard(
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
-            .clickable { onExpand() },
-        backgroundColor = DarkSurfaceVariant,
-        borderColor = AccentLime
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(AccentLime)
+            .clickable { onExpand() }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.weight(1f)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(AccentLime)
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(GymInkOnLight)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = workout.title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Black,
+                    color = GymInkOnLight,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.width(10.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = workout.title,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = "$formattedTime • ${workout.exercises.size} упр. • $completedSets сет.",
-                        fontSize = 11.sp,
-                        color = AccentLime,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                Text(
+                    text = "$formattedTime · ${workout.exercises.size} упр. · $completedSets сет.",
+                    fontSize = 12.sp,
+                    color = GymInkOnLight.copy(alpha = 0.8f),
+                    fontWeight = FontWeight.Bold,
+                    style = TextStyle(fontFeatureSettings = "tnum")
+                )
             }
+        }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(AccentLime)
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowUp,
-                            contentDescription = null,
-                            tint = Color.Black,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Открыть",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
-                    }
-                }
-            }
+        Row(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(GymInkOnLight)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowUp,
+                contentDescription = null,
+                tint = AccentLime,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "В зал",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = AccentLime
+            )
         }
     }
 }
@@ -166,73 +155,63 @@ fun FloatingFocusTimerOverlay(
     val formatted = StrengthCalculator.formatTime(displaySeconds / 60, displaySeconds % 60)
 
     if (state.isMinimized) {
-        AthleticCard(
+        Row(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 4.dp),
-            backgroundColor = DarkSurface,
-            borderColor = BorderHighlight
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(DarkSurfaceElevated)
+                .clickable { onMinimize(false) }
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onMinimize(false) }
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.weight(1f)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Timer,
-                        contentDescription = null,
-                        tint = AccentLime,
-                        modifier = Modifier.size(18.dp)
+                GymIconBadge(icon = Icons.Default.Timer, size = 36.dp)
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = state.taskTitle.ifBlank { "Фокус-сессия" },
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = state.taskTitle.ifBlank { "Фокус-сессия" },
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = formatted,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Black,
-                            color = AccentLime,
-                            style = TextStyle(fontFeatureSettings = "tnum")
-                        )
-                    }
+                    Text(
+                        text = formatted,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Black,
+                        color = AccentLime,
+                        style = TextStyle(fontFeatureSettings = "tnum")
+                    )
                 }
+            }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onToggleRunning, modifier = Modifier.size(32.dp)) {
-                        Icon(
-                            imageVector = if (state.isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = null,
-                            tint = AccentLime
-                        )
-                    }
-                    IconButton(onClick = onCompleteSession, modifier = Modifier.size(32.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Завершить",
-                            tint = AccentLime
-                        )
-                    }
-                    IconButton(onClick = { onMinimize(false) }, modifier = Modifier.size(32.dp)) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowUp,
-                            contentDescription = "Развернуть",
-                            tint = TextSecondary
-                        )
-                    }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onToggleRunning, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        imageVector = if (state.isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = AccentLime
+                    )
+                }
+                IconButton(onClick = onCompleteSession, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Завершить",
+                        tint = AccentLime
+                    )
+                }
+                IconButton(onClick = { onMinimize(false) }, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowUp,
+                        contentDescription = "Развернуть",
+                        tint = TextSecondary
+                    )
                 }
             }
         }
@@ -250,31 +229,35 @@ fun FloatingFocusTimerOverlay(
         onDismissRequest = { onMinimize(true) },
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .size(width = 40.dp, height = 4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Top bar: Minimize & Close
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "ФОКУС ТАЙМЕР",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AccentLime,
-                        letterSpacing = 1.sp
-                    )
+                    GymKicker(text = "Фокус таймер")
                     Text(
                         text = state.taskTitle.ifBlank { "Глубокая концентрация" },
-                        fontSize = 16.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
                         color = TextPrimary,
                         maxLines = 1,
@@ -292,15 +275,12 @@ fun FloatingFocusTimerOverlay(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
             // Mode Tabs: Помидор / Таймер / Секундомер
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(GymWell)
-                    .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
+                    .clip(CircleShape)
+                    .background(DarkSurfaceHigh)
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -313,8 +293,8 @@ fun FloatingFocusTimerOverlay(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .heightIn(min = 44.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .heightIn(min = 42.dp)
+                            .clip(CircleShape)
                             .background(if (selected) AccentLime else Color.Transparent)
                             .clickable { onSetMode(modeKey, "focus", mins.coerceAtLeast(15)) }
                             .padding(vertical = 8.dp),
@@ -322,15 +302,13 @@ fun FloatingFocusTimerOverlay(
                     ) {
                         Text(
                             text = label,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.ExtraBold,
                             color = if (selected) GymInkOnLight else TextSecondary
                         )
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
 
             if (state.mode == "pomodoro") {
                 Row(
@@ -342,29 +320,12 @@ fun FloatingFocusTimerOverlay(
                         Triple("short_break", "Перерыв 5м", 5),
                         Triple("long_break", "Длинный 15м", 15)
                     ).forEach { (phaseKey, label, mins) ->
-                        val selected = state.pomodoroPhase == phaseKey
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 44.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (selected) AccentLimeSubtle else GymWell)
-                                .border(
-                                    1.dp,
-                                    if (selected) BorderHighlight else BorderSubtle,
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .clickable { onSetMode("pomodoro", phaseKey, mins) }
-                                .padding(vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = label,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (selected) AccentLime else TextSecondary
-                            )
-                        }
+                        GymPillTab(
+                            text = label,
+                            selected = state.pomodoroPhase == phaseKey,
+                            onClick = { onSetMode("pomodoro", phaseKey, mins) },
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             } else if (state.mode == "timer") {
@@ -373,92 +334,65 @@ fun FloatingFocusTimerOverlay(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     listOf(15, 25, 45, 60, 90).forEach { mins ->
-                        val selected = state.customMinutes == mins
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 44.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (selected) AccentLimeSubtle else GymWell)
-                                .border(
-                                    1.dp,
-                                    if (selected) BorderHighlight else BorderSubtle,
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .clickable { onSetMode("timer", "focus", mins) }
-                                .padding(vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "${mins}м",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (selected) AccentLime else TextSecondary
-                            )
-                        }
+                        GymPillTab(
+                            text = "${mins}м",
+                            selected = state.customMinutes == mins,
+                            onClick = { onSetMode("timer", "focus", mins) },
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(22.dp))
-
             // Circular Countdown Display
             Box(
-                modifier = Modifier.size(180.dp),
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .size(200.dp),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
                     progress = { progress },
-                    modifier = Modifier.size(180.dp),
+                    modifier = Modifier.size(200.dp),
                     color = AccentLime,
                     trackColor = DarkSurfaceHigh,
-                    strokeWidth = 8.dp
+                    strokeWidth = 10.dp
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = formatted,
-                        fontSize = 38.sp,
+                        fontSize = 44.sp,
                         fontWeight = FontWeight.Black,
+                        letterSpacing = (-1).sp,
                         color = TextPrimary,
                         style = TextStyle(fontFeatureSettings = "tnum")
                     )
                     Text(
-                        text = "Помидоров: ${state.pomodoroCount}",
-                        fontSize = 11.sp,
+                        text = "Сессий: ${state.pomodoroCount}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = TextSecondary
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(22.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                OutlinedButton(
+                GymOutlineButton(
+                    text = "Сброс",
                     onClick = onReset,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = GymWell,
-                        contentColor = TextPrimary
-                    ),
-                    border = BorderStroke(1.dp, BorderSubtle)
-                ) {
-                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Сброс", fontWeight = FontWeight.Bold)
-                }
+                    modifier = Modifier.weight(1f),
+                    fillWidth = true
+                )
 
                 Button(
                     onClick = onToggleRunning,
                     modifier = Modifier
                         .weight(1.4f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(10.dp),
+                        .height(52.dp),
+                    shape = RoundedCornerShape(16.dp),
                     elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (state.isRunning) AmberWarm else AccentLime,
@@ -468,37 +402,25 @@ fun FloatingFocusTimerOverlay(
                     Icon(
                         imageVector = if (state.isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = if (state.isRunning) "Пауза" else "Старт",
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         fontSize = 15.sp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            OutlinedButton(
+            GymOutlineButton(
+                text = "Завершить и закрыть задачу",
                 onClick = onCompleteSession,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(46.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = AccentLimeSubtle,
-                    contentColor = AccentLime
-                ),
-                border = BorderStroke(1.dp, BorderHighlight)
-            ) {
-                Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Завершить сессию и отметить задачу выполненной", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-            }
+                fillWidth = true,
+                textColor = AccentLime
+            )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }

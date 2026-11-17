@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -38,25 +39,32 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeGlow
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.BorderDivider
-import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
-import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.GymCard
-import dev.neverpaid.health.core.designsystem.GymDivider
 import dev.neverpaid.health.core.designsystem.GymInnerWell
 import dev.neverpaid.health.core.designsystem.GymLabeledField
 import dev.neverpaid.health.core.designsystem.GymLoadingCard
@@ -65,6 +73,8 @@ import dev.neverpaid.health.core.designsystem.GymPageHeader
 import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymProgressBar
+import dev.neverpaid.health.core.designsystem.GymSectionTitle
+import dev.neverpaid.health.core.designsystem.GymStatTile
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -197,10 +207,14 @@ fun BodyScreen(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+            contentPadding = PaddingValues(
+                start = 20.dp,
+                end = 20.dp,
+                top = 8.dp,
+                bottom = 110.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Header — Figma 11
             item(key = "header", contentType = "header") {
                 GymPageHeader(
                     title = strings.bodyTitle,
@@ -216,105 +230,161 @@ fun BodyScreen(
                     )
                 }
             } else {
-                // Summary KPI Stack (3 cards) — Figma 11
-                item(key = "kpi_current_weight", contentType = "kpi") {
-                    GymCard(contentPadding = PaddingValues(20.dp)) {
-                        Text(
-                            text = "${formatOneDecimal(state.latestWeightKg)} ${strings.unitKg}",
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = AccentLime
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = strings.bodyCurrentWeight,
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
-                    }
-                }
+                // Hero Card: Current Weight + Delta Pill + Target Progress
+                item(key = "weight_hero_card", contentType = "hero") {
+                    val weightDelta = state.latestWeightKg - state.startWeightKg
+                    val deltaSign = if (weightDelta > 0.0) "+" else ""
+                    val deltaText = "$deltaSign${formatOneDecimal(weightDelta)} ${strings.unitKg}"
 
-                item(key = "kpi_target_weight", contentType = "kpi") {
-                    GymCard(contentPadding = PaddingValues(20.dp)) {
+                    GymCard {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.Top
                         ) {
-                            Column {
-                                val targetLabel = state.targetWeightKg?.let {
-                                    "${formatOneDecimal(it)} ${strings.unitKg}"
-                                } ?: "—"
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(
-                                    text = targetLabel,
-                                    fontSize = 30.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = TextPrimary
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = when (lang) {
-                                        "uz" -> "Maqsadli vazn"
-                                        "en" -> "Target weight"
-                                        else -> "Целевой вес"
-                                    },
+                                    text = strings.bodyCurrentWeight,
                                     fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = TextSecondary
                                 )
+                                Row(verticalAlignment = Alignment.Bottom) {
+                                    Text(
+                                        text = formatOneDecimal(state.latestWeightKg),
+                                        fontSize = 44.sp,
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = (-1.2).sp,
+                                        color = TextPrimary,
+                                        style = TextStyle(fontFeatureSettings = "tnum")
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = strings.unitKg,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AccentLime,
+                                        modifier = Modifier.padding(bottom = 6.dp)
+                                    )
+                                }
                             }
-                            GymOutlineButton(
-                                text = when (lang) {
-                                    "uz" -> "O'zgartirish"
-                                    "en" -> "Edit"
-                                    else -> "Изменить"
-                                },
-                                onClick = { onAction(BodyUiAction.OnOpenTargetWeightModal) }
-                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(AccentLimeSubtle)
+                                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                            ) {
+                                Text(
+                                    text = deltaText,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = AccentLime,
+                                    style = TextStyle(fontFeatureSettings = "tnum")
+                                )
+                            }
                         }
+
                         val target = state.targetWeightKg
                         if (target != null && target > 0.0) {
                             val totalDiff = abs(target - state.startWeightKg).coerceAtLeast(0.5)
                             val remaining = abs(target - state.latestWeightKg)
-                            val progress = (1.0 - (remaining / totalDiff)).toFloat().coerceIn(0.04f, 1f)
-                            Spacer(modifier = Modifier.height(12.dp))
-                            GymProgressBar(progress = progress, heightDp = 6, color = AccentLime)
+                            val progress = (1.0 - (remaining / totalDiff)).toFloat().coerceIn(0.05f, 1f)
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(DarkSurfaceHigh)
+                                    .clickable { onAction(BodyUiAction.OnOpenTargetWeightModal) }
+                                    .padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = when (lang) {
+                                            "uz" -> "Maqsad: ${formatOneDecimal(target)} ${strings.unitKg}"
+                                            "en" -> "Target: ${formatOneDecimal(target)} ${strings.unitKg}"
+                                            else -> "Цель: ${formatOneDecimal(target)} ${strings.unitKg}"
+                                        },
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary,
+                                        style = TextStyle(fontFeatureSettings = "tnum")
+                                    )
+                                    Text(
+                                        text = when (lang) {
+                                            "uz" -> "O'zgartirish"
+                                            "en" -> "Edit"
+                                            else -> "Изменить"
+                                        },
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AccentLime
+                                    )
+                                }
+                                GymProgressBar(progress = progress, heightDp = 6, color = AccentLime)
+                            }
+                        } else {
+                            GymOutlineButton(
+                                text = when (lang) {
+                                    "uz" -> "Maqsadli vaznni belgilash"
+                                    "en" -> "Set target weight"
+                                    else -> "Задать целевой вес"
+                                },
+                                onClick = { onAction(BodyUiAction.OnOpenTargetWeightModal) },
+                                fillWidth = true
+                            )
                         }
                     }
                 }
 
-                item(key = "kpi_sma_weight", contentType = "kpi") {
-                    GymCard(contentPadding = PaddingValues(20.dp)) {
-                        val sma = state.movingAverage7DayKg ?: state.latestWeightKg
-                        Text(
-                            text = "${formatOneDecimal(sma)} ${strings.unitKg}",
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
+                // 2-Column Secondary KPI Row: Target & 7-Day SMA
+                item(key = "kpi_secondary_row", contentType = "kpi") {
+                    val sma = state.movingAverage7DayKg ?: state.latestWeightKg
+                    val targetVal = state.targetWeightKg?.let { formatOneDecimal(it) } ?: "—"
+                    val targetUnit = if (state.targetWeightKg != null) strings.unitKg else ""
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        GymStatTile(
+                            label = when (lang) {
+                                "uz" -> "Maqsadli vazn"
+                                "en" -> "Target weight"
+                                else -> "Целевой вес"
+                            },
+                            value = targetVal,
+                            unit = targetUnit,
+                            valueColor = AccentLime,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onAction(BodyUiAction.OnOpenTargetWeightModal) }
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "${strings.bodyMovingAverage} · SMA 7",
-                            fontSize = 13.sp,
-                            color = TextSecondary
+                        GymStatTile(
+                            label = "${strings.bodyMovingAverage} (7д)",
+                            value = formatOneDecimal(sma),
+                            unit = strings.unitKg,
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
 
-                // Weight & Body Composition Dynamics Chart Card — Figma 11
+                // Weight & Body Composition Dynamics Chart Card
                 item(key = "dynamics_chart_card", contentType = "chart") {
-                    GymCard(contentPadding = PaddingValues(20.dp)) {
-                        Text(
-                            text = when (lang) {
+                    GymCard {
+                        GymSectionTitle(
+                            title = when (lang) {
                                 "uz" -> "Vazn dinamikasi"
                                 "en" -> "Weight & body trend"
-                                else -> "Динамика веса"
-                            },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
+                                else -> "Динамика замеров"
+                            }
                         )
-
-                        Spacer(modifier = Modifier.height(12.dp))
 
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             GymPillTab(
@@ -333,8 +403,6 @@ fun BodyScreen(
                                 onClick = { chartMetric = BodyChartMetric.BODY_FAT }
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(16.dp))
 
                         val series = remember(state.measurements, chartMetric) {
                             state.measurements
@@ -368,7 +436,7 @@ fun BodyScreen(
                                         "en" -> "No measurements recorded for this metric yet"
                                         else -> "Нет замеров для отображения графика"
                                     },
-                                    fontSize = 13.sp,
+                                    fontSize = 14.sp,
                                     color = TextSecondary
                                 )
                             }
@@ -381,107 +449,56 @@ fun BodyScreen(
                                     BodyChartMetric.BODY_FAT -> "%"
                                 }
                             )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Text(
-                                text = when (lang) {
-                                    "uz" -> "Yashil chiziq — oxirgi ${series.size} o'lchov · SMA 7"
-                                    "en" -> "Emerald line — last ${series.size} logs · SMA 7 uses last 7 logs"
-                                    else -> "Зелёная линия — последние ${series.size} замеров · SMA 7 по 7 замерам"
-                                },
-                                fontSize = 12.sp,
-                                color = TextMuted
-                            )
                         }
                     }
                 }
 
-                // Recent Measurements List Card — Figma 11
-                item(key = "recent_measurements_card", contentType = "measurements") {
-                    GymCard(contentPadding = PaddingValues(20.dp)) {
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Oxirgi o'lchovlar"
-                                "en" -> "Recent measurements"
-                                else -> "Последние замеры"
-                            },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        if (state.measurements.isEmpty()) {
-                            GymInnerWell {
-                                Text(
-                                    text = when (lang) {
-                                        "uz" -> "O'lchovlar tarixi bo'sh"
-                                        "en" -> "No measurements logged yet"
-                                        else -> "История замеров пока пуста"
-                                    },
-                                    fontSize = 13.sp,
-                                    color = TextSecondary
-                                )
-                            }
-                        } else {
-                            state.measurements.take(10).forEachIndexed { index, m ->
-                                if (index > 0) GymDivider()
-                                BodyMeasurementCleanRow(
-                                    measurement = m,
-                                    unitLabel = strings.unitKg,
-                                    lang = lang,
-                                    onDelete = {
-                                        val dateKey = m.loggedDate.ifBlank {
-                                            PlatformBridge.formatDate(m.dateEpochMs, "yyyy-MM-dd")
-                                        }
-                                        onAction(BodyUiAction.OnDeleteMeasurement(dateKey))
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Inline Add Measurement Card — Figma 11
+                // Inline Add Measurement Card (Clean 2-Column Grid)
                 item(key = "add_measurement_card", contentType = "add_measurement") {
-                    GymCard(contentPadding = PaddingValues(20.dp)) {
-                        Text(
-                            text = when (lang) {
+                    GymCard {
+                        GymSectionTitle(
+                            title = when (lang) {
                                 "uz" -> "O'lchov qo'shish"
                                 "en" -> "Add measurement"
                                 else -> "Добавить замер"
                             },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
+                            actionLabel = when (lang) { "uz" -> "Tozalash"; "en" -> "Reset"; else -> "Сбросить" },
+                            onAction = {
+                                weightInput = formatOneDecimal(state.latestWeightKg)
+                                waistInput = ""
+                                chestInput = ""
+                                bicepsInput = ""
+                                bodyFatInput = ""
+                                notesInput = ""
+                            }
                         )
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            GymLabeledField(
+                                label = "${when (lang) { "uz" -> "Vazn"; "en" -> "Weight"; else -> "Вес" }}, ${strings.unitKg}",
+                                value = weightInput,
+                                onValueChange = { weightInput = it },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                placeholder = "78",
+                                modifier = Modifier.weight(1f)
+                            )
+                            GymLabeledField(
+                                label = when (lang) { "uz" -> "Yog', %"; "en" -> "Body fat %"; else -> "Жир, %" },
+                                value = bodyFatInput,
+                                onValueChange = { bodyFatInput = it },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                placeholder = "—",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
 
-                        GymLabeledField(
-                            label = "${when (lang) { "uz" -> "Vazn"; "en" -> "Weight"; else -> "Вес" }}, ${strings.unitKg}",
-                            value = weightInput,
-                            onValueChange = { weightInput = it },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            placeholder = "78"
-                        )
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "O'lchamlar · ixtiyoriy"
-                                "en" -> "Circumferences · optional"
-                                else -> "Обхваты · необязательно"
-                            },
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextSecondary
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             GymLabeledField(
                                 label = when (lang) { "uz" -> "Bel, sm"; "en" -> "Waist, cm"; else -> "Талия, см" },
                                 value = waistInput,
@@ -500,11 +517,12 @@ fun BodyScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             GymLabeledField(
-                                label = when (lang) { "uz" -> "Qo'l, sm"; "en" -> "Arms, cm"; else -> "Руки, см" },
+                                label = when (lang) { "uz" -> "Qo'l, sm"; "en" -> "Arms, cm"; else -> "Бицепс, см" },
                                 value = bicepsInput,
                                 onValueChange = { bicepsInput = it },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -512,104 +530,109 @@ fun BodyScreen(
                                 modifier = Modifier.weight(1f)
                             )
                             GymLabeledField(
-                                label = when (lang) { "uz" -> "Yog', % · ixtiyoriy"; "en" -> "Body fat % · optional"; else -> "Жир, % · необязательно" },
-                                value = bodyFatInput,
-                                onValueChange = { bodyFatInput = it },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                placeholder = "—",
+                                label = when (lang) { "uz" -> "Eslatma"; "en" -> "Note"; else -> "Заметка" },
+                                value = notesInput,
+                                onValueChange = { notesInput = it },
+                                placeholder = when (lang) {
+                                    "uz" -> "Ertalab"
+                                    "en" -> "Morning"
+                                    else -> "Натощак"
+                                },
                                 modifier = Modifier.weight(1f)
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        GymLabeledField(
-                            label = when (lang) { "uz" -> "Eslatma"; "en" -> "Note"; else -> "Заметка" },
-                            value = notesInput,
-                            onValueChange = { notesInput = it },
-                            placeholder = when (lang) {
-                                "uz" -> "Ertalab och qoringa"
-                                "en" -> "Morning fasted weigh-in"
-                                else -> "Утром натощак"
-                            }
-                        )
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            GymPrimaryButton(
-                                text = when (lang) {
-                                    "uz" -> "O'lchovni saqlash"
-                                    "en" -> "Save measurement"
-                                    else -> "Сохранить замер"
-                                },
-                                onClick = {
-                                    val w = weightInput.toDoubleOrNull() ?: state.latestWeightKg
-                                    val h = calcHeightInput.toDoubleOrNull() ?: state.heightCm
-                                    onAction(
-                                        BodyUiAction.OnSaveFullMeasurement(
-                                            weightKg = w,
-                                            heightCm = h,
-                                            bodyFatPct = bodyFatInput.toDoubleOrNull(),
-                                            waistCm = waistInput.toDoubleOrNull(),
-                                            chestCm = chestInput.toDoubleOrNull(),
-                                            bicepsCm = bicepsInput.toDoubleOrNull(),
-                                            notes = notesInput.trim()
-                                        )
-                                    )
-                                    waistInput = ""
-                                    chestInput = ""
-                                    bicepsInput = ""
-                                    bodyFatInput = ""
-                                    notesInput = ""
-                                }
-                            )
-                            GymOutlineButton(
-                                text = when (lang) { "uz" -> "Tozalash"; "en" -> "Reset"; else -> "Очистить" },
-                                onClick = {
-                                    weightInput = formatOneDecimal(state.latestWeightKg)
-                                    waistInput = ""
-                                    chestInput = ""
-                                    bicepsInput = ""
-                                    bodyFatInput = ""
-                                    notesInput = ""
-                                }
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
+                        GymPrimaryButton(
                             text = when (lang) {
-                                "uz" -> "Bo'sh maydon — o'lchov yo'q degani, nol emas"
-                                "en" -> "Empty field means not measured, not zero"
-                                else -> "Пустое поле — нет измерения, а не ноль"
+                                "uz" -> "O'lchovni saqlash"
+                                "en" -> "Save measurement"
+                                else -> "Сохранить замер"
                             },
-                            fontSize = 12.sp,
-                            color = TextMuted
+                            onClick = {
+                                val w = weightInput.toDoubleOrNull() ?: state.latestWeightKg
+                                val h = calcHeightInput.toDoubleOrNull() ?: state.heightCm
+                                onAction(
+                                    BodyUiAction.OnSaveFullMeasurement(
+                                        weightKg = w,
+                                        heightCm = h,
+                                        bodyFatPct = bodyFatInput.toDoubleOrNull(),
+                                        waistCm = waistInput.toDoubleOrNull(),
+                                        chestCm = chestInput.toDoubleOrNull(),
+                                        bicepsCm = bicepsInput.toDoubleOrNull(),
+                                        notes = notesInput.trim()
+                                    )
+                                )
+                                waistInput = ""
+                                chestInput = ""
+                                bicepsInput = ""
+                                bodyFatInput = ""
+                                notesInput = ""
+                            },
+                            fillWidth = true
                         )
                     }
                 }
 
-                // Calculator Card (BMI / BMR / TDEE + Navy BF% & Adonis Sheet) — Figma 11
-                item(key = "calculator_card", contentType = "calculator") {
-                    GymCard(contentPadding = PaddingValues(20.dp)) {
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Kalkulyator"
-                                "en" -> "Calculator"
-                                else -> "Калькулятор"
-                            },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
+                // Recent Measurements List Card
+                item(key = "recent_measurements_card", contentType = "measurements") {
+                    GymCard {
+                        GymSectionTitle(
+                            title = when (lang) {
+                                "uz" -> "Oxirgi o'lchovlar"
+                                "en" -> "Recent measurements"
+                                else -> "Последние замеры"
+                            }
                         )
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        if (state.measurements.isEmpty()) {
+                            GymInnerWell {
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "O'lchovlar tarixi bo'sh"
+                                        "en" -> "No measurements logged yet"
+                                        else -> "История замеров пока пуста"
+                                    },
+                                    fontSize = 14.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                state.measurements.take(10).forEach { m ->
+                                    BodyMeasurementCleanRow(
+                                        measurement = m,
+                                        unitLabel = strings.unitKg,
+                                        lang = lang,
+                                        onDelete = {
+                                            val dateKey = m.loggedDate.ifBlank {
+                                                PlatformBridge.formatDate(m.dateEpochMs, "yyyy-MM-dd")
+                                            }
+                                            onAction(BodyUiAction.OnDeleteMeasurement(dateKey))
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Calculator Card (BMI / BMR / TDEE + Navy BF% & Adonis Sheet)
+                item(key = "calculator_card", contentType = "calculator") {
+                    GymCard {
+                        GymSectionTitle(
+                            title = when (lang) {
+                                "uz" -> "Kalkulyator"
+                                "en" -> "Metabolic calculator"
+                                else -> "Калькулятор обмена"
+                            },
+                            actionLabel = strings.navyBodyFatTitle,
+                            onAction = { isAnthropometrySheetOpen = true }
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             GymLabeledField(
                                 label = strings.bodyHeight,
                                 value = calcHeightInput,
@@ -628,96 +651,129 @@ fun BodyScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        GymLabeledField(
-                            label = when (lang) { "uz" -> "Yosh, yil"; "en" -> "Age, yrs"; else -> "Возраст, лет" },
-                            value = calcAgeInput,
-                            onValueChange = { calcAgeInput = it.filter { c -> c.isDigit() } },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            placeholder = "28"
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = when (lang) { "uz" -> "Jins"; "en" -> "Sex"; else -> "Пол" },
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            GymPillTab(
-                                text = when (lang) { "uz" -> "Erkak"; "en" -> "Male"; else -> "Мужской" },
-                                selected = calcGender == "male",
-                                onClick = {
-                                    calcGender = "male"
-                                    onAction(
-                                        BodyUiAction.OnUpdateBmiParams(
-                                            gender = "male",
-                                            age = calcAgeInput.toIntOrNull() ?: state.age,
-                                            heightCm = calcHeightInput.toDoubleOrNull() ?: state.heightCm,
-                                            weightKg = calcWeightInput.toDoubleOrNull() ?: state.latestWeightKg,
-                                            activityMultiplier = calcActivity
-                                        )
-                                    )
-                                }
-                            )
-                            GymPillTab(
-                                text = when (lang) { "uz" -> "Ayol"; "en" -> "Female"; else -> "Женский" },
-                                selected = calcGender == "female",
-                                onClick = {
-                                    calcGender = "female"
-                                    onAction(
-                                        BodyUiAction.OnUpdateBmiParams(
-                                            gender = "female",
-                                            age = calcAgeInput.toIntOrNull() ?: state.age,
-                                            heightCm = calcHeightInput.toDoubleOrNull() ?: state.heightCm,
-                                            weightKg = calcWeightInput.toDoubleOrNull() ?: state.latestWeightKg,
-                                            activityMultiplier = calcActivity
-                                        )
-                                    )
-                                }
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Faollik koeffitsiyenti"
-                                "en" -> "Activity factor"
-                                else -> "Коэффициент активности"
-                            },
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.Bottom
                         ) {
-                            listOf(
-                                1.2 to "1.2",
-                                1.375 to "1.375",
-                                1.55 to "1.55",
-                                1.725 to "1.725"
-                            ).forEach { (mult, label) ->
-                                GymPillTab(
-                                    text = label,
-                                    selected = calcActivity == mult,
-                                    onClick = { calcActivity = mult }
+                            GymLabeledField(
+                                label = when (lang) { "uz" -> "Yosh, yil"; "en" -> "Age, yrs"; else -> "Возраст, лет" },
+                                value = calcAgeInput,
+                                onValueChange = { calcAgeInput = it.filter { c -> c.isDigit() } },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                placeholder = "28",
+                                modifier = Modifier.weight(1f)
+                            )
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = when (lang) { "uz" -> "Jins"; "en" -> "Sex"; else -> "Пол" },
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextSecondary
                                 )
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    GymPillTab(
+                                        text = when (lang) { "uz" -> "Erkak"; "en" -> "M"; else -> "Муж" },
+                                        selected = calcGender == "male",
+                                        onClick = {
+                                            calcGender = "male"
+                                            onAction(
+                                                BodyUiAction.OnUpdateBmiParams(
+                                                    gender = "male",
+                                                    age = calcAgeInput.toIntOrNull() ?: state.age,
+                                                    heightCm = calcHeightInput.toDoubleOrNull() ?: state.heightCm,
+                                                    weightKg = calcWeightInput.toDoubleOrNull() ?: state.latestWeightKg,
+                                                    activityMultiplier = calcActivity
+                                                )
+                                            )
+                                        },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    GymPillTab(
+                                        text = when (lang) { "uz" -> "Ayol"; "en" -> "F"; else -> "Жен" },
+                                        selected = calcGender == "female",
+                                        onClick = {
+                                            calcGender = "female"
+                                            onAction(
+                                                BodyUiAction.OnUpdateBmiParams(
+                                                    gender = "female",
+                                                    age = calcAgeInput.toIntOrNull() ?: state.age,
+                                                    heightCm = calcHeightInput.toDoubleOrNull() ?: state.heightCm,
+                                                    weightKg = calcWeightInput.toDoubleOrNull() ?: state.latestWeightKg,
+                                                    activityMultiplier = calcActivity
+                                                )
+                                            )
+                                        },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = when (lang) {
+                                    "uz" -> "Faollik koeffitsiyenti"
+                                    "en" -> "Activity factor"
+                                    else -> "Коэффициент активности"
+                                },
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecondary
+                            )
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf(
+                                    1.2 to "1.2",
+                                    1.375 to "1.375",
+                                    1.55 to "1.55",
+                                    1.725 to "1.725"
+                                ).forEach { (mult, label) ->
+                                    GymPillTab(
+                                        text = label,
+                                        selected = calcActivity == mult,
+                                        onClick = { calcActivity = mult }
+                                    )
+                                }
+                            }
+                        }
 
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        // 3-Column Heavy Numeral Readout: BMI, BMR, TDEE
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            CalcResultTile(
+                                label = strings.bodyBmi,
+                                value = formatOneDecimal(state.bmi),
+                                unit = "кг/м²",
+                                valueColor = TextPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            CalcResultTile(
+                                label = "BMR",
+                                value = "${state.bmrCalories}",
+                                unit = "ккал",
+                                valueColor = TextPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            CalcResultTile(
+                                label = strings.bodyTdee,
+                                value = "${state.tdeeCalories}",
+                                unit = "ккал",
+                                valueColor = AccentLime,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             GymPrimaryButton(
                                 text = when (lang) { "uz" -> "Hisoblash"; "en" -> "Calculate"; else -> "Рассчитать" },
@@ -731,91 +787,24 @@ fun BodyScreen(
                                             activityMultiplier = calcActivity
                                         )
                                     )
-                                }
+                                },
+                                modifier = Modifier.weight(1f)
                             )
                             GymOutlineButton(
                                 text = strings.navyBodyFatTitle,
-                                onClick = { isAnthropometrySheetOpen = true }
+                                onClick = { isAnthropometrySheetOpen = true },
+                                modifier = Modifier.weight(1f)
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(18.dp))
-
-                        Text(
-                            text = "${formatOneDecimal(state.bmi)}",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "${strings.bodyBmi} · кг/м²",
-                            fontSize = 12.sp,
-                            color = TextMuted
-                        )
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Text(
-                            text = "${state.bmrCalories}",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "BMR · ккал/сутки",
-                            fontSize = 12.sp,
-                            color = TextMuted
-                        )
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Text(
-                            text = "${state.tdeeCalories}",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "${strings.bodyTdee} · ккал/сутки",
-                            fontSize = 12.sp,
-                            color = TextMuted
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Hisob-kitob ko'rsatkichlari, tibbiy xulosa emas"
-                                "en" -> "Reference estimates, not medical advice"
-                                else -> "Расчётные ориентиры, не медицинское заключение"
-                            },
-                            fontSize = 12.sp,
-                            color = TextMuted
-                        )
                     }
                 }
 
-                // Targets Card — Figma 11
+                // Targets & Calorie Mode Card
                 item(key = "goals_card", contentType = "goals") {
-                    GymCard(contentPadding = PaddingValues(20.dp)) {
-                        Text(
-                            text = when (lang) { "uz" -> "Maqsadlar"; "en" -> "Goals"; else -> "Цели" },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
+                    GymCard {
+                        GymSectionTitle(
+                            title = when (lang) { "uz" -> "Maqsadlar"; "en" -> "Goals"; else -> "Цели и калории" }
                         )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Ovqatlanish rejimi"
-                                "en" -> "Nutrition mode"
-                                else -> "Режим питания"
-                            },
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
 
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -838,32 +827,34 @@ fun BodyScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
-
                         val targetKcal = when (dietMode) {
                             DietMode.CUT -> (state.tdeeCalories * 0.80).roundToInt()
                             DietMode.MAINTAIN -> state.tdeeCalories
                             DietMode.BULK -> (state.tdeeCalories * 1.12).roundToInt()
                         }
-                        Text(
-                            text = "$targetKcal ккал",
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = AccentLime
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
                         val modeLabel = when (dietMode) {
-                            DietMode.CUT -> when (lang) { "uz" -> "Pasaytirish"; "en" -> "Fat loss"; else -> "Снижение" }
-                            DietMode.MAINTAIN -> when (lang) { "uz" -> "Saqlash"; "en" -> "Maintenance"; else -> "Поддержание" }
-                            DietMode.BULK -> when (lang) { "uz" -> "Oshirish"; "en" -> "Surplus"; else -> "Набор" }
+                            DietMode.CUT -> when (lang) { "uz" -> "Pasaytirish"; "en" -> "Fat loss"; else -> "Дефицит калорий" }
+                            DietMode.MAINTAIN -> when (lang) { "uz" -> "Saqlash"; "en" -> "Maintenance"; else -> "Поддержание веса" }
+                            DietMode.BULK -> when (lang) { "uz" -> "Oshirish"; "en" -> "Surplus"; else -> "Профицит для роста" }
                         }
-                        Text(
-                            text = "$modeLabel · ${when (lang) { "uz" -> "kuniga"; "en" -> "per day"; else -> "в сутки" }}",
-                            fontSize = 12.sp,
-                            color = TextMuted
-                        )
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        GymInnerWell {
+                            Text(
+                                text = "$modeLabel · ${when (lang) { "uz" -> "kuniga"; "en" -> "per day"; else -> "ориентир на день" }}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "$targetKcal ккал",
+                                fontSize = 34.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = (-0.8).sp,
+                                color = AccentLime,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                        }
 
                         GymLabeledField(
                             label = "${when (lang) { "uz" -> "Maqsadli vazn"; "en" -> "Target weight"; else -> "Целевой вес" }}, ${strings.unitKg}",
@@ -873,8 +864,6 @@ fun BodyScreen(
                             placeholder = "75"
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
                         GymPrimaryButton(
                             text = when (lang) {
                                 "uz" -> "Maqsadni saqlash"
@@ -883,16 +872,54 @@ fun BodyScreen(
                             },
                             onClick = {
                                 onAction(BodyUiAction.OnSaveTargetWeight(targetWeightInput.toDoubleOrNull()))
-                            }
+                            },
+                            fillWidth = true
                         )
                     }
                 }
-
-                item(key = "bottom_spacer", contentType = "spacer") {
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
             }
         }
+    }
+}
+
+@Composable
+private fun CalcResultTile(
+    label: String,
+    value: String,
+    unit: String,
+    valueColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(DarkSurfaceHigh)
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = value,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Black,
+            color = valueColor,
+            style = TextStyle(fontFeatureSettings = "tnum"),
+            maxLines = 1
+        )
+        Text(
+            text = unit,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = TextMuted,
+            maxLines = 1
+        )
     }
 }
 
@@ -908,21 +935,24 @@ private fun BodyTrendLineChart(
     val high = maxVal + padding
     val range = (high - low).coerceAtLeast(1.0)
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = unitLabel, fontSize = 11.sp, color = TextMuted)
+            Text(text = unitLabel, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextMuted)
             Text(
                 text = "${formatOneDecimal(points.first().second)} → ${formatOneDecimal(points.last().second)} $unitLabel",
-                fontSize = 11.sp,
+                fontSize = 13.sp,
                 color = AccentLime,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Black,
+                style = TextStyle(fontFeatureSettings = "tnum")
             )
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         Row(
             modifier = Modifier
@@ -936,9 +966,24 @@ private fun BodyTrendLineChart(
                     .height(130.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = formatOneDecimal(high), fontSize = 10.sp, color = TextMuted)
-                Text(text = formatOneDecimal((high + low) / 2.0), fontSize = 10.sp, color = TextMuted)
-                Text(text = formatOneDecimal(low), fontSize = 10.sp, color = TextMuted)
+                Text(
+                    text = formatOneDecimal(high),
+                    fontSize = 10.sp,
+                    color = TextMuted,
+                    style = TextStyle(fontFeatureSettings = "tnum")
+                )
+                Text(
+                    text = formatOneDecimal((high + low) / 2.0),
+                    fontSize = 10.sp,
+                    color = TextMuted,
+                    style = TextStyle(fontFeatureSettings = "tnum")
+                )
+                Text(
+                    text = formatOneDecimal(low),
+                    fontSize = 10.sp,
+                    color = TextMuted,
+                    style = TextStyle(fontFeatureSettings = "tnum")
+                )
             }
 
             Box(
@@ -950,14 +995,14 @@ private fun BodyTrendLineChart(
                     val w = size.width
                     val h = size.height
 
-                    // Horizontal guide lines
                     listOf(0f, 0.5f, 1f).forEach { frac ->
                         val y = frac * h
                         drawLine(
                             color = BorderDivider,
                             start = Offset(0f, y),
                             end = Offset(w, y),
-                            strokeWidth = 1.dp.toPx()
+                            strokeWidth = 1.dp.toPx(),
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f), 0f)
                         )
                     }
 
@@ -970,15 +1015,36 @@ private fun BodyTrendLineChart(
                     }
 
                     if (coords.size > 1) {
-                        val path = Path().apply {
+                        val strokePath = Path().apply {
                             moveTo(coords.first().x, coords.first().y)
-                            coords.drop(1).forEach { pt -> lineTo(pt.x, pt.y) }
+                            for (i in 0 until coords.size - 1) {
+                                val p0 = coords[i]
+                                val p1 = coords[i + 1]
+                                val cp1 = Offset(p0.x + (p1.x - p0.x) / 2f, p0.y)
+                                val cp2 = Offset(p0.x + (p1.x - p0.x) / 2f, p1.y)
+                                cubicTo(cp1.x, cp1.y, cp2.x, cp2.y, p1.x, p1.y)
+                            }
+                        }
+                        val fillPath = Path().apply {
+                            addPath(strokePath)
+                            lineTo(coords.last().x, h)
+                            lineTo(coords.first().x, h)
+                            close()
                         }
                         drawPath(
-                            path = path,
+                            path = fillPath,
+                            brush = Brush.verticalGradient(
+                                colors = listOf(AccentLimeGlow, Color.Transparent),
+                                startY = 0f,
+                                endY = h
+                            ),
+                            style = Fill
+                        )
+                        drawPath(
+                            path = strokePath,
                             color = AccentLime,
                             style = Stroke(
-                                width = 2.5.dp.toPx(),
+                                width = 3.dp.toPx(),
                                 cap = StrokeCap.Round,
                                 join = StrokeJoin.Round
                             )
@@ -988,20 +1054,18 @@ private fun BodyTrendLineChart(
                     coords.forEach { pt ->
                         drawCircle(
                             color = DarkBackground,
-                            radius = 5.dp.toPx(),
+                            radius = 5.5.dp.toPx(),
                             center = pt
                         )
                         drawCircle(
                             color = AccentLime,
-                            radius = 3.5.dp.toPx(),
+                            radius = 3.8.dp.toPx(),
                             center = pt
                         )
                     }
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(6.dp))
 
         Row(
             modifier = Modifier
@@ -1015,12 +1079,14 @@ private fun BodyTrendLineChart(
                         text = formatOneDecimal(value),
                         fontSize = 10.sp,
                         color = TextPrimary,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Bold,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
                     Text(
                         text = dateLabel,
                         fontSize = 10.sp,
-                        color = TextMuted
+                        color = TextMuted,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
                 }
             }
@@ -1041,23 +1107,35 @@ private fun BodyMeasurementCleanRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .clip(RoundedCornerShape(16.dp))
+            .background(DarkSurfaceHigh)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = dateStr,
-                fontSize = 13.sp,
-                color = TextSecondary
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "${formatOneDecimal(measurement.weightKg)} $unitLabel",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
-            )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "${formatOneDecimal(measurement.weightKg)} $unitLabel",
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Black,
+                    color = TextPrimary,
+                    style = TextStyle(fontFeatureSettings = "tnum")
+                )
+                Text(
+                    text = dateStr,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextSecondary,
+                    modifier = Modifier.padding(bottom = 2.dp)
+                )
+            }
             val extras = buildList {
                 measurement.bodyFatPercentage?.let { add("${when (lang) { "uz" -> "Yog'"; "en" -> "BF"; else -> "Жир" }}: $it%") }
                 measurement.waistCm?.let { add("${when (lang) { "uz" -> "Bel"; "en" -> "Waist"; else -> "Талия" }}: ${it.toInt()} см") }
@@ -1065,25 +1143,33 @@ private fun BodyMeasurementCleanRow(
                 measurement.bicepsCm?.let { add("${when (lang) { "uz" -> "Qo'l"; "en" -> "Arm"; else -> "Бицепс" }}: ${it.toInt()} см") }
             }
             if (extras.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = extras.joinToString(" · "),
                     fontSize = 12.sp,
                     color = TextMuted,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    style = TextStyle(fontFeatureSettings = "tnum")
                 )
             }
         }
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        GymOutlineButton(
-            text = when (lang) { "uz" -> "O'chirish"; "en" -> "Delete"; else -> "Удалить" },
-            onClick = onDelete,
-            textColor = CrimsonRed,
-            borderColor = CrimsonRed.copy(alpha = 0.45f)
-        )
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(DarkSurface)
+                .clickable(onClick = onDelete)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Text(
+                text = when (lang) { "uz" -> "O'chirish"; "en" -> "Delete"; else -> "Удалить" },
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = CrimsonRed
+            )
+        }
     }
 }
 
@@ -1110,7 +1196,8 @@ private fun AddMeasurementBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
         Column(
             modifier = Modifier
@@ -1127,12 +1214,12 @@ private fun AddMeasurementBottomSheet(
             ) {
                 Text(
                     text = when (lang) {
-                        "uz" -> "Vazn va tana o'lchamlarini yozish"
+                        "uz" -> "Vazn va tana o'lchamlari"
                         "en" -> "Log Weight & Measurements"
-                        else -> "Записать вес и замеры тела"
+                        else -> "Записать вес и замеры"
                     },
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = TextPrimary
                 )
                 IconButton(onClick = onDismiss) {
@@ -1177,24 +1264,27 @@ private fun AddMeasurementBottomSheet(
                 )
             }
 
-            GymLabeledField(
-                label = when (lang) { "uz" -> "Biceps, sm"; "en" -> "Biceps, cm"; else -> "Бицепс, см" },
-                value = bicepsInput,
-                onValueChange = { bicepsInput = it },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                placeholder = "—"
-            )
-
-            GymLabeledField(
-                label = when (lang) { "uz" -> "Eslatma"; "en" -> "Note"; else -> "Заметка" },
-                value = notesInput,
-                onValueChange = { notesInput = it },
-                placeholder = when (lang) {
-                    "uz" -> "Ertalab och qoringa"
-                    "en" -> "Morning fasted"
-                    else -> "Утром натощак"
-                }
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                GymLabeledField(
+                    label = when (lang) { "uz" -> "Biceps, sm"; "en" -> "Biceps, cm"; else -> "Бицепс, см" },
+                    value = bicepsInput,
+                    onValueChange = { bicepsInput = it },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    placeholder = "—",
+                    modifier = Modifier.weight(1f)
+                )
+                GymLabeledField(
+                    label = when (lang) { "uz" -> "Eslatma"; "en" -> "Note"; else -> "Заметка" },
+                    value = notesInput,
+                    onValueChange = { notesInput = it },
+                    placeholder = when (lang) {
+                        "uz" -> "Ertalab"
+                        "en" -> "Morning"
+                        else -> "Натощак"
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 GymOutlineButton(
@@ -1204,7 +1294,7 @@ private fun AddMeasurementBottomSheet(
                     fillWidth = true
                 )
                 GymPrimaryButton(
-                    text = when (lang) { "uz" -> "Saqlash"; "en" -> "Save"; else -> "Сохранить замер" },
+                    text = when (lang) { "uz" -> "Saqlash"; "en" -> "Save"; else -> "Сохранить" },
                     onClick = {
                         onSave(
                             weightInput.toDoubleOrNull() ?: defaultWeight,
@@ -1240,6 +1330,7 @@ private fun TargetWeightDialog(
         containerColor = DarkSurface,
         titleContentColor = TextPrimary,
         textContentColor = TextSecondary,
+        shape = RoundedCornerShape(24.dp),
         title = {
             Text(
                 text = when (lang) {
@@ -1247,14 +1338,14 @@ private fun TargetWeightDialog(
                     "en" -> "Target weight ($unitLabel)"
                     else -> "Целевой вес ($unitLabel)"
                 },
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.ExtraBold,
                 color = TextPrimary
             )
         },
         text = {
             GymLabeledField(
-                label = "$unitLabel",
+                label = unitLabel,
                 value = input,
                 onValueChange = { input = it },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

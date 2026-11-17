@@ -18,8 +18,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,27 +41,34 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.neverpaid.health.core.designsystem.BorderSubtle
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
+import dev.neverpaid.health.core.designsystem.BorderHighlight
+import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
+import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
 import dev.neverpaid.health.core.designsystem.GymCard
 import dev.neverpaid.health.core.designsystem.GymDivider
-import dev.neverpaid.health.core.designsystem.GymEmptyCard
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
+import dev.neverpaid.health.core.designsystem.GymInnerWell
 import dev.neverpaid.health.core.designsystem.GymLoadingCard
 import dev.neverpaid.health.core.designsystem.GymOutlineButton
 import dev.neverpaid.health.core.designsystem.GymPageHeader
 import dev.neverpaid.health.core.designsystem.GymPrimaryButton
-import dev.neverpaid.health.core.designsystem.GymInnerWell
-import dev.neverpaid.health.core.designsystem.GymWhiteButton
+import dev.neverpaid.health.core.designsystem.GymSectionTitle
+import dev.neverpaid.health.core.designsystem.GymStatTile
+import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -115,6 +122,7 @@ fun HistoryScreen(
     modifier: Modifier = Modifier
 ) {
     val strings = LocalDudaStrings.current
+    val clipboard = LocalClipboardManager.current
     val tz = remember { TimeZone.currentSystemDefault() }
     val today = remember { Clock.System.now().toLocalDateTime(tz).date }
 
@@ -154,12 +162,12 @@ fun HistoryScreen(
         LazyColumn(
             modifier = modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             item(key = "header") {
                 GymPageHeader(
                     title = strings.historyTitle,
-                    subtitle = "Тренировки, календарь и регулярность"
+                    subtitle = "Журнал тренировок и регулярность"
                 )
             }
             item(key = "loading") {
@@ -172,6 +180,16 @@ fun HistoryScreen(
         return
     }
 
+    val (monthVolValue, monthVolUnit) = remember(monthTotalVolumeKg) {
+        if (monthTotalVolumeKg >= 1000.0) {
+            val tons = round((monthTotalVolumeKg / 1000.0) * 10.0) / 10.0
+            val num = if (tons % 1.0 == 0.0) "${tons.toInt()}" else tons.toString().replace('.', ',')
+            num to "т"
+        } else {
+            "${round(monthTotalVolumeKg).toInt()}" to "кг"
+        }
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -180,78 +198,37 @@ fun HistoryScreen(
             top = 8.dp,
             bottom = 110.dp
         ),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item(key = "header", contentType = "header") {
             GymPageHeader(
                 title = strings.historyTitle,
-                subtitle = "Тренировки, календарь и регулярность"
+                subtitle = "Календарь, выполненные сеты и тоннаж"
             )
         }
 
-        // Card 1: Monthly KPI & Export
-        item(key = "kpi_card", contentType = "kpi") {
-            GymCard {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "ТРЕНИРОВОК",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextMuted,
-                            letterSpacing = 0.8.sp
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "${monthWorkouts.size}",
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "ОБЩИЙ ОБЪЁМ",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextMuted,
-                            letterSpacing = 0.8.sp
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = formatTonsOrKg(monthTotalVolumeKg),
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    GymOutlineButton(
-                        text = monthHeaderLabel,
-                        onClick = {
-                            displayedMonth = LocalDate(today.year, today.monthNumber, 1)
-                            selectedDate = today
-                        }
-                    )
-                    GymOutlineButton(
-                        text = "Экспорт",
-                        onClick = { showExportSheet = true }
-                    )
-                }
+        // Monthly KPI Grid
+        item(key = "kpi_row", contentType = "kpi") {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                GymStatTile(
+                    label = "Тренировок за месяц",
+                    value = "${monthWorkouts.size}",
+                    modifier = Modifier.weight(1f)
+                )
+                GymStatTile(
+                    label = "Объём за месяц",
+                    value = monthVolValue,
+                    unit = monthVolUnit,
+                    valueColor = AccentLime,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
 
-        // Card 2: Monthly Calendar
+        // Monthly Calendar Card
         item(key = "calendar_card", contentType = "calendar") {
             HistoryMonthCalendarCard(
                 monthStart = displayedMonth,
@@ -283,202 +260,92 @@ fun HistoryScreen(
             )
         }
 
-        // Card 3: Chronological Divided Workout Log
-        item(key = "sessions_card", contentType = "sessions") {
-            GymCard {
-                Text(
-                    text = "Тренировки",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+        // Section Header for Workouts
+        item(key = "sessions_section_header", contentType = "section_header") {
+            GymSectionTitle(
+                title = "Тренировки · $monthHeaderLabel",
+                actionLabel = "Экспорт CSV",
+                onAction = { showExportSheet = true }
+            )
+        }
 
-                if (state.workouts.isEmpty()) {
-                    GymInnerWell {
-                        Text(
-                            text = "История тренировок пока пуста",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Завершите первую тренировку, чтобы видеть календарь, сеты и общий тоннаж.",
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
-                    }
-                } else if (monthWorkouts.isEmpty()) {
-                    GymInnerWell {
-                        Text(
-                            text = "Нет тренировок за $monthHeaderLabel",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Всего в архиве: ${state.workouts.size}. Переключите месяц или откройте последнюю тренировку.",
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        GymOutlineButton(
-                            text = "К последней тренировке",
-                            onClick = {
-                                val latest = state.workouts.maxByOrNull { it.startTimeEpochMs }
-                                val d = latest?.let { workoutLocalDate(it, tz) }
-                                if (d != null) {
-                                    displayedMonth = LocalDate(d.year, d.monthNumber, 1)
-                                    selectedDate = d
-                                }
-                            }
-                        )
-                    }
-                } else {
-                    shownWorkouts.forEachIndexed { idx, workout ->
-                        val isExpanded = state.expandedWorkoutId == workout.id
-                        val wDate = workoutLocalDate(workout, tz)
-                        val titleDate = if (wDate != null) formatFullRuDate(wDate) else workout.title
-                        val volStr = formatTonsOrKg(workout.totalVolume)
-                        val statusSub = if (isExpanded) {
-                            "$volStr · детали открыты"
-                        } else {
-                            "$volStr · завершена"
-                        }
-
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = titleDate,
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = TextPrimary
-                            )
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Text(
-                                text = "$statusSub · ${workout.title}",
-                                fontSize = 13.sp,
-                                color = TextSecondary
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            GymOutlineButton(
-                                text = if (isExpanded) "Свернуть детали" else "Показать детали",
-                                onClick = { onAction(HistoryUiAction.OnToggleWorkoutExpand(workout.id)) }
-                            )
-
-                            AnimatedVisibility(visible = isExpanded) {
-                                Column(modifier = Modifier.padding(top = 12.dp)) {
-                                    GymInnerWell {
-                                        Text(
-                                            text = workout.title.ifBlank { "Детализация тренировки" },
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = AccentLime
-                                        )
-                                        Spacer(modifier = Modifier.height(10.dp))
-
-                                        workout.exercises.forEachIndexed { exIdx, ex ->
-                                            val exVol = ex.sets.filter { it.isCompleted }.sumOf { it.weightKg * it.reps }
-                                                .let { if (it > 0.0) it else ex.sets.sumOf { s -> s.weightKg * s.reps } }
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                            ) {
-                                                ExerciseThumbnail(
-                                                    exerciseName = ex.exerciseName.ifBlank { ex.exercise.name },
-                                                    sourceId = ex.exercise.sourceId,
-                                                    exerciseId = ex.exerciseId,
-                                                    fallbackMuscle = ex.primaryMuscleGroup,
-                                                    size = ExerciseThumbnailSize.SM
-                                                )
-                                                Text(
-                                                    text = ex.exerciseName.ifBlank { ex.exercise.name },
-                                                    fontSize = 15.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = TextPrimary,
-                                                    modifier = Modifier.weight(1f)
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.height(6.dp))
-                                            ex.sets.forEach { s ->
-                                                Text(
-                                                    text = "${s.setNumber} · ${formatCleanKg(s.weightKg)} кг × ${s.reps}",
-                                                    fontSize = 13.sp,
-                                                    color = TextSoft,
-                                                    modifier = Modifier.padding(vertical = 1.dp)
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.height(6.dp))
-                                            Text(
-                                                text = "Итого · ${formatSpacedInt(exVol)} кг",
-                                                fontSize = 12.sp,
-                                                color = TextSecondary
-                                            )
-                                            if (exIdx < workout.exercises.lastIndex) {
-                                                Spacer(modifier = Modifier.height(10.dp))
-                                                GymDivider()
-                                                Spacer(modifier = Modifier.height(10.dp))
-                                            }
-                                        }
-
-                                        Spacer(modifier = Modifier.height(10.dp))
-                                        GymDivider()
-                                        Spacer(modifier = Modifier.height(10.dp))
-                                        Text(
-                                            text = "Общий объём · ${formatSpacedInt(workout.totalVolume)} кг",
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = TextPrimary
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.height(12.dp))
-
-                                    FlowRow(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        GymPrimaryButton(
-                                            text = "Повторить",
-                                            onClick = { onAction(HistoryUiAction.OnRepeatWorkout(workout)) }
-                                        )
-                                        GymOutlineButton(
-                                            text = strings.delete,
-                                            onClick = { workoutPendingDelete = workout }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        if (idx < shownWorkouts.lastIndex) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            GymDivider()
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
-                    }
-
-                    if (monthWorkouts.size > shownWorkouts.size) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        GymOutlineButton(
-                            text = "Загрузить ещё",
-                            onClick = { visibleLimit += 6 }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
+        if (state.workouts.isEmpty()) {
+            item(key = "empty_all", contentType = "empty") {
+                GymCard {
                     Text(
-                        text = "${monthWorkouts.size} тренировки за выбранный месяц",
-                        fontSize = 12.sp,
+                        text = "История тренировок пока пуста",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "Завершите первую тренировку, чтобы видеть календарь, сеты и общий тоннаж.",
+                        fontSize = 14.sp,
                         color = TextSecondary
+                    )
+                }
+            }
+        } else if (monthWorkouts.isEmpty()) {
+            item(key = "empty_month", contentType = "empty") {
+                GymCard {
+                    Text(
+                        text = "Нет тренировок за $monthHeaderLabel",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "Всего в архиве: ${state.workouts.size}. Переключите месяц или перейдите к последней записи.",
+                        fontSize = 14.sp,
+                        color = TextSecondary
+                    )
+                    GymOutlineButton(
+                        text = "К последней тренировке",
+                        onClick = {
+                            val latest = state.workouts.maxByOrNull { it.startTimeEpochMs }
+                            val d = latest?.let { workoutLocalDate(it, tz) }
+                            if (d != null) {
+                                displayedMonth = LocalDate(d.year, d.monthNumber, 1)
+                                selectedDate = d
+                            }
+                        }
+                    )
+                }
+            }
+        } else {
+            items(
+                items = shownWorkouts,
+                key = { it.id },
+                contentType = { "workout_card" }
+            ) { workout ->
+                CompletedWorkoutCard(
+                    workout = workout,
+                    tz = tz,
+                    isExpanded = state.expandedWorkoutId == workout.id,
+                    deleteLabel = strings.delete,
+                    onToggleExpand = { onAction(HistoryUiAction.OnToggleWorkoutExpand(workout.id)) },
+                    onRepeat = { onAction(HistoryUiAction.OnRepeatWorkout(workout)) },
+                    onShare = {
+                        val shareText = formatWorkoutShareSummary(workout, tz)
+                        clipboard.setText(AnnotatedString(shareText))
+                        PlatformBridge.showToast("Тренировка скопирована")
+                    },
+                    onDelete = { workoutPendingDelete = workout }
+                )
+            }
+
+            if (monthWorkouts.size > shownWorkouts.size) {
+                item(key = "load_more_btn", contentType = "load_more") {
+                    GymOutlineButton(
+                        text = "Показать ещё (${monthWorkouts.size - shownWorkouts.size})",
+                        onClick = { visibleLimit += 6 },
+                        fillWidth = true
                     )
                 }
             }
         }
 
-        // Card 4: 52-week Consistency Heatmap
+        // 52-week Consistency Heatmap
         item(key = "yearly_heatmap_card", contentType = "heatmap") {
             HistoryYearlyHeatmapCard(
                 workouts = state.workouts,
@@ -489,7 +356,6 @@ fun HistoryScreen(
     }
 
     if (showExportSheet) {
-        val clipboard = LocalClipboardManager.current
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         val csvPayload = remember(state.workouts) {
             buildString {
@@ -505,54 +371,50 @@ fun HistoryScreen(
             onDismissRequest = { showExportSheet = false },
             sheetState = sheetState,
             containerColor = DarkSurface,
-            contentColor = TextPrimary
+            contentColor = TextPrimary,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Text(
-                    text = "ЭКСПОРТ АРХИВА",
-                    fontSize = 11.sp,
-                    color = AccentLime,
-                    letterSpacing = 0.8.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "CSV выгрузка (${state.workouts.size} тренировок)",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    text = "CSV выгрузка (${state.workouts.size})",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = TextPrimary
                 )
-                Spacer(modifier = Modifier.height(12.dp))
                 GymInnerWell {
                     Text(
                         text = csvPayload.lines().take(12).joinToString("\n"),
                         fontSize = 12.sp,
-                        color = TextSoft
+                        color = TextSoft,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    GymOutlineButton(
+                        text = strings.cancel,
+                        onClick = { showExportSheet = false },
+                        modifier = Modifier.weight(1f)
+                    )
                     GymPrimaryButton(
                         text = "Скопировать CSV",
                         onClick = {
                             clipboard.setText(AnnotatedString(csvPayload))
                             PlatformBridge.showToast("CSV скопирован")
                             showExportSheet = false
-                        }
-                    )
-                    GymOutlineButton(
-                        text = strings.cancel,
-                        onClick = { showExportSheet = false }
+                        },
+                        modifier = Modifier.weight(1.4f)
                     )
                 }
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
@@ -564,58 +426,282 @@ fun HistoryScreen(
             onDismissRequest = { workoutPendingDelete = null },
             sheetState = sheetState,
             containerColor = DarkSurface,
-            contentColor = TextPrimary
+            contentColor = TextPrimary,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Text(
-                    text = "УДАЛЕНИЕ ЗАПИСИ",
-                    fontSize = 11.sp,
-                    color = TextMuted,
-                    letterSpacing = 0.8.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Удалить «${pendingDelete.title}»?",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    text = "Удалить «${pendingDelete.title.ifBlank { "Тренировку" }}»?",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = TextPrimary
                 )
-                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Тренировка будет удалена из журнала и статистики.",
+                    text = "Запись о тренировке будет удалена из журнала и статистики.",
                     fontSize = 14.sp,
                     color = TextSecondary
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                GymDivider()
-                Spacer(modifier = Modifier.height(16.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     GymOutlineButton(
                         text = strings.cancel,
-                        onClick = { workoutPendingDelete = null }
+                        onClick = { workoutPendingDelete = null },
+                        modifier = Modifier.weight(1f)
                     )
-                    GymWhiteButton(
+                    GymOutlineButton(
                         text = strings.delete,
                         onClick = {
                             onAction(HistoryUiAction.OnDeleteWorkout(pendingDelete.id))
                             workoutPendingDelete = null
-                        }
+                        },
+                        textColor = CrimsonRed,
+                        modifier = Modifier.weight(1f)
                     )
                 }
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CompletedWorkoutCard(
+    workout: Workout,
+    tz: TimeZone,
+    isExpanded: Boolean,
+    deleteLabel: String,
+    onToggleExpand: () -> Unit,
+    onRepeat: () -> Unit,
+    onShare: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val wDate = workoutLocalDate(workout, tz)
+    val dateLabel = if (wDate != null) formatFullRuDate(wDate) else workout.startedAt.take(10)
+    val displayTitle = workout.title.ifBlank { "Силовая тренировка" }
+    val setsCount = remember(workout) {
+        workout.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
+            .let { if (it > 0) it else workout.completedSetsCount.coerceAtLeast(workout.exercises.sumOf { e -> e.sets.size }) }
+    }
+    val durationLabel = remember(workout.durationSeconds) {
+        formatDurationCompact(workout.durationSeconds)
+    }
+    val volumeLabel = remember(workout.totalVolume) {
+        formatTonsOrKg(workout.totalVolume)
+    }
+
+    GymCard {
+        // Header: Bold Title + Date + Expand Badge
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable(onClick = onToggleExpand),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = displayTitle,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.3).sp,
+                    color = TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = dateLabel,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextSecondary
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(if (isExpanded) AccentLimeSubtle else DarkSurfaceHigh)
+                    .clickable(onClick = onToggleExpand)
+                    .padding(horizontal = 12.dp, vertical = 7.dp)
+            ) {
+                Text(
+                    text = if (isExpanded) "Свернуть" else "Детали",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isExpanded) AccentLime else TextSecondary
+                )
+            }
+        }
+
+        // 3 Inline Heavy-Numeral Stats: Duration, Volume, Sets
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            WorkoutInlineStat(
+                label = "Время",
+                value = durationLabel,
+                valueColor = TextPrimary,
+                modifier = Modifier.weight(1f)
+            )
+            WorkoutInlineStat(
+                label = "Объём",
+                value = volumeLabel,
+                valueColor = AccentLime,
+                modifier = Modifier.weight(1f)
+            )
+            WorkoutInlineStat(
+                label = "Сеты",
+                value = "$setsCount",
+                valueColor = TextPrimary,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        // Expandable Exercise Breakdown with ExerciseThumbnail(SM)
+        AnimatedVisibility(visible = isExpanded) {
+            GymInnerWell {
+                workout.exercises.forEachIndexed { exIdx, ex ->
+                    val exVol = ex.sets.filter { it.isCompleted }.sumOf { it.weightKg * it.reps }
+                        .let { if (it > 0.0) it else ex.sets.sumOf { s -> s.weightKg * s.reps } }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        ExerciseThumbnail(
+                            exerciseName = ex.exerciseName.ifBlank { ex.exercise.name },
+                            sourceId = ex.exercise.sourceId,
+                            exerciseId = ex.exerciseId,
+                            fallbackMuscle = ex.primaryMuscleGroup,
+                            size = ExerciseThumbnailSize.SM
+                        )
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = ex.exerciseName.ifBlank { ex.exercise.name },
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "${ex.sets.size} подх. · ${formatSpacedInt(exVol)} кг",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecondary,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                        }
+                    }
+
+                    if (ex.sets.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            ex.sets.forEach { s ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(DarkSurface)
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "${s.setNumber} · ${formatCleanKg(s.weightKg)} кг × ${s.reps}",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextSoft,
+                                        style = TextStyle(fontFeatureSettings = "tnum")
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (exIdx < workout.exercises.lastIndex) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        GymDivider()
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+            }
+        }
+
+        // Compact Repeat / Share / Delete Actions
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            GymPrimaryButton(
+                text = "Повторить",
+                onClick = onRepeat,
+                modifier = Modifier.weight(1.2f)
+            )
+            GymOutlineButton(
+                text = "Поделиться",
+                onClick = onShare,
+                modifier = Modifier.weight(1f)
+            )
+            GymOutlineButton(
+                text = deleteLabel,
+                onClick = onDelete,
+                textColor = CrimsonRed
+            )
+        }
+    }
+}
+
+@Composable
+private fun WorkoutInlineStat(
+    label: String,
+    value: String,
+    valueColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(DarkSurfaceHigh)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextSecondary,
+            maxLines = 1
+        )
+        Text(
+            text = value,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Black,
+            color = valueColor,
+            style = TextStyle(fontFeatureSettings = "tnum"),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
 @Composable
 private fun HistoryMonthCalendarCard(
     monthStart: LocalDate,
@@ -650,24 +736,24 @@ private fun HistoryMonthCalendarCard(
     }
 
     GymCard {
-        Text(
-            text = monthTitle,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            GymOutlineButton(text = "←", onClick = onPrevMonth)
-            GymOutlineButton(text = "Сегодня", onClick = onToday)
-            GymOutlineButton(text = "→", onClick = onNextMonth)
+            Text(
+                text = monthTitle,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = (-0.4).sp,
+                color = TextPrimary
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                CalendarNavChip(text = "←", onClick = onPrevMonth)
+                CalendarNavChip(text = "Сегодня", onClick = onToday)
+                CalendarNavChip(text = "→", onClick = onNextMonth)
+            }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         // Weekday headers
         Row(
@@ -678,14 +764,13 @@ private fun HistoryMonthCalendarCard(
                 Text(
                     text = wd,
                     fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
                     color = TextMuted,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f)
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             weeks.forEach { week ->
@@ -701,31 +786,41 @@ private fun HistoryMonthCalendarCard(
                             val isSelected = selectedDate == date
                             val isToday = date == today
 
-                            val bg = if (hasWorkout) AccentLime else DarkBackground
-                            val borderColor = when {
-                                isSelected -> TextPrimary
-                                isToday -> AccentLime
+                            val bg = when {
                                 hasWorkout -> AccentLime
-                                else -> BorderSubtle
+                                isSelected -> DarkSurfaceElevated
+                                isToday -> DarkSurfaceElevated
+                                else -> DarkSurfaceHigh
                             }
-                            val borderWidth = if (isSelected) 2.dp else 1.dp
-                            val textColor = if (hasWorkout) Color.Black else TextSoft
+                            val textColor = when {
+                                hasWorkout -> GymInkOnLight
+                                isSelected || isToday -> TextPrimary
+                                else -> TextSoft
+                            }
+                            val cellShape = RoundedCornerShape(12.dp)
+                            val borderMod = when {
+                                isSelected && hasWorkout -> Modifier.border(2.dp, TextPrimary, cellShape)
+                                isSelected -> Modifier.border(2.dp, AccentLime, cellShape)
+                                isToday && !hasWorkout -> Modifier.border(1.dp, BorderHighlight, cellShape)
+                                else -> Modifier
+                            }
 
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(40.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .clip(cellShape)
                                     .background(bg)
-                                    .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
+                                    .then(borderMod)
                                     .clickable { onSelectDate(date) },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = "${date.dayOfMonth}",
                                     fontSize = 14.sp,
-                                    fontWeight = if (hasWorkout || isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = textColor
+                                    fontWeight = if (hasWorkout || isSelected || isToday) FontWeight.Black else FontWeight.Medium,
+                                    color = textColor,
+                                    style = TextStyle(fontFeatureSettings = "tnum")
                                 )
                             }
                         }
@@ -734,15 +829,14 @@ private fun HistoryMonthCalendarCard(
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
-
         Row(
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -751,19 +845,38 @@ private fun HistoryMonthCalendarCard(
                         .background(AccentLime)
                 )
                 Text(
-                    text = "Тренировка",
-                    fontSize = 12.sp,
-                    color = TextSecondary
-                )
-            }
-            if (selectedDate != null) {
-                Text(
-                    text = "${selectedDate.dayOfMonth} — выбранная дата",
+                    text = if (selectedDate != null) {
+                        "Выбрано: ${formatFullRuDate(selectedDate)}"
+                    } else {
+                        "Дни с тренировкой отмечены лаймом"
+                    },
                     fontSize = 12.sp,
                     color = TextSecondary
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun CalendarNavChip(
+    text: String,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(DarkSurfaceHigh)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary
+        )
     }
 }
 
@@ -784,7 +897,6 @@ private fun HistoryYearlyHeatmapCard(
         map
     }
 
-    // Align grid end to the end of current week (Sunday), covering 52 weeks (364 days)
     val sundayOffset = 6 - today.dayOfWeek.ordinal
     val gridEnd = remember(today) { today.plus(sundayOffset, DateTimeUnit.DAY) }
     val gridStart = remember(gridEnd) { gridEnd.minus(52 * 7 - 1, DateTimeUnit.DAY) }
@@ -798,19 +910,12 @@ private fun HistoryYearlyHeatmapCard(
     }
 
     GymCard {
+        GymSectionTitle(title = "Год в тренировках")
         Text(
-            text = "Год в тренировках",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "52 недели · прокрутка",
+            text = "Активность за последние 52 недели",
             fontSize = 13.sp,
             color = TextSecondary
         )
-        Spacer(modifier = Modifier.height(14.dp))
 
         Row(
             modifier = Modifier
@@ -823,7 +928,7 @@ private fun HistoryYearlyHeatmapCard(
                     weekDays.forEach { day ->
                         val count = workoutsCountByDate[day] ?: 0
                         val cellColor = when {
-                            day > today -> DarkBackground
+                            day > today -> GymWell
                             count >= 2 -> AccentLime
                             count == 1 -> AccentLime.copy(alpha = 0.72f)
                             else -> DarkSurfaceHigh
@@ -831,7 +936,7 @@ private fun HistoryYearlyHeatmapCard(
                         Box(
                             modifier = Modifier
                                 .size(12.dp)
-                                .clip(RoundedCornerShape(3.dp))
+                                .clip(RoundedCornerShape(3.5.dp))
                                 .background(cellColor)
                         )
                     }
@@ -839,35 +944,71 @@ private fun HistoryYearlyHeatmapCard(
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
-
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Нет записей",
-                fontSize = 12.sp,
-                color = TextMuted
-            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
+                        .size(10.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(DarkSurfaceHigh)
+                )
+                Text(
+                    text = "Отдых",
+                    fontSize = 12.sp,
+                    color = TextMuted
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(RoundedCornerShape(3.dp))
                         .background(AccentLime)
                 )
                 Text(
-                    text = "Есть тренировка",
+                    text = "Тренировка",
                     fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
                     color = AccentLime
                 )
             }
         }
     }
+}
+
+private fun formatDurationCompact(durationSeconds: Long): String {
+    if (durationSeconds <= 0L) return "45 мин"
+    val totalMin = (durationSeconds / 60L).coerceAtLeast(1L)
+    val hrs = totalMin / 60L
+    val mins = totalMin % 60L
+    return if (hrs > 0L) {
+        "${hrs}ч ${mins}м"
+    } else {
+        "$totalMin мин"
+    }
+}
+
+private fun formatWorkoutShareSummary(workout: Workout, tz: TimeZone): String {
+    val d = workoutLocalDate(workout, tz)
+    val dateStr = if (d != null) formatFullRuDate(d) else ""
+    val title = workout.title.ifBlank { "Тренировка" }
+    return buildString {
+        appendLine("$title · $dateStr")
+        appendLine("Объём: ${formatTonsOrKg(workout.totalVolume)} · Время: ${formatDurationCompact(workout.durationSeconds)}")
+        workout.exercises.forEach { ex ->
+            val name = ex.exerciseName.ifBlank { ex.exercise.name }
+            appendLine("• $name (${ex.sets.size} подх.)")
+        }
+    }.trim()
 }
 
 private fun workoutLocalDate(workout: Workout, tz: TimeZone): LocalDate? {

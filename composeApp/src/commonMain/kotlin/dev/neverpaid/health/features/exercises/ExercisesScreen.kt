@@ -1,7 +1,6 @@
 package dev.neverpaid.health.features.exercises
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +16,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -32,31 +33,34 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.AnimatedExerciseFramesCard
-import dev.neverpaid.health.core.designsystem.BorderSubtle
+import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
+import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
 import dev.neverpaid.health.core.designsystem.GymCard
-import dev.neverpaid.health.core.designsystem.GymDivider
 import dev.neverpaid.health.core.designsystem.GymEmptyCard
+import dev.neverpaid.health.core.designsystem.GymInnerWell
 import dev.neverpaid.health.core.designsystem.GymLabeledField
 import dev.neverpaid.health.core.designsystem.GymLoadingCard
 import dev.neverpaid.health.core.designsystem.GymOutlineButton
 import dev.neverpaid.health.core.designsystem.GymPageHeader
 import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymSectionTitle
 import dev.neverpaid.health.core.designsystem.GymTextField
-import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.designsystem.TextSoft
@@ -111,75 +115,74 @@ fun ExercisesScreen(
 
     val muscles = listOf(
         "All" to when (lang) {
-            "uz" -> "barchasi"
-            "en" -> "all"
-            else -> "все"
+            "uz" -> "Barchasi"
+            "en" -> "All"
+            else -> "Все"
         },
         "chest" to when (lang) {
-            "uz" -> "ko'krak"
-            "en" -> "chest"
-            else -> "грудь"
+            "uz" -> "Ko'krak"
+            "en" -> "Chest"
+            else -> "Грудь"
         },
         "back" to when (lang) {
-            "uz" -> "orqa"
-            "en" -> "back"
-            else -> "спина"
+            "uz" -> "Orqa"
+            "en" -> "Back"
+            else -> "Спина"
         },
         "legs" to when (lang) {
-            "uz" -> "oyoqlar"
-            "en" -> "legs"
-            else -> "ноги"
+            "uz" -> "Oyoqlar"
+            "en" -> "Legs"
+            else -> "Ноги"
         },
         "shoulders" to when (lang) {
-            "uz" -> "yelkalar"
-            "en" -> "shoulders"
-            else -> "плечи"
+            "uz" -> "Yelkalar"
+            "en" -> "Shoulders"
+            else -> "Плечи"
         },
         "arms" to when (lang) {
-            "uz" -> "qo'llar"
-            "en" -> "arms"
-            else -> "руки"
+            "uz" -> "Qo'llar"
+            "en" -> "Arms"
+            else -> "Руки"
         },
         "core" to when (lang) {
-            "uz" -> "press"
-            "en" -> "core"
-            else -> "пресс"
+            "uz" -> "Press"
+            "en" -> "Core"
+            else -> "Пресс"
         }
     )
     val equipments = listOf(
         "All" to when (lang) {
-            "uz" -> "barchasi"
-            "en" -> "all"
-            else -> "всё"
+            "uz" -> "Barchasi"
+            "en" -> "All"
+            else -> "Всё"
         },
         "barbell" to when (lang) {
-            "uz" -> "shtanga"
-            "en" -> "barbell"
-            else -> "штанга"
+            "uz" -> "Shtanga"
+            "en" -> "Barbell"
+            else -> "Штанга"
         },
         "dumbbell" to when (lang) {
-            "uz" -> "gantel"
-            "en" -> "dumbbell"
-            else -> "гантели"
+            "uz" -> "Gantel"
+            "en" -> "Dumbbell"
+            else -> "Гантели"
         },
         "cable" to when (lang) {
-            "uz" -> "blok"
-            "en" -> "cable"
-            else -> "блок"
+            "uz" -> "Blok"
+            "en" -> "Cable"
+            else -> "Блок"
         },
         "machine" to when (lang) {
-            "uz" -> "trenajyor"
-            "en" -> "machine"
-            else -> "тренажёр"
+            "uz" -> "Trenajyor"
+            "en" -> "Machine"
+            else -> "Тренажёр"
         },
         "bodyweight" to when (lang) {
-            "uz" -> "tana vazni"
-            "en" -> "bodyweight"
-            else -> "свой вес"
+            "uz" -> "Tana vazni"
+            "en" -> "Bodyweight"
+            else -> "Свой вес"
         }
     )
 
-    var showMuscleFilter by remember { mutableStateOf(false) }
     var showEquipFilter by remember { mutableStateOf(false) }
     var expandedTechniqueId by remember { mutableStateOf<String?>(null) }
 
@@ -204,8 +207,8 @@ fun ExercisesScreen(
         )
     }
 
-    val selectedMuscleLabel = muscles.find { it.first.equals(state.selectedMuscle, ignoreCase = true) }?.second ?: muscles.first().second
-    val selectedEquipLabel = equipments.find { it.first.equals(state.selectedEquipment, ignoreCase = true) }?.second ?: equipments.first().second
+    val selectedEquipLabel = equipments.find { it.first.equals(state.selectedEquipment, ignoreCase = true) }?.second
+        ?: equipments.first().second
 
     val catalogExercises = remember(state.exercises) { state.exercises.filter { !it.isCustom } }
     val customExercises = remember(state.exercises) { state.exercises.filter { it.isCustom } }
@@ -214,8 +217,8 @@ fun ExercisesScreen(
         modifier = modifier
             .fillMaxSize()
             .background(DarkBackground),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 112.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 40.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item(key = "header", contentType = "header") {
             GymPageHeader(
@@ -224,15 +227,19 @@ fun ExercisesScreen(
                     "uz" -> "Harakatlar katalogi va bajarish texnikasi"
                     "en" -> "Movement catalog and execution cues"
                     else -> "Каталог движений и техника выполнения"
-                }
+                },
+                modifier = Modifier.padding(bottom = 8.dp)
             )
         }
 
         item(key = "controls", contentType = "controls") {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = Modifier.padding(bottom = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     GymTextField(
@@ -248,87 +255,37 @@ fun ExercisesScreen(
                     )
                     GymPrimaryButton(
                         text = when (lang) {
-                            "uz" -> "O'zimniki"
-                            "en" -> "Create custom"
-                            else -> "Создать своё"
+                            "uz" -> "+ O'zimniki"
+                            "en" -> "+ Custom"
+                            else -> "+ Своё"
                         },
                         onClick = { onAction(ExercisesUiAction.OnOpenEditor(null)) }
                     )
                 }
 
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    GymOutlineButton(
-                        text = when (lang) {
-                            "uz" -> "Mushaklar: $selectedMuscleLabel"
-                            "en" -> "Muscles: $selectedMuscleLabel"
-                            else -> "Мышцы: $selectedMuscleLabel"
-                        },
-                        onClick = {
-                            showMuscleFilter = !showMuscleFilter
-                            if (showMuscleFilter) showEquipFilter = false
-                        }
-                    )
-                    GymOutlineButton(
-                        text = when (lang) {
-                            "uz" -> "Jihoz: $selectedEquipLabel"
-                            "en" -> "Equipment: $selectedEquipLabel"
-                            else -> "Оборудование: $selectedEquipLabel"
-                        },
-                        onClick = {
-                            showEquipFilter = !showEquipFilter
-                            if (showEquipFilter) showMuscleFilter = false
-                        }
-                    )
-                }
-
-                if (showMuscleFilter) {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        muscles.forEach { (key, label) ->
-                            GymPillTab(
-                                text = label.replaceFirstChar { it.uppercase() },
-                                selected = state.selectedMuscle.equals(key, ignoreCase = true),
-                                onClick = {
-                                    onAction(ExercisesUiAction.OnSelectMuscle(key))
-                                    showMuscleFilter = false
-                                }
-                            )
-                        }
+                    items(muscles, key = { it.first }) { (key, label) ->
+                        GymPillTab(
+                            text = label,
+                            selected = state.selectedMuscle.equals(key, ignoreCase = true),
+                            onClick = { onAction(ExercisesUiAction.OnSelectMuscle(key)) }
+                        )
                     }
                 }
 
-                if (showEquipFilter) {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        equipments.forEach { (key, label) ->
-                            GymPillTab(
-                                text = label.replaceFirstChar { it.uppercase() },
-                                selected = state.selectedEquipment.equals(key, ignoreCase = true),
-                                onClick = {
-                                    onAction(ExercisesUiAction.OnSelectEquipment(key))
-                                    showEquipFilter = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                FlowRow(
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     GymPillTab(
                         text = when (lang) {
-                            "uz" -> "Barcha mashqlar"
-                            "en" -> "All exercises"
-                            else -> "Все упражнения"
+                            "uz" -> "Barchasi"
+                            "en" -> "All"
+                            else -> "Все"
                         },
                         selected = state.selectedTab == "all",
                         onClick = { onAction(ExercisesUiAction.OnSelectTab("all")) }
@@ -342,30 +299,59 @@ fun ExercisesScreen(
                         selected = state.selectedTab == "custom",
                         onClick = { onAction(ExercisesUiAction.OnSelectTab("custom")) }
                     )
+                    GymPillTab(
+                        text = when (lang) {
+                            "uz" -> "Jihoz: $selectedEquipLabel"
+                            "en" -> "Gear: $selectedEquipLabel"
+                            else -> "Снаряд: $selectedEquipLabel"
+                        },
+                        selected = !state.selectedEquipment.equals("All", ignoreCase = true) || showEquipFilter,
+                        onClick = { showEquipFilter = !showEquipFilter }
+                    )
+                }
+
+                if (showEquipFilter) {
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(equipments, key = { it.first }) { (key, label) ->
+                            GymPillTab(
+                                text = label,
+                                selected = state.selectedEquipment.equals(key, ignoreCase = true),
+                                onClick = {
+                                    onAction(ExercisesUiAction.OnSelectEquipment(key))
+                                    showEquipFilter = false
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
 
         item(key = "library_heading", contentType = "section_heading") {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = when (lang) {
-                        "uz" -> "Mashqlar kutubxonasi"
-                        "en" -> "Exercise library"
-                        else -> "Библиотека упражнений"
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                GymSectionTitle(
+                    title = when (lang) {
+                        "uz" -> "Mashqlar"
+                        "en" -> "Exercises"
+                        else -> "Упражнения"
                     },
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = when (lang) {
-                        "uz" -> "${state.exercises.size} mashq · Kuch · Vazn va takrorlar"
-                        "en" -> "${state.exercises.size} exercises · Strength · Weight & reps"
-                        else -> "${state.exercises.size} упражнений · Силовые · Вес и повторения"
-                    },
-                    fontSize = 13.sp,
-                    color = TextSecondary
+                    text = "${state.exercises.size}",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = TextSecondary,
+                    style = TextStyle(fontFeatureSettings = "tnum")
                 )
             }
         }
@@ -399,43 +385,43 @@ fun ExercisesScreen(
                 )
             }
         } else {
-            if (catalogExercises.isNotEmpty()) {
-                itemsIndexed(
-                    items = catalogExercises,
-                    key = { _, ex -> ex.id },
-                    contentType = { _, _ -> "catalog_row" }
-                ) { index, ex ->
-                    GroupedCatalogExerciseRow(
-                        exercise = ex,
-                        isFirst = index == 0,
-                        isLast = index == catalogExercises.lastIndex,
-                        isExpanded = expandedTechniqueId == ex.id,
-                        lang = lang,
-                        onToggleTechnique = {
-                            expandedTechniqueId = if (expandedTechniqueId == ex.id) null else ex.id
-                        },
-                        onAddToWorkout = { onAction(ExercisesUiAction.OnStartWorkoutWithExercise(ex)) },
-                        onInspectFull = { onAction(ExercisesUiAction.OnSelectExercise(ex)) }
-                    )
-                }
-            }
-
             if (customExercises.isNotEmpty()) {
-                itemsIndexed(
+                items(
                     items = customExercises,
-                    key = { _, ex -> "custom_${ex.id}" },
-                    contentType = { _, _ -> "custom_card" }
-                ) { _, ex ->
-                    CustomExerciseCard(
+                    key = { ex -> "custom_${ex.id}" },
+                    contentType = { "custom_card" }
+                ) { ex ->
+                    ExerciseCatalogCard(
                         exercise = ex,
+                        isCustom = true,
                         isExpanded = expandedTechniqueId == ex.id,
                         lang = lang,
                         onToggleTechnique = {
                             expandedTechniqueId = if (expandedTechniqueId == ex.id) null else ex.id
                         },
                         onAddToWorkout = { onAction(ExercisesUiAction.OnStartWorkoutWithExercise(ex)) },
+                        onInspectFull = { onAction(ExercisesUiAction.OnSelectExercise(ex)) },
                         onEdit = { onAction(ExercisesUiAction.OnOpenEditor(ex)) },
-                        onDelete = { onAction(ExercisesUiAction.OnDeleteCustomExercise(ex.id)) },
+                        onDelete = { onAction(ExercisesUiAction.OnDeleteCustomExercise(ex.id)) }
+                    )
+                }
+            }
+
+            if (catalogExercises.isNotEmpty()) {
+                items(
+                    items = catalogExercises,
+                    key = { ex -> ex.id },
+                    contentType = { "catalog_row" }
+                ) { ex ->
+                    ExerciseCatalogCard(
+                        exercise = ex,
+                        isCustom = false,
+                        isExpanded = expandedTechniqueId == ex.id,
+                        lang = lang,
+                        onToggleTechnique = {
+                            expandedTechniqueId = if (expandedTechniqueId == ex.id) null else ex.id
+                        },
+                        onAddToWorkout = { onAction(ExercisesUiAction.OnStartWorkoutWithExercise(ex)) },
                         onInspectFull = { onAction(ExercisesUiAction.OnSelectExercise(ex)) }
                     )
                 }
@@ -446,160 +432,28 @@ fun ExercisesScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun GroupedCatalogExerciseRow(
+private fun ExerciseCatalogCard(
     exercise: Exercise,
-    isFirst: Boolean,
-    isLast: Boolean,
+    isCustom: Boolean,
     isExpanded: Boolean,
     lang: String,
     onToggleTechnique: () -> Unit,
     onAddToWorkout: () -> Unit,
-    onInspectFull: () -> Unit
-) {
-    val shape = RoundedCornerShape(
-        topStart = if (isFirst) 14.dp else 0.dp,
-        topEnd = if (isFirst) 14.dp else 0.dp,
-        bottomStart = if (isLast) 14.dp else 0.dp,
-        bottomEnd = if (isLast) 14.dp else 0.dp
-    )
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(DarkSurface, shape)
-            .border(1.dp, BorderSubtle, shape)
-            .drawWithContent {
-                drawContent()
-                val stroke = 1.dp.toPx()
-                if (!isFirst) {
-                    drawLine(
-                        color = DarkSurface,
-                        start = Offset(stroke, stroke / 2f),
-                        end = Offset(size.width - stroke, stroke / 2f),
-                        strokeWidth = stroke * 1.6f
-                    )
-                }
-                if (!isLast) {
-                    drawLine(
-                        color = DarkSurface,
-                        start = Offset(stroke, size.height - stroke / 2f),
-                        end = Offset(size.width - stroke, size.height - stroke / 2f),
-                        strokeWidth = stroke * 1.6f
-                    )
-                }
-            }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onInspectFull() },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                ExerciseThumbnail(
-                    exerciseName = exercise.name,
-                    sourceId = exercise.sourceId,
-                    exerciseId = exercise.id,
-                    fallbackMuscle = exercise.primaryMuscle,
-                    size = ExerciseThumbnailSize.MD,
-                    onClick = onInspectFull
-                )
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = exercise.name,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}",
-                        fontSize = 13.sp,
-                        color = TextSecondary
-                    )
-                }
-            }
-
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                GymOutlineButton(
-                    text = if (isExpanded) {
-                        when (lang) {
-                            "uz" -> "Texnikani yopish"
-                            "en" -> "Hide cues"
-                            else -> "Скрыть технику"
-                        }
-                    } else {
-                        when (lang) {
-                            "uz" -> "Texnika"
-                            "en" -> "Technique"
-                            else -> "Техника"
-                        }
-                    },
-                    onClick = onToggleTechnique
-                )
-                GymPrimaryButton(
-                    text = when (lang) {
-                        "uz" -> "Qo'shish"
-                        "en" -> "Add"
-                        else -> "Добавить"
-                    },
-                    onClick = onAddToWorkout
-                )
-            }
-
-            if (isExpanded) {
-                ExpandedTechniquePanel(
-                    exercise = exercise,
-                    lang = lang,
-                    onAddToWorkout = onAddToWorkout,
-                    onInspectFull = onInspectFull
-                )
-            }
-        }
-
-        if (!isLast) {
-            GymDivider(
-                modifier = Modifier.padding(horizontal = 24.dp),
-                color = BorderSubtle
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun CustomExerciseCard(
-    exercise: Exercise,
-    isExpanded: Boolean,
-    lang: String,
-    onToggleTechnique: () -> Unit,
-    onAddToWorkout: () -> Unit,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
-    onInspectFull: () -> Unit
+    onInspectFull: () -> Unit,
+    onEdit: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null
 ) {
     GymCard(
         backgroundColor = DarkSurface,
-        borderColor = BorderSubtle
+        contentPadding = PaddingValues(18.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
                 .clickable { onInspectFull() },
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             ExerciseThumbnail(
                 exerciseName = exercise.name,
@@ -613,19 +467,43 @@ private fun CustomExerciseCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = exercise.name,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextPrimary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (isCustom) {
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(AccentLimeSubtle)
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = when (lang) {
+                                    "uz" -> "O'zimniki"
+                                    "en" -> "Custom"
+                                    else -> "Своё"
+                                },
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AccentLime
+                            )
+                        }
+                    }
+                }
                 Text(
-                    text = exercise.name,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                Text(
-                    text = when (lang) {
-                        "uz" -> "Shaxsiy mashq · ${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}"
-                        "en" -> "Custom exercise · ${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}"
-                        else -> "Своё упражнение · ${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}"
-                    },
+                    text = "${localizeMuscleName(exercise.primaryMuscle)} · ${localizeEquipmentName(exercise.equipment)}",
                     fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
                     color = TextSecondary
                 )
             }
@@ -635,12 +513,20 @@ private fun CustomExerciseCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            GymPrimaryButton(
+                text = when (lang) {
+                    "uz" -> "Qo'shish"
+                    "en" -> "Add"
+                    else -> "Добавить"
+                },
+                onClick = onAddToWorkout
+            )
             GymOutlineButton(
                 text = if (isExpanded) {
                     when (lang) {
-                        "uz" -> "Texnikani yopish"
-                        "en" -> "Hide cues"
-                        else -> "Скрыть технику"
+                        "uz" -> "Yopish"
+                        "en" -> "Hide"
+                        else -> "Скрыть"
                     }
                 } else {
                     when (lang) {
@@ -651,30 +537,27 @@ private fun CustomExerciseCard(
                 },
                 onClick = onToggleTechnique
             )
-            GymPrimaryButton(
-                text = when (lang) {
-                    "uz" -> "Qo'shish"
-                    "en" -> "Add"
-                    else -> "Добавить"
-                },
-                onClick = onAddToWorkout
-            )
-            GymOutlineButton(
-                text = when (lang) {
-                    "uz" -> "Tahrirlash"
-                    "en" -> "Edit"
-                    else -> "Изменить"
-                },
-                onClick = onEdit
-            )
-            GymOutlineButton(
-                text = when (lang) {
-                    "uz" -> "O'chirish"
-                    "en" -> "Delete"
-                    else -> "Удалить"
-                },
-                onClick = onDelete
-            )
+            if (isCustom && onEdit != null) {
+                GymOutlineButton(
+                    text = when (lang) {
+                        "uz" -> "Tahrirlash"
+                        "en" -> "Edit"
+                        else -> "Изменить"
+                    },
+                    onClick = onEdit
+                )
+            }
+            if (isCustom && onDelete != null) {
+                GymOutlineButton(
+                    text = when (lang) {
+                        "uz" -> "O'chirish"
+                        "en" -> "Delete"
+                        else -> "Удалить"
+                    },
+                    textColor = CrimsonRed,
+                    onClick = onDelete
+                )
+            }
         }
 
         if (isExpanded) {
@@ -696,63 +579,48 @@ private fun ExpandedTechniquePanel(
     onAddToWorkout: () -> Unit,
     onInspectFull: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(DarkSurfaceHigh)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Text(
-            text = when (lang) {
-                "uz" -> "Texnika · ${exercise.name}"
-                "en" -> "Technique · ${exercise.name}"
-                else -> "Техника · ${exercise.name}"
-            },
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-        AnimatedExerciseFramesCard(
-            exerciseName = exercise.name,
-            sourceId = exercise.sourceId,
-            exerciseId = exercise.id,
-            primaryMuscle = exercise.primaryMuscle,
-            lang = lang
-        )
-        Text(
-            text = exercise.instructions.ifBlank {
-                when (lang) {
-                    "uz" -> "Asosiy: ${localizeMuscleName(exercise.primaryMuscle)}. Jihoz: ${localizeEquipmentName(exercise.equipment)}."
-                    "en" -> "Primary: ${localizeMuscleName(exercise.primaryMuscle)}. Equipment: ${localizeEquipmentName(exercise.equipment)}."
-                    else -> "Основные: ${localizeMuscleName(exercise.primaryMuscle)}. Оборудование: ${localizeEquipmentName(exercise.equipment)}."
-                }
-            },
-            fontSize = 13.sp,
-            lineHeight = 19.sp,
-            color = TextSoft
-        )
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            GymPrimaryButton(
-                text = when (lang) {
-                    "uz" -> "Mashg'ulotga qo'shish"
-                    "en" -> "Add to workout"
-                    else -> "Добавить в тренировку"
-                },
-                onClick = onAddToWorkout
+    GymInnerWell {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            AnimatedExerciseFramesCard(
+                exerciseName = exercise.name,
+                sourceId = exercise.sourceId,
+                exerciseId = exercise.id,
+                primaryMuscle = exercise.primaryMuscle,
+                lang = lang
             )
-            GymOutlineButton(
-                text = when (lang) {
-                    "uz" -> "Batafsil va rekordlar"
-                    "en" -> "Details & records"
-                    else -> "История и детали"
+            Text(
+                text = exercise.instructions.ifBlank {
+                    when (lang) {
+                        "uz" -> "Asosiy: ${localizeMuscleName(exercise.primaryMuscle)}. Jihoz: ${localizeEquipmentName(exercise.equipment)}."
+                        "en" -> "Primary: ${localizeMuscleName(exercise.primaryMuscle)}. Equipment: ${localizeEquipmentName(exercise.equipment)}."
+                        else -> "Основные: ${localizeMuscleName(exercise.primaryMuscle)}. Оборудование: ${localizeEquipmentName(exercise.equipment)}."
+                    }
                 },
-                onClick = onInspectFull
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                color = TextSoft
             )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                GymPrimaryButton(
+                    text = when (lang) {
+                        "uz" -> "Mashg'ulotga qo'shish"
+                        "en" -> "Add to workout"
+                        else -> "В тренировку"
+                    },
+                    onClick = onAddToWorkout
+                )
+                GymOutlineButton(
+                    text = when (lang) {
+                        "uz" -> "Batafsil"
+                        "en" -> "Details"
+                        else -> "История и детали"
+                    },
+                    onClick = onInspectFull
+                )
+            }
         }
     }
 }
@@ -792,7 +660,18 @@ private fun CustomExerciseEditorBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
@@ -809,13 +688,14 @@ private fun CustomExerciseEditorBottomSheet(
                     }
                 } else {
                     when (lang) {
-                        "uz" -> "Yangi mashq yaratish"
-                        "en" -> "Create custom exercise"
-                        else -> "Создать своё упражнение"
+                        "uz" -> "Yangi mashq"
+                        "en" -> "New custom exercise"
+                        else -> "Новое упражнение"
                     }
                 },
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = (-0.5).sp,
                 color = TextPrimary
             )
 
@@ -837,12 +717,12 @@ private fun CustomExerciseEditorBottomSheet(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = when (lang) {
-                        "uz" -> "Maqsadli mushak guruhi"
+                        "uz" -> "Maqsadli mushak"
                         "en" -> "Primary muscle"
-                        else -> "Целевая мышечная группа"
+                        else -> "Целевая мышца"
                     },
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
                     color = TextSecondary
                 )
                 FlowRow(
@@ -866,8 +746,8 @@ private fun CustomExerciseEditorBottomSheet(
                         "en" -> "Equipment"
                         else -> "Оборудование"
                     },
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
                     color = TextSecondary
                 )
                 FlowRow(
@@ -886,9 +766,9 @@ private fun CustomExerciseEditorBottomSheet(
 
             GymLabeledField(
                 label = when (lang) {
-                    "uz" -> "Bajarish texnikasi bo'yicha eslatmalar"
+                    "uz" -> "Texnika eslatmalari"
                     "en" -> "Technique cues"
-                    else -> "Заметки по технике выполнения"
+                    else -> "Заметки по технике"
                 },
                 value = instructions,
                 onValueChange = { instructions = it },

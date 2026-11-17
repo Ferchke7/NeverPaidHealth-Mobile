@@ -1,7 +1,6 @@
 package dev.neverpaid.health.features.profile
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,9 +15,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -43,23 +42,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.neverpaid.health.core.designsystem.AmberWarm
-import dev.neverpaid.health.core.designsystem.BorderHighlight
-import dev.neverpaid.health.core.designsystem.BorderSubtle
-import dev.neverpaid.health.core.designsystem.CrimsonRed
-import dev.neverpaid.health.core.designsystem.DarkBackground
-import dev.neverpaid.health.core.designsystem.DarkSurface
-import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
+import dev.neverpaid.health.core.designsystem.AmberWarm
+import dev.neverpaid.health.core.designsystem.CrimsonRed
+import dev.neverpaid.health.core.designsystem.CrimsonSubtle
+import dev.neverpaid.health.core.designsystem.DarkBackground
+import dev.neverpaid.health.core.designsystem.DarkSurface
+import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
+import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.GymCard
 import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
 import dev.neverpaid.health.core.designsystem.GymInnerWell
 import dev.neverpaid.health.core.designsystem.GymLabeledField
 import dev.neverpaid.health.core.designsystem.GymLoadingCard
@@ -67,11 +67,12 @@ import dev.neverpaid.health.core.designsystem.GymOutlineButton
 import dev.neverpaid.health.core.designsystem.GymPageHeader
 import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymSectionTitle
+import dev.neverpaid.health.core.designsystem.GymStatTile
 import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
-import dev.neverpaid.health.core.designsystem.TextSoft
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.domain.model.FeedbackItem
@@ -118,157 +119,138 @@ fun ProfileScreen(
         }
     }
 
-    Column(
+    LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(DarkBackground),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 36.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            // Header — Figma 12
-            item(key = "header", contentType = "header") {
-                GymPageHeader(
-                    title = strings.profileTitle,
-                    subtitle = when (lang) {
-                        "uz" -> "Sozlamalar, ma'lumotlar va maqsadlar"
-                        "en" -> "Preferences, data and settings"
-                        else -> "Предпочтения, данные и настройки"
-                    }
+        item(key = "header", contentType = "header") {
+            GymPageHeader(title = strings.profileTitle)
+        }
+
+        if (state.isLoading && state.user == null) {
+            item(key = "loading_card", contentType = "loading") {
+                GymLoadingCard(
+                    title = strings.stateLoadingTitle,
+                    hint = strings.stateLoadingHint
                 )
             }
+        }
 
-            if (state.isLoading && state.user == null) {
-                item(key = "loading_card", contentType = "loading") {
-                    GymLoadingCard(
-                        title = strings.stateLoadingTitle,
-                        hint = strings.stateLoadingHint
-                    )
-                }
-            }
-
-            // Status / Error Banner
-            if (state.errorMessage != null || state.successMessage != null) {
-                item(key = "status_banner", contentType = "banner") {
-                    val isError = state.errorMessage != null
-                    val accent = if (isError) CrimsonRed else AccentLime
-                    GymCard(
-                        backgroundColor = if (isError) DarkSurface else AccentLimeSubtle,
-                        borderColor = if (isError) CrimsonRed.copy(alpha = 0.5f) else BorderHighlight,
-                        contentPadding = PaddingValues(14.dp)
+        if (state.errorMessage != null || state.successMessage != null) {
+            item(key = "status_banner", contentType = "banner") {
+                val isError = state.errorMessage != null
+                val accent = if (isError) CrimsonRed else AccentLime
+                GymCard(
+                    backgroundColor = if (isError) CrimsonSubtle else AccentLimeSubtle,
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Text(
+                            text = state.errorMessage ?: state.successMessage.orEmpty(),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = accent,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(
+                            onClick = { onAction(ProfileUiAction.OnDismissMessages) },
+                            modifier = Modifier.size(28.dp)
                         ) {
-                            Text(
-                                text = state.errorMessage ?: state.successMessage.orEmpty(),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = accent,
-                                modifier = Modifier.weight(1f)
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = null,
+                                tint = accent,
+                                modifier = Modifier.size(18.dp)
                             )
-                            IconButton(
-                                onClick = { onAction(ProfileUiAction.OnDismissMessages) },
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = null,
-                                    tint = accent,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
                         }
                     }
                 }
             }
+        }
 
-            // Card 1: Account & Language — Figma 12
-            item(key = "account_card", contentType = "account") {
-                GymCard(contentPadding = PaddingValues(20.dp)) {
-                    Text(
-                        text = when (lang) { "uz" -> "Akkaunt"; "en" -> "Account"; else -> "Аккаунт" },
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
-                    )
+        // 1. Athlete Card
+        item(key = "account_card", contentType = "account") {
+            val displayName = if (state.isGuest) {
+                when (lang) { "uz" -> "Mehmon"; "en" -> "Guest Athlete"; else -> "Гость" }
+            } else {
+                state.userName.ifBlank { "Атлет" }
+            }
+            val initial = displayName.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D"
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    val displayName = if (state.isGuest) {
-                        when (lang) { "uz" -> "Mehmon"; "en" -> "Guest"; else -> "Гость" }
-                    } else {
-                        state.userName
-                    }
-
-                    Text(
-                        text = displayName,
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
-                    )
-
-                    if (state.userEmail.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(2.dp))
+            GymCard {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(CircleShape)
+                            .background(AccentLimeSubtle),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
-                            text = state.userEmail,
-                            fontSize = 13.sp,
-                            color = TextMuted
+                            text = initial,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Black,
+                            color = AccentLime
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = when (lang) { "uz" -> "Ism"; "en" -> "Name"; else -> "Имя" },
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    GymInnerWell {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Text(
                             text = displayName,
-                            fontSize = 15.sp,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.ExtraBold,
                             color = TextPrimary
                         )
+                        if (state.userEmail.isNotBlank()) {
+                            Text(
+                                text = state.userEmail,
+                                fontSize = 13.sp,
+                                color = TextSecondary
+                            )
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
                     if (state.isGuest) {
-                        GymOutlineButton(
-                            text = when (lang) {
-                                "uz" -> "Google orqali kirish"
-                                "en" -> "Sign in with Google"
-                                else -> "Вход через Google"
-                            },
+                        GymPrimaryButton(
+                            text = when (lang) { "uz" -> "Kirish"; "en" -> "Sign in"; else -> "Войти" },
                             onClick = { onAction(ProfileUiAction.OnLogoutClick) }
                         )
                     } else {
                         GymOutlineButton(
-                            text = when (lang) {
-                                "uz" -> "Ma'lumotlarni yangilash"
-                                "en" -> "Sync account"
-                                else -> "Обновить профиль"
-                            },
+                            text = when (lang) { "uz" -> "Yangilash"; "en" -> "Sync"; else -> "Синхр." },
                             onClick = { onAction(ProfileUiAction.OnRefresh) }
                         )
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                GymDivider()
 
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = strings.profileLanguage,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextSecondary
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         languages.forEach { (code, label) ->
                             GymPillTab(
                                 text = label,
@@ -279,30 +261,30 @@ fun ProfileScreen(
                     }
                 }
             }
+        }
 
-            // Card 2: Training Preferences — Figma 12
-            item(key = "training_prefs_card", contentType = "training_prefs") {
-                GymCard(contentPadding = PaddingValues(20.dp)) {
+        // 2. Gym & Timer Settings
+        item(key = "training_prefs_card", contentType = "training_prefs") {
+            GymCard {
+                GymSectionTitle(
+                    title = when (lang) {
+                        "uz" -> "Mashg'ulot sozlamalari"
+                        "en" -> "Workout settings"
+                        else -> "Настройки зала"
+                    }
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = when (lang) {
-                            "uz" -> "Mashg'ulotlar"
-                            "en" -> "Workouts"
-                            else -> "Тренировки"
-                        },
-                        fontSize = 18.sp,
+                        text = strings.profileUnits,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = TextPrimary
                     )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = strings.profileUnits,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextSecondary
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         GymPillTab(
                             text = "KG",
@@ -315,368 +297,221 @@ fun ProfileScreen(
                             onClick = { onAction(ProfileUiAction.OnToggleUnits(false)) }
                         )
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(14.dp))
-
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
                         text = strings.profileRestTimer,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = TextSecondary
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         restOptions.forEach { secs ->
                             GymPillTab(
-                                text = "$secs ${when (lang) { "uz" -> "son"; "en" -> "s"; else -> "с" }}",
+                                text = "$secs ${when (lang) { "uz" -> "s"; "en" -> "s"; else -> "с" }}",
                                 selected = state.defaultRestSeconds == secs,
-                                onClick = { onAction(ProfileUiAction.OnSelectDefaultRest(secs)) }
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    GymDivider()
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Taymer ovozi"
-                                "en" -> "Timer sound"
-                                else -> "Звук таймера"
-                            },
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
-                        )
-                        Switch(
-                            checked = state.soundAlertsEnabled,
-                            onCheckedChange = { onAction(ProfileUiAction.OnToggleSound(it)) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = DarkBackground,
-                                checkedTrackColor = AccentLime,
-                                uncheckedThumbColor = TextSecondary,
-                                uncheckedTrackColor = DarkSurfaceHigh
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = strings.profileVibration,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
-                        )
-                        Switch(
-                            checked = state.vibrationEnabled,
-                            onCheckedChange = { onAction(ProfileUiAction.OnToggleVibration(it)) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = DarkBackground,
-                                checkedTrackColor = AccentLime,
-                                uncheckedThumbColor = TextSecondary,
-                                uncheckedTrackColor = DarkSurfaceHigh
-                            )
-                        )
-                    }
-                }
-            }
-
-            // Card 3: Nutrition Targets & Parameters — Figma 12
-            item(key = "macro_targets_card", contentType = "macros") {
-                val pVal = state.proteinTargetInput.toIntOrNull() ?: 0
-                val cVal = state.carbsTargetInput.toIntOrNull() ?: 0
-                val fVal = state.fatsTargetInput.toIntOrNull() ?: 0
-                val computedKcal = (pVal * 4) + (cVal * 4) + (fVal * 9)
-
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    GymCard(contentPadding = PaddingValues(20.dp)) {
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Ovqatlanish maqsadlari va parametrlar"
-                                "en" -> "Nutrition goals & targets"
-                                else -> "Цели питания и параметры"
-                            },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Ovqatlanish va AI Murabbiy bo'limlari bilan sinxronlanadi."
-                                "en" -> "Synced with Nutrition & AI Coach goals."
-                                else -> "Синхронизируются с разделом Питание и AI Тренером."
-                            },
-                            fontSize = 12.sp,
-                            color = TextMuted
-                        )
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        GymLabeledField(
-                            label = when (lang) { "uz" -> "Oqsillar, g"; "en" -> "Protein, g"; else -> "Белки, г" },
-                            value = state.proteinTargetInput,
-                            onValueChange = { onAction(ProfileUiAction.OnUpdateProteinTarget(it)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            placeholder = "180"
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        GymLabeledField(
-                            label = when (lang) { "uz" -> "Uglevodlar, g"; "en" -> "Carbs, g"; else -> "Углеводы, г" },
-                            value = state.carbsTargetInput,
-                            onValueChange = { onAction(ProfileUiAction.OnUpdateCarbsTarget(it)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            placeholder = "280"
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        GymLabeledField(
-                            label = when (lang) { "uz" -> "Yog'lar, g"; "en" -> "Fats, g"; else -> "Жиры, г" },
-                            value = state.fatsTargetInput,
-                            onValueChange = { onAction(ProfileUiAction.OnUpdateFatsTarget(it)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            placeholder = "80"
-                        )
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Text(
-                            text = "${if (computedKcal > 0) computedKcal else state.calorieTargetInput} ккал",
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "${pVal}×4 + ${cVal}×4 + ${fVal}×9",
-                            fontSize = 12.sp,
-                            color = TextMuted
-                        )
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            GymLabeledField(
-                                label = when (lang) {
-                                    "uz" -> "Kaloriya / kun"
-                                    "en" -> "Calories / day"
-                                    else -> "Ккал / день"
-                                },
-                                value = state.calorieTargetInput,
-                                onValueChange = { onAction(ProfileUiAction.OnUpdateCalorieTarget(it)) },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f)
-                            )
-                            GymLabeledField(
-                                label = when (lang) {
-                                    "uz" -> "Suv maqsadi, ml"
-                                    "en" -> "Water goal, ml"
-                                    else -> "Вода, мл"
-                                },
-                                value = state.waterGoalInput,
-                                onValueChange = { onAction(ProfileUiAction.OnUpdateWaterGoal(it)) },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                onClick = { onAction(ProfileUiAction.OnSelectDefaultRest(secs)) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
                     }
-
-                    GymPrimaryButton(
-                        text = when (lang) {
-                            "uz" -> "Sozlamalarni saqlash"
-                            "en" -> "Save preferences"
-                            else -> "Сохранить предпочтения"
-                        },
-                        onClick = { onAction(ProfileUiAction.OnSaveMacroTargets) },
-                        fillWidth = true
-                    )
-
-                    Text(
-                        text = when (lang) {
-                            "uz" -> "O'zgarishlar joriy sozlamalar mantiqi orqali qo'llaniladi."
-                            "en" -> "Changes apply via the active preferences store."
-                            else -> "Изменения применяются через текущую логику настроек."
-                        },
-                        fontSize = 12.sp,
-                        color = TextMuted
-                    )
                 }
-            }
 
-            // Card 4: Data, App & Confirmed Logout — Figma 12
-            item(key = "data_app_card", contentType = "data_app") {
-                val stats = state.platformStats
-                GymCard(contentPadding = PaddingValues(20.dp)) {
+                GymDivider()
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = when (lang) {
-                            "uz" -> "Ma'lumotlar va ilova"
-                            "en" -> "Data & application"
-                            else -> "Данные и приложение"
+                            "uz" -> "Taymer ovozi"
+                            "en" -> "Timer sound"
+                            else -> "Звук таймера"
                         },
-                        fontSize = 18.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = TextPrimary
                     )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    GymInnerWell {
-                        val tons = (stats.totalVolumeKg / 1000.0).toInt()
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            StatCol(
-                                label = when (lang) { "uz" -> "Atletlar"; "en" -> "Athletes"; else -> "Атлетов" },
-                                value = stats.totalUsers.toString()
-                            )
-                            StatCol(
-                                label = when (lang) { "uz" -> "Mashg'ulot"; "en" -> "Workouts"; else -> "Тренировок" },
-                                value = stats.totalWorkouts.toString()
-                            )
-                            StatCol(
-                                label = when (lang) { "uz" -> "Tonnaj"; "en" -> "Tonnage"; else -> "Тоннаж" },
-                                value = "${tons}т"
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = "API base URL",
-                        fontSize = 12.sp,
-                        color = TextSecondary
+                    Switch(
+                        checked = state.soundAlertsEnabled,
+                        onCheckedChange = { onAction(ProfileUiAction.OnToggleSound(it)) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = GymInkOnLight,
+                            checkedTrackColor = AccentLime,
+                            uncheckedThumbColor = TextSecondary,
+                            uncheckedTrackColor = DarkSurfaceHigh
+                        )
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    GymInnerWell {
-                        Text(
-                            text = "https://duda.uz/api/v1",
-                            fontSize = 14.sp,
-                            color = TextSoft
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    GymDivider()
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    if (state.isGuest) {
-                        GymPrimaryButton(
-                            text = when (lang) {
-                                "uz" -> "Akkauntga kirish"
-                                "en" -> "Sign in"
-                                else -> "Войти в аккаунт"
-                            },
-                            onClick = { onAction(ProfileUiAction.OnLogoutClick) },
-                            fillWidth = true
-                        )
-                    } else if (!isLogoutConfirmOpen) {
-                        GymOutlineButton(
-                            text = strings.profileLogout,
-                            onClick = { isLogoutConfirmOpen = true },
-                            fillWidth = true,
-                            textColor = CrimsonRed,
-                            borderColor = CrimsonRed.copy(alpha = 0.45f)
-                        )
-                    } else {
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Akkauntdan chiqasizmi?"
-                                "en" -> "Log out of account?"
-                                else -> "Выйти из аккаунта?"
-                            },
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Avval chiqishni tasdiqlang. Bu yerdaligingizda sessiya faol qoladi."
-                                "en" -> "Confirm sign-out first. Your session remains active until confirmed."
-                                else -> "Сначала подтвердите выход. Пока вы здесь, сеанс остаётся активным."
-                            },
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            GymOutlineButton(
-                                text = strings.cancel,
-                                onClick = { isLogoutConfirmOpen = false },
-                                modifier = Modifier.weight(1f),
-                                fillWidth = true
-                            )
-                            GymOutlineButton(
-                                text = strings.profileLogout,
-                                onClick = {
-                                    isLogoutConfirmOpen = false
-                                    onAction(ProfileUiAction.OnLogoutClick)
-                                },
-                                modifier = Modifier.weight(1f),
-                                fillWidth = true,
-                                textColor = CrimsonRed,
-                                borderColor = CrimsonRed
-                            )
-                        }
-                    }
                 }
-            }
 
-            // Card 5: Community Feedback & Ideas — Figma 12
-            item(key = "feedback_card", contentType = "feedback") {
-                GymCard(contentPadding = PaddingValues(20.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = when (lang) {
-                            "uz" -> "duda.uz ni yaxshilashga yordam bering"
-                            "en" -> "Help improve duda.uz"
-                            else -> "Помогите сделать duda.uz лучше"
-                        },
-                        fontSize = 18.sp,
+                        text = strings.profileVibration,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = TextPrimary
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Switch(
+                        checked = state.vibrationEnabled,
+                        onCheckedChange = { onAction(ProfileUiAction.OnToggleVibration(it)) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = GymInkOnLight,
+                            checkedTrackColor = AccentLime,
+                            uncheckedThumbColor = TextSecondary,
+                            uncheckedTrackColor = DarkSurfaceHigh
+                        )
+                    )
+                }
+            }
+        }
+
+        // 3. Daily Nutrition & Hydration Targets
+        item(key = "macro_targets_card", contentType = "macros") {
+            val pVal = state.proteinTargetInput.toIntOrNull() ?: 0
+            val cVal = state.carbsTargetInput.toIntOrNull() ?: 0
+            val fVal = state.fatsTargetInput.toIntOrNull() ?: 0
+            val computedKcal = (pVal * 4) + (cVal * 4) + (fVal * 9)
+
+            GymCard {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = when (lang) {
-                            "uz" -> "Yaxshilash taklif qiling yoki mavjud g'oyani qo'llab-quvvatlang."
-                            "en" -> "Suggest an improvement or upvote an existing idea."
-                            else -> "Предложите улучшение или поддержите существующую идею."
+                            "uz" -> "KBJU va suv maqsadi"
+                            "en" -> "Daily macros & water"
+                            else -> "Норма КБЖУ и воды"
                         },
-                        fontSize = 13.sp,
-                        color = TextSecondary
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextPrimary
                     )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
                     Text(
-                        text = when (lang) {
-                            "uz" -> "Taklifingiz"
-                            "en" -> "Your suggestion"
-                            else -> "Ваше предложение"
-                        },
-                        fontSize = 12.sp,
-                        color = TextSecondary
+                        text = "${if (computedKcal > 0) computedKcal else state.calorieTargetInput} ккал",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Black,
+                        color = AccentLime,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    GymLabeledField(
+                        label = when (lang) { "uz" -> "Oqsil, g"; "en" -> "Protein, g"; else -> "Белки, г" },
+                        value = state.proteinTargetInput,
+                        onValueChange = { onAction(ProfileUiAction.OnUpdateProteinTarget(it)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        placeholder = "180",
+                        modifier = Modifier.weight(1f)
+                    )
+                    GymLabeledField(
+                        label = when (lang) { "uz" -> "Uglevod, g"; "en" -> "Carbs, g"; else -> "Углеводы, г" },
+                        value = state.carbsTargetInput,
+                        onValueChange = { onAction(ProfileUiAction.OnUpdateCarbsTarget(it)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        placeholder = "280",
+                        modifier = Modifier.weight(1f)
+                    )
+                    GymLabeledField(
+                        label = when (lang) { "uz" -> "Yog', g"; "en" -> "Fat, g"; else -> "Жиры, г" },
+                        value = state.fatsTargetInput,
+                        onValueChange = { onAction(ProfileUiAction.OnUpdateFatsTarget(it)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        placeholder = "80",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    GymLabeledField(
+                        label = when (lang) { "uz" -> "Kaloriya / kun"; "en" -> "Calories / day"; else -> "Ккал / день" },
+                        value = state.calorieTargetInput,
+                        onValueChange = { onAction(ProfileUiAction.OnUpdateCalorieTarget(it)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f)
+                    )
+                    GymLabeledField(
+                        label = when (lang) { "uz" -> "Suv, ml"; "en" -> "Water, ml"; else -> "Вода, мл" },
+                        value = state.waterGoalInput,
+                        onValueChange = { onAction(ProfileUiAction.OnUpdateWaterGoal(it)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                GymPrimaryButton(
+                    text = when (lang) {
+                        "uz" -> "Saqlash"
+                        "en" -> "Save targets"
+                        else -> "Сохранить цели"
+                    },
+                    onClick = { onAction(ProfileUiAction.OnSaveMacroTargets) },
+                    fillWidth = true
+                )
+            }
+        }
+
+        // 4. Community Stats & Feedback
+        item(key = "community_card", contentType = "feedback") {
+            val stats = state.platformStats
+            val tons = (stats.totalVolumeKg / 1000.0).toInt()
+
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    GymStatTile(
+                        label = when (lang) { "uz" -> "Atletlar"; "en" -> "Athletes"; else -> "Атлетов" },
+                        value = stats.totalUsers.toString(),
+                        modifier = Modifier.weight(1f)
+                    )
+                    GymStatTile(
+                        label = when (lang) { "uz" -> "Mashg'ulot"; "en" -> "Workouts"; else -> "Тренировок" },
+                        value = stats.totalWorkouts.toString(),
+                        modifier = Modifier.weight(1f)
+                    )
+                    GymStatTile(
+                        label = when (lang) { "uz" -> "Tonnaj"; "en" -> "Tonnage"; else -> "Тоннаж" },
+                        value = "$tons",
+                        unit = "т",
+                        valueColor = AccentLime,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                GymCard {
+                    GymSectionTitle(
+                        title = when (lang) {
+                            "uz" -> "Fikr va g'oyalar"
+                            "en" -> "Ideas & feedback"
+                            else -> "Идеи и предложения"
+                        },
+                        actionLabel = when (lang) {
+                            "uz" -> "Batafsil"
+                            "en" -> "Full form"
+                            else -> "Подробно"
+                        },
+                        onAction = { onAction(ProfileUiAction.OnOpenFeedbackModal) }
+                    )
 
                     GymTextField(
                         value = state.feedbackMessage,
@@ -684,76 +519,39 @@ fun ProfileScreen(
                         placeholder = when (lang) {
                             "uz" -> "Nimani yaxshilash kerak?"
                             "en" -> "What should we improve?"
-                            else -> "Что стоит улучшить?"
+                            else -> "Что добавить или улучшить в приложении?"
                         },
                         singleLine = false,
                         minLines = 2
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        GymOutlineButton(
+                        GymPrimaryButton(
                             text = when (lang) {
-                                "uz" -> "Taklif yuborish"
-                                "en" -> "Send suggestion"
-                                else -> "Отправить предложение"
+                                "uz" -> "Yuborish"
+                                "en" -> "Send"
+                                else -> "Отправить"
                             },
                             onClick = { onAction(ProfileUiAction.OnSubmitFeedback) },
-                            enabled = !state.isSubmittingFeedback && state.feedbackMessage.isNotBlank()
+                            enabled = !state.isSubmittingFeedback && state.feedbackMessage.isNotBlank(),
+                            modifier = Modifier.weight(1f)
                         )
                         GymOutlineButton(
-                            text = when (lang) {
-                                "uz" -> "Kategoriya bilan yuborish"
-                                "en" -> "Full form"
-                                else -> "Подробный отзыв"
+                            text = if (isCommunityListExpanded) {
+                                when (lang) { "uz" -> "Yopish"; "en" -> "Hide"; else -> "Скрыть (${state.feedbackList.size})" }
+                            } else {
+                                when (lang) { "uz" -> "G'oyalar (${state.feedbackList.size})"; "en" -> "Ideas (${state.feedbackList.size})"; else -> "Идеи (${state.feedbackList.size})" }
                             },
-                            onClick = { onAction(ProfileUiAction.OnOpenFeedbackModal) }
+                            onClick = { isCommunityListExpanded = !isCommunityListExpanded },
+                            modifier = Modifier.weight(1f)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                    GymDivider()
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = when (lang) {
-                            "uz" -> "Jamiyat g'oyalari (${state.feedbackList.size})"
-                            "en" -> "Community ideas (${state.feedbackList.size})"
-                            else -> "Идеи сообщества (${state.feedbackList.size})"
-                        },
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = when (lang) {
-                            "uz" -> "Mavjud takliflar va ovozlar"
-                            "en" -> "Existing suggestions and votes"
-                            else -> "Существующие предложения и голоса"
-                        },
-                        fontSize = 12.sp,
-                        color = TextMuted
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    GymOutlineButton(
-                        text = if (isCommunityListExpanded) {
-                            when (lang) { "uz" -> "Ro'yxatni yopish"; "en" -> "Hide ideas"; else -> "Скрыть идеи" }
-                        } else {
-                            when (lang) { "uz" -> "Ko'rish va ovoz berish"; "en" -> "View and vote"; else -> "Посмотреть и проголосовать" }
-                        },
-                        onClick = { isCommunityListExpanded = !isCommunityListExpanded },
-                        fillWidth = true
-                    )
-
                     if (isCommunityListExpanded) {
-                        Spacer(modifier = Modifier.height(14.dp))
+                        GymDivider()
 
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -773,8 +571,6 @@ fun ProfileScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
                         if (filteredFeedback.isEmpty()) {
                             GymInnerWell {
                                 Text(
@@ -788,21 +584,63 @@ fun ProfileScreen(
                                 )
                             }
                         } else {
-                            filteredFeedback.forEachIndexed { idx, item ->
-                                if (idx > 0) GymDivider()
-                                FeedbackItemCleanRow(
-                                    item = item,
-                                    lang = lang,
-                                    onUpvote = { onAction(ProfileUiAction.OnToggleFeedbackUpvote(item.id)) }
-                                )
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                filteredFeedback.forEach { item ->
+                                    FeedbackItemCleanRow(
+                                        item = item,
+                                        lang = lang,
+                                        onUpvote = { onAction(ProfileUiAction.OnToggleFeedbackUpvote(item.id)) }
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+        }
 
-            item(key = "bottom_spacer", contentType = "spacer") {
-                Spacer(modifier = Modifier.height(24.dp))
+        // 5. Sign Out
+        if (!state.isGuest) {
+            item(key = "logout_card", contentType = "logout") {
+                if (!isLogoutConfirmOpen) {
+                    GymOutlineButton(
+                        text = strings.profileLogout,
+                        onClick = { isLogoutConfirmOpen = true },
+                        fillWidth = true,
+                        textColor = CrimsonRed
+                    )
+                } else {
+                    GymCard(backgroundColor = CrimsonSubtle) {
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Akkauntdan chiqasizmi?"
+                                "en" -> "Log out of account?"
+                                else -> "Выйти из аккаунта?"
+                            },
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = TextPrimary
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            GymOutlineButton(
+                                text = strings.cancel,
+                                onClick = { isLogoutConfirmOpen = false },
+                                modifier = Modifier.weight(1f),
+                                fillWidth = true
+                            )
+                            GymOutlineButton(
+                                text = strings.profileLogout,
+                                onClick = {
+                                    isLogoutConfirmOpen = false
+                                    onAction(ProfileUiAction.OnLogoutClick)
+                                },
+                                modifier = Modifier.weight(1f),
+                                fillWidth = true,
+                                textColor = CrimsonRed
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -812,7 +650,17 @@ fun ProfileScreen(
             onDismissRequest = { onAction(ProfileUiAction.OnCloseFeedbackModal) },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             containerColor = DarkSurface,
-            contentColor = TextPrimary
+            contentColor = TextPrimary,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 12.dp, bottom = 4.dp)
+                        .size(width = 40.dp, height = 4.dp)
+                        .clip(CircleShape)
+                        .background(DarkSurfaceElevated)
+                )
+            }
         ) {
             Column(
                 modifier = Modifier
@@ -820,7 +668,7 @@ fun ProfileScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
                     .padding(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -829,12 +677,12 @@ fun ProfileScreen(
                 ) {
                     Text(
                         text = when (lang) {
-                            "uz" -> "Fikr yoki taklif qoldirish"
-                            "en" -> "Leave feedback or idea"
-                            else -> "Оставить отзыв или предложение"
+                            "uz" -> "Fikr yoki taklif"
+                            "en" -> "Leave feedback"
+                            else -> "Отзыв или идея"
                         },
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold,
                         color = TextPrimary
                     )
                     IconButton(onClick = { onAction(ProfileUiAction.OnCloseFeedbackModal) }) {
@@ -865,19 +713,20 @@ fun ProfileScreen(
                 ) {
                     Text(
                         text = when (lang) { "uz" -> "Baho:"; "en" -> "Rating:"; else -> "Оценка:" },
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = TextSecondary
                     )
                     (1..5).forEach { star ->
                         IconButton(
                             onClick = { onAction(ProfileUiAction.OnSelectFeedbackRating(star)) },
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Star,
                                 contentDescription = "$star",
                                 tint = if (star <= state.feedbackRating) AmberWarm else TextMuted.copy(alpha = 0.35f),
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(24.dp)
                             )
                         }
                     }
@@ -920,24 +769,6 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun StatCol(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = AccentLime
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            color = TextMuted
-        )
-    }
-}
-
-@Composable
 private fun FeedbackItemCleanRow(
     item: FeedbackItem,
     lang: String,
@@ -949,69 +780,54 @@ private fun FeedbackItemCleanRow(
         else -> when (lang) { "uz" -> "G'oya"; "en" -> "Idea"; else -> "Идея" }
     }
 
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(DarkSurfaceHigh)
+            .padding(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "${item.userName.ifBlank { "Атлет" }} · $categoryLabel",
+                text = "${item.userName.ifBlank { "Атлет" }} · $categoryLabel · ${item.createdAt.take(10)}",
                 fontSize = 12.sp,
                 color = AccentLime,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Bold
             )
             Text(
-                text = item.createdAt.take(10),
-                fontSize = 11.sp,
-                color = TextMuted
+                text = item.message,
+                fontSize = 14.sp,
+                color = TextPrimary,
+                lineHeight = 20.sp
             )
         }
 
-        Text(
-            text = item.message,
-            fontSize = 14.sp,
-            color = TextPrimary,
-            lineHeight = 20.sp
-        )
-
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(if (item.upvotedByMe) AccentLime else DarkSurfaceElevated)
+                .clickable(onClick = onUpvote)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            val shape = RoundedCornerShape(8.dp)
-            Row(
-                modifier = Modifier
-                    .clip(shape)
-                    .background(if (item.upvotedByMe) AccentLimeSubtle else DarkBackground)
-                    .border(
-                        1.dp,
-                        if (item.upvotedByMe) BorderHighlight else BorderSubtle,
-                        shape
-                    )
-                    .clickable(onClick = onUpvote)
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ThumbUp,
-                    contentDescription = null,
-                    tint = if (item.upvotedByMe) AccentLime else TextSecondary,
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(
-                    text = item.upvotes.toString(),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = if (item.upvotedByMe) AccentLime else TextSecondary
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.ThumbUp,
+                contentDescription = null,
+                tint = if (item.upvotedByMe) GymInkOnLight else TextSecondary,
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = item.upvotes.toString(),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = if (item.upvotedByMe) GymInkOnLight else TextPrimary
+            )
         }
     }
 }

@@ -1,11 +1,6 @@
 package dev.neverpaid.health.features.workout
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,12 +15,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -50,47 +47,52 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.neverpaid.health.core.audio.AthleteSoundManager
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeDark
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.AmberWarm
-import dev.neverpaid.health.core.designsystem.BorderDivider
-import dev.neverpaid.health.core.designsystem.BorderHighlight
-import dev.neverpaid.health.core.designsystem.BorderSubtle
+import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
+import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.AccentLime
-import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
-import dev.neverpaid.health.core.designsystem.InteractivePlateCalculator
 import dev.neverpaid.health.core.designsystem.GymCard
 import dev.neverpaid.health.core.designsystem.GymDivider
 import dev.neverpaid.health.core.designsystem.GymEmptyCard
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
+import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymKicker
 import dev.neverpaid.health.core.designsystem.GymOutlineButton
 import dev.neverpaid.health.core.designsystem.GymPageHeader
-import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymProgressBar
 import dev.neverpaid.health.core.designsystem.GymTextField
-import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.GymWhiteButton
+import dev.neverpaid.health.core.designsystem.InteractivePlateCalculator
+import dev.neverpaid.health.core.designsystem.SetTypeBadge
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.designsystem.TextSoft
 import dev.neverpaid.health.core.designsystem.localizeMuscleName
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
-import dev.neverpaid.health.core.math.HistoricalSetRecord
 import dev.neverpaid.health.core.math.SetHistoryCalculator
 import dev.neverpaid.health.core.math.StrengthCalculator
 import dev.neverpaid.health.core.mvi.CollectEffect
@@ -261,21 +263,25 @@ fun WorkoutRoute(
             onDismissRequest = { plateCalculatorWeightKg = null },
             sheetState = sheetState,
             containerColor = DarkSurface,
-            contentColor = TextPrimary
+            contentColor = TextPrimary,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            dragHandle = { SheetDragHandle() }
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .padding(horizontal = 20.dp, vertical = 12.dp)
+                    .navigationBarsPadding()
             ) {
                 Text(
                     text = LocalDudaStrings.current.plateCalculatorTitle,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.4).sp,
                     color = TextPrimary
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
                 InteractivePlateCalculator(
                     initialWeightKg = plateCalculatorWeightKg ?: 60.0,
                     onWeightConfirmed = { confirmedKg ->
@@ -412,13 +418,13 @@ fun WorkoutScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .padding(horizontal = 20.dp, vertical = 16.dp)
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
             ) {
                 GymPageHeader(
                     title = strings.navWorkouts,
                     subtitle = "Нет активной сессии"
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
                 GymEmptyCard(
                     title = "Тренировка не запущена",
                     description = "Выберите шаблон на вкладке «Тренировки» или начните пустую сессию."
@@ -433,6 +439,18 @@ fun WorkoutScreen(
             ex.sets.filter { it.isCompleted }.sumOf { it.weightKg * it.reps }
         }
     }
+    val totalSetsCount = remember(workout) {
+        workout.exercises.sumOf { it.sets.size }
+    }
+    val completedSetsCount = remember(workout) {
+        workout.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
+    }
+    val setsProgress = if (totalSetsCount > 0) {
+        (completedSetsCount.toFloat() / totalSetsCount.toFloat()).coerceIn(0f, 1f)
+    } else {
+        0f
+    }
+
     val displayTotalVolume = if (state.isKgUnit) totalVolumeKg else StrengthCalculator.kgToLbs(totalVolumeKg)
     val unitLabel = if (state.isKgUnit) strings.unitKg else strings.unitLbs
 
@@ -456,104 +474,109 @@ fun WorkoutScreen(
                 top = 8.dp,
                 bottom = 110.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            item(key = "page_header", contentType = "header") {
-                GymPageHeader(
-                    title = "Тренировка",
-                    subtitle = workout.title.ifBlank { "Свободная тренировка" }
-                )
-            }
-
-            // Card 1: Session Metrics & Controls (1:1 Figma 04)
+            // Top workout header card: clean bold workout title, big heavy tabular live elapsed timer,
+            // thin lime progress bar of completed sets, primary "Завершить" and quiet secondary "Отменить"
             item(key = "session_summary_card", contentType = "summary") {
                 GymCard {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { showSessionNoteEditor = !showSessionNoteEditor }
+                        ) {
                             Text(
-                                text = "ВРЕМЯ",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = TextMuted,
-                                letterSpacing = 0.8.sp
+                                text = workout.title.ifBlank { "Свободная тренировка" },
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = (-0.6).sp,
+                                lineHeight = 28.sp,
+                                color = TextPrimary,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = formatElapsedShort(elapsedSeconds),
-                                fontSize = 26.sp,
+                                text = if (showSessionNoteEditor) "Скрыть название" else "Изменить название",
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
+                                color = TextMuted
                             )
                         }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "ОБЪЁМ",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = TextMuted,
-                                letterSpacing = 0.8.sp
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = "${formatRoundedInt(displayTotalVolume)} $unitLabel",
-                                fontSize = 26.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Text(
+                            text = formatElapsedShort(elapsedSeconds),
+                            fontSize = 36.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-1.2).sp,
+                            color = AccentLime,
+                            style = TextStyle(fontFeatureSettings = "tnum")
+                        )
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    // Thin lime progress bar of completed sets + compact live stats strip
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "$completedSetsCount из $totalSetsCount подходов · ${workout.exercises.size} упр.",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecondary,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                            Text(
+                                text = "${formatRoundedInt(displayTotalVolume)} $unitLabel",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = TextPrimary,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                        }
+                        GymProgressBar(
+                            progress = setsProgress,
+                            heightDp = 6,
+                            color = AccentLime
+                        )
+                    }
 
-                    Text(
-                        text = "УПРАЖНЕНИЯ",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextMuted,
-                        letterSpacing = 0.8.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "${workout.exercises.size}",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    // Primary "Завершить" and quiet secondary "Отменить"
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         GymPrimaryButton(
                             text = strings.workoutFinish,
-                            onClick = onRequestFinish
+                            onClick = onRequestFinish,
+                            modifier = Modifier.weight(1f)
                         )
                         GymOutlineButton(
                             text = strings.workoutDiscard,
-                            onClick = onRequestDiscard
-                        )
-                        GymOutlineButton(
-                            text = if (showSessionNoteEditor) "Скрыть заметку" else "Заметка сессии",
-                            onClick = { showSessionNoteEditor = !showSessionNoteEditor }
+                            onClick = onRequestDiscard,
+                            textColor = TextSecondary
                         )
                     }
 
                     AnimatedVisibility(visible = showSessionNoteEditor) {
-                        Column {
-                            Spacer(modifier = Modifier.height(14.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             GymDivider()
-                            Spacer(modifier = Modifier.height(14.dp))
                             Text(
                                 text = "Название / заметка тренировки",
                                 fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
                                 color = TextSecondary
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
                             GymTextField(
                                 value = sessionTitleDraft,
                                 onValueChange = {
@@ -567,102 +590,87 @@ fun WorkoutScreen(
                 }
             }
 
-            // Inline Active Rest Card when countdown runs (1:1 Figma 15 Card 1)
-            item(key = "active_rest_card", contentType = "rest") {
-                AnimatedVisibility(
-                    visible = state.isRestTimerActive && state.restTimerSecondsRemaining > 0,
-                    enter = fadeIn() + slideInVertically(),
-                    exit = fadeOut() + slideOutVertically()
-                ) {
+            // Inline Active Rest Card when countdown runs
+            if (state.isRestTimerActive && state.restTimerSecondsRemaining > 0) {
+                item(key = "active_rest_card", contentType = "rest") {
                     val lastCompleted = remember(workout) { findLastCompletedSetInfo(workout) }
-                    GymCard {
-                        Text(
-                            text = "01 / ОТДЫХ",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = AccentLime,
-                            letterSpacing = 0.8.sp
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Время восстановиться",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = formatCountdown(state.restTimerSecondsRemaining),
-                            fontSize = 36.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "Осталось ${state.restTimerSecondsRemaining} секунд",
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
+                    GymCard(backgroundColor = DarkSurfaceElevated) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                GymKicker(text = "Отдых")
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Время восстановиться",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            }
+                            Text(
+                                text = formatCountdown(state.restTimerSecondsRemaining),
+                                fontSize = 36.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = (-1).sp,
+                                color = AccentLime,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                        }
+
                         val progress = (state.restTimerSecondsRemaining.toFloat() / restTotalSeconds.coerceAtLeast(1).toFloat())
                             .coerceIn(0f, 1f)
                         GymProgressBar(
                             progress = progress,
+                            heightDp = 6,
                             color = AccentLime
                         )
 
                         if (lastCompleted != null) {
-                            Spacer(modifier = Modifier.height(14.dp))
-                            GymDivider()
-                            Spacer(modifier = Modifier.height(14.dp))
-                            Text(
-                                text = lastCompleted.exerciseName,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = TextPrimary
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
                             val lw = if (state.isKgUnit) lastCompleted.weightKg else StrengthCalculator.kgToLbs(lastCompleted.weightKg)
-                            val lv = lw * lastCompleted.reps
                             Text(
-                                text = "Последний подход · ${formatCleanWeight(lw)} $unitLabel × ${lastCompleted.reps}",
-                                fontSize = 12.sp,
-                                color = TextSecondary
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Text(
-                                text = "${formatRoundedInt(lv)} $unitLabel",
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                            Text(
-                                text = "объём последнего подхода",
-                                fontSize = 12.sp,
-                                color = TextMuted
+                                text = "${lastCompleted.exerciseName} · ${formatCleanWeight(lw)} $unitLabel × ${lastCompleted.reps}",
+                                fontSize = 13.sp,
+                                color = TextSecondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = TextStyle(fontFeatureSettings = "tnum")
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            GymOutlineButton(
-                                text = "−15 сек",
-                                onClick = { onAction(WorkoutUiAction.OnRestTimerAddSeconds(-15)) }
+                            WorkoutUtilityChip(
+                                text = "−15с",
+                                onClick = { onAction(WorkoutUiAction.OnRestTimerAddSeconds(-15)) },
+                                backgroundColor = DarkSurface,
+                                textColor = TextPrimary,
+                                modifier = Modifier.weight(1f)
                             )
-                            GymOutlineButton(
-                                text = "+30 сек",
-                                onClick = { onAction(WorkoutUiAction.OnRestTimerAddSeconds(30)) }
+                            WorkoutUtilityChip(
+                                text = "+30с",
+                                onClick = { onAction(WorkoutUiAction.OnRestTimerAddSeconds(30)) },
+                                backgroundColor = DarkSurface,
+                                textColor = TextPrimary,
+                                modifier = Modifier.weight(1f)
                             )
-                            GymOutlineButton(
-                                text = "Пропустить",
-                                onClick = { onAction(WorkoutUiAction.OnRestTimerSkip) }
+                            WorkoutUtilityChip(
+                                text = formatCountdown(restPresetSeconds),
+                                onClick = onCycleRestPreset,
+                                backgroundColor = DarkSurface,
+                                textColor = TextSecondary,
+                                modifier = Modifier.weight(1f)
                             )
-                            GymOutlineButton(
-                                text = "Отдых ${formatCountdown(restPresetSeconds)}",
-                                onClick = onCycleRestPreset
+                            WorkoutUtilityChip(
+                                text = "Сброс",
+                                onClick = { onAction(WorkoutUiAction.OnRestTimerSkip) },
+                                backgroundColor = AccentLime,
+                                textColor = GymInkOnLight,
+                                modifier = Modifier.weight(1.1f)
                             )
                         }
                     }
@@ -683,10 +691,8 @@ fun WorkoutScreen(
                     items = visibleExercises,
                     key = { idx, ex -> "${ex.id}_$idx" },
                     contentType = { _, _ -> "exercise_card" }
-                ) { index, exercise ->
+                ) { _, exercise ->
                     WorkoutExerciseCard(
-                        index = index,
-                        totalExercises = workout.exercises.size,
                         exercise = exercise,
                         workoutHistory = state.workoutHistory,
                         isKgUnit = state.isKgUnit,
@@ -722,55 +728,43 @@ fun WorkoutScreen(
                     val remaining = workout.exercises.size - 2
                     item(key = "show_more_card", contentType = "show_more") {
                         GymCard {
-                            Text(
-                                text = "Ещё $remaining упражнения",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = "Откройте, чтобы продолжить тренировку",
-                                fontSize = 14.sp,
-                                color = TextSecondary
-                            )
-                            Spacer(modifier = Modifier.height(14.dp))
-                            GymOutlineButton(
-                                text = "Показать ещё $remaining",
-                                onClick = { showAllExercises = true }
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Ещё $remaining упр.",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = TextPrimary
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "Откройте весь список сессии",
+                                        fontSize = 13.sp,
+                                        color = TextSecondary
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                GymOutlineButton(
+                                    text = "Показать ($remaining)",
+                                    onClick = { showAllExercises = true },
+                                    textColor = AccentLime
+                                )
+                            }
                         }
                     }
                 }
 
                 item(key = "add_exercise_footer", contentType = "footer") {
-                    GymCard {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Нужно больше объёма?",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = TextPrimary
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Добавьте упражнение в текущую сессию",
-                                    fontSize = 13.sp,
-                                    color = TextSecondary
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            GymOutlineButton(
-                                text = "+ Добавить",
-                                onClick = { onAction(WorkoutUiAction.OnOpenExercisePicker) }
-                            )
-                        }
-                    }
+                    GymOutlineButton(
+                        text = "+ ${strings.workoutAddExercise}",
+                        onClick = { onAction(WorkoutUiAction.OnOpenExercisePicker) },
+                        fillWidth = true,
+                        textColor = AccentLime
+                    )
                 }
             }
         }
@@ -780,8 +774,6 @@ fun WorkoutScreen(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun WorkoutExerciseCard(
-    index: Int,
-    totalExercises: Int,
     exercise: WorkoutExercise,
     workoutHistory: List<Workout>,
     isKgUnit: Boolean,
@@ -832,15 +824,18 @@ private fun WorkoutExerciseCard(
     var editingNotes by remember { mutableStateOf(false) }
     var noteDraft by remember(exercise.id, exercise.notes) { mutableStateOf(exercise.notes) }
 
-    val indexPadded = (index + 1).toString().padStart(2, '0')
-    val totalPadded = totalExercises.coerceAtLeast(1).toString().padStart(2, '0')
-    val muscleUpper = localizeMuscleName(exercise.primaryMuscleGroup).uppercase()
+    val muscleLabel = localizeMuscleName(exercise.primaryMuscleGroup)
+    val plateWeightKg = activeSet?.weightKg?.takeIf { it > 0 }
+        ?: exercise.sets.lastOrNull { it.weightKg > 0 }?.weightKg
+        ?: 60.0
+    val supportsPlates = exercise.equipment.lowercase() in setOf("barbell", "ez_bar", "smith_machine", "machine")
 
     GymCard {
+        // 1. Clean Exercise Header: ExerciseThumbnail (MD) + bold exercise name + muted muscle label + single-line PR/technique link
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             ExerciseThumbnail(
                 exerciseName = exercise.exerciseName.ifBlank { exercise.exercise.name },
@@ -850,65 +845,101 @@ private fun WorkoutExerciseCard(
                 size = ExerciseThumbnailSize.MD,
                 onClick = onInspect
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "$indexPadded / $totalPadded · $muscleUpper",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextMuted,
-                    letterSpacing = 0.8.sp
-                )
-                Spacer(modifier = Modifier.height(4.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
                 Text(
                     text = exercise.exerciseName.ifBlank { exercise.exercise.name },
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.4).sp,
+                    lineHeight = 23.sp,
                     color = TextPrimary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.clickable(onClick = onInspect)
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = muscleLabel,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
                 if (prRecord != null) {
                     val prW = if (isKgUnit) prRecord.weightKg else StrengthCalculator.kgToLbs(prRecord.weightKg)
                     Text(
-                        text = "Личный рекорд · ${formatCleanWeight(prW)} $unitLabel × ${prRecord.reps}",
-                        fontSize = 13.sp,
-                        color = AccentLime,
+                        text = "Рекорд ${formatCleanWeight(prW)} $unitLabel × ${prRecord.reps} · Техника →",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AmberWarm,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = TextStyle(fontFeatureSettings = "tnum"),
                         modifier = Modifier.clickable(onClick = onInspect)
                     )
                 } else {
                     Text(
                         text = "Техника и инструкции →",
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = TextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.clickable(onClick = onInspect)
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
-
+        // 2. Clean Secondary Exercise Actions strip (Заметка, Разминка, Блины, Заменить, Убрать)
         FlowRow(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            GymOutlineButton(
-                text = "Заменить",
-                onClick = onSwap
+            WorkoutUtilityChip(
+                text = if (exercise.notes.isNotBlank()) "Заметка •" else "Заметка",
+                onClick = {
+                    noteExpanded = true
+                    editingNotes = !editingNotes
+                },
+                backgroundColor = if (exercise.notes.isNotBlank() || editingNotes) AccentLimeSubtle else DarkSurfaceHigh,
+                textColor = if (exercise.notes.isNotBlank() || editingNotes) AccentLime else TextSecondary
             )
-            GymOutlineButton(
+            WorkoutUtilityChip(
+                text = "Разминка",
+                onClick = onOpenWarmup,
+                textColor = TextSecondary
+            )
+            if (supportsPlates) {
+                WorkoutUtilityChip(
+                    text = "Блины",
+                    onClick = { onOpenPlates(activeSet?.id ?: "", plateWeightKg) },
+                    textColor = TextSecondary
+                )
+            }
+            WorkoutUtilityChip(
+                text = "Заменить",
+                onClick = onSwap,
+                textColor = TextSecondary
+            )
+            WorkoutUtilityChip(
                 text = "Убрать",
-                onClick = onRemove
+                onClick = onRemove,
+                textColor = TextMuted
             )
         }
 
+        // Optional Note Editor / Viewer
         if (exercise.notes.isNotBlank() || editingNotes) {
-            Spacer(modifier = Modifier.height(14.dp))
             GymInnerWell {
                 Text(
-                    text = if (exercise.notes.isNotBlank()) "Заметка · 1 активна" else "Заметка к упражнению",
+                    text = "Заметка к упражнению",
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.Bold,
                     color = AccentLime
                 )
                 if (editingNotes) {
@@ -920,10 +951,7 @@ private fun WorkoutExerciseCard(
                         singleLine = false
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         GymPrimaryButton(
                             text = strings.save,
                             onClick = {
@@ -942,7 +970,7 @@ private fun WorkoutExerciseCard(
                     }
                 } else {
                     if (noteExpanded && exercise.notes.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = exercise.notes,
                             fontSize = 13.sp,
@@ -950,214 +978,220 @@ private fun WorkoutExerciseCard(
                             color = TextSoft
                         )
                     }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        GymOutlineButton(
-                            text = if (noteExpanded) "Свернуть" else "Открыть",
-                            onClick = { noteExpanded = !noteExpanded }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        WorkoutUtilityChip(
+                            text = if (noteExpanded) "Свернуть" else "Показать",
+                            onClick = { noteExpanded = !noteExpanded },
+                            backgroundColor = GymWell,
+                            textColor = TextSecondary
                         )
-                        GymOutlineButton(
-                            text = "Комментировать",
+                        WorkoutUtilityChip(
+                            text = "Изменить",
                             onClick = {
                                 noteExpanded = true
                                 editingNotes = true
-                            }
+                            },
+                            backgroundColor = GymWell,
+                            textColor = AccentLime
                         )
                     }
                 }
             }
         }
 
-        if (activeSet != null) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Тип подхода · подход ${activeSet.setNumber}",
-                fontSize = 12.sp,
-                color = TextSecondary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+        // 3. Sets Table (SET / ПРЕД / КГ / ПОВТ / ✓)
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "SET",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.6.sp,
+                    color = TextMuted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.width(36.dp)
+                )
+                Text(
+                    text = "ПРЕД",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.6.sp,
+                    color = TextMuted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(0.95f)
+                )
+                Text(
+                    text = unitLabel.uppercase(),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.6.sp,
+                    color = TextMuted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "ПОВТ",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.6.sp,
+                    color = TextMuted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(0.9f)
+                )
+                Box(
+                    modifier = Modifier.width(38.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "✓",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextMuted
+                    )
+                }
+            }
 
+            exercise.sets.forEach { set ->
+                WorkoutSetRow(
+                    set = set,
+                    isSelected = set.id == activeSet?.id,
+                    isKgUnit = isKgUnit,
+                    onSelectSet = { selectedSetId = set.id },
+                    onToggleSetType = {
+                        selectedSetId = set.id
+                        onToggleSetType(set.id)
+                    },
+                    onUpdateWeight = { onUpdateWeight(set.id, it) },
+                    onUpdateReps = { onUpdateReps(set.id, it) },
+                    onApplyPrevious = { onApplyPrevious(set.id) },
+                    onOpenHistory = {
+                        selectedSetId = set.id
+                        onOpenSetHistory(set.setNumber, set.id)
+                    },
+                    onToggleComplete = {
+                        selectedSetId = set.id
+                        if (!set.isCompleted) {
+                            val isNewPr = prRecord != null &&
+                                set.weightKg > 0 &&
+                                set.reps > 0 &&
+                                ((StrengthCalculator.calculateE1RM(set.weightKg, set.reps) ?: 0.0) > prRecord.e1rmKg)
+                            if (isNewPr) {
+                                AthleteSoundManager.playPersonalRecordFanfare()
+                            } else {
+                                AthleteSoundManager.playSetComplete()
+                            }
+                            PlatformBridge.vibrate()
+                        }
+                        onToggleSetComplete(set.id)
+                    }
+                )
+            }
+        }
+
+        // Active Set Quick Controls (Set Type, Quick Reps, History, Delete Set)
+        if (activeSet != null) {
             val setTypeOrder = listOf("normal", "warmup", "drop", "failure")
             val setTypeLabels = listOf("Обычный", "Разминка", "Дроп", "Отказ")
             val currentIdx = setTypeOrder.indexOf(activeSet.setType).coerceAtLeast(0)
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                setTypeOrder.forEachIndexed { targetIdx, typeKey ->
-                    GymPillTab(
-                        text = setTypeLabels[targetIdx],
-                        selected = activeSet.setType == typeKey,
-                        onClick = {
-                            val steps = (targetIdx - currentIdx + setTypeOrder.size) % setTypeOrder.size
-                            repeat(steps) { onToggleSetType(activeSet.id) }
-                        }
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // Column headers
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                text = "№",
-                fontSize = 12.sp,
-                color = TextMuted,
-                modifier = Modifier.width(26.dp)
-            )
-            Text(
-                text = "Вес, $unitLabel",
-                fontSize = 12.sp,
-                color = TextMuted,
-                modifier = Modifier.weight(1f)
-            )
-            Text(
-                text = "Повторы",
-                fontSize = 12.sp,
-                color = TextMuted,
-                modifier = Modifier.weight(1f)
-            )
-            Box(
-                modifier = Modifier.width(36.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "✓",
-                    fontSize = 12.sp,
-                    color = TextMuted
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        exercise.sets.forEachIndexed { sIdx, set ->
-            val displayNum = when (set.setType) {
-                "warmup" -> "W"
-                "drop" -> "D"
-                "failure" -> "F"
-                else -> "${set.setNumber}"
-            }
-            val displayColor = when {
-                set.id == activeSet?.id -> AccentLime
-                set.setType == "warmup" -> AmberWarm
-                else -> TextPrimary
-            }
-
-            WorkoutSetRow(
-                set = set,
-                displayBadge = displayNum,
-                badgeColor = displayColor,
-                isKgUnit = isKgUnit,
-                unitLabel = unitLabel,
-                prRecord = prRecord,
-                canDelete = exercise.sets.size > 1,
-                onSelectSet = { selectedSetId = set.id },
-                onUpdateWeight = { onUpdateWeight(set.id, it) },
-                onUpdateReps = { onUpdateReps(set.id, it) },
-                onApplyPrevious = { onApplyPrevious(set.id) },
-                onOpenHistory = {
-                    selectedSetId = set.id
-                    onOpenSetHistory(set.setNumber, set.id)
-                },
-                onToggleComplete = {
-                    selectedSetId = set.id
-                    if (!set.isCompleted) {
-                        val isNewPr = prRecord != null &&
-                            set.weightKg > 0 &&
-                            set.reps > 0 &&
-                            ((StrengthCalculator.calculateE1RM(set.weightKg, set.reps) ?: 0.0) > prRecord.e1rmKg)
-                        if (isNewPr) {
-                            AthleteSoundManager.playPersonalRecordFanfare()
-                        } else {
-                            AthleteSoundManager.playSetComplete()
-                        }
-                        PlatformBridge.vibrate()
-                    }
-                    onToggleSetComplete(set.id)
-                },
-                onDelete = { onDeleteSet(set.id) }
-            )
-
-            if (sIdx < exercise.sets.lastIndex) {
-                GymDivider()
-            }
-        }
-
-        if (activeSet != null) {
-            Spacer(modifier = Modifier.height(14.dp))
-            Text(
-                text = "Быстрые повторы",
-                fontSize = 12.sp,
-                color = TextMuted
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(GymWell)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                listOf(8, 6, 4).forEach { repsPreset ->
-                    GymPillTab(
-                        text = "$repsPreset",
-                        selected = activeSet.reps == repsPreset,
-                        onClick = { onUpdateReps(activeSet.id, repsPreset) }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Подход #${activeSet.setNumber}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextSecondary
                     )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "История подхода",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentLime,
+                            modifier = Modifier.clickable {
+                                onOpenSetHistory(activeSet.setNumber, activeSet.id)
+                            }
+                        )
+                        if (exercise.sets.size > 1) {
+                            Text(
+                                text = "Удалить",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = CrimsonRed,
+                                modifier = Modifier.clickable {
+                                    onDeleteSet(activeSet.id)
+                                }
+                            )
+                        }
+                    }
+                }
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    setTypeOrder.forEachIndexed { targetIdx, typeKey ->
+                        val isTypeSelected = activeSet.setType == typeKey
+                        WorkoutUtilityChip(
+                            text = setTypeLabels[targetIdx],
+                            onClick = {
+                                val steps = (targetIdx - currentIdx + setTypeOrder.size) % setTypeOrder.size
+                                repeat(steps) { onToggleSetType(activeSet.id) }
+                            },
+                            backgroundColor = if (isTypeSelected) AccentLime else DarkSurfaceHigh,
+                            textColor = if (isTypeSelected) GymInkOnLight else TextSecondary
+                        )
+                    }
+                    listOf(8, 6, 4).forEach { repsPreset ->
+                        val isPresetSelected = activeSet.reps == repsPreset
+                        WorkoutUtilityChip(
+                            text = "${repsPreset}×",
+                            onClick = { onUpdateReps(activeSet.id, repsPreset) },
+                            backgroundColor = if (isPresetSelected) AccentLimeSubtle else DarkSurfaceHigh,
+                            textColor = if (isPresetSelected) AccentLime else TextMuted
+                        )
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        val plateWeightKg = activeSet?.weightKg?.takeIf { it > 0 }
-            ?: exercise.sets.lastOrNull { it.weightKg > 0 }?.weightKg
-            ?: 60.0
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        // Primary Footer Actions: + Подход & Отдых
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             GymOutlineButton(
                 text = "+ Подход",
-                onClick = onAddSet
+                onClick = onAddSet,
+                textColor = AccentLime,
+                modifier = Modifier.weight(1f)
             )
             GymOutlineButton(
-                text = "+ Разминка",
-                onClick = onOpenWarmup
-            )
-            if (exercise.equipment.lowercase() in setOf("barbell", "ez_bar", "smith_machine", "machine")) {
-                GymOutlineButton(
-                    text = "Блины",
-                    onClick = { onOpenPlates(activeSet?.id ?: "", plateWeightKg) }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            GymOutlineButton(
-                text = "Отдых · ${formatCountdown(restPresetSeconds)}",
-                onClick = onOpenRest
-            )
-            GymOutlineButton(
-                text = "Заметка",
-                onClick = {
-                    noteExpanded = true
-                    editingNotes = !editingNotes
-                }
+                text = "Отдых ${formatCountdown(restPresetSeconds)}",
+                onClick = onOpenRest,
+                textColor = TextSecondary
             )
         }
     }
@@ -1166,19 +1200,15 @@ private fun WorkoutExerciseCard(
 @Composable
 private fun WorkoutSetRow(
     set: WorkoutSet,
-    displayBadge: String,
-    badgeColor: Color,
+    isSelected: Boolean,
     isKgUnit: Boolean,
-    unitLabel: String,
-    prRecord: HistoricalSetRecord?,
-    canDelete: Boolean,
     onSelectSet: () -> Unit,
+    onToggleSetType: () -> Unit,
     onUpdateWeight: (Double) -> Unit,
     onUpdateReps: (Int) -> Unit,
     onApplyPrevious: () -> Unit,
     onOpenHistory: () -> Unit,
-    onToggleComplete: () -> Unit,
-    onDelete: () -> Unit
+    onToggleComplete: () -> Unit
 ) {
     val displayedWeight = if (isKgUnit) set.weightKg else StrengthCalculator.kgToLbs(set.weightKg)
     var weightText by remember(set.id, set.weightKg, isKgUnit) {
@@ -1190,183 +1220,252 @@ private fun WorkoutSetRow(
         mutableStateOf(if (set.reps <= 0) "" else set.reps.toString())
     }
 
+    var weightFocused by remember { mutableStateOf(false) }
+    var repsFocused by remember { mutableStateOf(false) }
+
     val hasPrev = set.previousWeightKg != null && set.previousReps != null
     val prevDisplayedW = if (set.previousWeightKg != null) {
         if (isKgUnit) set.previousWeightKg else StrengthCalculator.kgToLbs(set.previousWeightKg)
     } else 0.0
 
-    val inputBorder = if (set.isCompleted) AccentLime.copy(alpha = 0.45f) else BorderSubtle
+    val rowBackground = when {
+        set.isCompleted -> AccentLimeSubtle
+        isSelected -> DarkSurfaceHigh.copy(alpha = 0.45f)
+        else -> Color.Transparent
+    }
+    val inputBackground = if (set.isCompleted) DarkSurface else GymWell
 
-    Column(
+    val weightBorder = when {
+        weightFocused -> AccentLime
+        set.isCompleted -> AccentLimeDark.copy(alpha = 0.55f)
+        else -> Color.Transparent
+    }
+    val repsBorder = when {
+        repsFocused -> AccentLime
+        set.isCompleted -> AccentLimeDark.copy(alpha = 0.55f)
+        else -> Color.Transparent
+    }
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(rowBackground)
             .clickable(onClick = onSelectSet)
-            .padding(vertical = 10.dp)
+            .padding(horizontal = 6.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(26.dp)
-                    .clickable(onClick = onOpenHistory),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Text(
-                    text = displayBadge,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = badgeColor
-                )
-            }
+        // 1. SET column (SetTypeBadge)
+        SetTypeBadge(
+            type = set.setType,
+            setIndex = set.setNumber,
+            onClick = onToggleSetType
+        )
 
-            // Weight Input (#0A0A0A)
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(DarkBackground)
-                    .border(1.dp, inputBorder, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 12.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                BasicTextField(
-                    value = weightText,
-                    onValueChange = { raw ->
-                        val cleaned = raw.replace(",", ".").filter { it.isDigit() || it == '.' }
-                        weightText = cleaned
-                        val parsed = cleaned.toDoubleOrNull() ?: 0.0
-                        val kgVal = if (isKgUnit) parsed else StrengthCalculator.lbsToKg(parsed)
-                        onUpdateWeight(kgVal)
-                    },
-                    singleLine = true,
-                    textStyle = LocalTextStyle.current.copy(
-                        color = TextPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    ),
-                    cursorBrush = SolidColor(AccentLime),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    decorationBox = { inner ->
-                        if (weightText.isEmpty()) {
-                            Text("0", color = TextMuted, fontSize = 14.sp)
-                        }
-                        inner()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            // Reps Input (#0A0A0A)
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(DarkBackground)
-                    .border(1.dp, inputBorder, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 12.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                BasicTextField(
-                    value = repsText,
-                    onValueChange = { raw ->
-                        val cleaned = raw.filter { it.isDigit() }
-                        repsText = cleaned
-                        onUpdateReps(cleaned.toIntOrNull() ?: 0)
-                    },
-                    singleLine = true,
-                    textStyle = LocalTextStyle.current.copy(
-                        color = TextPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    ),
-                    cursorBrush = SolidColor(AccentLime),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    decorationBox = { inner ->
-                        if (repsText.isEmpty()) {
-                            Text("0", color = TextMuted, fontSize = 14.sp)
-                        }
-                        inner()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            // Completion Check Box
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(if (set.isCompleted) AccentLime else DarkBackground)
-                    .border(
-                        width = 1.dp,
-                        color = if (set.isCompleted) AccentLime else BorderSubtle,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .clickable(onClick = onToggleComplete),
-                contentAlignment = Alignment.Center
-            ) {
-                if (set.isCompleted) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                        tint = Color.Black,
-                        modifier = Modifier.size(18.dp)
-                    )
+        // 2. ПРЕД column (Previous weight x reps or history trigger)
+        Box(
+            modifier = Modifier
+                .weight(0.95f)
+                .height(40.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .clickable {
+                    onSelectSet()
+                    if (hasPrev) {
+                        onApplyPrevious()
+                    } else {
+                        onOpenHistory()
+                    }
                 }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 4.dp),
+            contentAlignment = Alignment.Center
         ) {
-            val prevLabel = if (hasPrev) {
-                "Ранее: ${formatCleanWeight(prevDisplayedW)} × ${set.previousReps} $unitLabel / повт."
-            } else {
-                "Ранее: —"
-            }
             Text(
-                text = prevLabel,
-                fontSize = 12.sp,
+                text = if (hasPrev) {
+                    "${formatCleanWeight(prevDisplayedW)}×${set.previousReps}"
+                } else {
+                    "—"
+                },
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
                 color = if (hasPrev) TextSecondary else TextMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable(enabled = hasPrev) { onApplyPrevious() }
+                textAlign = TextAlign.Center,
+                style = TextStyle(fontFeatureSettings = "tnum")
             )
+        }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "История",
-                    fontSize = 11.sp,
-                    color = AccentLime,
-                    modifier = Modifier.clickable(onClick = onOpenHistory)
-                )
-                if (canDelete) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Удалить подход",
-                        tint = TextMuted,
-                        modifier = Modifier
-                            .size(16.dp)
-                            .clickable(onClick = onDelete)
-                    )
-                }
-            }
+        // 3. КГ / LBS column (Compact rounded filled numeric input)
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(inputBackground)
+                .border(1.dp, weightBorder, RoundedCornerShape(12.dp))
+                .padding(horizontal = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            BasicTextField(
+                value = weightText,
+                onValueChange = { raw ->
+                    val cleaned = raw.replace(",", ".").filter { it.isDigit() || it == '.' }
+                    weightText = cleaned
+                    val parsed = cleaned.toDoubleOrNull() ?: 0.0
+                    val kgVal = if (isKgUnit) parsed else StrengthCalculator.lbsToKg(parsed)
+                    onUpdateWeight(kgVal)
+                },
+                singleLine = true,
+                textStyle = LocalTextStyle.current.copy(
+                    color = TextPrimary,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center,
+                    fontFeatureSettings = "tnum"
+                ),
+                cursorBrush = SolidColor(AccentLime),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                decorationBox = { inner ->
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (weightText.isEmpty()) {
+                            Text(
+                                text = if (hasPrev) formatCleanWeight(prevDisplayedW) else "0",
+                                color = TextMuted,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                        }
+                        inner()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        weightFocused = focusState.isFocused
+                        if (focusState.isFocused) onSelectSet()
+                    }
+            )
+        }
+
+        // 4. ПОВТ column (Compact rounded filled numeric input)
+        Box(
+            modifier = Modifier
+                .weight(0.9f)
+                .height(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(inputBackground)
+                .border(1.dp, repsBorder, RoundedCornerShape(12.dp))
+                .padding(horizontal = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            BasicTextField(
+                value = repsText,
+                onValueChange = { raw ->
+                    val cleaned = raw.filter { it.isDigit() }
+                    repsText = cleaned
+                    onUpdateReps(cleaned.toIntOrNull() ?: 0)
+                },
+                singleLine = true,
+                textStyle = LocalTextStyle.current.copy(
+                    color = TextPrimary,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center,
+                    fontFeatureSettings = "tnum"
+                ),
+                cursorBrush = SolidColor(AccentLime),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                decorationBox = { inner ->
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (repsText.isEmpty()) {
+                            Text(
+                                text = if (hasPrev) "${set.previousReps}" else "0",
+                                color = TextMuted,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                        }
+                        inner()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        repsFocused = focusState.isFocused
+                        if (focusState.isFocused) onSelectSet()
+                    }
+            )
+        }
+
+        // 5. ✓ Completion Check Button (AccentLime + GymInkOnLight when completed)
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(if (set.isCompleted) AccentLime else DarkSurfaceHigh)
+                .clickable(onClick = onToggleComplete),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = "Отметить подход",
+                tint = if (set.isCompleted) GymInkOnLight else TextMuted,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
+}
+
+@Composable
+private fun WorkoutUtilityChip(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    backgroundColor: Color = DarkSurfaceHigh,
+    textColor: Color = TextSecondary
+) {
+    Box(
+        modifier = modifier
+            .height(34.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(backgroundColor)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = textColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = TextStyle(fontFeatureSettings = "tnum")
+        )
+    }
+}
+
+@Composable
+private fun SheetDragHandle() {
+    Box(
+        modifier = Modifier
+            .padding(top = 12.dp, bottom = 4.dp)
+            .width(40.dp)
+            .height(4.dp)
+            .clip(CircleShape)
+            .background(DarkSurfaceElevated)
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -1391,41 +1490,42 @@ private fun WorkoutRestModalSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = { SheetDragHandle() }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 12.dp)
+                .navigationBarsPadding()
         ) {
-            Text(
-                text = "01 / ОТДЫХ",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = AccentLime,
-                letterSpacing = 0.8.sp
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            GymKicker(text = "Отдых")
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = "Время восстановиться",
                 fontSize = 22.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = (-0.5).sp,
                 color = TextPrimary
             )
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = formatCountdown(secondsRemaining),
-                fontSize = 40.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-1.5).sp,
+                color = AccentLime,
+                style = TextStyle(fontFeatureSettings = "tnum")
             )
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Осталось $secondsRemaining секунд",
                 fontSize = 13.sp,
-                color = TextSecondary
+                color = TextSecondary,
+                style = TextStyle(fontFeatureSettings = "tnum")
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
             GymProgressBar(
                 progress = (secondsRemaining.toFloat() / totalSeconds.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f),
                 color = AccentLime
@@ -1433,58 +1533,59 @@ private fun WorkoutRestModalSheet(
 
             if (lastCompleted != null) {
                 Spacer(modifier = Modifier.height(16.dp))
-                GymDivider()
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = lastCompleted.exerciseName,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextPrimary
-                )
-                val lw = if (isKgUnit) lastCompleted.weightKg else StrengthCalculator.kgToLbs(lastCompleted.weightKg)
-                val lv = lw * lastCompleted.reps
-                Text(
-                    text = "Последний подход · ${formatCleanWeight(lw)} $unitLabel × ${lastCompleted.reps}",
-                    fontSize = 12.sp,
-                    color = TextSecondary
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "${formatRoundedInt(lv)} $unitLabel",
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                Text(
-                    text = "объём последнего подхода",
-                    fontSize = 12.sp,
-                    color = TextMuted
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(DarkSurfaceHigh)
+                        .padding(14.dp)
+                ) {
+                    Text(
+                        text = lastCompleted.exerciseName,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    val lw = if (isKgUnit) lastCompleted.weightKg else StrengthCalculator.kgToLbs(lastCompleted.weightKg)
+                    val lv = lw * lastCompleted.reps
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Последний подход · ${formatCleanWeight(lw)} $unitLabel × ${lastCompleted.reps} (${formatRoundedInt(lv)} $unitLabel)",
+                        fontSize = 13.sp,
+                        color = TextSecondary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(18.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 GymOutlineButton(
                     text = "−15 сек",
-                    onClick = { onAddSeconds(-15) }
+                    onClick = { onAddSeconds(-15) },
+                    modifier = Modifier.weight(1f)
                 )
                 GymOutlineButton(
                     text = "+30 сек",
-                    onClick = { onAddSeconds(30) }
+                    onClick = { onAddSeconds(30) },
+                    modifier = Modifier.weight(1f)
                 )
                 GymOutlineButton(
-                    text = "Пропустить",
-                    onClick = onSkip
-                )
-                GymOutlineButton(
-                    text = "Настроить отдых (${formatCountdown(restPresetSeconds)})",
-                    onClick = onCyclePreset
+                    text = formatCountdown(restPresetSeconds),
+                    onClick = onCyclePreset,
+                    modifier = Modifier.weight(1f)
                 )
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+            GymPrimaryButton(
+                text = "Пропустить отдых",
+                onClick = onSkip,
+                fillWidth = true
+            )
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -1532,88 +1633,84 @@ private fun WorkoutFinishModalSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = { SheetDragHandle() }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 12.dp)
+                .navigationBarsPadding()
         ) {
             when (stage) {
                 FinishSheetStage.CONFIRM_INCOMPLETE -> {
                     Text(
-                        text = "03 / ПОДТВЕРЖДЕНИЕ",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextMuted,
-                        letterSpacing = 0.8.sp
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
                         text = "Есть незавершённые подходы",
                         fontSize = 22.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.5).sp,
                         color = TextPrimary,
                         lineHeight = 28.sp
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Вернитесь к тренировке или сохраните только отмеченные подходы.",
                         fontSize = 14.sp,
-                        lineHeight = 21.sp,
+                        lineHeight = 20.sp,
                         color = TextSecondary
                     )
-                    Spacer(modifier = Modifier.height(18.dp))
-                    GymDivider()
-                    Spacer(modifier = Modifier.height(18.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         GymPrimaryButton(
                             text = "Вернуться к тренировке",
-                            onClick = onDismiss
+                            onClick = onDismiss,
+                            fillWidth = true
                         )
                         GymOutlineButton(
                             text = "Сохранить только отмеченные",
-                            onClick = onProceedToSummary
+                            onClick = onProceedToSummary,
+                            fillWidth = true
                         )
                     }
                 }
 
                 FinishSheetStage.SUMMARY -> {
-                    Text(
-                        text = "02 / ЗАВЕРШЕНИЕ",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = AccentLime,
-                        letterSpacing = 0.8.sp
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    GymKicker(text = "Тренировка завершена")
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Хорошая работа",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.6).sp,
                         color = TextPrimary
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "${workout.exercises.size} упражнения · $completedSetsCount подходов",
                         fontSize = 14.sp,
-                        color = TextSecondary
+                        color = TextSecondary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
 
                     Spacer(modifier = Modifier.height(18.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(DarkSurfaceHigh)
+                                .padding(14.dp)
+                        ) {
                             Text(
                                 text = "ОБЪЁМ",
                                 fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
                                 color = TextMuted,
                                 letterSpacing = 0.8.sp
                             )
@@ -1621,14 +1718,22 @@ private fun WorkoutFinishModalSheet(
                             Text(
                                 text = tonnageStr,
                                 fontSize = 26.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
+                                fontWeight = FontWeight.Black,
+                                color = AccentLime,
+                                style = TextStyle(fontFeatureSettings = "tnum")
                             )
                         }
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(DarkSurfaceHigh)
+                                .padding(14.dp)
+                        ) {
                             Text(
                                 text = "ВРЕМЯ",
                                 fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
                                 color = TextMuted,
                                 letterSpacing = 0.8.sp
                             )
@@ -1636,74 +1741,79 @@ private fun WorkoutFinishModalSheet(
                             Text(
                                 text = formatCountdown(durationSeconds.toInt()),
                                 fontSize = 26.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
+                                fontWeight = FontWeight.Black,
+                                color = TextPrimary,
+                                style = TextStyle(fontFeatureSettings = "tnum")
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text = "Точный объём · ${formatRoundedInt(displayedExactVolume)} $unitLabel",
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-
                     if (workout.exercises.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(14.dp))
-                        GymDivider()
-                        workout.exercises.forEachIndexed { idx, ex ->
-                            val exCompleted = ex.sets.count { it.isCompleted }
-                            val exVol = ex.sets.filter { it.isCompleted }.sumOf { it.weightKg * it.reps }
-                            val exDispVol = if (isKgUnit) exVol else StrengthCalculator.kgToLbs(exVol)
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp)
-                            ) {
-                                Text(
-                                    text = ex.exerciseName.ifBlank { ex.exercise.name },
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = TextPrimary
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "$exCompleted подхода · ${formatRoundedInt(exDispVol)} $unitLabel",
-                                    fontSize = 12.sp,
-                                    color = TextSecondary
-                                )
-                            }
-                            if (idx < workout.exercises.lastIndex) {
-                                GymDivider()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(DarkSurfaceHigh)
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            workout.exercises.forEachIndexed { idx, ex ->
+                                val exCompleted = ex.sets.count { it.isCompleted }
+                                val exVol = ex.sets.filter { it.isCompleted }.sumOf { it.weightKg * it.reps }
+                                val exDispVol = if (isKgUnit) exVol else StrengthCalculator.kgToLbs(exVol)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = ex.exerciseName.ifBlank { ex.exercise.name },
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "$exCompleted с. · ${formatRoundedInt(exDispVol)} $unitLabel",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = TextSecondary,
+                                        style = TextStyle(fontFeatureSettings = "tnum")
+                                    )
+                                }
+                                if (idx < workout.exercises.lastIndex) {
+                                    GymDivider()
+                                }
                             }
                         }
-                        GymDivider()
                     }
 
-                    Spacer(modifier = Modifier.height(18.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         GymPrimaryButton(
                             text = if (isFinishing) "Сохранение..." else strings.save,
                             onClick = onConfirmSave,
-                            enabled = !isFinishing
+                            enabled = !isFinishing,
+                            fillWidth = true
                         )
                         GymOutlineButton(
                             text = "Вернуться к тренировке",
-                            onClick = onDismiss
+                            onClick = onDismiss,
+                            fillWidth = true
                         )
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WorkoutDiscardModalSheet(
     onConfirmDiscard: () -> Unit,
@@ -1716,51 +1826,47 @@ private fun WorkoutDiscardModalSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = { SheetDragHandle() }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 12.dp)
+                .navigationBarsPadding()
         ) {
-            Text(
-                text = "04 / СБРОС",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                color = TextMuted,
-                letterSpacing = 0.8.sp
-            )
-            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = strings.workoutDiscardConfirmTitle,
                 fontSize = 22.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = (-0.5).sp,
                 color = TextPrimary
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = strings.workoutDiscardConfirmText,
                 fontSize = 14.sp,
-                lineHeight = 21.sp,
+                lineHeight = 20.sp,
                 color = TextSecondary
             )
-            Spacer(modifier = Modifier.height(18.dp))
-            GymDivider()
-            Spacer(modifier = Modifier.height(18.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Spacer(modifier = Modifier.height(20.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 GymOutlineButton(
                     text = strings.cancel,
-                    onClick = onDismiss
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f)
                 )
                 GymWhiteButton(
-                    text = "Сбросить тренировку",
-                    onClick = onConfirmDiscard
+                    text = "Сбросить",
+                    onClick = onConfirmDiscard,
+                    modifier = Modifier.weight(1f)
                 )
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

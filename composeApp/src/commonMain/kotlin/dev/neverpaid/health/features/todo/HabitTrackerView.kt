@@ -1,6 +1,5 @@
 package dev.neverpaid.health.features.todo
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,18 +21,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -43,18 +36,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.neverpaid.health.core.audio.AthleteSoundManager
-import dev.neverpaid.health.core.designsystem.AmberGold
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.AmberWarm
-import dev.neverpaid.health.core.designsystem.BorderSubtle
-import dev.neverpaid.health.core.designsystem.DarkBackground
+import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymIconBadge
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -63,7 +61,8 @@ import dev.neverpaid.health.data.catalog.StandardHabitsCatalog
 import dev.neverpaid.health.domain.model.AthleteHabit
 
 /**
- * Habit tracking widget with weekly streak dots, daily toggle, and standard athletic presets.
+ * Habit tracking widget with daily completion toggle, AmberWarm streak flame accents,
+ * and standard athletic presets.
  */
 @Composable
 fun HabitTrackerView(
@@ -76,157 +75,157 @@ fun HabitTrackerView(
     val strings = LocalDudaStrings.current
     var showPresetSheet by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-        border = BorderStroke(1.dp, BorderSubtle)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+    GymCard(modifier = modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Header Row
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.LocalFireDepartment,
-                        contentDescription = null,
-                        tint = AmberGold,
-                        modifier = Modifier.size(20.dp)
-                    )
+                GymIconBadge(
+                    icon = Icons.Default.LocalFireDepartment,
+                    tint = AmberWarm,
+                    background = AmberWarm.copy(alpha = 0.16f),
+                    size = 40.dp
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         text = strings.habitsTitle,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.4).sp,
                         color = TextPrimary
                     )
-                }
-
-                IconButton(
-                    onClick = { showPresetSheet = true },
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = AccentLime)
+                    val doneCount = habits.count { it.isCompletedOn(currentDateIso) }
+                    Text(
+                        text = "$doneCount / ${habits.size}",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextSecondary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceHigh)
+                    .clickable { showPresetSheet = true },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = strings.habitsTitle,
+                    tint = AccentLime,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
 
-            if (habits.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    OutlinedButton(
-                        onClick = { showPresetSheet = true },
-                        shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, BorderSubtle)
-                    ) {
-                        Text("+ Добавить базовые привычки атлета", color = AccentLime)
-                    }
-                }
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    habits.forEach { habit ->
-                        val isDone = habit.isCompletedOn(currentDateIso)
-                        val streak = habit.calculateCurrentStreak(currentDateIso)
+        if (habits.isEmpty()) {
+            GymOutlineButton(
+                text = "+ Добавить базовые привычки",
+                onClick = { showPresetSheet = true },
+                fillWidth = true,
+                textColor = AccentLime
+            )
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                habits.forEach { habit ->
+                    val isDone = habit.isCompletedOn(currentDateIso)
+                    val streak = habit.calculateCurrentStreak(currentDateIso)
+                    val rowShape = RoundedCornerShape(16.dp)
 
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    AthleteSoundManager.playSetComplete()
-                                    onToggleHabitToday(habit.id)
-                                },
-                            shape = RoundedCornerShape(10.dp),
-                            colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                            border = BorderStroke(1.dp, if (isDone) AccentLime.copy(alpha = 0.5f) else BorderSubtle)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    // Custom Circular Checkbox
-                                    Box(
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .clip(CircleShape)
-                                            .background(if (isDone) AccentLime else DarkSurfaceElevated)
-                                            .border(1.5.dp, if (isDone) AccentLime else BorderSubtle, CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        if (isDone) {
-                                            Icon(
-                                                imageVector = Icons.Default.Check,
-                                                contentDescription = null,
-                                                tint = DarkBackground,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
-                                    }
-
-                                    Column {
-                                        Text(
-                                            text = habit.title,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = if (isDone) TextMuted else TextPrimary
-                                        )
-                                        Text(
-                                            text = habit.targetValue,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = TextSecondary
-                                        )
-                                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(rowShape)
+                            .background(if (isDone) AccentLimeSubtle else DarkSurfaceHigh)
+                            .then(
+                                if (isDone) {
+                                    Modifier.border(1.dp, BorderHighlight, rowShape)
+                                } else {
+                                    Modifier
                                 }
-
-                                // Streak Badge
-                                if (streak > 0) {
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = AmberWarm.copy(alpha = 0.15f),
-                                        border = BorderStroke(1.dp, AmberWarm.copy(alpha = 0.3f))
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(2.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.LocalFireDepartment,
-                                                contentDescription = null,
-                                                tint = AmberGold,
-                                                modifier = Modifier.size(12.dp)
-                                            )
-                                            Text(
-                                                text = "$streak",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Bold,
-                                                color = AmberGold
-                                            )
-                                        }
-                                    }
+                            )
+                            .clickable {
+                                AthleteSoundManager.playSetComplete()
+                                onToggleHabitToday(habit.id)
+                            }
+                            .padding(horizontal = 14.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isDone) AccentLime else DarkSurfaceElevated),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isDone) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = GymInkOnLight,
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
                             }
+
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    text = habit.title,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDone) TextSecondary else TextPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = habit.targetValue,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextMuted
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        Row(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(
+                                    if (streak > 0) AmberWarm.copy(alpha = 0.16f) else DarkSurface
+                                )
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocalFireDepartment,
+                                contentDescription = null,
+                                tint = if (streak > 0) AmberWarm else TextMuted,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = "$streak",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black,
+                                color = if (streak > 0) AmberWarm else TextMuted,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
                         }
                     }
                 }
@@ -256,63 +255,114 @@ private fun HabitPresetsBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkBackground,
-        dragHandle = null
+        containerColor = DarkSurface,
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Шаблоны привычек атлета",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Шаблоны привычек",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.5).sp,
+                    color = TextPrimary
+                )
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(DarkSurfaceHigh)
+                        .clickable(onClick = onDismiss),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = null,
+                        tint = TextSecondary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
 
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .height(340.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(StandardHabitsCatalog.standardPresets) { preset ->
-                    Card(
+                items(
+                    items = StandardHabitsCatalog.standardPresets,
+                    key = { it.id }
+                ) { preset ->
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onSelectPreset(preset) },
-                        shape = RoundedCornerShape(10.dp),
-                        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                        border = BorderStroke(1.dp, BorderSubtle)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(DarkSurfaceHigh)
+                            .clickable { onSelectPreset(preset) }
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = preset.title,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = preset.description,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary,
-                                    maxLines = 2
-                                )
-                            }
-                            Icon(Icons.Default.Add, contentDescription = null, tint = AccentLime)
+                            Text(
+                                text = preset.title,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = preset.description,
+                                fontSize = 13.sp,
+                                color = TextSecondary,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(AccentLimeSubtle),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                tint = AccentLime,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }

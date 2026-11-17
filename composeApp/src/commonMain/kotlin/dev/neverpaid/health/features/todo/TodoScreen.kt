@@ -1,6 +1,5 @@
 package dev.neverpaid.health.features.todo
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,16 +23,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -50,7 +49,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
@@ -58,20 +58,19 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.neverpaid.health.core.audio.AthleteSoundManager
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
+import dev.neverpaid.health.core.designsystem.AmberWarm
 import dev.neverpaid.health.core.designsystem.BorderHighlight
-import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
+import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.AccentLime
-import dev.neverpaid.health.core.designsystem.AccentLime
-import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.GymCard
-import dev.neverpaid.health.core.designsystem.GymDivider
-import dev.neverpaid.health.core.designsystem.GymEmptyCard
 import dev.neverpaid.health.core.designsystem.GymInkOnLight
 import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymKicker
 import dev.neverpaid.health.core.designsystem.GymLabeledField
 import dev.neverpaid.health.core.designsystem.GymLoadingCard
 import dev.neverpaid.health.core.designsystem.GymOutlineButton
@@ -79,7 +78,7 @@ import dev.neverpaid.health.core.designsystem.GymPageHeader
 import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymProgressBar
-import dev.neverpaid.health.core.designsystem.GymWhiteButton
+import dev.neverpaid.health.core.designsystem.GymSectionTitle
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -88,7 +87,6 @@ import dev.neverpaid.health.core.i18n.DudaStrings
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.data.catalog.StandardHabitsCatalog
-import dev.neverpaid.health.domain.model.AthleteHabit
 import dev.neverpaid.health.domain.model.SaveTodoRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
 import kotlinx.coroutines.delay
@@ -198,6 +196,7 @@ fun TodoScreen(
     }
 
     val activeDate = state.selectedDate.ifBlank { currentTodayIso() }
+    val todayIso = remember { currentTodayIso() }
 
     Column(
         modifier = modifier
@@ -206,7 +205,12 @@ fun TodoScreen(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+            contentPadding = PaddingValues(
+                start = 20.dp,
+                end = 20.dp,
+                top = 8.dp,
+                bottom = 32.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             item(key = "page_header", contentType = "header") {
@@ -224,179 +228,218 @@ fun TodoScreen(
                     )
                 }
             } else {
-                // Date Navigation & 7-Day Strip (Figma 09)
+                // Hero Card: Daily Progress + 7-Day Date Strip
                 item(key = "date_strip", contentType = "date_strip") {
-                    GymCard(contentPadding = PaddingValues(18.dp)) {
-                        Text(
-                            text = formatFullPlanDate(activeDate, lang),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
+                    val progress = if (state.totalCount > 0) {
+                        (state.completedCount.toFloat() / state.totalCount.toFloat()).coerceIn(0f, 1f)
+                    } else {
+                        0f
+                    }
+                    val habitsDone = habits.count { it.isCompletedOn(activeDate) }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                    GymCard {
+                        GymKicker(text = formatFullPlanDate(activeDate, lang))
 
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Bottom
                         ) {
-                            GymOutlineButton(
-                                text = when (lang) {
-                                    "uz" -> "← Oldinga"
-                                    "en" -> "← Back"
-                                    else -> "← Назад"
-                                },
-                                onClick = { onAction(TodoUiAction.OnSelectDate(shiftIsoDate(activeDate, -1))) }
-                            )
-                            GymOutlineButton(
-                                text = when (lang) {
-                                    "uz" -> "Bugun"
-                                    "en" -> "Today"
-                                    else -> "Сегодня"
-                                },
-                                onClick = { onAction(TodoUiAction.OnSelectDate(currentTodayIso())) }
-                            )
-                            GymOutlineButton(
-                                text = when (lang) {
-                                    "uz" -> "Keyingi →"
-                                    "en" -> "Forward →"
-                                    else -> "Вперёд →"
-                                },
-                                onClick = { onAction(TodoUiAction.OnSelectDate(shiftIsoDate(activeDate, 1))) }
-                            )
-                            GymPillTab(
-                                text = when (lang) {
-                                    "uz" -> "Odatlar (${habits.count { it.isCompletedOn(activeDate) }}/${habits.size})"
-                                    "en" -> "Habits (${habits.count { it.isCompletedOn(activeDate) }}/${habits.size})"
-                                    else -> "Привычки (${habits.count { it.isCompletedOn(activeDate) }}/${habits.size})"
-                                },
-                                selected = showHabitsSection,
-                                onClick = { showHabitsSection = !showHabitsSection }
-                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(verticalAlignment = Alignment.Bottom) {
+                                    Text(
+                                        text = "${state.completedCount}",
+                                        fontSize = 44.sp,
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = (-1.2).sp,
+                                        color = AccentLime,
+                                        style = TextStyle(fontFeatureSettings = "tnum")
+                                    )
+                                    Text(
+                                        text = " / ${state.totalCount}",
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = TextSecondary,
+                                        style = TextStyle(fontFeatureSettings = "tnum"),
+                                        modifier = Modifier.padding(bottom = 5.dp)
+                                    )
+                                }
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "Bajarilgan vazifalar"
+                                        "en" -> "Tasks completed"
+                                        else -> "Выполнено задач"
+                                    },
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextSecondary
+                                )
+                            }
+
+                            if (state.highPriorityRemaining > 0) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(AmberWarm.copy(alpha = 0.16f))
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = when (lang) {
+                                            "uz" -> "${state.highPriorityRemaining} muhim"
+                                            "en" -> "${state.highPriorityRemaining} high priority"
+                                            else -> "${state.highPriorityRemaining} важных"
+                                        },
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AmberWarm,
+                                        style = TextStyle(fontFeatureSettings = "tnum")
+                                    )
+                                }
+                            }
                         }
 
+                        GymProgressBar(
+                            progress = progress,
+                            heightDp = 8,
+                            color = AccentLime
+                        )
+
                         if (state.calendarDays.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(14.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 state.calendarDays.forEach { day ->
-                                    val dayShape = RoundedCornerShape(10.dp)
-                                    val bgColor = when {
-                                        day.isSelected -> AccentLimeSubtle
-                                        else -> DarkBackground
-                                    }
-                                    val borderColor = when {
-                                        day.isSelected -> BorderHighlight
-                                        day.isToday -> AccentLime.copy(alpha = 0.45f)
-                                        else -> BorderSubtle
-                                    }
+                                    val dayShape = RoundedCornerShape(14.dp)
+                                    val bgColor = if (day.isSelected) AccentLime else DarkSurfaceHigh
                                     Column(
                                         modifier = Modifier
                                             .weight(1f)
-                                            .defaultMinSize(minHeight = 54.dp)
+                                            .defaultMinSize(minHeight = 58.dp)
                                             .clip(dayShape)
                                             .background(bgColor)
-                                            .border(1.dp, borderColor, dayShape)
+                                            .then(
+                                                if (day.isToday && !day.isSelected) {
+                                                    Modifier.border(1.dp, BorderHighlight, dayShape)
+                                                } else {
+                                                    Modifier
+                                                }
+                                            )
                                             .clickable { onAction(TodoUiAction.OnSelectDate(day.dateString)) }
                                             .padding(vertical = 8.dp, horizontal = 2.dp),
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         verticalArrangement = Arrangement.Center
                                     ) {
                                         Text(
-                                            text = day.dayName.take(2),
+                                            text = day.dayName.take(2).uppercase(),
                                             fontSize = 11.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = if (day.isSelected) AccentLime else TextMuted,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (day.isSelected) GymInkOnLight else TextSecondary,
                                             maxLines = 1
                                         )
-                                        Spacer(modifier = Modifier.height(3.dp))
+                                        Spacer(modifier = Modifier.height(4.dp))
                                         Text(
                                             text = day.dayNumber,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontFamily = FontFamily.Default,
-                                            color = if (day.isSelected) AccentLime else TextPrimary
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = if (day.isSelected) GymInkOnLight else TextPrimary,
+                                            style = TextStyle(fontFeatureSettings = "tnum")
                                         )
                                     }
                                 }
                             }
                         }
+
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            item(key = "nav_prev") {
+                                GymPillTab(
+                                    text = when (lang) {
+                                        "uz" -> "← Oldingi"
+                                        "en" -> "← Prev"
+                                        else -> "← Назад"
+                                    },
+                                    selected = false,
+                                    onClick = { onAction(TodoUiAction.OnSelectDate(shiftIsoDate(activeDate, -1))) }
+                                )
+                            }
+                            item(key = "nav_today") {
+                                GymPillTab(
+                                    text = when (lang) {
+                                        "uz" -> "Bugun"
+                                        "en" -> "Today"
+                                        else -> "Сегодня"
+                                    },
+                                    selected = activeDate == todayIso,
+                                    onClick = { onAction(TodoUiAction.OnSelectDate(currentTodayIso())) }
+                                )
+                            }
+                            item(key = "nav_next") {
+                                GymPillTab(
+                                    text = when (lang) {
+                                        "uz" -> "Keyingi →"
+                                        "en" -> "Next →"
+                                        else -> "Вперёд →"
+                                    },
+                                    selected = false,
+                                    onClick = { onAction(TodoUiAction.OnSelectDate(shiftIsoDate(activeDate, 1))) }
+                                )
+                            }
+                            item(key = "toggle_habits") {
+                                GymPillTab(
+                                    text = when (lang) {
+                                        "uz" -> "Odatlar $habitsDone/${habits.size}"
+                                        "en" -> "Habits $habitsDone/${habits.size}"
+                                        else -> "Привычки $habitsDone/${habits.size}"
+                                    },
+                                    selected = showHabitsSection,
+                                    onClick = { showHabitsSection = !showHabitsSection }
+                                )
+                            }
+                        }
                     }
                 }
 
-                // Toggleable Habit Tracker section (preserves existing capability without cluttering Figma baseline)
+                // Toggleable Habit Tracker section
                 if (showHabitsSection) {
                     item(key = "habits_section", contentType = "habits") {
-                        GymCard(contentPadding = PaddingValues(18.dp)) {
-                            HabitTrackerView(
-                                habits = habits,
-                                currentDateIso = activeDate,
-                                onToggleHabitToday = { habitId ->
-                                    habits = habits.map { item ->
-                                        if (item.id == habitId) {
-                                            val updatedDates = if (activeDate in item.completedDates) {
-                                                item.completedDates - activeDate
-                                            } else {
-                                                item.completedDates + activeDate
-                                            }
-                                            item.copy(completedDates = updatedDates)
+                        HabitTrackerView(
+                            habits = habits,
+                            currentDateIso = activeDate,
+                            onToggleHabitToday = { habitId ->
+                                habits = habits.map { item ->
+                                    if (item.id == habitId) {
+                                        val updatedDates = if (activeDate in item.completedDates) {
+                                            item.completedDates - activeDate
                                         } else {
-                                            item
+                                            item.completedDates + activeDate
                                         }
-                                    }
-                                },
-                                onAddHabitPreset = { preset ->
-                                    if (habits.none { it.id == preset.id }) {
-                                        habits = habits + preset
+                                        item.copy(completedDates = updatedDates)
+                                    } else {
+                                        item
                                     }
                                 }
-                            )
-                        }
+                            },
+                            onAddHabitPreset = { preset ->
+                                if (habits.none { it.id == preset.id }) {
+                                    habits = habits + preset
+                                }
+                            }
+                        )
                     }
                 }
 
-                // Card 1: Checklist ("Небольшие шаги каждый день") — Figma 09
+                // Tasks & Filters Card
                 item(key = "checklist_card", contentType = "checklist") {
-                    GymCard(contentPadding = PaddingValues(20.dp)) {
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Har kuni kichik qadamlar"
-                                "en" -> "Small steps every day"
-                                else -> "Небольшие шаги каждый день"
+                    GymCard {
+                        GymSectionTitle(
+                            title = when (lang) {
+                                "uz" -> "Kunlik режа"
+                                "en" -> "Daily Tasks"
+                                else -> "Задачи дня"
                             },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
+                            actionLabel = "+ ${strings.todoAddTask}",
+                            onAction = { onAction(TodoUiAction.OnOpenTaskModal(null)) }
                         )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "${state.totalCount} ta vazifadan ${state.completedCount} tasi bajarildi"
-                                "en" -> "${state.completedCount} of ${state.totalCount} tasks completed"
-                                else -> "${state.completedCount} из ${state.totalCount} задач выполнена"
-                            },
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        val progress = if (state.totalCount > 0) {
-                            (state.completedCount.toFloat() / state.totalCount.toFloat()).coerceIn(0f, 1f)
-                        } else {
-                            0f
-                        }
-                        GymProgressBar(
-                            progress = progress,
-                            heightDp = 6,
-                            color = AccentLime
-                        )
-
-                        Spacer(modifier = Modifier.height(14.dp))
 
                         val categories = listOf(
                             "all" to when (lang) { "uz" -> "Hammasi"; "en" -> "All"; else -> "Все" },
@@ -417,16 +460,6 @@ fun TodoScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        GymPrimaryButton(
-                            text = "+ ${strings.todoAddTask}",
-                            onClick = { onAction(TodoUiAction.OnOpenTaskModal(null)) },
-                            fillWidth = true
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
                         if (state.tasksForSelectedDate.isEmpty()) {
                             GymInnerWell {
                                 Text(
@@ -435,8 +468,8 @@ fun TodoScreen(
                                         "en" -> "No tasks for selected day"
                                         else -> "На выбранный день задач нет"
                                     },
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
                                     color = TextPrimary
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -446,80 +479,133 @@ fun TodoScreen(
                                         "en" -> "Add a workout goal, supplement, or focus session"
                                         else -> "Добавьте тренировочную цель, приём добавок или сессию фокуса"
                                     },
-                                    fontSize = 12.sp,
+                                    fontSize = 13.sp,
                                     color = TextSecondary
                                 )
                             }
                         } else {
-                            state.tasksForSelectedDate.forEachIndexed { index, task ->
-                                if (index > 0) {
-                                    GymDivider()
-                                }
-                                val isCompleted = task.isCompletedOn(activeDate)
-                                TodoChecklistRow(
-                                    task = task,
-                                    isCompleted = isCompleted,
-                                    lang = lang,
-                                    onToggle = { onAction(TodoUiAction.OnToggleTask(task.id)) },
-                                    onEdit = { inlineEditingTask = task },
-                                    onMoveTomorrow = {
-                                        val nextDate = shiftIsoDate(
-                                            task.scheduledDate.ifBlank { activeDate },
-                                            1
-                                        )
-                                        onAction(
-                                            TodoUiAction.OnSaveTask(
-                                                request = SaveTodoRequestDto(
-                                                    title = task.title,
-                                                    notes = task.notes,
-                                                    category = task.category,
-                                                    priority = task.priority,
-                                                    scheduledDate = nextDate,
-                                                    scheduledTime = task.startTime,
-                                                    repeatDaily = task.repeatDaily,
-                                                    durationMinutes = task.durationMinutes
-                                                ),
-                                                editingId = task.id
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                state.tasksForSelectedDate.forEach { task ->
+                                    val isCompleted = task.isCompletedOn(activeDate)
+                                    TodoChecklistRow(
+                                        task = task,
+                                        isCompleted = isCompleted,
+                                        lang = lang,
+                                        onToggle = { onAction(TodoUiAction.OnToggleTask(task.id)) },
+                                        onEdit = { inlineEditingTask = task },
+                                        onMoveTomorrow = {
+                                            val nextDate = shiftIsoDate(
+                                                task.scheduledDate.ifBlank { activeDate },
+                                                1
                                             )
-                                        )
-                                        PlatformBridge.showToast(
-                                            when (lang) {
-                                                "uz" -> "Ertaga ko'chirildi ($nextDate)"
-                                                "en" -> "Moved to next day ($nextDate)"
-                                                else -> "Перенесено на $nextDate"
-                                            }
-                                        )
-                                    },
-                                    onStartFocus = {
-                                        activeTaskTitle = task.title
-                                        focusMode = FocusMode.POMODORO
-                                        focusPhase = FocusPhase.WORK
-                                        timerSecondsLeft = task.pomodoroMinutes * 60
-                                        hasStartedSession = true
-                                        isTimerRunning = true
-                                        onAction(TodoUiAction.OnStartFocusTimer(task))
-                                    }
-                                )
+                                            onAction(
+                                                TodoUiAction.OnSaveTask(
+                                                    request = SaveTodoRequestDto(
+                                                        title = task.title,
+                                                        notes = task.notes,
+                                                        category = task.category,
+                                                        priority = task.priority,
+                                                        scheduledDate = nextDate,
+                                                        scheduledTime = task.startTime,
+                                                        repeatDaily = task.repeatDaily,
+                                                        durationMinutes = task.durationMinutes
+                                                    ),
+                                                    editingId = task.id
+                                                )
+                                            )
+                                            PlatformBridge.showToast(
+                                                when (lang) {
+                                                    "uz" -> "Ertaga ko'chirildi ($nextDate)"
+                                                    "en" -> "Moved to next day ($nextDate)"
+                                                    else -> "Перенесено на $nextDate"
+                                                }
+                                            )
+                                        },
+                                        onStartFocus = {
+                                            activeTaskTitle = task.title
+                                            focusMode = FocusMode.POMODORO
+                                            focusPhase = FocusPhase.WORK
+                                            timerSecondsLeft = task.pomodoroMinutes * 60
+                                            hasStartedSession = true
+                                            isTimerRunning = true
+                                            onAction(TodoUiAction.OnStartFocusTimer(task))
+                                        }
+                                    )
+                                }
                             }
                         }
+
+                        GymPrimaryButton(
+                            text = "+ ${strings.todoAddTask}",
+                            onClick = { onAction(TodoUiAction.OnOpenTaskModal(null)) },
+                            fillWidth = true
+                        )
                     }
                 }
 
-                // Card 2: Focus Timer ("Время для фокуса") — Figma 09
-                item(key = "focus_timer_card", contentType = "focus_timer") {
-                    GymCard(contentPadding = PaddingValues(20.dp)) {
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Fokus vaqti"
-                                "en" -> "Time for focus"
-                                else -> "Время для фокуса"
+                // Inline Task Editor Card
+                inlineEditingTask?.let { editing ->
+                    item(key = "inline_task_editor_${editing.id}", contentType = "inline_editor") {
+                        InlineTaskEditorCard(
+                            task = editing,
+                            strings = strings,
+                            onSave = { request ->
+                                onAction(TodoUiAction.OnSaveTask(request, editing.id))
+                                inlineEditingTask = null
                             },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
+                            onDelete = {
+                                onAction(TodoUiAction.OnDeleteTask(editing.id))
+                                inlineEditingTask = null
+                            },
+                            onCancel = { inlineEditingTask = null }
                         )
+                    }
+                }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                // Focus Timer Card
+                item(key = "focus_timer_card", contentType = "focus_timer") {
+                    GymCard {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = when (lang) {
+                                    "uz" -> "Fokus vaqti"
+                                    "en" -> "Focus Timer"
+                                    else -> "Таймер фокуса"
+                                },
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = (-0.4).sp,
+                                color = TextPrimary
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(if (soundEnabled) AccentLimeSubtle else DarkSurfaceHigh)
+                                    .clickable {
+                                        soundEnabled = !soundEnabled
+                                        if (soundEnabled) {
+                                            AthleteSoundManager.playIntervalGong()
+                                        }
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> if (soundEnabled) "Ovoz: yoq." else "Ovoz: o'ch."
+                                        "en" -> if (soundEnabled) "Sound: ON" else "Sound: OFF"
+                                        else -> if (soundEnabled) "Звук: вкл." else "Звук: выкл."
+                                    },
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (soundEnabled) AccentLime else TextMuted
+                                )
+                            }
+                        }
 
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -558,10 +644,9 @@ fun TodoScreen(
                         }
 
                         if (focusMode == FocusMode.POMODORO) {
-                            Spacer(modifier = Modifier.height(8.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 GymPillTab(
-                                    text = when (lang) { "uz" -> "Ish"; "en" -> "Work"; else -> "Работа" },
+                                    text = when (lang) { "uz" -> "Ish 25m"; "en" -> "Work 25m"; else -> "Работа 25м" },
                                     selected = focusPhase == FocusPhase.WORK,
                                     onClick = {
                                         focusPhase = FocusPhase.WORK
@@ -570,7 +655,7 @@ fun TodoScreen(
                                     }
                                 )
                                 GymPillTab(
-                                    text = when (lang) { "uz" -> "Tanaffus"; "en" -> "Break"; else -> "Перерыв" },
+                                    text = when (lang) { "uz" -> "Tanaffus 5m"; "en" -> "Break 5m"; else -> "Перерыв 5м" },
                                     selected = focusPhase == FocusPhase.BREAK,
                                     onClick = {
                                         focusPhase = FocusPhase.BREAK
@@ -581,23 +666,11 @@ fun TodoScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
-
                         val displayedSeconds = if (focusMode == FocusMode.STOPWATCH) {
                             stopwatchElapsedSeconds
                         } else {
                             timerSecondsLeft
                         }
-                        Text(
-                            text = formatMmSs(displayedSeconds),
-                            fontSize = 52.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            fontFamily = FontFamily.Default,
-                            color = TextPrimary,
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
 
                         val statusText = when {
                             activeTaskTitle != null -> activeTaskTitle!!
@@ -617,37 +690,58 @@ fun TodoScreen(
                                 else -> "Перерыв (5 мин)"
                             }
                         }
-                        Text(
-                            text = statusText,
-                            fontSize = 13.sp,
-                            color = TextSecondary,
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        GymInnerWell(
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            GymWhiteButton(
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = formatMmSs(displayedSeconds),
+                                    fontSize = 56.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = (-1.5).sp,
+                                    color = if (isTimerRunning) AccentLime else TextPrimary,
+                                    style = TextStyle(fontFeatureSettings = "tnum")
+                                )
+                                Text(
+                                    text = statusText,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            GymPrimaryButton(
                                 text = when {
                                     isTimerRunning -> when (lang) { "uz" -> "Faol"; "en" -> "Running"; else -> "Идёт" }
-                                    hasStartedSession -> when (lang) { "uz" -> "Davom etish"; "en" -> "Resume"; else -> "Продолжить" }
+                                    hasStartedSession -> when (lang) { "uz" -> "Davom"; "en" -> "Resume"; else -> "Старт" }
                                     else -> strings.todoPomodoroStart
                                 },
                                 onClick = {
                                     hasStartedSession = true
                                     isTimerRunning = true
                                 },
-                                enabled = !isTimerRunning
+                                enabled = !isTimerRunning,
+                                modifier = Modifier.weight(1.2f)
                             )
                             GymOutlineButton(
                                 text = strings.todoPomodoroPause,
                                 onClick = { isTimerRunning = false },
-                                enabled = isTimerRunning
+                                enabled = isTimerRunning,
+                                modifier = Modifier.weight(1f)
                             )
                             GymOutlineButton(
                                 text = strings.todoPomodoroReset,
@@ -661,71 +755,23 @@ fun TodoScreen(
                                         FocusMode.TIMER -> 15 * 60
                                         FocusMode.STOPWATCH -> 0
                                     }
-                                }
-                            )
-                            GymOutlineButton(
-                                text = when {
-                                    lang == "uz" -> if (soundEnabled) "Ovoz: yoq." else "Ovoz: o'ch."
-                                    lang == "en" -> if (soundEnabled) "Sound: on" else "Sound: off"
-                                    else -> if (soundEnabled) "Звук: вкл." else "Звук: выкл."
                                 },
-                                onClick = {
-                                    soundEnabled = !soundEnabled
-                                    if (soundEnabled) {
-                                        AthleteSoundManager.playIntervalGong()
-                                    }
-                                }
+                                modifier = Modifier.weight(1f)
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Yakunlangan sessiyalar faoliyat jurnalida ko'rinadi."
-                                "en" -> "Completed sessions will appear in the activity log."
-                                else -> "Завершённые сессии появятся в журнале."
-                            },
-                            fontSize = 12.sp,
-                            color = TextMuted
-                        )
                     }
                 }
 
-                // Card 3: Inline Task Editor ("Редактирование задачи") — Figma 09
-                inlineEditingTask?.let { editing ->
-                    item(key = "inline_task_editor_${editing.id}", contentType = "inline_editor") {
-                        InlineTaskEditorCard(
-                            task = editing,
-                            strings = strings,
-                            onSave = { request ->
-                                onAction(TodoUiAction.OnSaveTask(request, editing.id))
-                                inlineEditingTask = null
-                            },
-                            onDelete = {
-                                onAction(TodoUiAction.OnDeleteTask(editing.id))
-                                inlineEditingTask = null
-                            },
-                            onCancel = { inlineEditingTask = null }
-                        )
-                    }
-                }
-
-                // Card 4: Activity Log ("Журнал активности") — Figma 09
+                // Activity Log Card
                 item(key = "activity_log_card", contentType = "activity_log") {
-                    GymCard(contentPadding = PaddingValues(20.dp)) {
-                        Text(
-                            text = when (lang) {
+                    GymCard {
+                        GymSectionTitle(
+                            title = when (lang) {
                                 "uz" -> "Faoliyat jurnali"
-                                "en" -> "Activity log"
+                                "en" -> "Activity Log"
                                 else -> "Журнал активности"
-                            },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
+                            }
                         )
-
-                        Spacer(modifier = Modifier.height(12.dp))
 
                         val completedForDay = state.tasksForSelectedDate.filter { it.isCompletedOn(activeDate) }
 
@@ -737,105 +783,105 @@ fun TodoScreen(
                                         "en" -> "No activity entries yet"
                                         else -> "Пока нет записей активности"
                                     },
-                                    fontSize = 13.sp,
+                                    fontSize = 14.sp,
                                     color = TextSecondary
                                 )
                             }
                         } else {
-                            state.activityLogs.take(8).forEachIndexed { idx, log ->
-                                if (idx > 0) GymDivider()
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 10.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                state.activityLogs.take(8).forEach { log ->
+                                    val timeLabel = log.startedAt
+                                        .substringAfter("T", "")
+                                        .take(5)
+                                        .ifBlank { log.loggedDate }
                                     Row(
-                                        modifier = Modifier.weight(1f),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(DarkSurfaceHigh)
+                                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        val timeLabel = log.startedAt
-                                            .substringAfter("T", "")
-                                            .take(5)
-                                            .ifBlank { log.loggedDate }
+                                        Row(
+                                            modifier = Modifier.weight(1f),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            Text(
+                                                text = timeLabel.ifBlank { "●" },
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = AccentLime,
+                                                style = TextStyle(fontFeatureSettings = "tnum")
+                                            )
+                                            Text(
+                                                text = log.taskTitle,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = TextPrimary,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = timeLabel.ifBlank { "●" },
+                                            text = if (log.durationMinutes > 0) "${log.durationMinutes} мин" else log.actionType,
                                             fontSize = 12.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontFamily = FontFamily.Default,
-                                            color = AccentLime
-                                        )
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Text(
-                                            text = log.taskTitle,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = TextPrimary,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextSecondary,
+                                            style = TextStyle(fontFeatureSettings = "tnum")
                                         )
                                     }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = if (log.durationMinutes > 0) "${log.durationMinutes} мин" else log.actionType,
-                                        fontSize = 12.sp,
-                                        fontFamily = FontFamily.Default,
-                                        color = TextSecondary
-                                    )
                                 }
-                            }
 
-                            completedForDay.take(5).forEachIndexed { idx, task ->
-                                if (state.activityLogs.isNotEmpty() || idx > 0) {
-                                    GymDivider()
-                                }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 10.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
+                                completedForDay.take(5).forEach { task ->
                                     Row(
-                                        modifier = Modifier.weight(1f),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(DarkSurfaceHigh)
+                                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
+                                        Row(
+                                            modifier = Modifier.weight(1f),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            Text(
+                                                text = task.scheduledTime.ifBlank { "✓" },
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = AccentLime,
+                                                style = TextStyle(fontFeatureSettings = "tnum")
+                                            )
+                                            Text(
+                                                text = task.title,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = TextPrimary,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = task.scheduledTime.ifBlank { "✓" },
+                                            text = when (lang) {
+                                                "uz" -> "Bajarildi"
+                                                "en" -> "Done"
+                                                else -> "Выполнена"
+                                            },
                                             fontSize = 12.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontFamily = FontFamily.Default,
+                                            fontWeight = FontWeight.Bold,
                                             color = AccentLime
                                         )
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Text(
-                                            text = task.title,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = TextPrimary,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
                                     }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = when (lang) {
-                                            "uz" -> "Bajarildi"
-                                            "en" -> "Done"
-                                            else -> "Выполнена"
-                                        },
-                                        fontSize = 12.sp,
-                                        color = AccentLime
-                                    )
                                 }
                             }
                         }
                     }
-                }
-
-                item(key = "bottom_spacer", contentType = "spacer") {
-                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
@@ -871,73 +917,124 @@ private fun TodoChecklistRow(
     onMoveTomorrow: () -> Unit,
     onStartFocus: () -> Unit
 ) {
+    val cardShape = RoundedCornerShape(16.dp)
+    val priorityLower = task.priority.lowercase()
+    val (priorityColor, priorityBg) = when (priorityLower) {
+        "high" -> CrimsonRed to CrimsonRed.copy(alpha = 0.16f)
+        "medium" -> AmberWarm to AmberWarm.copy(alpha = 0.16f)
+        else -> TextSecondary to DarkSurface
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp)
+            .clip(cardShape)
+            .background(if (isCompleted) AccentLimeSubtle else DarkSurfaceHigh)
+            .then(
+                if (isCompleted) {
+                    Modifier.border(1.dp, BorderHighlight, cardShape)
+                } else {
+                    Modifier
+                }
+            )
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onToggle),
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .padding(top = 2.dp)
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(if (isCompleted) AccentLime else DarkSurfaceElevated)
                     .clickable(onClick = onToggle),
-                contentAlignment = Alignment.CenterStart
+                contentAlignment = Alignment.Center
             ) {
-                val boxShape = RoundedCornerShape(6.dp)
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(boxShape)
-                        .background(if (isCompleted) TextPrimary else DarkBackground)
-                        .border(
-                            width = 1.dp,
-                            color = if (isCompleted) TextPrimary else BorderSubtle,
-                            shape = boxShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isCompleted) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = null,
-                            tint = GymInkOnLight,
-                            modifier = Modifier.size(15.dp)
-                        )
-                    }
+                if (isCompleted) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = GymInkOnLight,
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 Text(
                     text = task.title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
                     color = if (isCompleted) TextSecondary else TextPrimary,
                     textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None
                 )
-                Spacer(modifier = Modifier.height(3.dp))
-                val statusLabel = if (isCompleted) {
-                    when (lang) { "uz" -> "bajarildi"; "en" -> "completed"; else -> "выполнена" }
-                } else {
-                    when (lang) { "uz" -> "bajarilmagan"; "en" -> "pending"; else -> "не выполнена" }
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Category pill
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(DarkSurface)
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = localizeTodoCategory(task.category, lang),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondary
+                        )
+                    }
+
+                    // Priority pill
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(priorityBg)
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = localizePriority(task.priority, lang),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = priorityColor
+                        )
+                    }
+
+                    // Duration / Time pill
+                    val timePart = if (task.scheduledTime.isNotBlank()) "${task.scheduledTime} · " else ""
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(DarkSurface)
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "$timePart${task.durationMinutes} мин",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextMuted,
+                            style = TextStyle(fontFeatureSettings = "tnum")
+                        )
+                    }
                 }
-                val catLabel = localizeTodoCategory(task.category, lang)
-                Text(
-                    text = "$catLabel · ${task.durationMinutes} мин · $statusLabel",
-                    fontSize = 12.sp,
-                    color = if (isCompleted) AccentLime else TextSecondary
-                )
+
                 if (task.notes.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = task.notes,
-                        fontSize = 12.sp,
-                        color = TextMuted,
+                        fontSize = 13.sp,
+                        color = TextSecondary,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -945,26 +1042,49 @@ private fun TodoChecklistRow(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-
-        FlowRow(
-            modifier = Modifier.padding(start = 44.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 40.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            GymOutlineButton(
-                text = when (lang) { "uz" -> "Tahrirlash"; "en" -> "Edit"; else -> "Изменить" },
-                onClick = onEdit
+            TaskActionChip(
+                text = when (lang) { "uz" -> "Fokus"; "en" -> "Focus"; else -> "Фокус" },
+                onClick = onStartFocus,
+                accent = true
             )
-            GymOutlineButton(
-                text = when (lang) { "uz" -> "Ko'chirish"; "en" -> "Move +1d"; else -> "Перенести" },
+            TaskActionChip(
+                text = when (lang) { "uz" -> "Ertaga"; "en" -> "+1d"; else -> "Перенести" },
                 onClick = onMoveTomorrow
             )
-            GymOutlineButton(
-                text = when (lang) { "uz" -> "Jurnal / Fokus"; "en" -> "Focus"; else -> "Журнал" },
-                onClick = onStartFocus
+            TaskActionChip(
+                text = when (lang) { "uz" -> "Tahrir"; "en" -> "Edit"; else -> "Изменить" },
+                onClick = onEdit
             )
         }
+    }
+}
+
+@Composable
+private fun TaskActionChip(
+    text: String,
+    onClick: () -> Unit,
+    accent: Boolean = false
+) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(if (accent) AccentLimeSubtle else DarkSurface)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (accent) AccentLime else TextSecondary
+        )
     }
 }
 
@@ -984,19 +1104,14 @@ private fun InlineTaskEditorCard(
     var durationText by remember(task.id) { mutableStateOf(task.durationMinutes.toString()) }
     var priority by remember(task.id) { mutableStateOf(task.priority) }
 
-    GymCard(contentPadding = PaddingValues(20.dp)) {
-        Text(
-            text = when (lang) {
+    GymCard(borderColor = BorderHighlight) {
+        GymSectionTitle(
+            title = when (lang) {
                 "uz" -> "Vazifani tahrirlash"
-                "en" -> "Edit task"
+                "en" -> "Edit Task"
                 else -> "Редактирование задачи"
-            },
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
+            }
         )
-
-        Spacer(modifier = Modifier.height(14.dp))
 
         GymLabeledField(
             label = strings.todoTaskTitleLabel,
@@ -1005,75 +1120,70 @@ private fun InlineTaskEditorCard(
             placeholder = strings.todoTaskTitleLabel
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            GymLabeledField(
+                label = when (lang) { "uz" -> "Sana"; "en" -> "Date"; else -> "Дата" },
+                value = date,
+                onValueChange = { date = it },
+                placeholder = "YYYY-MM-DD",
+                modifier = Modifier.weight(1f)
+            )
+            GymLabeledField(
+                label = when (lang) {
+                    "uz" -> "Davomiyligi, min"
+                    "en" -> "Duration, min"
+                    else -> "Длительность, мин"
+                },
+                value = durationText,
+                onValueChange = { input -> durationText = input.filter { it.isDigit() } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                placeholder = "30",
+                modifier = Modifier.weight(1f)
+            )
+        }
 
-        GymLabeledField(
-            label = when (lang) { "uz" -> "Sana"; "en" -> "Date"; else -> "Дата" },
-            value = date,
-            onValueChange = { date = it },
-            placeholder = "YYYY-MM-DD"
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = strings.todoCategoryLabel,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = TextSecondary
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            listOf("workout", "nutrition", "supplement", "work", "recovery").forEach { key ->
-                GymPillTab(
-                    text = localizeTodoCategory(key, lang),
-                    selected = category == key,
-                    onClick = { category = key }
-                )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = strings.todoCategoryLabel,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextSecondary
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf("workout", "nutrition", "supplement", "work", "recovery").forEach { key ->
+                    GymPillTab(
+                        text = localizeTodoCategory(key, lang),
+                        selected = category == key,
+                        onClick = { category = key }
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        GymLabeledField(
-            label = when (lang) {
-                "uz" -> "Davomiyligi, min"
-                "en" -> "Duration, min"
-                else -> "Длительность, мин"
-            },
-            value = durationText,
-            onValueChange = { input -> durationText = input.filter { it.isDigit() } },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            placeholder = "30"
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = strings.todoPriorityLabel,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = TextSecondary
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("low", "medium", "high").forEach { p ->
-                GymPillTab(
-                    text = localizePriority(p, lang),
-                    selected = priority == p,
-                    onClick = { priority = p }
-                )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = strings.todoPriorityLabel,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextSecondary
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("low", "medium", "high").forEach { p ->
+                    GymPillTab(
+                        text = localizePriority(p, lang),
+                        selected = priority == p,
+                        onClick = { priority = p }
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             GymPrimaryButton(
                 text = strings.save,
@@ -1093,17 +1203,19 @@ private fun InlineTaskEditorCard(
                         )
                     }
                 },
-                enabled = title.isNotBlank()
+                enabled = title.isNotBlank(),
+                modifier = Modifier.weight(1.2f)
+            )
+            GymOutlineButton(
+                text = strings.cancel,
+                onClick = onCancel,
+                modifier = Modifier.weight(1f)
             )
             GymOutlineButton(
                 text = strings.delete,
                 onClick = onDelete,
                 textColor = CrimsonRed,
-                borderColor = CrimsonRed.copy(alpha = 0.5f)
-            )
-            GymOutlineButton(
-                text = strings.cancel,
-                onClick = onCancel
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -1158,14 +1270,26 @@ private fun CreateOrEditTaskBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 32.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1182,44 +1306,55 @@ private fun CreateOrEditTaskBottomSheet(
                     } else {
                         strings.todoNewTaskTitle
                     },
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.5).sp,
                     color = TextPrimary
                 )
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = null, tint = TextSecondary)
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(DarkSurfaceHigh)
+                        .clickable(onClick = onDismiss),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = strings.cancel,
+                        tint = TextSecondary,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
 
             if (existingTask == null) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = when (lang) {
-                        "uz" -> "Tezkor shablonlar"
-                        "en" -> "Quick templates"
-                        else -> "Быстрые шаблоны"
-                    },
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextSecondary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(quickTemplates, key = { it.first }) { (tplTitle, tplNotes, tplCat) ->
-                        GymPillTab(
-                            text = "+ $tplTitle",
-                            selected = false,
-                            onClick = {
-                                title = tplTitle
-                                notes = tplNotes
-                                category = tplCat
-                            }
-                        )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Tezkor shablonlar"
+                            "en" -> "Quick templates"
+                            else -> "Быстрые шаблоны"
+                        },
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextSecondary
+                    )
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(quickTemplates, key = { it.first }) { (tplTitle, tplNotes, tplCat) ->
+                            GymPillTab(
+                                text = "+ $tplTitle",
+                                selected = title == tplTitle,
+                                onClick = {
+                                    title = tplTitle
+                                    notes = tplNotes
+                                    category = tplCat
+                                }
+                            )
+                        }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(14.dp))
 
             GymLabeledField(
                 label = strings.todoTaskTitleLabel,
@@ -1228,16 +1363,12 @@ private fun CreateOrEditTaskBottomSheet(
                 placeholder = strings.todoTaskTitleLabel
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
-
             GymLabeledField(
                 label = strings.todoTargetLabel,
                 value = notes,
                 onValueChange = { notes = it },
                 placeholder = strings.todoTargetLabel
             )
-
-            Spacer(modifier = Modifier.height(10.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 GymLabeledField(
@@ -1256,8 +1387,6 @@ private fun CreateOrEditTaskBottomSheet(
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
             GymLabeledField(
                 label = when (lang) {
                     "uz" -> "Davomiyligi, min"
@@ -1270,72 +1399,72 @@ private fun CreateOrEditTaskBottomSheet(
                 placeholder = "30"
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = strings.todoCategoryLabel,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = TextSecondary
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                listOf("workout", "nutrition", "supplement", "work", "recovery").forEach { key ->
-                    GymPillTab(
-                        text = localizeTodoCategory(key, lang),
-                        selected = category == key,
-                        onClick = { category = key }
-                    )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = strings.todoCategoryLabel,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextSecondary
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf("workout", "nutrition", "supplement", "work", "recovery").forEach { key ->
+                        GymPillTab(
+                            text = localizeTodoCategory(key, lang),
+                            selected = category == key,
+                            onClick = { category = key }
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = strings.todoPriorityLabel,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = TextSecondary
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("low", "medium", "high").forEach { key ->
-                    GymPillTab(
-                        text = localizePriority(key, lang),
-                        selected = priority == key,
-                        onClick = { priority = key }
-                    )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = strings.todoPriorityLabel,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextSecondary
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("low", "medium", "high").forEach { key ->
+                        GymPillTab(
+                            text = localizePriority(key, lang),
+                            selected = priority == key,
+                            onClick = { priority = key }
+                        )
+                    }
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(DarkSurfaceHigh)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = strings.todoRecurringDaily,
                     fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
                     color = TextSoft
                 )
                 Switch(
                     checked = repeatDaily,
                     onCheckedChange = { repeatDaily = it },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = DarkBackground,
+                        checkedThumbColor = GymInkOnLight,
                         checkedTrackColor = AccentLime,
                         uncheckedThumbColor = TextSecondary,
-                        uncheckedTrackColor = DarkSurfaceHigh
+                        uncheckedTrackColor = DarkSurfaceElevated,
+                        uncheckedBorderColor = Color.Transparent
                     )
                 )
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1345,8 +1474,7 @@ private fun CreateOrEditTaskBottomSheet(
                     GymOutlineButton(
                         text = strings.delete,
                         onClick = onDelete,
-                        textColor = CrimsonRed,
-                        borderColor = CrimsonRed.copy(alpha = 0.5f)
+                        textColor = CrimsonRed
                     )
                 }
                 GymOutlineButton(
@@ -1378,6 +1506,8 @@ private fun CreateOrEditTaskBottomSheet(
                     fillWidth = true
                 )
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }

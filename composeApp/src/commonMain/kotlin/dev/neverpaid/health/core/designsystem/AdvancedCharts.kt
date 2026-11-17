@@ -8,10 +8,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -28,13 +27,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -50,26 +44,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import kotlin.math.PI
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.sin
 
 // ============================================================================
@@ -126,10 +117,10 @@ data class MacroTargetProgress(
  * High-performance Compose Canvas chart showing volume progression.
  * Features:
  * - Cubic Bezier spline smoothing for organic curves
- * - Neon gradient area fill
+ * - Electric lime gradient area fill
  * - Dynamic Y-axis gridlines and tonnage labels
  * - Interactive horizontal touch drag scrubber with snapped data badge
- * - Glowing milestone markers for PR sessions
+ * - Highlighted milestone markers for PR sessions
  */
 @Composable
 fun InteractiveVolumeChart(
@@ -151,8 +142,8 @@ fun InteractiveVolumeChart(
             modifier = modifier
                 .fillMaxWidth()
                 .height(220.dp)
-                .background(DarkSurface, RoundedCornerShape(14.dp))
-                .border(1.dp, BorderSubtle, RoundedCornerShape(14.dp)),
+                .clip(RoundedCornerShape(20.dp))
+                .background(DarkSurface),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -166,21 +157,21 @@ fun InteractiveVolumeChart(
 
     val maxVolume = remember(dataPoints) {
         val maxVal = dataPoints.maxOfOrNull { it.volumeKg } ?: 1000.0
-        // Round up to nice readable ceiling
         if (maxVal <= 0.0) 1000.0 else maxVal * 1.15
     }
     val minVolume = 0.0
 
-    Card(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
+        shape = RoundedCornerShape(20.dp),
+        color = DarkSurface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             // Selected Scrubber Header readout
             val activePoint = selectedIndex?.let { dataPoints.getOrNull(it) } ?: dataPoints.lastOrNull()
@@ -189,32 +180,57 @@ fun InteractiveVolumeChart(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         text = activePoint?.sessionTitle?.ifBlank { strings.volumeTonnage } ?: strings.volumeTonnage,
-                        style = MaterialTheme.typography.labelMedium,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = TextSecondary
                     )
                     Text(
                         text = "${((activePoint?.volumeKg ?: 0.0)).toInt()} ${strings.unitKg}",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = if (activePoint?.isPersonalRecord == true) AmberGold else AccentLime
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.6).sp,
+                        color = if (activePoint?.isPersonalRecord == true) AmberWarm else AccentLime,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
                 }
 
                 if (activePoint != null) {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = DarkSurfaceElevated,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text(
-                            text = activePoint.date,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextPrimary,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
+                        if (activePoint.isPersonalRecord) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(AmberSubtle)
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = "PR",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = AmberWarm
+                                )
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(DarkSurfaceHigh)
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = activePoint.date,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                        }
                     }
                 }
             }
@@ -247,12 +263,8 @@ fun InteractiveVolumeChart(
                                         .coerceIn(0, dataPoints.size - 1)
                                     selectedIndex = index
                                 },
-                                onDragEnd = {
-                                    // Keep selected point visible
-                                },
-                                onDragCancel = {
-                                    // Retain or reset
-                                }
+                                onDragEnd = {},
+                                onDragCancel = {}
                             )
                         }
                         .pointerInput(dataPoints) {
@@ -276,22 +288,20 @@ fun InteractiveVolumeChart(
                     val chartHeight = canvasHeight - topPadding - bottomPadding
 
                     // Draw Horizontal Gridlines (4 levels: 0%, 33%, 66%, 100%)
-                    val gridLevels = 4
+                    val gridLevels = 3
                     for (i in 0..gridLevels) {
                         val fraction = i.toFloat() / gridLevels
                         val y = topPadding + chartHeight * (1f - fraction)
                         val levelVolume = minVolume + (maxVolume - minVolume) * fraction
 
-                        // Grid line
                         drawLine(
-                            color = gridColor,
+                            color = gridColor.copy(alpha = 0.7f),
                             start = Offset(leftPadding, y),
                             end = Offset(canvasWidth - rightPadding, y),
-                            strokeWidth = 1f,
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f)
+                            strokeWidth = 1.dp.toPx(),
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f), 0f)
                         )
 
-                        // Y-Axis Label
                         val label = if (levelVolume >= 1000.0) {
                             "${(levelVolume / 1000.0).toInt()}k"
                         } else {
@@ -300,17 +310,17 @@ fun InteractiveVolumeChart(
                         drawText(
                             textMeasurer = textMeasurer,
                             text = label,
-                            topLeft = Offset(4.dp.toPx(), y - 8.dp.toPx()),
+                            topLeft = Offset(2.dp.toPx(), y - 8.dp.toPx()),
                             style = TextStyle(
                                 color = textColor,
                                 fontSize = 10.sp,
-                                fontFamily = FontFamily.Monospace
+                                fontWeight = FontWeight.SemiBold,
+                                fontFeatureSettings = "tnum"
                             )
                         )
                     }
 
                     if (dataPoints.size < 2) {
-                        // Single point representation
                         val x = leftPadding + chartWidth / 2f
                         val y = topPadding + chartHeight * (1f - ((dataPoints[0].volumeKg - minVolume) / (maxVolume - minVolume)).toFloat())
                         drawCircle(
@@ -321,7 +331,6 @@ fun InteractiveVolumeChart(
                         return@Canvas
                     }
 
-                    // Calculate Coordinates for points
                     val points = dataPoints.mapIndexed { index, dp ->
                         val x = leftPadding + (index.toFloat() / (dataPoints.size - 1)) * chartWidth
                         val normalizedY = ((dp.volumeKg - minVolume) / (maxVolume - minVolume)).coerceIn(0.0, 1.0).toFloat()
@@ -329,7 +338,6 @@ fun InteractiveVolumeChart(
                         Offset(x, y)
                     }
 
-                    // Construct Smooth Cubic Bezier Line and Fill Paths
                     val strokePath = Path().apply {
                         moveTo(points.first().x, points.first().y)
                         for (i in 0 until points.size - 1) {
@@ -348,63 +356,67 @@ fun InteractiveVolumeChart(
                         close()
                     }
 
-                    // Flat Obsidian Area Under Curve
                     drawPath(
                         path = fillPath,
-                        color = gradientStartColor,
+                        brush = Brush.verticalGradient(
+                            colors = listOf(gradientStartColor, gradientEndColor),
+                            startY = topPadding,
+                            endY = topPadding + chartHeight
+                        ),
                         style = Fill
                     )
 
-                    // Draw Main Crisp Line
                     drawPath(
                         path = strokePath,
                         color = lineColor,
                         style = Stroke(
                             width = 3.dp.toPx(),
-                            cap = StrokeCap.Round
+                            cap = StrokeCap.Round,
+                            join = StrokeJoin.Round
                         )
                     )
 
-                    // Draw Milestone PR Badges / Points (flat geometric, no blur halo)
                     points.forEachIndexed { index, point ->
                         val dp = dataPoints[index]
                         if (dp.isPersonalRecord) {
                             drawCircle(
                                 color = DarkBackground,
-                                radius = 6.dp.toPx(),
+                                radius = 6.5.dp.toPx(),
                                 center = point
                             )
                             drawCircle(
-                                color = AmberGold,
+                                color = AmberWarm,
                                 radius = 4.5.dp.toPx(),
                                 center = point
                             )
                         } else {
                             drawCircle(
+                                color = DarkBackground,
+                                radius = 5.dp.toPx(),
+                                center = point
+                            )
+                            drawCircle(
                                 color = lineColor,
-                                radius = 3.dp.toPx(),
+                                radius = 3.5.dp.toPx(),
                                 center = point
                             )
                         }
                     }
 
-                    // Active Scrubber Crosshair Line & Beacon
                     val activeIdx = selectedIndex
                     if (activeIdx != null && activeIdx in points.indices) {
                         val activePointCoord = points[activeIdx]
 
-                        // Vertical dashed indicator
                         drawLine(
-                            color = lineColor.copy(alpha = 0.8f),
+                            color = lineColor.copy(alpha = 0.75f),
                             start = Offset(activePointCoord.x, topPadding),
                             end = Offset(activePointCoord.x, topPadding + chartHeight),
                             strokeWidth = 1.5.dp.toPx(),
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 6f), 0f)
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f), 0f)
                         )
 
-                        // Glowing Beacon on Curve
                         drawCircle(
-                            color = lineColor.copy(alpha = 0.25f),
+                            color = lineColor.copy(alpha = 0.22f),
                             radius = 12.dp.toPx(),
                             center = activePointCoord
                         )
@@ -420,7 +432,6 @@ fun InteractiveVolumeChart(
                         )
                     }
 
-                    // Draw Date X-Axis Markers for first, middle, last
                     val xIndices = listOf(0, dataPoints.size / 2, dataPoints.size - 1).distinct()
                     xIndices.forEach { idx ->
                         val pt = points[idx]
@@ -432,7 +443,8 @@ fun InteractiveVolumeChart(
                             style = TextStyle(
                                 color = textColor,
                                 fontSize = 10.sp,
-                                fontFamily = FontFamily.Monospace
+                                fontWeight = FontWeight.SemiBold,
+                                fontFeatureSettings = "tnum"
                             )
                         )
                     }
@@ -447,7 +459,7 @@ fun InteractiveVolumeChart(
 // ============================================================================
 
 /**
- * 84-day (12 weeks × 7 days) athletic discipline heatmap inspired by GitHub & Strava.
+ * 84-day (12 weeks × 7 days) athletic discipline heatmap.
  * Color intensity scales automatically by session volume.
  * Provides interactive tap inspection for any day in the quarter.
  */
@@ -460,12 +472,10 @@ fun ConsistencyHeatmap84Day(
     val strings = LocalDudaStrings.current
     var selectedDay by remember { mutableStateOf<HeatmapDayEntry?>(null) }
 
-    // Precompute 12 weeks of 7 days
     val weeksCount = 12
     val daysInWeek = 7
     val totalSlots = weeksCount * daysInWeek
 
-    // Pad or trim input list to strictly 84 slots
     val paddedDays = remember(days) {
         val list = days.takeLast(totalSlots).toMutableList()
         while (list.size < totalSlots) {
@@ -490,16 +500,17 @@ fun ConsistencyHeatmap84Day(
         streak
     }
 
-    Card(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
+        shape = RoundedCornerShape(20.dp),
+        color = DarkSurface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             // Header: Streak & Total Workout count
             Row(
@@ -507,47 +518,49 @@ fun ConsistencyHeatmap84Day(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         text = strings.consistencyHeatmap,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
                         color = TextPrimary
                     )
                     Text(
                         text = "$totalWorkouts ${strings.workoutsDone} (12 ${strings.weeksUnit})",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary
+                        fontSize = 12.sp,
+                        color = TextSecondary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
                 }
 
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = AmberWarm.copy(alpha = 0.15f),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, AmberWarm.copy(alpha = 0.4f))
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(AmberSubtle)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.LocalFireDepartment,
                             contentDescription = null,
-                            tint = AmberGold,
+                            tint = AmberWarm,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
                             text = "$activeStreak ${strings.daysStreak}",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = AmberGold
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Black,
+                            color = AmberWarm,
+                            style = TextStyle(fontFeatureSettings = "tnum")
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Canvas Grid
             Box(
@@ -591,11 +604,11 @@ fun ConsistencyHeatmap84Day(
                             val y = d * (cellSize + gap)
 
                             val color = when (entry.tier) {
-                                1 -> AccentLimeDark.copy(alpha = 0.45f)
-                                2 -> AccentLime.copy(alpha = 0.70f)
+                                1 -> AccentLimeDark.copy(alpha = 0.55f)
+                                2 -> AccentLime.copy(alpha = 0.75f)
                                 3 -> AccentLime
-                                4 -> AmberGold
-                                else -> DarkSurfaceElevated
+                                4 -> AmberWarm
+                                else -> DarkSurfaceHigh
                             }
 
                             val isSelected = selectedDay?.date == entry.date && entry.date.isNotEmpty()
@@ -604,15 +617,15 @@ fun ConsistencyHeatmap84Day(
                                 color = color,
                                 topLeft = Offset(x, y),
                                 size = Size(cellSize, cellSize),
-                                cornerRadius = CornerRadius(2.5.dp.toPx())
+                                cornerRadius = CornerRadius(3.dp.toPx())
                             )
 
                             if (isSelected) {
                                 drawRoundRect(
-                                    color = Color.White,
+                                    color = TextPrimary,
                                     topLeft = Offset(x - 1.dp.toPx(), y - 1.dp.toPx()),
                                     size = Size(cellSize + 2.dp.toPx(), cellSize + 2.dp.toPx()),
-                                    cornerRadius = CornerRadius(3.5.dp.toPx()),
+                                    cornerRadius = CornerRadius(4.dp.toPx()),
                                     style = Stroke(width = 1.5.dp.toPx())
                                 )
                             }
@@ -627,38 +640,37 @@ fun ConsistencyHeatmap84Day(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Selected Day Micro Badge
                 if (selectedDay != null && selectedDay?.date?.isNotEmpty() == true) {
                     Text(
                         text = "${selectedDay?.date}: ${selectedDay?.workoutCount} ${strings.workoutsDone} (${selectedDay?.volumeKg?.toInt()} kg)",
-                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 12.sp,
                         color = AccentLime,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Bold,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
                 } else {
                     Text(
                         text = strings.lessMoreLegend,
-                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 12.sp,
                         color = TextMuted
                     )
                 }
 
-                // Legend squares
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     listOf(
-                        DarkSurfaceElevated,
-                        AccentLimeDark.copy(alpha = 0.45f),
-                        AccentLime.copy(alpha = 0.70f),
+                        DarkSurfaceHigh,
+                        AccentLimeDark.copy(alpha = 0.55f),
+                        AccentLime.copy(alpha = 0.75f),
                         AccentLime,
-                        AmberGold
+                        AmberWarm
                     ).forEach { col ->
                         Box(
                             modifier = Modifier
-                                .size(9.dp)
-                                .clip(RoundedCornerShape(2.dp))
+                                .size(10.dp)
+                                .clip(RoundedCornerShape(3.dp))
                                 .background(col)
                         )
                     }
@@ -703,16 +715,17 @@ fun MacronutrientDonutGauge(
         animationSpec = tween(durationMillis = 1100, easing = FastOutSlowInEasing)
     )
 
-    Card(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
+        shape = RoundedCornerShape(20.dp),
+        color = DarkSurface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -723,7 +736,7 @@ fun MacronutrientDonutGauge(
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val strokeWidth = 8.dp.toPx()
-                    val gap = 3.dp.toPx()
+                    val gap = 4.dp.toPx()
 
                     val radius0 = (size.minDimension / 2f) - (strokeWidth / 2f)
                     val radius1 = radius0 - strokeWidth - gap
@@ -733,13 +746,13 @@ fun MacronutrientDonutGauge(
                     // Draw Tracks (background track rings)
                     listOf(radius0, radius1, radius2, radius3).forEach { r ->
                         drawCircle(
-                            color = DarkSurfaceElevated,
+                            color = DarkSurfaceHigh,
                             radius = r,
-                            style = Stroke(width = strokeWidth)
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                         )
                     }
 
-                    // 1. Outer Ring: Calories (Emerald Neon)
+                    // 1. Outer Ring: Calories (AccentLime)
                     val calSweep = animCalorieProgress * 360f
                     drawArc(
                         color = if (animCalorieProgress > 1.0f) AmberWarm else AccentLime,
@@ -792,14 +805,16 @@ fun MacronutrientDonutGauge(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "${progress.currentCalories.toInt()}",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Black,
+                        color = TextPrimary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
                     Text(
                         text = "/ ${progress.targetCalories.toInt()} ${strings.unitKcal}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted
+                        fontSize = 11.sp,
+                        color = TextMuted,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
                 }
             }
@@ -809,7 +824,7 @@ fun MacronutrientDonutGauge(
             // Legend Readouts
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 MacroLegendRow(
                     label = strings.protein,
@@ -848,7 +863,7 @@ private fun MacroLegendRow(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -858,15 +873,17 @@ private fun MacroLegendRow(
             )
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodySmall,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
                 color = TextSecondary
             )
         }
         Text(
             text = "${current.toInt()} / ${target.toInt()} g",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimary
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Black,
+            color = TextPrimary,
+            style = TextStyle(fontFeatureSettings = "tnum")
         )
     }
 }
@@ -876,8 +893,8 @@ private fun MacroLegendRow(
 // ============================================================================
 
 /**
- * Animated Canvas water vessel with realistic sinusoidal wave movement,
- * bubbly particles, and instant +250ml / +500ml hydration logging buttons.
+ * Animated Canvas water vessel with sinusoidal wave movement
+ * and instant +250ml / +500ml hydration logging buttons.
  */
 @Composable
 fun WaterHydrationWave(
@@ -888,7 +905,6 @@ fun WaterHydrationWave(
 ) {
     val strings = LocalDudaStrings.current
 
-    // Infinite wave phase animation
     val infiniteTransition = rememberInfiniteTransition(label = "waveTransition")
     val phase by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -907,16 +923,17 @@ fun WaterHydrationWave(
         label = "fillHeight"
     )
 
-    Card(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-        border = BorderStroke(1.dp, BorderSubtle)
+        shape = RoundedCornerShape(20.dp),
+        color = DarkSurface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -935,31 +952,30 @@ fun WaterHydrationWave(
                     )
                     Text(
                         text = strings.waterHydration,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
                         color = TextPrimary
                     )
                 }
 
                 Text(
                     text = "$currentMl / $targetMl ml (${(progress * 100).toInt()}%)",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = InfoAccent
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Black,
+                    color = InfoAccent,
+                    style = TextStyle(fontFeatureSettings = "tnum")
                 )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Wave Vessel Box
+            // Wave Vessel Box (flat tonal well, no hairline border)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(90.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(GymWell)
-                    .border(1.dp, BorderDivider, RoundedCornerShape(10.dp))
-                    .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(DarkSurfaceHigh)
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val w = size.width
@@ -969,7 +985,6 @@ fun WaterHydrationWave(
                     val waveAmplitude = 4.dp.toPx()
                     val waveFrequency = (2f * PI.toFloat()) / w
 
-                    // Primary Wave Path
                     val wavePath = Path().apply {
                         moveTo(0f, h)
                         lineTo(0f, waterLevelY)
@@ -985,7 +1000,6 @@ fun WaterHydrationWave(
                         close()
                     }
 
-                    // Secondary Sub-Wave (shifted phase for depth)
                     val subWavePath = Path().apply {
                         moveTo(0f, h)
                         lineTo(0f, waterLevelY)
@@ -1001,13 +1015,11 @@ fun WaterHydrationWave(
                         close()
                     }
 
-                    // Flat Obsidian sub-wave
                     drawPath(
                         path = subWavePath,
                         color = InfoAccent.copy(alpha = 0.22f)
                     )
 
-                    // Flat Obsidian primary wave
                     drawPath(
                         path = wavePath,
                         color = InfoAccent.copy(alpha = 0.45f)
@@ -1015,7 +1027,7 @@ fun WaterHydrationWave(
 
                     // Target Line Indicator at 100%
                     drawLine(
-                        color = AccentLime.copy(alpha = 0.5f),
+                        color = AccentLime.copy(alpha = 0.55f),
                         start = Offset(0f, 6.dp.toPx()),
                         end = Offset(w, 6.dp.toPx()),
                         strokeWidth = 1.dp.toPx(),
@@ -1023,7 +1035,7 @@ fun WaterHydrationWave(
                     )
                 }
 
-                // Hydration Quick Action Buttons inside/over the card
+                // Hydration Quick Action Buttons
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
@@ -1031,32 +1043,42 @@ fun WaterHydrationWave(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    FilledTonalButton(
-                        onClick = { onAddWater(250) },
-                        shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, BorderSubtle),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = DarkSurface,
-                            contentColor = InfoAccent
-                        ),
-                        modifier = Modifier.height(44.dp)
+                    Box(
+                        modifier = Modifier
+                            .height(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(DarkSurfaceElevated)
+                            .clickable { onAddWater(250) }
+                            .padding(horizontal = 14.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("+250 ml", style = MaterialTheme.typography.labelSmall)
+                        Text(
+                            text = "+250 ml",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Black,
+                            color = InfoAccent,
+                            style = TextStyle(fontFeatureSettings = "tnum")
+                        )
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    FilledTonalButton(
-                        onClick = { onAddWater(500) },
-                        shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, BorderSubtle),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = DarkSurface,
-                            contentColor = InfoAccent
-                        ),
-                        modifier = Modifier.height(44.dp)
+                    Box(
+                        modifier = Modifier
+                            .height(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(DarkSurfaceElevated)
+                            .clickable { onAddWater(500) }
+                            .padding(horizontal = 14.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("+500 ml", style = MaterialTheme.typography.labelSmall)
+                        Text(
+                            text = "+500 ml",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Black,
+                            color = InfoAccent,
+                            style = TextStyle(fontFeatureSettings = "tnum")
+                        )
                     }
                 }
             }

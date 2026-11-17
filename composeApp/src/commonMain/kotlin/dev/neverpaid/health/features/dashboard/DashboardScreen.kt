@@ -1,32 +1,13 @@
 package dev.neverpaid.health.features.dashboard
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import dev.neverpaid.health.core.i18n.LocalDudaStrings
-import dev.neverpaid.health.core.designsystem.BorderDivider
-import dev.neverpaid.health.core.designsystem.GymCard
-import dev.neverpaid.health.core.designsystem.GymDivider
-import dev.neverpaid.health.core.designsystem.GymEmptyCard
-import dev.neverpaid.health.core.designsystem.GymLabeledField
-import dev.neverpaid.health.core.designsystem.GymLoadingCard
-import dev.neverpaid.health.core.designsystem.GymOutlineButton
-import dev.neverpaid.health.core.designsystem.GymPageHeader
-import dev.neverpaid.health.core.designsystem.GymPillTab
-import dev.neverpaid.health.core.designsystem.GymPrimaryButton
-import dev.neverpaid.health.core.designsystem.GymTextField
-import dev.neverpaid.health.core.designsystem.TextSoft
-
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -46,73 +27,70 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ElectricBolt
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.neverpaid.health.core.designsystem.AmberWarm
-import dev.neverpaid.health.core.designsystem.AthleticCard
-import dev.neverpaid.health.core.designsystem.BorderHighlight
-import dev.neverpaid.health.core.designsystem.BorderSubtle
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
+import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.AccentLime
-import dev.neverpaid.health.core.designsystem.AccentLime
-import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
-import dev.neverpaid.health.core.designsystem.GymWell
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymEmptyCard
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
+import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymKicker
+import dev.neverpaid.health.core.designsystem.GymLabeledField
+import dev.neverpaid.health.core.designsystem.GymLoadingCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymSectionTitle
+import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
-import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
-import dev.neverpaid.health.core.math.StrengthCalculator
+import dev.neverpaid.health.core.designsystem.TextSoft
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.domain.model.ActiveProgramBundle
 import dev.neverpaid.health.domain.model.ProgramDay
@@ -219,7 +197,7 @@ fun DashboardScreen(
             modifier = modifier
                 .fillMaxSize()
                 .background(DarkBackground)
-                .padding(horizontal = 20.dp, vertical = 24.dp)
+                .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
             GymLoadingCard(
                 title = strings.stateLoadingTitle,
@@ -253,22 +231,18 @@ fun DashboardScreen(
         modifier = modifier
             .fillMaxSize()
             .background(DarkBackground),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 112.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 36.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // 1. Page Header ("Тренировки" / "Ваши программы и шаблоны")
+        // 1. Page Header + Quick Hub Shortcuts
         item(key = "page_header", contentType = "header") {
-            GymPageHeader(
-                title = strings.navWorkouts,
-                subtitle = when (lang) {
-                    "uz" -> "Dasturlar va shablonlaringiz"
-                    "en" -> "Your programs and templates"
-                    else -> "Ваши программы и шаблоны"
-                }
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                GymPageHeader(title = strings.navWorkouts)
+                TrainingHubQuickActions(onNavigateToScreen = onNavigateToScreen)
+            }
         }
 
-        // 2. Active Workout Banner (if in progress)
+        // 2. Active Workout Hero Banner (if in progress)
         if (state.hasActiveWorkout) {
             item(key = "active_workout_banner", contentType = "active_banner") {
                 ActiveWorkoutBannerCard(
@@ -281,27 +255,31 @@ fun DashboardScreen(
             }
         }
 
-        // 3. Primary Quick Actions Wrap
+        // 3. Quick Start Actions
         item(key = "quick_actions", contentType = "actions") {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 GymPrimaryButton(
                     text = when (lang) {
-                        "uz" -> "Bo'sh mashg'ulotni boshlash"
-                        "en" -> "Start empty workout"
-                        else -> "Начать пустую тренировку"
+                        "uz" -> "+ Bo'sh mashg'ulot"
+                        "en" -> "+ Empty workout"
+                        else -> "+ Пустая тренировка"
                     },
-                    onClick = { onAction(DashboardUiAction.OnStartEmptyWorkoutClick) }
+                    onClick = { onAction(DashboardUiAction.OnStartEmptyWorkoutClick) },
+                    modifier = Modifier.weight(1.3f),
+                    fillWidth = true
                 )
                 GymOutlineButton(
                     text = when (lang) {
                         "uz" -> "Yangi shablon"
                         "en" -> "New template"
-                        else -> "Новый шаблон"
+                        else -> "Новый сплит"
                     },
-                    onClick = { onAction(DashboardUiAction.OnOpenRoutineEditor(null)) }
+                    onClick = { onAction(DashboardUiAction.OnOpenRoutineEditor(null)) },
+                    modifier = Modifier.weight(1f),
+                    fillWidth = true
                 )
             }
         }
@@ -322,62 +300,46 @@ fun DashboardScreen(
             )
         }
 
-        // 5. Templates Header & Search + Order Filter
+        // 5. Templates Header, Search & Sort Chips
         item(key = "templates_controls", contentType = "controls") {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text(
-                    text = when (lang) {
-                        "uz" -> "Mening shablonlarim"
-                        "en" -> "My templates"
-                        else -> "Мои шаблоны"
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                GymSectionTitle(
+                    title = when (lang) {
+                        "uz" -> "Shablonlar"
+                        "en" -> "Templates"
+                        else -> "Мои сплиты и шаблоны"
                     },
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    actionLabel = when (lang) {
+                        "uz" -> "+ Yaratish"
+                        "en" -> "+ Create"
+                        else -> "+ Создать"
+                    },
+                    onAction = { onAction(DashboardUiAction.OnOpenRoutineEditor(null)) }
                 )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    GymTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        placeholder = when (lang) {
-                            "uz" -> "Shablon qidirish"
-                            "en" -> "Search templates"
-                            else -> "Поиск шаблонов"
-                        },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    GymOutlineButton(
-                        text = when (sortMode) {
-                            "prebuilt" -> when (lang) {
-                                "uz" -> "Tartib: baza"
-                                "en" -> "Order: starter"
-                                else -> "Порядок: базовые"
-                            }
-                            "alpha" -> when (lang) {
-                                "uz" -> "Tartib: A–Z"
-                                "en" -> "Order: A–Z"
-                                else -> "Порядок: А–Я"
-                            }
-                            else -> when (lang) {
-                                "uz" -> "Tartib: meniki"
-                                "en" -> "Order: mine"
-                                else -> "Порядок: мои"
-                            }
-                        },
-                        onClick = {
-                            sortMode = when (sortMode) {
-                                "custom" -> "prebuilt"
-                                "prebuilt" -> "alpha"
-                                else -> "custom"
-                            }
-                        }
-                    )
+                GymTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = when (lang) {
+                        "uz" -> "Shablon yoki mashq qidirish..."
+                        "en" -> "Search templates or exercises..."
+                        else -> "Поиск по названию или упражнению..."
+                    },
+                    singleLine = true
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(
+                        "custom" to when (lang) { "uz" -> "Meniki"; "en" -> "Mine"; else -> "Мои" },
+                        "prebuilt" to when (lang) { "uz" -> "Bazaviy"; "en" -> "Starter"; else -> "Базовые" },
+                        "alpha" to when (lang) { "uz" -> "A–Z"; "en" -> "A–Z"; else -> "А–Я" }
+                    ).forEach { (key, label) ->
+                        GymPillTab(
+                            text = label,
+                            selected = sortMode == key,
+                            onClick = { sortMode = key }
+                        )
+                    }
                 }
             }
         }
@@ -394,12 +356,12 @@ fun DashboardScreen(
                     description = when (lang) {
                         "uz" -> "Yangi shablon yarating yoki qidiruv so'zini tozalang."
                         "en" -> "Create a new template or clear your search filter."
-                        else -> "Создайте новый шаблон тренировки или сбросьте поисковый запрос."
+                        else -> "Создайте свой сплит или сбросьте фильтр поиска."
                     },
                     primaryActionLabel = when (lang) {
                         "uz" -> "Yangi shablon"
                         "en" -> "New template"
-                        else -> "Новый шаблон"
+                        else -> "Новый сплит"
                     },
                     onPrimaryAction = { onAction(DashboardUiAction.OnOpenRoutineEditor(null)) },
                     secondaryActionLabel = if (searchQuery.isNotBlank()) {
@@ -460,43 +422,71 @@ private fun ActiveWorkoutBannerCard(
     onResumeClick: () -> Unit
 ) {
     GymCard(
-        backgroundColor = AccentLimeSubtle,
-        borderColor = BorderHighlight
+        backgroundColor = AccentLime,
+        contentPadding = PaddingValues(20.dp)
     ) {
-        Text(
-            text = when (lang) {
-                "uz" -> "FAOL MASHG'ULOT"
-                "en" -> "ACTIVE WORKOUT"
-                else -> "ТРЕНИРОВКА АКТИВНА"
-            },
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 0.8.sp,
-            color = AccentLime
-        )
-        Text(
-            text = title,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-        Text(
-            text = when (lang) {
-                "uz" -> "$exercisesCount mashq · $completedSetsCount bajarilgan yondashuv"
-                "en" -> "$exercisesCount exercises · $completedSetsCount completed sets"
-                else -> "$exercisesCount упражнений · $completedSetsCount выполненных подходов"
-            },
-            fontSize = 14.sp,
-            color = TextSecondary
-        )
-        GymPrimaryButton(
-            text = when (lang) {
-                "uz" -> "Davom etish"
-                "en" -> "Resume workout"
-                else -> "Продолжить"
-            },
-            onClick = onResumeClick
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = when (lang) {
+                        "uz" -> "LIVE MASHG'ULOT"
+                        "en" -> "LIVE WORKOUT"
+                        else -> "ИДЁТ ТРЕНИРОВКА"
+                    },
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp,
+                    color = GymInkOnLight.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = title,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Black,
+                    color = GymInkOnLight,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = when (lang) {
+                        "uz" -> "$exercisesCount mashq · $completedSetsCount yondashuv"
+                        "en" -> "$exercisesCount exercises · $completedSetsCount sets done"
+                        else -> "$exercisesCount упр. · $completedSetsCount подходов выполнено"
+                    },
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = GymInkOnLight.copy(alpha = 0.8f)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(GymInkOnLight)
+                    .clickable(onClick = onResumeClick)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Ochish"
+                        "en" -> "Resume"
+                        else -> "Продолжить"
+                    },
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = AccentLime
+                )
+            }
+        }
     }
 }
 
@@ -516,47 +506,41 @@ private fun ActiveProgramScheduleSection(
     val currentDayNumber = bundle?.userProgram?.currentDayNumber ?: 1
 
     if (program == null) {
-        GymCard(
-            backgroundColor = DarkSurface,
-            borderColor = BorderSubtle
-        ) {
-            Text(
+        GymCard {
+            GymKicker(
                 text = when (lang) {
-                    "uz" -> "FAOL DASTUR"
-                    "en" -> "ACTIVE PROGRAM"
-                    else -> "АКТИВНАЯ ПРОГРАММА"
-                },
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                letterSpacing = 0.8.sp,
-                color = AccentLime
+                    "uz" -> "DASTUR"
+                    "en" -> "TRAINING PLAN"
+                    else -> "ПРОГРАММА"
+                }
             )
             Text(
                 text = when (lang) {
                     "uz" -> "Faol dastur tanlanmagan"
                     "en" -> "No active program selected"
-                    else -> "Нет активной программы"
+                    else -> "Выберите программу тренировок"
                 },
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.ExtraBold,
                 color = TextPrimary
             )
             Text(
                 text = when (lang) {
-                    "uz" -> "Katalogdan dastur tanlang (PPL, Upper/Lower, Full Body)"
-                    "en" -> "Pick a structured split (PPL, Upper/Lower, Full Body) in the catalog"
-                    else -> "Выберите структурированный сплит (PPL, Upper/Lower, Full Body) в каталоге"
+                    "uz" -> "PPL, Upper/Lower yoki Full Body dasturlarini katalogdan tanlang."
+                    "en" -> "Pick a structured split (PPL, Upper/Lower, Full Body) from the catalog."
+                    else -> "Готовые сплиты PPL, Upper/Lower и Full Body с расписанием по дням."
                 },
                 fontSize = 14.sp,
                 color = TextSecondary
             )
             GymOutlineButton(
                 text = when (lang) {
-                    "uz" -> "Dasturlarni ochish"
+                    "uz" -> "Dasturlar katalogi"
                     "en" -> "Browse programs"
-                    else -> "Открыть программы"
+                    else -> "Открыть каталог программ"
                 },
-                onClick = onNavigateToPrograms
+                onClick = onNavigateToPrograms,
+                fillWidth = true
             )
         }
         return
@@ -566,108 +550,46 @@ private fun ActiveProgramScheduleSection(
     val selectedDay = days.find { it.dayNumber == selectedDayNumber }
         ?: days.find { it.dayNumber == currentDayNumber }
         ?: days.firstOrNull()
-    var showDaySelector by remember { mutableStateOf(false) }
 
-    GymCard(
-        backgroundColor = DarkSurface,
-        borderColor = BorderSubtle
-    ) {
-        Text(
-            text = when (lang) {
-                "uz" -> "FAOL DASTUR"
-                "en" -> "ACTIVE PROGRAM"
-                else -> "АКТИВНАЯ ПРОГРАММА"
-            },
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 0.8.sp,
-            color = AccentLime
-        )
-
-        Text(
-            text = when (lang) {
-                "uz" -> "${selectedDay?.dayNumber ?: currentDayNumber}-kun / ${days.size} · ${program.title}"
-                "en" -> "Day #${selectedDay?.dayNumber ?: currentDayNumber} of ${days.size} · ${program.title}"
-                else -> "День #${selectedDay?.dayNumber ?: currentDayNumber} из ${days.size} · ${program.title}"
-            },
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-
-        Text(
-            text = if (selectedDay == null) {
-                program.description
-            } else if (selectedDay.isRestDay || selectedDay.exercises.isEmpty()) {
-                when (lang) {
-                    "uz" -> "Dam olish kuni · Tiklanish"
-                    "en" -> "Rest day · CNS & muscle recovery"
-                    else -> "День отдыха · Восстановление ЦНС и сон"
-                }
-            } else {
-                when (lang) {
-                    "uz" -> "${selectedDay.title} · ${selectedDay.exercises.size} mashq"
-                    "en" -> "${selectedDay.title} · ${selectedDay.exercises.size} exercises"
-                    else -> "${selectedDay.title} · ${selectedDay.exercises.size} упражнений"
-                }
-            },
-            fontSize = 14.sp,
-            color = TextSecondary
-        )
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+    GymCard(backgroundColor = DarkSurface) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            if (selectedDay != null) {
-                if (selectedDay.isRestDay || selectedDay.exercises.isEmpty()) {
-                    GymPrimaryButton(
-                        text = when (lang) {
-                            "uz" -> "Dam olishni o'tkazish"
-                            "en" -> "Skip rest day"
-                            else -> "Пропустить отдых"
-                        },
-                        onClick = onSkipRestDay
-                    )
-                } else {
-                    GymPrimaryButton(
-                        text = when (lang) {
-                            "uz" -> "Mashg'ulotni boshlash"
-                            "en" -> "Start workout"
-                            else -> "Начать тренировку"
-                        },
-                        onClick = { onStartProgramDay(selectedDay) }
-                    )
+            GymKicker(
+                text = when (lang) {
+                    "uz" -> "BUGUNGI REJA · ${selectedDay?.dayNumber ?: currentDayNumber}/${days.size}-KUN"
+                    "en" -> "TODAY'S PLAN · DAY ${selectedDay?.dayNumber ?: currentDayNumber}/${days.size}"
+                    else -> "ПО ПРОГРАММЕ · ДЕНЬ ${selectedDay?.dayNumber ?: currentDayNumber} ИЗ ${days.size}"
                 }
-            }
-
-            GymOutlineButton(
-                text = when (lang) {
-                    "uz" -> "Kunni tanlash"
-                    "en" -> "Choose day"
-                    else -> "Выбрать день"
-                },
-                onClick = { showDaySelector = !showDaySelector }
             )
-
-            GymOutlineButton(
+            Text(
                 text = when (lang) {
-                    "uz" -> "Dasturni ochish"
-                    "en" -> "Open program"
-                    else -> "Открыть программу"
+                    "uz" -> "Barchasi →"
+                    "en" -> "Program →"
+                    else -> "Вся программа →"
                 },
-                onClick = onNavigateToPrograms
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = AccentLime,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(onClick = onNavigateToPrograms)
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
             )
         }
 
-        if (showDaySelector && days.isNotEmpty()) {
-            GymDivider(color = BorderSubtle)
+        Text(
+            text = program.title,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Black,
+            color = TextPrimary
+        )
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                days.forEach { day ->
+        if (days.isNotEmpty()) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(days, key = { it.dayNumber }) { day ->
                     val isSelected = day.dayNumber == (selectedDay?.dayNumber ?: 1)
                     GymPillTab(
                         text = when (lang) {
@@ -680,39 +602,84 @@ private fun ActiveProgramScheduleSection(
                     )
                 }
             }
+        }
 
-            if (selectedDay != null && selectedDay.exercises.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    selectedDay.exercises.forEach { ex ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onInspectExercise(ex.exerciseId, ex.exerciseName) },
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ExerciseThumbnail(
-                                exerciseName = ex.exerciseName,
-                                exerciseId = ex.exerciseId,
-                                size = ExerciseThumbnailSize.XS,
-                                onClick = { onInspectExercise(ex.exerciseId, ex.exerciseName) }
-                            )
-                            Text(
-                                text = "${ex.targetSets} × ${ex.exerciseName}",
-                                fontSize = 14.sp,
-                                color = TextSoft,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Text(
-                                text = "${ex.targetRepsMin}–${ex.targetRepsMax}",
-                                fontSize = 13.sp,
-                                color = TextMuted
-                            )
+        if (selectedDay != null) {
+            if (selectedDay.isRestDay || selectedDay.exercises.isEmpty()) {
+                GymInnerWell {
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Dam olish kuni · Asab tizimi va mushaklar tiklanishi"
+                            "en" -> "Rest day · Muscle & CNS recovery"
+                            else -> "День отдыха · Восстановление мышц и ЦНС"
+                        },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+                }
+                GymPrimaryButton(
+                    text = when (lang) {
+                        "uz" -> "Dam olishni o'tkazish"
+                        "en" -> "Skip rest day"
+                        else -> "Пропустить день отдыха"
+                    },
+                    onClick = onSkipRestDay,
+                    fillWidth = true
+                )
+            } else {
+                Text(
+                    text = "${selectedDay.title} · ${selectedDay.exercises.size} упр.",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextSecondary
+                )
+
+                GymInnerWell {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        selectedDay.exercises.forEach { ex ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onInspectExercise(ex.exerciseId, ex.exerciseName) },
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                ExerciseThumbnail(
+                                    exerciseName = ex.exerciseName,
+                                    exerciseId = ex.exerciseId,
+                                    size = ExerciseThumbnailSize.XS,
+                                    onClick = { onInspectExercise(ex.exerciseId, ex.exerciseName) }
+                                )
+                                Text(
+                                    text = ex.exerciseName,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = "${ex.targetSets} × ${ex.targetRepsMin}–${ex.targetRepsMax}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AccentLime
+                                )
+                            }
                         }
                     }
                 }
+
+                GymPrimaryButton(
+                    text = when (lang) {
+                        "uz" -> "Mashg'ulotni boshlash"
+                        "en" -> "Start workout"
+                        else -> "Начать тренировку дня"
+                    },
+                    onClick = { onStartProgramDay(selectedDay) },
+                    fillWidth = true
+                )
             }
         }
     }
@@ -731,81 +698,97 @@ private fun RoutineCardItem(
     onDelete: (() -> Unit)?
 ) {
     val estimatedMinutes = (routine.exercises.sumOf { it.targetSets } * 3).coerceAtLeast(20)
-    GymCard(
-        backgroundColor = DarkSurface,
-        borderColor = BorderSubtle
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = routine.title,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
-            )
-            if (routine.description.isNotBlank()) {
-                Text(
-                    text = routine.description,
-                    fontSize = 14.sp,
-                    color = TextSecondary,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Text(
-                text = when (lang) {
-                    "uz" -> "${routine.exercises.size} mashq · ~$estimatedMinutes daq"
-                    "en" -> "${routine.exercises.size} exercises · ~$estimatedMinutes min"
-                    else -> "${routine.exercises.size} упражнений · ~$estimatedMinutes мин"
-                },
-                fontSize = 13.sp,
-                color = TextMuted
-            )
-        }
-
-        if (routine.exercises.isNotEmpty()) {
-            GymDivider(color = BorderSubtle)
-
+    GymCard {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onPreview() },
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onPreview() },
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                routine.exercises.take(5).forEach { ex ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        ExerciseThumbnail(
-                            exerciseName = ex.exerciseName,
-                            exerciseId = ex.exerciseId,
-                            size = ExerciseThumbnailSize.XS
-                        )
-                        Text(
-                            text = "${ex.targetSets} × ${ex.exerciseName}",
-                            fontSize = 14.sp,
-                            color = TextSoft,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-                if (routine.exercises.size > 5) {
+                Text(
+                    text = routine.title,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = TextPrimary
+                )
+                if (routine.description.isNotBlank()) {
                     Text(
-                        text = "+${routine.exercises.size - 5} ещё",
+                        text = routine.description,
                         fontSize = 13.sp,
-                        color = AccentLime
+                        color = TextSecondary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
+            Spacer(modifier = Modifier.width(10.dp))
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(DarkSurfaceHigh)
+                    .padding(horizontal = 10.dp, vertical = 5.dp)
+            ) {
+                Text(
+                    text = "~$estimatedMinutes мин",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AccentLime
+                )
+            }
         }
 
-        GymDivider(color = BorderSubtle)
+        if (routine.exercises.isNotEmpty()) {
+            GymInnerWell(
+                modifier = Modifier.clickable { onPreview() }
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    routine.exercises.take(4).forEach { ex ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            ExerciseThumbnail(
+                                exerciseName = ex.exerciseName,
+                                exerciseId = ex.exerciseId,
+                                size = ExerciseThumbnailSize.XS
+                            )
+                            Text(
+                                text = ex.exerciseName,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = TextSoft,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = "${ex.targetSets}×${ex.targetRepsMin}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                    if (routine.exercises.size > 4) {
+                        Text(
+                            text = "+ ещё ${routine.exercises.size - 4} упр.",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentLime
+                        )
+                    }
+                }
+            }
+        }
 
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             GymPrimaryButton(
                 text = when (lang) {
@@ -813,43 +796,39 @@ private fun RoutineCardItem(
                     "en" -> "Start"
                     else -> "Начать"
                 },
-                onClick = onStart
+                onClick = onStart,
+                modifier = Modifier.weight(1.2f),
+                fillWidth = true
             )
             GymOutlineButton(
                 text = if (isCustom) {
-                    when (lang) {
-                        "uz" -> "Tahrirlash"
-                        "en" -> "Edit"
-                        else -> "Изменить"
-                    }
+                    when (lang) { "uz" -> "Tahrir"; "en" -> "Edit"; else -> "Изменить" }
                 } else {
-                    when (lang) {
-                        "uz" -> "Tarkib"
-                        "en" -> "Details"
-                        else -> "Состав"
-                    }
+                    when (lang) { "uz" -> "Tarkib"; "en" -> "View"; else -> "Состав" }
                 },
-                onClick = {
-                    if (isCustom && onEdit != null) onEdit() else onPreview()
-                }
+                onClick = { if (isCustom && onEdit != null) onEdit() else onPreview() },
+                modifier = Modifier.weight(1f),
+                fillWidth = true
             )
             GymOutlineButton(
-                text = when (lang) {
-                    "uz" -> "Nusxalash"
-                    "en" -> "Duplicate"
-                    else -> "Копировать"
-                },
+                text = when (lang) { "uz" -> "Nusxa"; "en" -> "Copy"; else -> "Копия" },
                 onClick = onDuplicate
             )
             if (isCustom && onDelete != null) {
-                GymOutlineButton(
-                    text = when (lang) {
-                        "uz" -> "O'chirish"
-                        "en" -> "Delete"
-                        else -> "Удалить"
-                    },
-                    onClick = onDelete
-                )
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(DarkSurfaceHigh)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Удалить",
+                        tint = CrimsonRed,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
@@ -871,12 +850,22 @@ private fun RoutineDetailBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .size(width = 40.dp, height = 4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 10.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -886,14 +875,14 @@ private fun RoutineDetailBottomSheet(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = routine.title,
-                        fontSize = 19.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Black,
                         color = TextPrimary
                     )
                     if (routine.description.isNotBlank()) {
                         Text(
                             text = routine.description,
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
                             color = TextSecondary
                         )
                     }
@@ -903,100 +892,79 @@ private fun RoutineDetailBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                routine.exercises.forEachIndexed { idx, ex ->
-                    AthleticCard(
-                        backgroundColor = DarkSurfaceVariant,
-                        borderColor = BorderSubtle
+                routine.exercises.forEach { ex ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(DarkSurfaceHigh)
+                            .clickable { onInspectExercise(ex.exerciseId, ex.exerciseName) }
+                            .padding(14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onInspectExercise(ex.exerciseId, ex.exerciseName) }
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                ExerciseThumbnail(
-                                    exerciseName = ex.exerciseName,
-                                    exerciseId = ex.exerciseId,
-                                    size = ExerciseThumbnailSize.SM,
-                                    onClick = { onInspectExercise(ex.exerciseId, ex.exerciseName) }
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = ex.exerciseName,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextPrimary
-                                    )
-                                    Text(
-                                        text = "${ex.targetSets} подходов × ${ex.targetRepsMin}–${ex.targetRepsMax} повторений",
-                                        fontSize = 12.sp,
-                                        color = AccentLime
-                                    )
-                                }
-                            }
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = "Техника",
-                                tint = TextSecondary,
-                                modifier = Modifier.size(18.dp)
+                            ExerciseThumbnail(
+                                exerciseName = ex.exerciseName,
+                                exerciseId = ex.exerciseId,
+                                size = ExerciseThumbnailSize.SM,
+                                onClick = { onInspectExercise(ex.exerciseId, ex.exerciseName) }
                             )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = ex.exerciseName,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Text(
+                                    text = "${ex.targetSets} подходов × ${ex.targetRepsMin}–${ex.targetRepsMax} повторений",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = AccentLime
+                                )
+                            }
                         }
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Техника",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                OutlinedButton(
+                GymOutlineButton(
+                    text = if (isCustom) "Изменить" else "Копировать",
                     onClick = onEditRoutine,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (isCustom) "Изменить" else "Копировать себе",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp
-                    )
-                }
-
-                Button(
+                    modifier = Modifier.weight(1f),
+                    fillWidth = true
+                )
+                GymPrimaryButton(
+                    text = "Начать тренировку",
                     onClick = onStartWorkout,
-                    modifier = Modifier
-                        .weight(1.3f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AccentLime,
-                        contentColor = Color.Black
-                    )
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Начать тренировку", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                }
+                    modifier = Modifier.weight(1.3f),
+                    fillWidth = true
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -1017,13 +985,24 @@ private fun RoutineEditorBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .size(width = 40.dp, height = 4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.9f)
-                .padding(horizontal = 18.dp, vertical = 8.dp)
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1031,8 +1010,8 @@ private fun RoutineEditorBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (state.editingRoutineId != null) "Редактировать сплит" else "Новый сплит / рутина",
-                    fontSize = 18.sp,
+                    text = if (state.editingRoutineId != null) "Редактировать сплит" else "Новый сплит",
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Black,
                     color = TextPrimary
                 )
@@ -1041,161 +1020,118 @@ private fun RoutineEditorBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
+            GymTextField(
                 value = state.editorTitle,
                 onValueChange = { onAction(DashboardUiAction.OnEditorTitleChanged(it)) },
-                label = { Text("Название (напр. День Груди и Бицепса)") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = GymWell,
-                    unfocusedContainerColor = GymWell,
-                    focusedBorderColor = AccentLime,
-                    unfocusedBorderColor = BorderSubtle,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
-                )
+                placeholder = "Название (напр. Грудь + Бицепс)",
+                singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
+            GymTextField(
                 value = state.editorDescription,
                 onValueChange = { onAction(DashboardUiAction.OnEditorDescriptionChanged(it)) },
-                label = { Text("Описание / заметка к сплиту") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = GymWell,
-                    unfocusedContainerColor = GymWell,
-                    focusedBorderColor = AccentLime,
-                    unfocusedBorderColor = BorderSubtle,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
-                )
+                placeholder = "Описание или заметка к тренировке",
+                singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "УПРАЖНЕНИЯ (${state.editorExercises.size})",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextMuted
-                )
-                TextButton(onClick = { onAction(DashboardUiAction.OnOpenExercisePicker) }) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = AccentLime, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Добавить упражнение", color = AccentLime, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                }
-            }
+            GymSectionTitle(
+                title = "Упражнения (${state.editorExercises.size})",
+                actionLabel = "+ Добавить",
+                onAction = { onAction(DashboardUiAction.OnOpenExercisePicker) }
+            )
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(state.editorExercises.size) { idx ->
                     val ex = state.editorExercises[idx]
-                    AthleticCard(
-                        backgroundColor = DarkSurfaceVariant,
-                        borderColor = BorderSubtle
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(DarkSurfaceHigh)
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ExerciseThumbnail(
+                                exerciseName = ex.exerciseName,
+                                exerciseId = ex.exerciseId,
+                                size = ExerciseThumbnailSize.XS
+                            )
+                            Text(
+                                text = "${idx + 1}. ${ex.exerciseName}",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                onClick = { onAction(DashboardUiAction.OnRemoveExerciseFromEditor(idx)) },
+                                modifier = Modifier.size(32.dp)
                             ) {
-                                ExerciseThumbnail(
-                                    exerciseName = ex.exerciseName,
-                                    exerciseId = ex.exerciseId,
-                                    size = ExerciseThumbnailSize.XS
-                                )
-                                Text(
-                                    text = "${idx + 1}. ${ex.exerciseName}",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                IconButton(
-                                    onClick = { onAction(DashboardUiAction.OnRemoveExerciseFromEditor(idx)) },
-                                    modifier = Modifier.size(28.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Удалить",
-                                        tint = CrimsonRed,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                OutlinedTextField(
-                                    value = ex.targetSets.toString(),
-                                    onValueChange = { v ->
-                                        v.toIntOrNull()?.let { sets ->
-                                            onAction(DashboardUiAction.OnUpdateEditorExerciseSets(idx, sets))
-                                        }
-                                    },
-                                    label = { Text("Подходы", fontSize = 10.sp) },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    singleLine = true,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                OutlinedTextField(
-                                    value = ex.targetRepsMin.toString(),
-                                    onValueChange = { v ->
-                                        v.toIntOrNull()?.let { minR ->
-                                            onAction(DashboardUiAction.OnUpdateEditorExerciseReps(idx, minR, ex.targetRepsMax))
-                                        }
-                                    },
-                                    label = { Text("Мин повт.", fontSize = 10.sp) },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    singleLine = true,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                OutlinedTextField(
-                                    value = ex.targetRepsMax.toString(),
-                                    onValueChange = { v ->
-                                        v.toIntOrNull()?.let { maxR ->
-                                            onAction(DashboardUiAction.OnUpdateEditorExerciseReps(idx, ex.targetRepsMin, maxR))
-                                        }
-                                    },
-                                    label = { Text("Макс повт.", fontSize = 10.sp) },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    singleLine = true,
-                                    modifier = Modifier.weight(1f)
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Удалить",
+                                    tint = CrimsonRed,
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            GymLabeledField(
+                                label = "Подходы",
+                                value = ex.targetSets.toString(),
+                                onValueChange = { v ->
+                                    v.toIntOrNull()?.let { sets ->
+                                        onAction(DashboardUiAction.OnUpdateEditorExerciseSets(idx, sets))
+                                    }
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                            GymLabeledField(
+                                label = "Мин повт.",
+                                value = ex.targetRepsMin.toString(),
+                                onValueChange = { v ->
+                                    v.toIntOrNull()?.let { minR ->
+                                        onAction(DashboardUiAction.OnUpdateEditorExerciseReps(idx, minR, ex.targetRepsMax))
+                                    }
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                            GymLabeledField(
+                                label = "Макс повт.",
+                                value = ex.targetRepsMax.toString(),
+                                onValueChange = { v ->
+                                    v.toIntOrNull()?.let { maxR ->
+                                        onAction(DashboardUiAction.OnUpdateEditorExerciseReps(idx, ex.targetRepsMin, maxR))
+                                    }
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             PrimaryAthleticButton(
                 text = "Сохранить сплит",
                 onClick = { onAction(DashboardUiAction.OnSaveRoutineClick) }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
@@ -1209,45 +1145,46 @@ fun TrainingHubQuickActions(
         Triple("programs", "Программы", Icons.Default.Layers),
         Triple("exercises", "Упражнения", Icons.Default.FitnessCenter),
         Triple("history", "История", Icons.Default.History),
-        Triple("body", "Замеры тела", Icons.Default.MonitorWeight)
+        Triple("body", "Замеры", Icons.Default.MonitorWeight)
     )
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         items.forEach { (route, title, icon) ->
-            Box(
+            Column(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(DarkSurfaceVariant)
-                    .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(DarkSurface)
                     .clickable { onNavigateToScreen(route) }
-                    .padding(vertical = 10.dp, horizontal = 4.dp),
-                contentAlignment = Alignment.Center
+                    .padding(vertical = 12.dp, horizontal = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(AccentLimeSubtle),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
                         tint = AccentLime,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = title,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        modifier = Modifier.size(18.dp)
                     )
                 }
+                Text(
+                    text = title,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }

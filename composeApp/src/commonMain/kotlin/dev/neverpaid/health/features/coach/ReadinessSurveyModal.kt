@@ -1,7 +1,9 @@
 package dev.neverpaid.health.features.coach
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,25 +12,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MonitorHeart
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -39,18 +33,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.AmberWarm
-import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.CrimsonRed
-import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
-import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
+import dev.neverpaid.health.core.designsystem.GymIconBadge
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.InfoAccent
-import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -91,19 +88,35 @@ fun ReadinessSurveyModal(
         )
     }
 
+    val tierColor = when (tempAssessment.tier) {
+        ReadinessTier.PEAK_READINESS -> AccentLime
+        ReadinessTier.NORMAL_READINESS -> InfoAccent
+        ReadinessTier.MILD_FATIGUE -> AmberWarm
+        ReadinessTier.CRITICAL_RECOVERY -> CrimsonRed
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkBackground,
-        dragHandle = null
+        containerColor = DarkSurface,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .size(width = 40.dp, height = 4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 20.dp)
-                .navigationBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -111,18 +124,14 @@ fun ReadinessSurveyModal(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.MonitorHeart,
-                        contentDescription = null,
-                        tint = AccentLime,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    GymIconBadge(icon = Icons.Default.MonitorHeart, size = 42.dp)
                     Text(
                         text = strings.readinessSurveyTitle,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
                         color = TextPrimary
                     )
                 }
@@ -132,169 +141,152 @@ fun ReadinessSurveyModal(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Live Computed Readiness Score Preview
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(containerColor = GymWell),
-                border = BorderStroke(1.dp, when (tempAssessment.tier) {
-                    ReadinessTier.PEAK_READINESS -> AccentLime
-                    ReadinessTier.NORMAL_READINESS -> InfoAccent
-                    ReadinessTier.MILD_FATIGUE -> AmberWarm
-                    ReadinessTier.CRITICAL_RECOVERY -> CrimsonRed
-                })
+            // Live Score Banner
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(DarkSurfaceHigh)
+                    .padding(18.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(14.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = strings.readinessScore,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary
-                        )
-                        Text(
-                            text = "${tempAssessment.score} / 100",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = when (tempAssessment.tier) {
-                                ReadinessTier.PEAK_READINESS -> AccentLime
-                                ReadinessTier.NORMAL_READINESS -> InfoAccent
-                                ReadinessTier.MILD_FATIGUE -> AmberWarm
-                                ReadinessTier.CRITICAL_RECOVERY -> CrimsonRed
-                            }
-                        )
-                    }
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = strings.readinessScore.uppercase(),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp,
+                        color = TextSecondary
+                    )
+                    Text(
+                        text = "${tempAssessment.score} / 100",
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Black,
+                        color = tierColor,
+                        style = TextStyle(fontFeatureSettings = "tnum")
+                    )
+                }
 
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = DarkSurfaceElevated,
-                        border = BorderStroke(1.dp, BorderSubtle)
-                    ) {
-                        Text(
-                            text = "Объём: ${tempAssessment.volumeModifierPercentage}%",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                        )
-                    }
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(DarkSurfaceElevated)
+                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = "Объём: ${tempAssessment.volumeModifierPercentage}%",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = tierColor
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             // 1. Sleep Hours Slider
-            Text(
-                text = "Продолжительность сна: ${((sleepHours * 10).toInt() / 10.0)} ч",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
-            )
-            Slider(
-                value = sleepHours,
-                onValueChange = { sleepHours = it },
-                valueRange = 4f..11f,
-                steps = 13,
-                colors = SliderDefaults.colors(
-                    thumbColor = AccentLime,
-                    activeTrackColor = AccentLime,
-                    inactiveTrackColor = DarkSurfaceElevated
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Сон",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "${((sleepHours * 10).toInt() / 10.0)} ч",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Black,
+                        color = AccentLime
+                    )
+                }
+                Slider(
+                    value = sleepHours,
+                    onValueChange = { sleepHours = it },
+                    valueRange = 4f..11f,
+                    steps = 13,
+                    colors = SliderDefaults.colors(
+                        thumbColor = AccentLime,
+                        activeTrackColor = AccentLime,
+                        inactiveTrackColor = DarkSurfaceHigh
+                    )
                 )
-            )
+            }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 2. Sleep Quality Segmented (1-5)
             SurveyRatingRow(
                 title = strings.sleepQuality,
                 currentValue = sleepQuality,
                 onValueChange = { sleepQuality = it }
             )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 3. Muscle Soreness DOMS (1-5)
             SurveyRatingRow(
                 title = strings.muscleSoreness,
                 currentValue = muscleSoreness,
                 onValueChange = { muscleSoreness = it }
             )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 4. CNS Fatigue (1-5)
             SurveyRatingRow(
                 title = strings.cnsFatigue,
                 currentValue = cnsFatigue,
                 onValueChange = { cnsFatigue = it }
             )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 5. Psychological Stress (1-5)
             SurveyRatingRow(
                 title = strings.stressLevel,
                 currentValue = stressLevel,
                 onValueChange = { stressLevel = it }
             )
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            FilledTonalButton(
+            GymPrimaryButton(
+                text = "Применить к тренировке",
                 onClick = {
                     onSubmitAssessment(tempAssessment)
                     onDismiss()
                 },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = AccentLime,
-                    contentColor = DarkBackground
-                )
-            ) {
-                Text(
-                    text = "Применить и настроить тренировку",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                fillWidth = true
+            )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SurveyRatingRow(
     title: String,
     currentValue: Int,
     onValueChange: (Int) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.labelMedium,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
             color = TextSecondary
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            (1..5).forEachIndexed { index, value ->
-                SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = 5),
-                    onClick = { onValueChange(value) },
-                    selected = currentValue == value,
-                    colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = AccentLime.copy(alpha = 0.2f),
-                        activeContentColor = AccentLime,
-                        inactiveContainerColor = DarkSurface,
-                        inactiveContentColor = TextSecondary
-                    )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            (1..5).forEach { value ->
+                val selected = currentValue == value
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (selected) AccentLime else DarkSurfaceHigh)
+                        .clickable { onValueChange(value) },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text("$value", style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        text = "$value",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Black,
+                        color = if (selected) GymInkOnLight else TextSecondary
+                    )
                 }
             }
         }

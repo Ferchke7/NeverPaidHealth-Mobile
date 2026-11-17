@@ -1,7 +1,6 @@
 package dev.neverpaid.health.features.programs
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,20 +9,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.lazy.itemsIndexed
-import dev.neverpaid.health.core.designsystem.BorderDivider
-import dev.neverpaid.health.core.designsystem.GymCard
-import dev.neverpaid.health.core.designsystem.GymDivider
-import dev.neverpaid.health.core.designsystem.GymEmptyCard
-import dev.neverpaid.health.core.designsystem.GymLabeledField
-import dev.neverpaid.health.core.designsystem.GymLoadingCard
-import dev.neverpaid.health.core.designsystem.GymOutlineButton
-import dev.neverpaid.health.core.designsystem.GymPageHeader
-import dev.neverpaid.health.core.designsystem.GymPillTab
-import dev.neverpaid.health.core.designsystem.GymPrimaryButton
-import dev.neverpaid.health.core.designsystem.GymTextField
-import dev.neverpaid.health.core.designsystem.TextSoft
-import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,41 +21,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.ModeComment
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -83,34 +47,43 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.neverpaid.health.core.designsystem.AmberWarm
-import dev.neverpaid.health.core.designsystem.AthleticCard
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
+import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.AccentLime
-import dev.neverpaid.health.core.designsystem.AccentLime
-import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
-import dev.neverpaid.health.core.designsystem.InfoAccent
+import dev.neverpaid.health.core.designsystem.GymCard
+import dev.neverpaid.health.core.designsystem.GymEmptyCard
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
+import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymKicker
+import dev.neverpaid.health.core.designsystem.GymLabeledField
+import dev.neverpaid.health.core.designsystem.GymLoadingCard
+import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.GymPageHeader
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
+import dev.neverpaid.health.core.designsystem.GymSectionTitle
+import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.GymWell
-import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
-import dev.neverpaid.health.core.designsystem.StatCounter
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.designsystem.TextSoft
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.math.StrengthCalculator
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.core.platform.PlatformBridge
@@ -259,8 +232,8 @@ fun ProgramsScreen(
         modifier = modifier
             .fillMaxSize()
             .background(DarkBackground),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 112.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 40.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item(key = "header", contentType = "header") {
             GymPageHeader(
@@ -269,52 +242,65 @@ fun ProgramsScreen(
                     "uz" -> "Kutubxona, hamjamiyat va shaxsiy splitlar"
                     "en" -> "Library, community and your custom splits"
                     else -> "Библиотека, сообщество и ваши сплиты"
-                }
+                },
+                modifier = Modifier.padding(bottom = 8.dp)
             )
         }
 
-        // Top Tabs: Библиотека / Сообщество / Мои сплиты
-        item(key = "tabs", contentType = "tabs") {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                GymPillTab(
-                    text = when (lang) {
-                        "uz" -> "Kutubxona"
-                        "en" -> "Library"
-                        else -> "Библиотека"
-                    },
-                    selected = state.activeTab == "official",
-                    onClick = { onAction(ProgramsUiAction.OnSelectTab("official")) }
-                )
-                GymPillTab(
-                    text = when (lang) {
-                        "uz" -> "Hamjamiyat"
-                        "en" -> "Community"
-                        else -> "Сообщество"
-                    },
-                    selected = state.activeTab == "community",
-                    onClick = { onAction(ProgramsUiAction.OnSelectTab("community")) }
-                )
-                GymPillTab(
-                    text = when (lang) {
-                        "uz" -> "Mening splitlarim"
-                        "en" -> "My splits"
-                        else -> "Мои сплиты"
-                    },
-                    selected = state.activeTab == "mine",
-                    onClick = { onAction(ProgramsUiAction.OnSelectTab("mine")) }
+        if (activeProgram != null) {
+            item(key = "active_program_banner", contentType = "active_program") {
+                ActiveProgramHeroCard(
+                    program = activeProgram,
+                    lang = lang,
+                    onStartDay = { day -> onAction(ProgramsUiAction.OnStartProgramDay(activeProgram, day)) },
+                    onOpenDetail = { onAction(ProgramsUiAction.OnOpenProgramDetail(activeProgram)) },
+                    onDeactivate = { onAction(ProgramsUiAction.OnDeactivateProgram) },
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
         }
 
-        // Search + Create Program
-        item(key = "search_create", contentType = "search") {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item(key = "controls", contentType = "controls") {
+            Column(
+                modifier = Modifier.padding(bottom = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    GymPillTab(
+                        text = when (lang) {
+                            "uz" -> "Kutubxona"
+                            "en" -> "Library"
+                            else -> "Библиотека"
+                        },
+                        selected = state.activeTab == "official",
+                        onClick = { onAction(ProgramsUiAction.OnSelectTab("official")) }
+                    )
+                    GymPillTab(
+                        text = when (lang) {
+                            "uz" -> "Hamjamiyat"
+                            "en" -> "Community"
+                            else -> "Сообщество"
+                        },
+                        selected = state.activeTab == "community",
+                        onClick = { onAction(ProgramsUiAction.OnSelectTab("community")) }
+                    )
+                    GymPillTab(
+                        text = when (lang) {
+                            "uz" -> "Mening"
+                            "en" -> "Mine"
+                            else -> "Мои сплиты"
+                        },
+                        selected = state.activeTab == "mine",
+                        onClick = { onAction(ProgramsUiAction.OnSelectTab("mine")) }
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     GymTextField(
@@ -330,26 +316,26 @@ fun ProgramsScreen(
                     )
                     GymPrimaryButton(
                         text = when (lang) {
-                            "uz" -> "Dastur yaratish"
-                            "en" -> "Create program"
-                            else -> "Создать программу"
+                            "uz" -> "+ Yaratish"
+                            "en" -> "+ Create"
+                            else -> "+ Создать"
                         },
                         onClick = { onAction(ProgramsUiAction.OnOpenEditor(null)) }
                     )
                 }
 
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                val splits = listOf(
+                    "all" to when (lang) { "uz" -> "Barchasi"; "en" -> "All"; else -> "Все" },
+                    "ppl" to "PPL",
+                    "upper_lower" to "Upper / Lower",
+                    "full_body" to "Full Body",
+                    "custom" to when (lang) { "uz" -> "Shaxsiy"; "en" -> "Custom"; else -> "Авторский" }
+                )
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val splits = listOf(
-                        "all" to when (lang) { "uz" -> "Barchasi"; "en" -> "All"; else -> "Все" },
-                        "ppl" to "PPL",
-                        "upper_lower" to "Upper / Lower",
-                        "full_body" to "Full Body",
-                        "custom" to when (lang) { "uz" -> "Shaxsiy"; "en" -> "Custom"; else -> "Авторский" }
-                    )
-                    splits.forEach { (key, label) ->
+                    items(splits, key = { it.first }) { (key, label) ->
                         GymPillTab(
                             text = label,
                             selected = state.selectedSplitFilter == key,
@@ -360,81 +346,14 @@ fun ProgramsScreen(
             }
         }
 
-        // Current Active Program Card
-        if (activeProgram != null) {
-            item(key = "active_program_banner", contentType = "active_program") {
-                GymCard(
-                    backgroundColor = DarkSurface,
-                    borderColor = BorderHighlight
-                ) {
-                    Text(
-                        text = when (lang) {
-                            "uz" -> "SIZ USHBU DASTUR BO'YICHA MASHQ QILYAPSIZ"
-                            "en" -> "CURRENTLY FOLLOWING THIS PROGRAM"
-                            else -> "ВЫ ТРЕНИРУЕТЕСЬ ПО ЭТОЙ ПРОГРАММЕ"
-                        },
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        letterSpacing = 0.8.sp,
-                        color = AccentLime
-                    )
-                    Text(
-                        text = "${activeProgram.title} · ${activeProgram.daysPerWeek} ${if (lang == "en") "days" else if (lang == "uz") "kun" else "дн."}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
-                    )
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        GymPrimaryButton(
-                            text = when (lang) {
-                                "uz" -> "Davom etish"
-                                "en" -> "Continue"
-                                else -> "Продолжить"
-                            },
-                            onClick = {
-                                val nextDay = activeProgram.days.firstOrNull { !it.isRestDay }
-                                if (nextDay != null) {
-                                    onAction(ProgramsUiAction.OnStartProgramDay(activeProgram, nextDay))
-                                } else {
-                                    onAction(ProgramsUiAction.OnOpenProgramDetail(activeProgram))
-                                }
-                            }
-                        )
-                        GymOutlineButton(
-                            text = when (lang) {
-                                "uz" -> "Batafsil"
-                                "en" -> "Details"
-                                else -> "Подробнее"
-                            },
-                            onClick = { onAction(ProgramsUiAction.OnOpenProgramDetail(activeProgram)) }
-                        )
-                        GymOutlineButton(
-                            text = when (lang) {
-                                "uz" -> "O'chirish"
-                                "en" -> "Deactivate"
-                                else -> "Снять"
-                            },
-                            textColor = TextSecondary,
-                            onClick = { onAction(ProgramsUiAction.OnDeactivateProgram) }
-                        )
-                    }
-                }
-            }
-        }
-
         item(key = "catalog_heading", contentType = "section_heading") {
-            Text(
-                text = when (state.activeTab) {
+            GymSectionTitle(
+                title = when (state.activeTab) {
                     "community" -> when (lang) { "uz" -> "Hamjamiyat"; "en" -> "Community"; else -> "Сообщество" }
                     "mine" -> when (lang) { "uz" -> "Mening splitlarim"; "en" -> "My splits"; else -> "Мои сплиты" }
-                    else -> when (lang) { "uz" -> "O'zingizga mos ritmni tanlang"; "en" -> "Find your training rhythm"; else -> "Подберите свой ритм" }
+                    else -> when (lang) { "uz" -> "Dasturlar katalogi"; "en" -> "Program catalog"; else -> "Каталог программ" }
                 },
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
+                modifier = Modifier.padding(bottom = 4.dp)
             )
         }
 
@@ -490,6 +409,251 @@ fun ProgramsScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
+private fun ActiveProgramHeroCard(
+    program: TrainingProgram,
+    lang: String,
+    onStartDay: (ProgramDay) -> Unit,
+    onOpenDetail: () -> Unit,
+    onDeactivate: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val sortedDays = remember(program.days) { program.days.sortedBy { it.dayNumber } }
+    var selectedDayIndex by remember(program.id, sortedDays.size) {
+        val firstWorkoutIdx = sortedDays.indexOfFirst { !it.isRestDay && it.exercises.isNotEmpty() }
+        mutableIntStateOf(if (firstWorkoutIdx >= 0) firstWorkoutIdx else 0)
+    }
+    val safeIndex = selectedDayIndex.coerceIn(0, (sortedDays.size - 1).coerceAtLeast(0))
+    val selectedDay = sortedDays.getOrNull(safeIndex)
+
+    GymCard(
+        modifier = modifier,
+        backgroundColor = AccentLimeSubtle,
+        borderColor = AccentLime
+    ) {
+        GymKicker(
+            text = when (lang) {
+                "uz" -> "Faol dastur"
+                "en" -> "Active program"
+                else -> "Активная программа"
+            },
+            color = AccentLime
+        )
+
+        Text(
+            text = program.title,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-0.5).sp,
+            color = TextPrimary
+        )
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ProgramMetaPill(
+                text = formatDaysPerWeekLabel(program.daysPerWeek, lang),
+                highlight = true
+            )
+            ProgramMetaPill(
+                text = formatSplitLabel(program.splitType, lang)
+            )
+            ProgramMetaPill(
+                text = formatLevelLabel(program.difficulty, lang)
+            )
+        }
+
+        if (sortedDays.isNotEmpty()) {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                itemsIndexed(sortedDays, key = { _, d -> d.dayNumber }) { idx, day ->
+                    GymPillTab(
+                        text = "${if (lang == "en") "Day" else if (lang == "uz") "Kun" else "День"} ${day.dayNumber} · ${day.title}",
+                        selected = idx == safeIndex,
+                        onClick = { selectedDayIndex = idx }
+                    )
+                }
+            }
+        }
+
+        if (selectedDay != null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(DarkSurface)
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (selectedDay.isRestDay || selectedDay.exercises.isEmpty()) {
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "Dam olish va tiklanish kuni"
+                            "en" -> "Rest & recovery day"
+                            else -> "День отдыха и восстановления"
+                        },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary
+                    )
+                } else {
+                    selectedDay.exercises.forEach { ex ->
+                        ProgramExerciseRow(exercise = ex)
+                    }
+                }
+            }
+        }
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            GymPrimaryButton(
+                text = when (lang) {
+                    "uz" -> "Davom etish"
+                    "en" -> "Start day"
+                    else -> "Продолжить"
+                },
+                onClick = {
+                    val targetDay = selectedDay?.takeIf { !it.isRestDay && it.exercises.isNotEmpty() }
+                        ?: sortedDays.firstOrNull { !it.isRestDay && it.exercises.isNotEmpty() }
+                    if (targetDay != null) {
+                        onStartDay(targetDay)
+                    } else {
+                        onOpenDetail()
+                    }
+                }
+            )
+            GymOutlineButton(
+                text = when (lang) {
+                    "uz" -> "Batafsil"
+                    "en" -> "Details"
+                    else -> "Подробнее"
+                },
+                onClick = onOpenDetail
+            )
+            GymOutlineButton(
+                text = when (lang) {
+                    "uz" -> "O'chirish"
+                    "en" -> "Deactivate"
+                    else -> "Снять"
+                },
+                textColor = TextSecondary,
+                onClick = onDeactivate
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProgramExerciseRow(
+    exercise: ProgramDayExercise,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ExerciseThumbnail(
+                exerciseName = exercise.exerciseName,
+                exerciseId = exercise.exerciseId,
+                size = ExerciseThumbnailSize.SM
+            )
+            Text(
+                text = exercise.exerciseName,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        SetRepBadge(
+            sets = exercise.targetSets,
+            repsMin = exercise.targetRepsMin,
+            repsMax = exercise.targetRepsMax
+        )
+    }
+}
+
+@Composable
+private fun SetRepBadge(
+    sets: Int,
+    repsMin: Int,
+    repsMax: Int,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(DarkSurfaceHigh)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "$sets × $repsMin–$repsMax",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = AccentLime,
+            style = TextStyle(fontFeatureSettings = "tnum")
+        )
+    }
+}
+
+@Composable
+private fun ProgramMetaPill(
+    text: String,
+    highlight: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(if (highlight) AccentLime else DarkSurfaceHigh)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (highlight) GymInkOnLight else TextSoft,
+            maxLines = 1
+        )
+    }
+}
+
+private fun formatDaysPerWeekLabel(daysPerWeek: Int, lang: String): String = when (lang) {
+    "uz" -> "$daysPerWeek kun / hafta"
+    "en" -> "$daysPerWeek days / wk"
+    else -> "$daysPerWeek дн / нед"
+}
+
+private fun formatLevelLabel(level: String, lang: String): String = when (level.lowercase()) {
+    "beginner", "novice" -> when (lang) { "uz" -> "Boshlang'ich"; "en" -> "Beginner"; else -> "Новичок" }
+    "advanced", "pro" -> when (lang) { "uz" -> "Pro"; "en" -> "Advanced"; else -> "Продвинутый" }
+    else -> when (lang) { "uz" -> "O'rta"; "en" -> "Intermediate"; else -> "Средний" }
+}
+
+private fun formatSplitLabel(splitType: String, lang: String): String = when (splitType.lowercase()) {
+    "ppl" -> "PPL · Гипертрофия"
+    "upper_lower" -> "Upper / Lower · Сила"
+    "full_body" -> "Full Body · База"
+    else -> when (lang) { "uz" -> "Shaxsiy split"; "en" -> "Custom split"; else -> "Сплит" }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
 private fun ProgramCard(
     program: TrainingProgram,
     isCommunityTab: Boolean,
@@ -505,31 +669,38 @@ private fun ProgramCard(
 ) {
     GymCard(
         backgroundColor = DarkSurface,
-        borderColor = if (program.isActive) BorderHighlight else BorderSubtle
+        borderColor = if (program.isActive) BorderHighlight else Color.Transparent
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
                 .clickable { onOpenDetail() },
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = when (lang) {
-                    "uz" -> "${program.splitType.uppercase()} · ${program.daysPerWeek} kun"
-                    "en" -> "${program.splitType.uppercase()} · ${program.daysPerWeek} days"
-                    else -> "${program.splitType.uppercase()} · ${program.daysPerWeek} дня"
-                },
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = if (program.isActive) AccentLime else TextSecondary
-            )
-
-            Text(
                 text = program.title,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = (-0.4).sp,
                 color = TextPrimary
             )
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ProgramMetaPill(
+                    text = formatDaysPerWeekLabel(program.daysPerWeek, lang),
+                    highlight = program.isActive
+                )
+                ProgramMetaPill(
+                    text = formatLevelLabel(program.difficulty, lang)
+                )
+                ProgramMetaPill(
+                    text = formatSplitLabel(program.splitType, lang)
+                )
+            }
 
             if (program.description.isNotBlank()) {
                 Text(
@@ -537,23 +708,22 @@ private fun ProgramCard(
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
                     color = TextSecondary,
-                    maxLines = 3,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
             if (program.days.isNotEmpty()) {
                 Text(
-                    text = program.days.joinToString(" / ") { it.title },
+                    text = program.days.joinToString(" · ") { it.title },
                     fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
                     color = TextSoft,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
         }
-
-        GymDivider(color = BorderSubtle)
 
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -563,7 +733,7 @@ private fun ProgramCard(
                 GymOutlineButton(
                     text = when (lang) {
                         "uz" -> "O'rnatilgan"
-                        "en" -> "Installed"
+                        "en" -> "Active"
                         else -> "Установлена"
                     },
                     textColor = AccentLime,
@@ -595,7 +765,7 @@ private fun ProgramCard(
                     text = when (lang) {
                         "uz" -> "Tahrirlash"
                         "en" -> "Edit"
-                        else -> "Редактировать"
+                        else -> "Изменить"
                     },
                     onClick = onEdit
                 )
@@ -605,6 +775,7 @@ private fun ProgramCard(
                         "en" -> "Delete"
                         else -> "Удалить"
                     },
+                    textColor = CrimsonRed,
                     onClick = onDelete
                 )
             }
@@ -612,19 +783,19 @@ private fun ProgramCard(
             if (isCommunityTab || program.likesCount > 0 || program.commentsCount > 0) {
                 if (program.authorName.isNotBlank()) {
                     GymOutlineButton(
-                        text = "${if (lang == "en") "Author" else if (lang == "uz") "Muallif" else "Автор"}: ${program.authorName.replace("NeverPaidHealth", "duda.uz")}",
+                        text = program.authorName.replace("NeverPaidHealth", "duda.uz"),
                         textColor = TextSecondary,
                         onClick = onOpenAuthor
                     )
                 }
                 GymOutlineButton(
-                    text = "${if (lang == "en") "Like" else if (lang == "uz") "Yoqdi" else "Нравится"} · ${program.likesCount}",
+                    text = "♥ ${program.likesCount}",
                     textColor = if (program.isLiked) AccentLime else TextPrimary,
                     borderColor = if (program.isLiked) BorderHighlight else BorderSubtle,
                     onClick = onToggleLike
                 )
                 GymOutlineButton(
-                    text = "${if (lang == "en") "Comments" else if (lang == "uz") "Fikrlar" else "Комментарии"} · ${program.commentsCount}",
+                    text = "${if (lang == "en") "Comments" else if (lang == "uz") "Fikrlar" else "Отзывы"} · ${program.commentsCount}",
                     onClick = onOpenComments
                 )
             }
@@ -647,12 +818,27 @@ private fun ProgramDetailBottomSheet(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sortedDays = remember(program.days) { program.days.sortedBy { it.dayNumber } }
+    var selectedDayNumber by remember(program.id) {
+        mutableIntStateOf(sortedDays.firstOrNull()?.dayNumber ?: 1)
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         LazyColumn(
             modifier = Modifier
@@ -662,20 +848,29 @@ private fun ProgramDetailBottomSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item(key = "detail_header") {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "ПРЕДПРОСМОТР · ${program.splitType.uppercase()} · ${program.days.size} ${if (lang == "en") "DAYS" else if (lang == "uz") "KUN" else "ДНЯ"}",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        letterSpacing = 0.8.sp,
-                        color = AccentLime
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         text = program.title,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.5).sp,
                         color = TextPrimary
                     )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ProgramMetaPill(
+                            text = formatDaysPerWeekLabel(program.daysPerWeek, lang),
+                            highlight = program.isActive
+                        )
+                        ProgramMetaPill(
+                            text = formatLevelLabel(program.difficulty, lang)
+                        )
+                        ProgramMetaPill(
+                            text = formatSplitLabel(program.splitType, lang)
+                        )
+                    }
                     if (program.description.isNotBlank()) {
                         Text(
                             text = program.description,
@@ -715,24 +910,49 @@ private fun ProgramDetailBottomSheet(
                             onClick = onOpenComments
                         )
                     }
+
+                    if (sortedDays.size > 1) {
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(sortedDays, key = { it.dayNumber }) { d ->
+                                GymPillTab(
+                                    text = "${if (lang == "en") "Day" else if (lang == "uz") "Kun" else "День"} ${d.dayNumber}",
+                                    selected = selectedDayNumber == d.dayNumber,
+                                    onClick = { selectedDayNumber = d.dayNumber }
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
-            items(program.days.sortedBy { it.dayNumber }, key = { it.dayNumber }) { day ->
+            items(sortedDays, key = { it.dayNumber }) { day ->
+                val isHighlighted = day.dayNumber == selectedDayNumber
                 GymCard(
-                    backgroundColor = DarkBackground,
-                    borderColor = BorderSubtle
+                    backgroundColor = GymWell,
+                    borderColor = if (isHighlighted) BorderHighlight else Color.Transparent
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 10.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            GymKicker(
+                                text = "${if (lang == "en") "Day" else if (lang == "uz") "Kun" else "День"} ${day.dayNumber}",
+                                color = if (isHighlighted) AccentLime else TextSecondary
+                            )
                             Text(
-                                text = "${if (lang == "en") "Day" else if (lang == "uz") "Kun" else "День"} ${day.dayNumber} · ${day.title}",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                text = day.title,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = TextPrimary
                             )
                             Text(
@@ -754,45 +974,9 @@ private fun ProgramDetailBottomSheet(
                     }
 
                     if (day.exercises.isNotEmpty()) {
-                        GymDivider(color = BorderSubtle)
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            day.exercises.forEachIndexed { idx, ex ->
-                                val num = (idx + 1).toString().padStart(2, '0')
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = num,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = AccentLime
-                                        )
-                                        ExerciseThumbnail(
-                                            exerciseName = ex.exerciseName,
-                                            exerciseId = ex.exerciseId,
-                                            size = ExerciseThumbnailSize.XS
-                                        )
-                                        Text(
-                                            text = ex.exerciseName,
-                                            fontSize = 14.sp,
-                                            color = TextPrimary,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                    Text(
-                                        text = "${ex.targetSets} × ${ex.targetRepsMin}–${ex.targetRepsMax}",
-                                        fontSize = 13.sp,
-                                        color = TextSecondary
-                                    )
-                                }
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            day.exercises.forEach { ex ->
+                                ProgramExerciseRow(exercise = ex)
                             }
                         }
                     }
@@ -816,7 +1000,18 @@ private fun AthleteProfileBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
@@ -826,28 +1021,27 @@ private fun AthleteProfileBottomSheet(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(52.dp)
                         .clip(CircleShape)
-                        .background(AccentLimeSubtle)
-                        .border(1.dp, BorderHighlight, CircleShape),
+                        .background(AccentLimeSubtle),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = profile.name.take(1).uppercase(),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Black,
                         color = AccentLime
                     )
                 }
-                Column {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = profile.name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
                         color = TextPrimary
                     )
                     Text(
@@ -857,13 +1051,13 @@ private fun AthleteProfileBottomSheet(
                             else -> "${profile.totalWorkouts} тренировок · ${StrengthCalculator.formatVolume(profile.totalVolumeKg)} кг · ${profile.totalLikesReceived} лайков"
                         },
                         fontSize = 13.sp,
-                        color = TextSecondary
+                        color = TextSecondary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
                     )
                 }
             }
 
             if (profile.publicPrograms.isNotEmpty()) {
-                GymDivider(color = BorderSubtle)
                 Text(
                     text = when (lang) {
                         "uz" -> "Sportchi dasturlari"
@@ -871,29 +1065,41 @@ private fun AthleteProfileBottomSheet(
                         else -> "Программы атлета"
                     },
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.ExtraBold,
                     color = TextPrimary
                 )
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     profile.publicPrograms.take(4).forEach { prog ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(16.dp))
                                 .background(DarkSurfaceHigh)
                                 .clickable { onSelectProgram(prog) }
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(prog.title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-                                Text("${prog.daysPerWeek} дн/нед · Нравится ${prog.likesCount}", fontSize = 12.sp, color = TextSecondary)
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(
+                                    text = prog.title,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Text(
+                                    text = "${prog.daysPerWeek} дн/нед · ♥ ${prog.likesCount}",
+                                    fontSize = 12.sp,
+                                    color = TextSecondary
+                                )
                             }
                             Text(
-                                text = when (lang) { "uz" -> "Ochish →"; "en" -> "Open →"; else -> "Открыть →" },
+                                text = when (lang) { "uz" -> "Ochish"; "en" -> "Open"; else -> "Открыть" },
                                 fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
+                                fontWeight = FontWeight.Bold,
                                 color = AccentLime
                             )
                         }
@@ -981,7 +1187,18 @@ private fun ProgramEditorBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
@@ -999,10 +1216,11 @@ private fun ProgramEditorBottomSheet(
                         text = if (existingProgram != null) {
                             when (lang) { "uz" -> "Dastur muharriri"; "en" -> "Program editor"; else -> "Редактор программы" }
                         } else {
-                            when (lang) { "uz" -> "Yangi dastur"; "en" -> "Program builder"; else -> "Редактор программы" }
+                            when (lang) { "uz" -> "Yangi dastur"; "en" -> "Program builder"; else -> "Конструктор программы" }
                         },
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.5).sp,
                         color = TextPrimary
                     )
                     Text(
@@ -1047,7 +1265,10 @@ private fun ProgramEditorBottomSheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { isPublic = !isPublic },
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(DarkSurfaceHigh)
+                        .clickable { isPublic = !isPublic }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(checked = isPublic, onCheckedChange = { isPublic = it })
@@ -1062,21 +1283,15 @@ private fun ProgramEditorBottomSheet(
                     )
                 }
 
-                GymDivider(color = BorderSubtle)
-
-                Text(
-                    text = when (lang) { "uz" -> "Dastur tuzilishi"; "en" -> "Program structure"; else -> "Структура программы" },
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                GymSectionTitle(
+                    title = when (lang) { "uz" -> "Dastur tuzilishi"; "en" -> "Program structure"; else -> "Структура программы" }
                 )
 
-                // Day Tabs
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    days.forEachIndexed { idx, day ->
+                    itemsIndexed(days, key = { idx, _ -> idx }) { idx, day ->
                         GymPillTab(
                             text = "${if (lang == "en") "Day" else if (lang == "uz") "Kun" else "День"} ${day.dayNumber} · ${day.title.take(14)}",
                             selected = idx == safeDayIndex,
@@ -1088,13 +1303,12 @@ private fun ProgramEditorBottomSheet(
                     }
                 }
 
-                // Add / Next / Delete Day Wrap
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     GymOutlineButton(
-                        text = when (lang) { "uz" -> "Kun qo'shish"; "en" -> "Add day"; else -> "Добавить день" },
+                        text = when (lang) { "uz" -> "+ Kun qo'shish"; "en" -> "+ Add day"; else -> "+ Добавить день" },
                         onClick = {
                             val nextNum = days.size + 1
                             days.add(ProgramDay(dayNumber = nextNum, name = "День $nextNum", exercises = emptyList()))
@@ -1123,11 +1337,9 @@ private fun ProgramEditorBottomSheet(
                     }
                 }
 
-                // Active Day Detail & Exercises
                 if (activeDay != null) {
                     GymCard(
-                        backgroundColor = DarkBackground,
-                        borderColor = BorderSubtle
+                        backgroundColor = GymWell
                     ) {
                         GymLabeledField(
                             label = when (lang) { "uz" -> "Kun nomi"; "en" -> "Day name"; else -> "Название дня" },
@@ -1149,111 +1361,75 @@ private fun ProgramEditorBottomSheet(
                         )
 
                         if (activeDay.exercises.isNotEmpty()) {
-                            GymDivider(color = BorderSubtle)
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                activeDay.exercises.forEachIndexed { exIndex, ex ->
+                                    GymInnerWell {
+                                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                            ProgramExerciseRow(exercise = ex)
 
-                            activeDay.exercises.forEachIndexed { exIndex, ex ->
-                                val num = (exIndex + 1).toString().padStart(2, '0')
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        Text(
-                                            text = num,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = AccentLime
-                                        )
-                                        ExerciseThumbnail(
-                                            exerciseName = ex.exerciseName,
-                                            exerciseId = ex.exerciseId,
-                                            size = ExerciseThumbnailSize.SM
-                                        )
-                                        Text(
-                                            text = ex.exerciseName,
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = TextPrimary,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
-
-                                    Text(
-                                        text = when (lang) {
-                                            "uz" -> "${ex.targetSets} yondashuv · ${ex.targetRepsMin}–${ex.targetRepsMax} takror"
-                                            "en" -> "${ex.targetSets} sets · ${ex.targetRepsMin}–${ex.targetRepsMax} reps"
-                                            else -> "${ex.targetSets} подхода · ${ex.targetRepsMin}–${ex.targetRepsMax} повторений"
-                                        },
-                                        fontSize = 13.sp,
-                                        color = TextSecondary
-                                    )
-
-                                    FlowRow(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        GymOutlineButton(
-                                            text = when (lang) { "uz" -> "Yondashuvlar"; "en" -> "Sets"; else -> "Подходы" },
-                                            borderColor = if (expandedSetsExIdx == exIndex) BorderHighlight else BorderSubtle,
-                                            onClick = {
-                                                expandedSetsExIdx = if (expandedSetsExIdx == exIndex) -1 else exIndex
-                                            }
-                                        )
-                                        GymOutlineButton(
-                                            text = when (lang) { "uz" -> "Almashtirish"; "en" -> "Replace"; else -> "Заменить" },
-                                            onClick = { replacingSlot = safeDayIndex to exIndex }
-                                        )
-                                        GymOutlineButton(
-                                            text = when (lang) { "uz" -> "Olib tashlash"; "en" -> "Remove"; else -> "Убрать" },
-                                            onClick = {
-                                                val updatedEx = activeDay.exercises.filterIndexed { i, _ -> i != exIndex }
-                                                days[safeDayIndex] = activeDay.copy(exercises = updatedEx)
-                                                expandedSetsExIdx = -1
-                                            }
-                                        )
-                                    }
-
-                                    if (expandedSetsExIdx == exIndex) {
-                                        FlowRow(
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            GymOutlineButton(
-                                                text = "− подход",
-                                                onClick = {
-                                                    val updated = activeDay.exercises.mapIndexed { idx, old ->
-                                                        if (idx == exIndex) old.copy(targetSets = (old.targetSets - 1).coerceAtLeast(1)) else old
+                                            FlowRow(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                GymOutlineButton(
+                                                    text = when (lang) { "uz" -> "Yondashuvlar"; "en" -> "Sets"; else -> "Подходы" },
+                                                    borderColor = if (expandedSetsExIdx == exIndex) BorderHighlight else BorderSubtle,
+                                                    onClick = {
+                                                        expandedSetsExIdx = if (expandedSetsExIdx == exIndex) -1 else exIndex
                                                     }
-                                                    days[safeDayIndex] = activeDay.copy(exercises = updated)
-                                                }
-                                            )
-                                            GymOutlineButton(
-                                                text = "+ подход",
-                                                onClick = {
-                                                    val updated = activeDay.exercises.mapIndexed { idx, old ->
-                                                        if (idx == exIndex) old.copy(targetSets = (old.targetSets + 1).coerceAtMost(10)) else old
+                                                )
+                                                GymOutlineButton(
+                                                    text = when (lang) { "uz" -> "Almashtirish"; "en" -> "Replace"; else -> "Заменить" },
+                                                    onClick = { replacingSlot = safeDayIndex to exIndex }
+                                                )
+                                                GymOutlineButton(
+                                                    text = when (lang) { "uz" -> "Olib tashlash"; "en" -> "Remove"; else -> "Убрать" },
+                                                    textColor = CrimsonRed,
+                                                    onClick = {
+                                                        val updatedEx = activeDay.exercises.filterIndexed { i, _ -> i != exIndex }
+                                                        days[safeDayIndex] = activeDay.copy(exercises = updatedEx)
+                                                        expandedSetsExIdx = -1
                                                     }
-                                                    days[safeDayIndex] = activeDay.copy(exercises = updated)
+                                                )
+                                            }
+
+                                            if (expandedSetsExIdx == exIndex) {
+                                                FlowRow(
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                                ) {
+                                                    GymOutlineButton(
+                                                        text = "− подход",
+                                                        onClick = {
+                                                            val updated = activeDay.exercises.mapIndexed { idx, old ->
+                                                                if (idx == exIndex) old.copy(targetSets = (old.targetSets - 1).coerceAtLeast(1)) else old
+                                                            }
+                                                            days[safeDayIndex] = activeDay.copy(exercises = updated)
+                                                        }
+                                                    )
+                                                    GymOutlineButton(
+                                                        text = "+ подход",
+                                                        onClick = {
+                                                            val updated = activeDay.exercises.mapIndexed { idx, old ->
+                                                                if (idx == exIndex) old.copy(targetSets = (old.targetSets + 1).coerceAtMost(10)) else old
+                                                            }
+                                                            days[safeDayIndex] = activeDay.copy(exercises = updated)
+                                                        }
+                                                    )
                                                 }
-                                            )
+                                            }
                                         }
                                     }
                                 }
-
-                                if (exIndex != activeDay.exercises.lastIndex) {
-                                    GymDivider(color = BorderDivider)
-                                }
                             }
                         }
-
-                        GymDivider(color = BorderSubtle)
 
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             GymOutlineButton(
-                                text = when (lang) { "uz" -> "Mashq qo'shish"; "en" -> "Add exercise"; else -> "Добавить упражнение" },
+                                text = when (lang) { "uz" -> "+ Mashq qo'shish"; "en" -> "+ Add exercise"; else -> "+ Добавить упражнение" },
                                 onClick = { pickingForDayIndex = safeDayIndex }
                             )
                             GymPrimaryButton(
@@ -1307,7 +1483,18 @@ private fun ProgramCommentsBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = DarkSurface,
-        contentColor = TextPrimary
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
@@ -1324,8 +1511,8 @@ private fun ProgramCommentsBottomSheet(
             ) {
                 Text(
                     text = "${if (lang == "en") "Discussion" else if (lang == "uz") "Muhokama" else "Обсуждение"} (${comments.size})",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = TextPrimary
                 )
                 IconButton(onClick = onDismiss) {
@@ -1369,7 +1556,7 @@ private fun ProgramCommentsBottomSheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(DarkSurfaceHigh)
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1378,6 +1565,7 @@ private fun ProgramCommentsBottomSheet(
                     Text(
                         text = "${if (lang == "en") "Reply to" else if (lang == "uz") "Javob" else "Ответ для"} @${replyingTo.userName}",
                         fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
                         color = AccentLime
                     )
                     IconButton(onClick = onCancelReply, modifier = Modifier.size(24.dp)) {
@@ -1420,70 +1608,70 @@ private fun CommentItem(
     onUpvote: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = comment.userName,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-        Text(
-            text = comment.content,
-            fontSize = 14.sp,
-            lineHeight = 20.sp,
-            color = TextSoft
-        )
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+    GymInnerWell {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            GymOutlineButton(
-                text = "${if (lang == "en") "Helpful" else if (lang == "uz") "Foydali" else "Полезно"} · ${comment.upvotes}",
-                textColor = if (comment.isUpvoted) AccentLime else TextPrimary,
-                borderColor = if (comment.isUpvoted) BorderHighlight else BorderSubtle,
-                onClick = onUpvote
+            Text(
+                text = comment.userName,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
             )
-            GymOutlineButton(
-                text = when (lang) { "uz" -> "Javob berish"; "en" -> "Reply"; else -> "Ответить" },
-                onClick = onReply
+            Text(
+                text = comment.content,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                color = TextSoft
             )
-            if (canDelete) {
-                GymOutlineButton(
-                    text = when (lang) { "uz" -> "O'chirish"; "en" -> "Delete"; else -> "Удалить" },
-                    textColor = CrimsonRed,
-                    onClick = onDelete
-                )
-            }
-        }
-
-        if (comment.replies.isNotEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(DarkSurfaceHigh)
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                comment.replies.forEach { reply ->
-                    Text(
-                        text = "${reply.userName} · ${comment.userName}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = AccentLime
-                    )
-                    Text(
-                        text = reply.content,
-                        fontSize = 13.sp,
-                        color = TextSoft
+                GymOutlineButton(
+                    text = "${if (lang == "en") "Helpful" else if (lang == "uz") "Foydali" else "Полезно"} · ${comment.upvotes}",
+                    textColor = if (comment.isUpvoted) AccentLime else TextPrimary,
+                    borderColor = if (comment.isUpvoted) BorderHighlight else BorderSubtle,
+                    onClick = onUpvote
+                )
+                GymOutlineButton(
+                    text = when (lang) { "uz" -> "Javob berish"; "en" -> "Reply"; else -> "Ответить" },
+                    onClick = onReply
+                )
+                if (canDelete) {
+                    GymOutlineButton(
+                        text = when (lang) { "uz" -> "O'chirish"; "en" -> "Delete"; else -> "Удалить" },
+                        textColor = CrimsonRed,
+                        onClick = onDelete
                     )
                 }
             }
-        }
 
-        GymDivider(color = BorderDivider)
+            if (comment.replies.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(DarkSurface)
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    comment.replies.forEach { reply ->
+                        Text(
+                            text = "${reply.userName} → ${comment.userName}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentLime
+                        )
+                        Text(
+                            text = reply.content,
+                            fontSize = 13.sp,
+                            color = TextSoft
+                        )
+                    }
+                }
+            }
+        }
     }
 }

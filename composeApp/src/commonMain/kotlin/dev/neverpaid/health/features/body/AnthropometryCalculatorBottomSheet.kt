@@ -1,7 +1,8 @@
 package dev.neverpaid.health.features.body
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,28 +10,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Straighten
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -40,17 +31,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import dev.neverpaid.health.core.designsystem.AmberGold
-import dev.neverpaid.health.core.designsystem.BorderSubtle
-import dev.neverpaid.health.core.designsystem.DarkBackground
+import androidx.compose.ui.unit.sp
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AmberWarm
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
-import dev.neverpaid.health.core.designsystem.DarkSurfaceVariant
-import dev.neverpaid.health.core.designsystem.AccentLime
-import dev.neverpaid.health.core.designsystem.InfoAccent
+import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
+import dev.neverpaid.health.core.designsystem.GymIconBadge
+import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymLabeledField
+import dev.neverpaid.health.core.designsystem.GymPillTab
+import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -123,14 +119,26 @@ fun AnthropometryCalculatorBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkBackground,
-        dragHandle = null
+        containerColor = DarkSurface,
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(DarkSurfaceElevated)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 20.dp)
-                .navigationBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Header
             Row(
@@ -140,20 +148,27 @@ fun AnthropometryCalculatorBottomSheet(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Straighten,
-                        contentDescription = null,
-                        tint = AccentLime,
-                        modifier = Modifier.size(24.dp)
+                    GymIconBadge(
+                        icon = Icons.Default.Straighten,
+                        size = 42.dp
                     )
-                    Text(
-                        text = "Антропометрия и Золотое сечение",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = "Антропометрия",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-0.4).sp,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "US Navy BF% · Индекс Адониса",
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                    }
                 }
 
                 IconButton(onClick = onDismiss) {
@@ -161,260 +176,274 @@ fun AnthropometryCalculatorBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-
             LazyColumn(
-                modifier = Modifier.fillMaxWidth().height(420.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(430.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Gender Selection
-                item {
-                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                            onClick = { isMale = true },
-                            selected = isMale,
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = AccentLime.copy(alpha = 0.2f),
-                                activeContentColor = AccentLime,
-                                inactiveContainerColor = DarkSurface,
-                                inactiveContentColor = TextSecondary
-                            )
-                        ) {
-                            Text("Мужчина", style = MaterialTheme.typography.labelSmall)
-                        }
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                            onClick = { isMale = false },
-                            selected = !isMale,
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = AccentLime.copy(alpha = 0.2f),
-                                activeContentColor = AccentLime,
-                                inactiveContainerColor = DarkSurface,
-                                inactiveContentColor = TextSecondary
-                            )
-                        ) {
-                            Text("Женщина", style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                }
-
-                // Summary Cards
-                item {
+                item(key = "gender_tabs") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Navy Body Fat % Card
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-                            border = BorderStroke(1.dp, BorderSubtle)
+                        GymPillTab(
+                            text = "Мужчина",
+                            selected = isMale,
+                            onClick = { isMale = true },
+                            modifier = Modifier.weight(1f)
+                        )
+                        GymPillTab(
+                            text = "Женщина",
+                            selected = !isMale,
+                            onClick = { isMale = false },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                // Summary Hero Tiles
+                item(key = "summary_tiles") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(DarkSurfaceHigh)
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(
-                                    text = "Жир (US Navy)",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextSecondary
-                                )
-                                Text(
-                                    text = "${(((navyBf?.bodyFatPercentage ?: 15.0) * 10).toInt() / 10.0)}%",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = AccentLime
-                                )
-                                Text(
-                                    text = "Сухая масса: ${navyBf?.leanMassKg?.toInt() ?: 0} кг",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextMuted
-                                )
-                            }
+                            Text(
+                                text = "Жир (US Navy)",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecondary
+                            )
+                            Text(
+                                text = "${(((navyBf?.bodyFatPercentage ?: 15.0) * 10).toInt() / 10.0)}%",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Black,
+                                color = AccentLime,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                            Text(
+                                text = "Сухая: ${navyBf?.leanMassKg?.toInt() ?: 0} кг",
+                                fontSize = 12.sp,
+                                color = TextMuted,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
                         }
 
-                        // Adonis Ratio Card
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-                            border = BorderStroke(1.dp, BorderSubtle)
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(DarkSurfaceHigh)
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(
-                                    text = "Индекс Адониса",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextSecondary
-                                )
-                                Text(
-                                    text = "${((adonis.shoulderToWaistRatio * 100).toInt() / 100.0)}",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = AmberGold
-                                )
-                                Text(
-                                    text = "Цель: 1.618",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextMuted
-                                )
-                            }
+                            Text(
+                                text = "Индекс Адониса",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecondary
+                            )
+                            Text(
+                                text = "${((adonis.shoulderToWaistRatio * 100).toInt() / 100.0)}",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Black,
+                                color = AmberWarm,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                            Text(
+                                text = "Цель: 1.618",
+                                fontSize = 12.sp,
+                                color = TextMuted,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
                         }
                     }
                 }
 
                 // Casey Butt Natural Muscular Limit
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                        border = BorderStroke(1.dp, BorderSubtle)
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
+                item(key = "natural_limit") {
+                    GymInnerWell {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = "Предел Кейси Батта (Natural Limit при 10% жира):",
-                                style = MaterialTheme.typography.labelSmall,
+                                text = "Натуральный потенциал (10% жира)",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
                                 color = TextSecondary
                             )
                             Text(
-                                text = "Максимальный вес: ${naturalLimit.maxWeightAt10PercentFatKg.toInt()} кг (сухой)",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = InfoAccent
+                                text = "до ${naturalLimit.maxWeightAt10PercentFatKg.toInt()} кг",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Black,
+                                color = AccentLime,
+                                style = TextStyle(fontFeatureSettings = "tnum")
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Бицепс: ${naturalLimit.maxBicepsCm.toInt()} см", style = MaterialTheme.typography.labelSmall, color = TextPrimary)
-                                Text("Грудь: ${naturalLimit.maxChestCm.toInt()} см", style = MaterialTheme.typography.labelSmall, color = TextPrimary)
-                                Text("Бедро: ${naturalLimit.maxThighCm.toInt()} см", style = MaterialTheme.typography.labelSmall, color = TextPrimary)
-                            }
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            LimitStatPill(
+                                label = "Бицепс",
+                                value = "${naturalLimit.maxBicepsCm.toInt()} см",
+                                modifier = Modifier.weight(1f)
+                            )
+                            LimitStatPill(
+                                label = "Грудь",
+                                value = "${naturalLimit.maxChestCm.toInt()} см",
+                                modifier = Modifier.weight(1f)
+                            )
+                            LimitStatPill(
+                                label = "Бедро",
+                                value = "${naturalLimit.maxThighCm.toInt()} см",
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
                 }
 
                 // Inputs Row 1: Height & Weight
-                item {
+                item(key = "inputs_1") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        OutlinedTextField(
+                        GymLabeledField(
+                            label = "Рост, см",
                             value = heightCmText,
                             onValueChange = { heightCmText = it },
-                            modifier = Modifier.weight(1f),
-                            label = { Text("Рост (см)") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            shape = RoundedCornerShape(8.dp)
+                            modifier = Modifier.weight(1f)
                         )
-                        OutlinedTextField(
+                        GymLabeledField(
+                            label = "Вес, кг",
                             value = weightKgText,
                             onValueChange = { weightKgText = it },
-                            modifier = Modifier.weight(1f),
-                            label = { Text("Вес (кг)") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            shape = RoundedCornerShape(8.dp)
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
 
                 // Inputs Row 2: Neck & Waist
-                item {
+                item(key = "inputs_2") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        OutlinedTextField(
+                        GymLabeledField(
+                            label = "Шея, см",
                             value = neckCmText,
                             onValueChange = { neckCmText = it },
-                            modifier = Modifier.weight(1f),
-                            label = { Text("Шея (см)") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            shape = RoundedCornerShape(8.dp)
+                            modifier = Modifier.weight(1f)
                         )
-                        OutlinedTextField(
+                        GymLabeledField(
+                            label = "Талия, см",
                             value = waistCmText,
                             onValueChange = { waistCmText = it },
-                            modifier = Modifier.weight(1f),
-                            label = { Text("Талия (см)") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            shape = RoundedCornerShape(8.dp)
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
 
                 // Inputs Row 3: Shoulder & Hip
-                item {
+                item(key = "inputs_3") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        OutlinedTextField(
+                        GymLabeledField(
+                            label = "Плечи, см",
                             value = shoulderCmText,
                             onValueChange = { shoulderCmText = it },
-                            modifier = Modifier.weight(1f),
-                            label = { Text("Плечи (см)") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            shape = RoundedCornerShape(8.dp)
+                            modifier = Modifier.weight(1f)
                         )
-                        OutlinedTextField(
+                        GymLabeledField(
+                            label = "Бёдра, см",
                             value = hipCmText,
                             onValueChange = { hipCmText = it },
-                            modifier = Modifier.weight(1f),
-                            label = { Text("Бёдра (см)") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            shape = RoundedCornerShape(8.dp)
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
 
-                // Inputs Row 4: Wrist & Ankle (Bone Frame)
-                item {
+                // Inputs Row 4: Wrist & Ankle
+                item(key = "inputs_4") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        OutlinedTextField(
+                        GymLabeledField(
+                            label = "Запястье, см",
                             value = wristCmText,
                             onValueChange = { wristCmText = it },
-                            modifier = Modifier.weight(1f),
-                            label = { Text("Запястье (см)") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            shape = RoundedCornerShape(8.dp)
+                            modifier = Modifier.weight(1f)
                         )
-                        OutlinedTextField(
+                        GymLabeledField(
+                            label = "Щиколотка, см",
                             value = ankleCmText,
                             onValueChange = { ankleCmText = it },
-                            modifier = Modifier.weight(1f),
-                            label = { Text("Щиколотка (см)") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            shape = RoundedCornerShape(8.dp)
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-
-            FilledTonalButton(
+            GymPrimaryButton(
+                text = "Сохранить антропометрию",
                 onClick = {
                     onSaveMetrics(navyBf?.bodyFatPercentage ?: 15.0, adonis.shoulderToWaistRatio)
                     onDismiss()
                 },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = AccentLime,
-                    contentColor = DarkBackground
-                )
-            ) {
-                Text(
-                    text = "Сохранить антропометрию",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                fillWidth = true
+            )
         }
+    }
+}
+
+@Composable
+private fun LimitStatPill(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(DarkSurface)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            color = TextMuted
+        )
+        Text(
+            text = value,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Black,
+            color = TextPrimary,
+            style = TextStyle(fontFeatureSettings = "tnum")
+        )
     }
 }

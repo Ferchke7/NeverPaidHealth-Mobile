@@ -1,9 +1,8 @@
 package dev.neverpaid.health.features.nutrition
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,13 +14,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -35,20 +35,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.neverpaid.health.core.designsystem.BorderSubtle
+import dev.neverpaid.health.core.designsystem.AccentLime
+import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
+import dev.neverpaid.health.core.designsystem.AmberWarm
+import dev.neverpaid.health.core.designsystem.BorderHighlight
+import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
-import dev.neverpaid.health.core.designsystem.AccentLime
-import dev.neverpaid.health.core.designsystem.GymWell
-import dev.neverpaid.health.core.designsystem.rememberBase64ImageBitmap
+import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
+import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
 import dev.neverpaid.health.core.designsystem.GymCard
-import dev.neverpaid.health.core.designsystem.GymDivider
+import dev.neverpaid.health.core.designsystem.GymInkOnLight
+import dev.neverpaid.health.core.designsystem.GymInnerWell
+import dev.neverpaid.health.core.designsystem.GymKicker
 import dev.neverpaid.health.core.designsystem.GymLabeledField
 import dev.neverpaid.health.core.designsystem.GymLoadingCard
 import dev.neverpaid.health.core.designsystem.GymOutlineButton
@@ -56,11 +64,13 @@ import dev.neverpaid.health.core.designsystem.GymPageHeader
 import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymProgressBar
-import dev.neverpaid.health.core.designsystem.GymInnerWell
-import dev.neverpaid.health.core.designsystem.GymWhiteButton
+import dev.neverpaid.health.core.designsystem.GymSectionTitle
+import dev.neverpaid.health.core.designsystem.GymWell
+import dev.neverpaid.health.core.designsystem.InfoAccent
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.designsystem.rememberBase64ImageBitmap
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.core.platform.PlatformBridge
@@ -183,12 +193,12 @@ fun NutritionScreen(
         LazyColumn(
             modifier = modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             item(key = "header") {
                 GymPageHeader(
                     title = "Питание",
-                    subtitle = "Приёмы пищи, макросы и вода"
+                    subtitle = "Калории, макросы и гидратация"
                 )
             }
             item(key = "loading") {
@@ -209,273 +219,219 @@ fun NutritionScreen(
             top = 8.dp,
             bottom = 110.dp
         ),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item(key = "page_header", contentType = "header") {
             GymPageHeader(
                 title = "Питание",
-                subtitle = "Приёмы пищи, макросы и вода"
+                subtitle = formatFullDateWithWeekday(state.selectedDate)
             )
         }
 
-        // Date Header & Nav
+        // Date & Fasting Strip
         item(key = "date_nav_block", contentType = "date_nav") {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    text = formatFullDateWithWeekday(state.selectedDate),
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    GymOutlineButton(
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                item(key = "prev_day") {
+                    GymPillTab(
                         text = "← Назад",
+                        selected = false,
                         onClick = { onAction(NutritionUiAction.OnShiftDateDays(-1)) }
                     )
-                    GymOutlineButton(
+                }
+                item(key = "today") {
+                    GymPillTab(
                         text = "Сегодня",
+                        selected = state.selectedDate == todayStr || state.selectedDate.isBlank(),
                         onClick = { onAction(NutritionUiAction.OnSelectDate(todayStr)) }
                     )
-                    GymOutlineButton(
+                }
+                item(key = "next_day") {
+                    GymPillTab(
                         text = "Вперёд →",
+                        selected = false,
                         onClick = { onAction(NutritionUiAction.OnShiftDateDays(1)) }
                     )
                 }
-
-                Text(
-                    text = "Часовой пояс профиля · ${tz.id}",
-                    fontSize = 12.sp,
-                    color = TextMuted
-                )
-            }
-        }
-
-        // Card 1: Daily Balance
-        item(key = "daily_balance_card", contentType = "balance") {
-            GymCard {
-                Text(
-                    text = "Дневной баланс",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                BalanceMetricRow(
-                    headline = "${state.totalCalories} / ${state.targetCalories} ккал",
-                    label = "Энергия",
-                    progress = caloriesProgress
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-                BalanceMetricRow(
-                    headline = "${state.totalProtein} / ${state.targetProtein} г",
-                    label = "Белки",
-                    progress = proteinProgress
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-                BalanceMetricRow(
-                    headline = "${state.totalCarbs} / ${state.targetCarbs} г",
-                    label = "Углеводы",
-                    progress = carbsProgress
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-                BalanceMetricRow(
-                    headline = "${state.totalFats} / ${state.targetFats} г",
-                    label = "Жиры",
-                    progress = fatsProgress
-                )
-            }
-        }
-
-        // Card 2: Meals Log (Divided List)
-        item(key = "meals_card", contentType = "meals") {
-            GymCard {
-                Text(
-                    text = "Приёмы пищи",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "${state.meals.size} записи · ${formatSpacedInt(state.totalCalories)} ккал",
-                    fontSize = 13.sp,
-                    color = TextSecondary
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                if (state.meals.isEmpty()) {
-                    GymInnerWell {
-                        Text(
-                            text = "Записей за ${state.selectedDate} пока нет",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Выберите способ добавления еды ниже — по фото, текстом или вручную.",
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
-                    }
-                } else {
-                    state.meals.forEachIndexed { idx, meal ->
-                        MealLogRowItem(
-                            meal = meal,
-                            tz = tz,
-                            onEdit = {
-                                editingMealId = meal.id
-                                onAction(NutritionUiAction.OnMealTypeChanged(meal.mealType))
-                                onAction(NutritionUiAction.OnMealNameChanged(meal.name))
-                                onAction(NutritionUiAction.OnMealCaloriesChanged(meal.calories.toString()))
-                                onAction(NutritionUiAction.OnMealProteinChanged(meal.proteinG.toInt().toString()))
-                                onAction(NutritionUiAction.OnMealCarbsChanged(meal.carbsG.toInt().toString()))
-                                onAction(NutritionUiAction.OnMealFatsChanged(meal.fatsG.toInt().toString()))
-                                inputMode = FoodInputMode.MANUAL
-                            },
-                            onRepeat = {
-                                onAction(NutritionUiAction.OnMealTypeChanged(meal.mealType))
-                                onAction(NutritionUiAction.OnMealNameChanged(meal.name))
-                                onAction(NutritionUiAction.OnMealCaloriesChanged(meal.calories.toString()))
-                                onAction(NutritionUiAction.OnMealProteinChanged(meal.proteinG.toInt().toString()))
-                                onAction(NutritionUiAction.OnMealCarbsChanged(meal.carbsG.toInt().toString()))
-                                onAction(NutritionUiAction.OnMealFatsChanged(meal.fatsG.toInt().toString()))
-                                onAction(NutritionUiAction.OnSaveMeal)
-                            },
-                            onDelete = { onAction(NutritionUiAction.OnDeleteMeal(meal.id)) }
-                        )
-                        if (idx < state.meals.lastIndex) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            GymDivider()
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
-                    }
+                item(key = "fasting_toggle") {
+                    GymPillTab(
+                        text = "Голодание 16/8",
+                        selected = showFastingWidget,
+                        onClick = { showFastingWidget = !showFastingWidget }
+                    )
                 }
             }
         }
 
-        // Card 3: Hydration
-        item(key = "water_card", contentType = "water") {
-            val portions = state.waterMl / 250
+        // Hero Card: Daily Calorie & Macros Summary
+        item(key = "daily_balance_card", contentType = "balance") {
+            val remainingKcal = (state.targetCalories - state.totalCalories).coerceAtLeast(0)
             GymCard {
-                Text(
-                    text = "Вода",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "${formatLiters(state.waterMl)} / ${formatLiters(state.targetWaterMl)} л",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "$portions порций по 250 мл",
-                    fontSize = 13.sp,
-                    color = TextSecondary
-                )
-                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    GymKicker(text = "Дневной баланс")
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(AccentLimeSubtle)
+                            .padding(horizontal = 12.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = "Осталось $remainingKcal ккал",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentLime,
+                            style = TextStyle(fontFeatureSettings = "tnum")
+                        )
+                    }
+                }
+
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = formatSpacedInt(state.totalCalories),
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-1.5).sp,
+                        color = AccentLime,
+                        style = TextStyle(fontFeatureSettings = "tnum")
+                    )
+                    Text(
+                        text = "/ ${formatSpacedInt(state.targetCalories)} ккал",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextSecondary,
+                        style = TextStyle(fontFeatureSettings = "tnum"),
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
+                }
+
                 GymProgressBar(
-                    progress = waterProgress,
+                    progress = caloriesProgress,
+                    heightDp = 10,
                     color = AccentLime
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    GymPrimaryButton(
-                        text = "+ 250 мл",
-                        onClick = { onAction(NutritionUiAction.OnAddWater(250)) }
+                    MacroSummaryTile(
+                        label = "Белки",
+                        current = state.totalProtein,
+                        target = state.targetProtein,
+                        progress = proteinProgress,
+                        barColor = AccentLime,
+                        modifier = Modifier.weight(1f)
                     )
-                    GymOutlineButton(
-                        text = "− 250 мл",
-                        enabled = state.waterMl >= 250,
-                        onClick = { onAction(NutritionUiAction.OnAddWater(-250)) }
+                    MacroSummaryTile(
+                        label = "Жиры",
+                        current = state.totalFats,
+                        target = state.targetFats,
+                        progress = fatsProgress,
+                        barColor = AmberWarm,
+                        modifier = Modifier.weight(1f)
                     )
-                    GymOutlineButton(
-                        text = "Сбросить",
-                        enabled = state.waterMl > 0,
-                        onClick = { showWaterResetConfirm = true }
+                    MacroSummaryTile(
+                        label = "Углеводы",
+                        current = state.totalCarbs,
+                        target = state.targetCarbs,
+                        progress = carbsProgress,
+                        barColor = InfoAccent,
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
         }
 
-        // Card 4: Add Food Mode Picker
+        // Toggleable Fasting Tracker Card
+        if (showFastingWidget) {
+            item(key = "fasting_section", contentType = "fasting") {
+                FastingTrackerView(
+                    activeSession = activeFastingSession,
+                    onStartFast = { protocol ->
+                        activeFastingSession = FastingSession(
+                            id = PlatformBridge.generateUuid(),
+                            protocol = protocol,
+                            startTimeEpochMs = PlatformBridge.currentTimeMillis(),
+                            targetDurationHours = protocol.fastHours.toDouble()
+                        )
+                    },
+                    onEndFast = { activeFastingSession = null }
+                )
+            }
+        }
+
+        // Card 2: Clean 2x2 Selector for Adding Food
         item(key = "add_food_card", contentType = "add_food") {
             GymCard {
-                Text(
-                    text = "Добавить еду",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Выберите удобный способ ввода",
-                    fontSize = 13.sp,
-                    color = TextSecondary
-                )
-                Spacer(modifier = Modifier.height(14.dp))
+                GymSectionTitle(title = "Добавить еду")
 
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    GymPillTab(
-                        text = "По фото",
-                        selected = inputMode == FoodInputMode.PHOTO,
-                        onClick = {
-                            inputMode = if (inputMode == FoodInputMode.PHOTO) FoodInputMode.NONE else FoodInputMode.PHOTO
-                        }
-                    )
-                    GymPillTab(
-                        text = "Текстом",
-                        selected = inputMode == FoodInputMode.TEXT,
-                        onClick = {
-                            inputMode = if (inputMode == FoodInputMode.TEXT) FoodInputMode.NONE else FoodInputMode.TEXT
-                        }
-                    )
-                    GymPillTab(
-                        text = "Вручную",
-                        selected = inputMode == FoodInputMode.MANUAL,
-                        onClick = {
-                            editingMealId = null
-                            inputMode = if (inputMode == FoodInputMode.MANUAL) FoodInputMode.NONE else FoodInputMode.MANUAL
-                        }
-                    )
-                    GymOutlineButton(
-                        text = "База продуктов",
-                        onClick = { isFoodCatalogSheetOpen = true }
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        AddFoodModeTile(
+                            title = "По фото",
+                            subtitle = "ИИ-анализ блюда",
+                            selected = inputMode == FoodInputMode.PHOTO,
+                            onClick = {
+                                inputMode = if (inputMode == FoodInputMode.PHOTO) FoodInputMode.NONE else FoodInputMode.PHOTO
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                        AddFoodModeTile(
+                            title = "Текстом",
+                            subtitle = "Описать словами",
+                            selected = inputMode == FoodInputMode.TEXT,
+                            onClick = {
+                                inputMode = if (inputMode == FoodInputMode.TEXT) FoodInputMode.NONE else FoodInputMode.TEXT
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        AddFoodModeTile(
+                            title = "База продуктов",
+                            subtitle = "Каталог 150+ блюд",
+                            selected = isFoodCatalogSheetOpen,
+                            onClick = { isFoodCatalogSheetOpen = true },
+                            modifier = Modifier.weight(1f)
+                        )
+                        AddFoodModeTile(
+                            title = "Вручную",
+                            subtitle = "Точный ввод КБЖУ",
+                            selected = inputMode == FoodInputMode.MANUAL,
+                            onClick = {
+                                editingMealId = null
+                                inputMode = if (inputMode == FoodInputMode.MANUAL) FoodInputMode.NONE else FoodInputMode.MANUAL
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
 
-        // Card 5: Draft / AI Recognition Card (1:1 Figma 08 Bottom Card)
+        // Card 3: Draft / AI Recognition Card
         if (inputMode != FoodInputMode.NONE || state.aiAnalysisPreview != null) {
             item(key = "draft_card", contentType = "draft") {
                 val preview = state.aiAnalysisPreview
                 val showFormFields = preview != null || inputMode == FoodInputMode.MANUAL || editingMealId != null
 
-                GymCard {
-                    Text(
-                        text = if (preview != null) "ИИ-распознавание" else "Черновик",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = AccentLime,
-                        letterSpacing = 0.8.sp
+                GymCard(borderColor = BorderHighlight) {
+                    GymKicker(
+                        text = if (preview != null) "ИИ-распознавание" else "Черновик"
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
+
                     Text(
                         text = if (editingMealId != null) {
                             "Редактирование записи"
@@ -486,24 +442,19 @@ fun NutritionScreen(
                         } else {
                             "Распознать по описанию"
                         },
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.5).sp,
                         color = TextPrimary
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = if (preview != null && preview.aiNotes.isNotBlank()) {
-                            preview.aiNotes
-                        } else if (showFormFields) {
-                            "Проверьте продукты, порцию и КБЖУ перед добавлением."
-                        } else {
-                            "Прикрепите фото или опишите блюдо — ИИ рассчитает калории и макросы."
-                        },
-                        fontSize = 13.sp,
-                        color = TextSecondary
-                    )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    if (preview != null && preview.aiNotes.isNotBlank()) {
+                        Text(
+                            text = preview.aiNotes,
+                            fontSize = 13.sp,
+                            color = TextSecondary
+                        )
+                    }
 
                     // Meal type selector
                     FlowRow(
@@ -524,7 +475,6 @@ fun NutritionScreen(
                     }
 
                     if (!showFormFields && inputMode == FoodInputMode.PHOTO) {
-                        Spacer(modifier = Modifier.height(14.dp))
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -543,44 +493,41 @@ fun NutritionScreen(
                         if (state.selectedPhotoBase64 != null) {
                             val selectedBitmap = rememberBase64ImageBitmap(state.selectedPhotoBase64)
                             if (selectedBitmap != null) {
-                                Spacer(modifier = Modifier.height(10.dp))
                                 Image(
                                     bitmap = selectedBitmap,
                                     contentDescription = "Выбранное фото блюда",
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(160.dp)
-                                        .clip(RoundedCornerShape(10.dp))
+                                        .height(180.dp)
+                                        .clip(RoundedCornerShape(16.dp))
                                         .background(GymWell)
-                                        .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
                         GymLabeledField(
                             label = "Комментарий (необязательно)",
                             value = state.aiDescriptionInput,
                             onValueChange = { onAction(NutritionUiAction.OnAiDescriptionChanged(it)) },
                             placeholder = "Например: 200г курицы без кожи и рис"
                         )
-                        Spacer(modifier = Modifier.height(14.dp))
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             GymPrimaryButton(
                                 text = if (state.isAiAnalyzing) "Анализ..." else "Рассчитать КБЖУ",
                                 enabled = !state.isAiAnalyzing && (state.selectedPhotoBase64 != null || state.aiDescriptionInput.isNotBlank()),
-                                onClick = { onAction(NutritionUiAction.OnRunAiAnalysis) }
+                                onClick = { onAction(NutritionUiAction.OnRunAiAnalysis) },
+                                modifier = Modifier.weight(1.3f)
                             )
                             GymOutlineButton(
                                 text = strings.cancel,
-                                onClick = { inputMode = FoodInputMode.NONE }
+                                onClick = { inputMode = FoodInputMode.NONE },
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     } else if (!showFormFields && inputMode == FoodInputMode.TEXT) {
-                        Spacer(modifier = Modifier.height(14.dp))
                         GymLabeledField(
                             label = "Опишите блюдо",
                             value = state.aiDescriptionInput,
@@ -588,7 +535,6 @@ fun NutritionScreen(
                             placeholder = "Овсянка 80г на молоке с бананом",
                             singleLine = false
                         )
-                        Spacer(modifier = Modifier.height(10.dp))
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -601,30 +547,29 @@ fun NutritionScreen(
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(14.dp))
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             GymPrimaryButton(
                                 text = if (state.isAiAnalyzing) "Анализ..." else "Рассчитать КБЖУ",
                                 enabled = !state.isAiAnalyzing && state.aiDescriptionInput.isNotBlank(),
-                                onClick = { onAction(NutritionUiAction.OnRunAiAnalysis) }
+                                onClick = { onAction(NutritionUiAction.OnRunAiAnalysis) },
+                                modifier = Modifier.weight(1.3f)
                             )
                             GymOutlineButton(
                                 text = strings.cancel,
-                                onClick = { inputMode = FoodInputMode.NONE }
+                                onClick = { inputMode = FoodInputMode.NONE },
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     } else if (showFormFields) {
-                        Spacer(modifier = Modifier.height(14.dp))
                         GymLabeledField(
                             label = "Название",
                             value = state.newMealName,
                             onValueChange = { onAction(NutritionUiAction.OnMealNameChanged(it)) },
                             placeholder = "Йогурт с ягодами"
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -644,7 +589,6 @@ fun NutritionScreen(
                                 modifier = Modifier.weight(1f)
                             )
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -663,9 +607,6 @@ fun NutritionScreen(
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 modifier = Modifier.weight(1f)
                             )
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(modifier = Modifier.fillMaxWidth()) {
                             GymLabeledField(
                                 label = "Жиры, г",
                                 value = state.newMealFats,
@@ -673,19 +614,11 @@ fun NutritionScreen(
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 modifier = Modifier.weight(1f)
                             )
-                            Spacer(modifier = Modifier.weight(1f))
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
-                        Text(
-                            text = "Черновик ещё не включён в дневной итог.",
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(14.dp))
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             GymPrimaryButton(
                                 text = if (state.isSavingMeal) "Сохранение..." else "Подтвердить",
@@ -702,7 +635,8 @@ fun NutritionScreen(
                                     }
                                     editingMealId = null
                                     inputMode = FoodInputMode.NONE
-                                }
+                                },
+                                modifier = Modifier.weight(1.3f)
                             )
                             GymOutlineButton(
                                 text = strings.cancel,
@@ -710,7 +644,8 @@ fun NutritionScreen(
                                     editingMealId = null
                                     if (preview != null) onAction(NutritionUiAction.OnDismissAiPreview)
                                     inputMode = FoodInputMode.NONE
-                                }
+                                },
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
@@ -718,25 +653,158 @@ fun NutritionScreen(
             }
         }
 
-        // Toggleable Fasting Tracker Card (preserves full fasting workflow)
-        item(key = "fasting_section", contentType = "fasting") {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                GymOutlineButton(
-                    text = if (showFastingWidget) "Скрыть интервальное голодание" else "Интервальное голодание 16/8",
-                    onClick = { showFastingWidget = !showFastingWidget }
-                )
-                AnimatedVisibility(visible = showFastingWidget) {
-                    FastingTrackerView(
-                        activeSession = activeFastingSession,
-                        onStartFast = { protocol ->
-                            activeFastingSession = FastingSession(
-                                id = PlatformBridge.generateUuid(),
-                                protocol = protocol,
-                                startTimeEpochMs = PlatformBridge.currentTimeMillis(),
-                                targetDurationHours = protocol.fastHours.toDouble()
+        // Card 4: Meals Log
+        item(key = "meals_card", contentType = "meals") {
+            GymCard {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Приёмы пищи",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.4).sp,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "${state.meals.size} · ${formatSpacedInt(state.totalCalories)} ккал",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextSecondary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
+                    )
+                }
+
+                if (state.meals.isEmpty()) {
+                    GymInnerWell {
+                        Text(
+                            text = "Записей за этот день пока нет",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Добавьте блюдо по фото, текстом, из базы или вручную.",
+                            fontSize = 13.sp,
+                            color = TextSecondary
+                        )
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        state.meals.forEach { meal ->
+                            MealLogRowItem(
+                                meal = meal,
+                                tz = tz,
+                                onEdit = {
+                                    editingMealId = meal.id
+                                    onAction(NutritionUiAction.OnMealTypeChanged(meal.mealType))
+                                    onAction(NutritionUiAction.OnMealNameChanged(meal.name))
+                                    onAction(NutritionUiAction.OnMealCaloriesChanged(meal.calories.toString()))
+                                    onAction(NutritionUiAction.OnMealProteinChanged(meal.proteinG.toInt().toString()))
+                                    onAction(NutritionUiAction.OnMealCarbsChanged(meal.carbsG.toInt().toString()))
+                                    onAction(NutritionUiAction.OnMealFatsChanged(meal.fatsG.toInt().toString()))
+                                    inputMode = FoodInputMode.MANUAL
+                                },
+                                onRepeat = {
+                                    onAction(NutritionUiAction.OnMealTypeChanged(meal.mealType))
+                                    onAction(NutritionUiAction.OnMealNameChanged(meal.name))
+                                    onAction(NutritionUiAction.OnMealCaloriesChanged(meal.calories.toString()))
+                                    onAction(NutritionUiAction.OnMealProteinChanged(meal.proteinG.toInt().toString()))
+                                    onAction(NutritionUiAction.OnMealCarbsChanged(meal.carbsG.toInt().toString()))
+                                    onAction(NutritionUiAction.OnMealFatsChanged(meal.fatsG.toInt().toString()))
+                                    onAction(NutritionUiAction.OnSaveMeal)
+                                },
+                                onDelete = { onAction(NutritionUiAction.OnDeleteMeal(meal.id)) }
                             )
-                        },
-                        onEndFast = { activeFastingSession = null }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Card 5: Hydration
+        item(key = "water_card", contentType = "water") {
+            val portions = state.waterMl / 250
+            GymCard {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Вода",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.4).sp,
+                        color = TextPrimary
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(DarkSurfaceHigh)
+                            .padding(horizontal = 12.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = "$portions × 250 мл",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondary,
+                            style = TextStyle(fontFeatureSettings = "tnum")
+                        )
+                    }
+                }
+
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = formatLiters(state.waterMl),
+                        fontSize = 38.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-1).sp,
+                        color = TextPrimary,
+                        style = TextStyle(fontFeatureSettings = "tnum")
+                    )
+                    Text(
+                        text = "/ ${formatLiters(state.targetWaterMl)} л",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextSecondary,
+                        style = TextStyle(fontFeatureSettings = "tnum"),
+                        modifier = Modifier.padding(bottom = 5.dp)
+                    )
+                }
+
+                GymProgressBar(
+                    progress = waterProgress,
+                    heightDp = 8,
+                    color = AccentLime
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    GymPrimaryButton(
+                        text = "+ 250 мл",
+                        onClick = { onAction(NutritionUiAction.OnAddWater(250)) },
+                        modifier = Modifier.weight(1.3f)
+                    )
+                    GymOutlineButton(
+                        text = "− 250",
+                        enabled = state.waterMl >= 250,
+                        onClick = { onAction(NutritionUiAction.OnAddWater(-250)) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    GymOutlineButton(
+                        text = "Сброс",
+                        enabled = state.waterMl > 0,
+                        onClick = { showWaterResetConfirm = true },
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
@@ -749,79 +817,158 @@ fun NutritionScreen(
             onDismissRequest = { showWaterResetConfirm = false },
             sheetState = sheetState,
             containerColor = DarkSurface,
-            contentColor = TextPrimary
+            contentColor = TextPrimary,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 12.dp, bottom = 4.dp)
+                        .width(40.dp)
+                        .height(4.dp)
+                        .clip(CircleShape)
+                        .background(DarkSurfaceElevated)
+                )
+            }
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .padding(horizontal = 20.dp, vertical = 12.dp)
+                    .navigationBarsPadding(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "СБРОС ВОДЫ",
-                    fontSize = 11.sp,
-                    color = TextMuted,
-                    letterSpacing = 0.8.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                GymKicker(text = "Гидратация")
                 Text(
                     text = "Сбросить счётчик воды за ${state.selectedDate}?",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.5).sp,
                     color = TextPrimary
                 )
-                Spacer(modifier = Modifier.height(14.dp))
-                GymDivider()
-                Spacer(modifier = Modifier.height(14.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     GymOutlineButton(
                         text = strings.cancel,
-                        onClick = { showWaterResetConfirm = false }
+                        onClick = { showWaterResetConfirm = false },
+                        modifier = Modifier.weight(1f)
                     )
-                    GymWhiteButton(
+                    GymPrimaryButton(
                         text = "Сбросить",
                         onClick = {
                             if (state.waterMl > 0) {
                                 onAction(NutritionUiAction.OnAddWater(-state.waterMl))
                             }
                             showWaterResetConfirm = false
-                        }
+                        },
+                        modifier = Modifier.weight(1f)
                     )
                 }
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
     }
 }
 
 @Composable
-private fun BalanceMetricRow(
-    headline: String,
+private fun MacroSummaryTile(
     label: String,
-    progress: Float
+    current: Int,
+    target: Int,
+    progress: Float,
+    barColor: Color,
+    modifier: Modifier = Modifier
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = headline,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
+    val clamped = progress.coerceIn(0f, 1f)
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(DarkSurfaceHigh)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Text(
             text = label,
-            fontSize = 13.sp,
-            color = TextSecondary
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
-        GymProgressBar(
-            progress = progress,
-            color = AccentLime
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = "$current",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-0.5).sp,
+                color = TextPrimary,
+                style = TextStyle(fontFeatureSettings = "tnum")
+            )
+            Text(
+                text = " / $target г",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextSecondary,
+                style = TextStyle(fontFeatureSettings = "tnum"),
+                modifier = Modifier.padding(bottom = 2.dp)
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(CircleShape)
+                .background(DarkSurface)
+        ) {
+            if (clamped > 0f) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(clamped)
+                        .height(6.dp)
+                        .clip(CircleShape)
+                        .background(barColor)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddFoodModeTile(
+    title: String,
+    subtitle: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (selected) AccentLime else DarkSurfaceHigh)
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = title,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = if (selected) GymInkOnLight else TextPrimary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = subtitle,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = if (selected) GymInkOnLight.copy(alpha = 0.75f) else TextSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MealLogRowItem(
     meal: MealLog,
@@ -839,41 +986,111 @@ private fun MealLogRowItem(
     }
     val metaLine = if (timeStr.isNotBlank()) "$mealTypeRu · $timeStr" else mealTypeRu
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = metaLine,
-            fontSize = 12.sp,
-            color = TextMuted
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = meal.name,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.Medium,
-            color = TextPrimary
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "${meal.calories} ккал",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "Б ${meal.proteinG.toInt()} г · У ${meal.carbsG.toInt()} г · Ж ${meal.fatsG.toInt()} г",
-            fontSize = 13.sp,
-            color = TextSecondary
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(DarkSurfaceHigh)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
         ) {
-            GymOutlineButton(text = "Изменить", onClick = onEdit)
-            GymOutlineButton(text = "Повторить", onClick = onRepeat)
-            GymOutlineButton(text = "Удалить", onClick = onDelete)
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = metaLine,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextMuted,
+                    style = TextStyle(fontFeatureSettings = "tnum")
+                )
+                Text(
+                    text = meal.name,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = "${meal.calories}",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-0.5).sp,
+                    color = AccentLime,
+                    style = TextStyle(fontFeatureSettings = "tnum")
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "ккал",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextSecondary,
+                    modifier = Modifier.padding(bottom = 3.dp)
+                )
+            }
         }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MealMacroChip(text = "Б ${meal.proteinG.toInt()} г")
+            MealMacroChip(text = "У ${meal.carbsG.toInt()} г")
+            MealMacroChip(text = "Ж ${meal.fatsG.toInt()} г")
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MealActionChip(text = "Изменить", onClick = onEdit)
+            MealActionChip(text = "Повторить", onClick = onRepeat)
+            MealActionChip(text = "Удалить", onClick = onDelete, isDestructive = true)
+        }
+    }
+}
+
+@Composable
+private fun MealMacroChip(text: String) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(DarkSurface)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextSecondary,
+            style = TextStyle(fontFeatureSettings = "tnum")
+        )
+    }
+}
+
+@Composable
+private fun MealActionChip(
+    text: String,
+    onClick: () -> Unit,
+    isDestructive: Boolean = false
+) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(if (isDestructive) CrimsonRed.copy(alpha = 0.14f) else DarkSurface)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 7.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (isDestructive) CrimsonRed else TextSecondary
+        )
     }
 }
 
