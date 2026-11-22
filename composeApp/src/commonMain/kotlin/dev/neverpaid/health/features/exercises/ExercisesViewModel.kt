@@ -57,13 +57,18 @@ class ExercisesViewModel(
     }
 
     private fun refreshFromApi() {
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.refreshExercises()
         }
     }
 
     private fun loadExercises() {
-        launchGuarded {
+        launchGuarded(
+            onError = { err ->
+                updateState { copy(isLoading = false) }
+                sendError(err)
+            }
+        ) {
             repository.searchExercises(
                 query = currentState.searchQuery,
                 muscle = currentState.selectedMuscle,
@@ -125,7 +130,12 @@ class ExercisesViewModel(
     }
 
     private fun startWorkoutWithExercise(exercise: Exercise) {
-        launchGuarded {
+        launchGuarded(
+            onError = { err ->
+                sendError(err)
+                sendEffect(ExercisesUiEffect.ShowToast(err.message ?: "Ошибка запуска тренировки"))
+            }
+        ) {
             val active = repository.getActiveWorkout().first()
             val newEx = WorkoutExercise(
                 instanceId = "we-${exercise.id}",

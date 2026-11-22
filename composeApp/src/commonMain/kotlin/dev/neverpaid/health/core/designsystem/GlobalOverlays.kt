@@ -1,6 +1,8 @@
 package dev.neverpaid.health.core.designsystem
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,7 +24,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,6 +32,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -42,12 +44,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.math.StrengthCalculator
 import dev.neverpaid.health.domain.model.FocusTimerState
 import dev.neverpaid.health.domain.model.Workout
@@ -60,6 +64,7 @@ fun FloatingActiveWorkoutPill(
     onExpand: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalDudaStrings.current
     var nowMs by remember { mutableLongStateOf(Clock.System.now().toEpochMilliseconds()) }
     LaunchedEffect(workout.id) {
         while (true) {
@@ -72,67 +77,74 @@ fun FloatingActiveWorkoutPill(
     val formattedTime = StrengthCalculator.formatTime(elapsedSeconds / 60, elapsedSeconds % 60)
     val completedSets = workout.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
 
-    Row(
+    Surface(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(AccentLime)
-            .clickable { onExpand() }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .shadow(10.dp, RoundedCornerShape(20.dp))
+            .clickable { onExpand() },
+        shape = RoundedCornerShape(20.dp),
+        color = SurfaceWhite,
+        border = BorderStroke(1.5.dp, BorderLilacStrong)
     ) {
         Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(GymInkOnLight)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = workout.title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Black,
-                    color = GymInkOnLight,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(EmeraldSuccess)
                 )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = workout.title,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Black,
+                        color = TextPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "$formattedTime · ${workout.exercises.size} ${strings.dashboardExercisesShort} · $completedSets ${strings.dashboardSetsShort}",
+                        fontSize = 12.sp,
+                        color = TextSecondary,
+                        fontWeight = FontWeight.SemiBold,
+                        style = TextStyle(fontFeatureSettings = "tnum")
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(VioletButtonBrush)
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowUp,
+                    contentDescription = null,
+                    tint = InkWhite,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "$formattedTime · ${workout.exercises.size} упр. · $completedSets сет.",
+                    text = strings.commonToGym,
                     fontSize = 12.sp,
-                    color = GymInkOnLight.copy(alpha = 0.8f),
-                    fontWeight = FontWeight.Bold,
-                    style = TextStyle(fontFeatureSettings = "tnum")
+                    fontWeight = FontWeight.ExtraBold,
+                    color = InkWhite
                 )
             }
-        }
-
-        Row(
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(GymInkOnLight)
-                .padding(horizontal = 14.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowUp,
-                contentDescription = null,
-                tint = AccentLime,
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = "В зал",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = AccentLime
-            )
         }
     }
 }
@@ -151,67 +163,75 @@ fun FloatingFocusTimerOverlay(
 ) {
     if (!state.isOpen) return
 
+    val strings = LocalDudaStrings.current
     val displaySeconds = if (state.mode == "stopwatch") state.elapsedSeconds else state.secondsLeft
     val formatted = StrengthCalculator.formatTime(displaySeconds / 60, displaySeconds % 60)
 
     if (state.isMinimized) {
-        Row(
+        Surface(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 4.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(DarkSurfaceElevated)
-                .clickable { onMinimize(false) }
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .shadow(8.dp, RoundedCornerShape(18.dp))
+                .clickable { onMinimize(false) },
+            shape = RoundedCornerShape(18.dp),
+            color = SurfaceWhite,
+            border = BorderStroke(1.dp, BorderLilacStrong)
         ) {
             Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                GymIconBadge(icon = Icons.Default.Timer, size = 36.dp)
-                Spacer(modifier = Modifier.width(10.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = state.taskTitle.ifBlank { "Фокус-сессия" },
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = formatted,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Black,
-                        color = AccentLime,
-                        style = TextStyle(fontFeatureSettings = "tnum")
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    GymIconBadge(icon = Icons.Default.Timer, size = 36.dp)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = state.taskTitle.ifBlank { strings.focusSessionDefault },
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = formatted,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Black,
+                            color = VioletPrimary,
+                            style = TextStyle(fontFeatureSettings = "tnum")
+                        )
+                    }
                 }
-            }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onToggleRunning, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        imageVector = if (state.isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = null,
-                        tint = AccentLime
-                    )
-                }
-                IconButton(onClick = onCompleteSession, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Завершить",
-                        tint = AccentLime
-                    )
-                }
-                IconButton(onClick = { onMinimize(false) }, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowUp,
-                        contentDescription = "Развернуть",
-                        tint = TextSecondary
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onToggleRunning, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            imageVector = if (state.isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            tint = VioletPrimary
+                        )
+                    }
+                    IconButton(onClick = onCompleteSession, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = strings.done,
+                            tint = EmeraldSuccess
+                        )
+                    }
+                    IconButton(onClick = { onMinimize(false) }, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowUp,
+                            contentDescription = strings.commonExpand,
+                            tint = TextSecondary
+                        )
+                    }
                 }
             }
         }
@@ -228,7 +248,7 @@ fun FloatingFocusTimerOverlay(
     ModalBottomSheet(
         onDismissRequest = { onMinimize(true) },
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = SurfaceWhite,
         contentColor = TextPrimary,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = {
@@ -237,7 +257,7 @@ fun FloatingFocusTimerOverlay(
                     .padding(top = 12.dp, bottom = 4.dp)
                     .size(width = 40.dp, height = 4.dp)
                     .clip(CircleShape)
-                    .background(DarkSurfaceElevated)
+                    .background(BorderLilacStrong)
             )
         }
     ) {
@@ -254,9 +274,9 @@ fun FloatingFocusTimerOverlay(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    GymKicker(text = "Фокус таймер")
+                    GymKicker(text = strings.todoPomodoroTitle)
                     Text(
-                        text = state.taskTitle.ifBlank { "Глубокая концентрация" },
+                        text = state.taskTitle.ifBlank { strings.focusDeepWork },
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
                         color = TextPrimary,
@@ -267,27 +287,28 @@ fun FloatingFocusTimerOverlay(
 
                 Row {
                     IconButton(onClick = { onMinimize(true) }) {
-                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Свернуть", tint = TextSecondary)
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = strings.commonMinimize, tint = TextSecondary)
                     }
                     IconButton(onClick = onClose) {
-                        Icon(Icons.Default.Close, contentDescription = "Закрыть", tint = TextSecondary)
+                        Icon(Icons.Default.Close, contentDescription = strings.commonClose, tint = TextSecondary)
                     }
                 }
             }
 
-            // Mode Tabs: Помидор / Таймер / Секундомер
+            // Mode Tabs
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(CircleShape)
-                    .background(DarkSurfaceHigh)
+                    .background(RoyalWell)
+                    .border(1.dp, BorderLilac, CircleShape)
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 listOf(
-                    Triple("pomodoro", "Помидор", 25),
-                    Triple("timer", "Таймер", state.customMinutes),
-                    Triple("stopwatch", "Секундомер", 0)
+                    Triple("pomodoro", strings.focusPomodoro, 25),
+                    Triple("timer", strings.focusTimer, state.customMinutes),
+                    Triple("stopwatch", strings.focusStopwatch, 0)
                 ).forEach { (modeKey, label, mins) ->
                     val selected = state.mode == modeKey
                     Box(
@@ -295,7 +316,7 @@ fun FloatingFocusTimerOverlay(
                             .weight(1f)
                             .heightIn(min = 42.dp)
                             .clip(CircleShape)
-                            .background(if (selected) AccentLime else Color.Transparent)
+                            .background(if (selected) VioletPrimary else Color.Transparent)
                             .clickable { onSetMode(modeKey, "focus", mins.coerceAtLeast(15)) }
                             .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
@@ -304,7 +325,7 @@ fun FloatingFocusTimerOverlay(
                             text = label,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = if (selected) GymInkOnLight else TextSecondary
+                            color = if (selected) InkWhite else TextSecondary
                         )
                     }
                 }
@@ -316,9 +337,9 @@ fun FloatingFocusTimerOverlay(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     listOf(
-                        Triple("focus", "Фокус 25м", 25),
-                        Triple("short_break", "Перерыв 5м", 5),
-                        Triple("long_break", "Длинный 15м", 15)
+                        Triple("focus", strings.todoPomodoroFocus, 25),
+                        Triple("short_break", strings.todoPomodoroShortBreak, 5),
+                        Triple("long_break", "15m", 15)
                     ).forEach { (phaseKey, label, mins) ->
                         GymPillTab(
                             text = label,
@@ -335,7 +356,7 @@ fun FloatingFocusTimerOverlay(
                 ) {
                     listOf(15, 25, 45, 60, 90).forEach { mins ->
                         GymPillTab(
-                            text = "${mins}м",
+                            text = "${mins}m",
                             selected = state.customMinutes == mins,
                             onClick = { onSetMode("timer", "focus", mins) },
                             modifier = Modifier.weight(1f)
@@ -354,8 +375,8 @@ fun FloatingFocusTimerOverlay(
                 CircularProgressIndicator(
                     progress = { progress },
                     modifier = Modifier.size(200.dp),
-                    color = AccentLime,
-                    trackColor = DarkSurfaceHigh,
+                    color = VioletPrimary,
+                    trackColor = SurfaceLilac,
                     strokeWidth = 10.dp
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -368,7 +389,7 @@ fun FloatingFocusTimerOverlay(
                         style = TextStyle(fontFeatureSettings = "tnum")
                     )
                     Text(
-                        text = "Сессий: ${state.pomodoroCount}",
+                        text = "${strings.focusSessionsCount} ${state.pomodoroCount}",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = TextSecondary
@@ -381,7 +402,7 @@ fun FloatingFocusTimerOverlay(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 GymOutlineButton(
-                    text = "Сброс",
+                    text = strings.todoPomodoroReset,
                     onClick = onReset,
                     modifier = Modifier.weight(1f),
                     fillWidth = true
@@ -391,12 +412,12 @@ fun FloatingFocusTimerOverlay(
                     onClick = onToggleRunning,
                     modifier = Modifier
                         .weight(1.4f)
-                        .height(52.dp),
+                        .height(50.dp),
                     shape = RoundedCornerShape(16.dp),
-                    elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+                    elevation = ButtonDefaults.buttonElevation(2.dp, 0.dp, 0.dp, 0.dp, 0.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (state.isRunning) AmberWarm else AccentLime,
-                        contentColor = GymInkOnLight
+                        containerColor = if (state.isRunning) AmberWarm else VioletPrimary,
+                        contentColor = InkWhite
                     )
                 ) {
                     Icon(
@@ -406,7 +427,7 @@ fun FloatingFocusTimerOverlay(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (state.isRunning) "Пауза" else "Старт",
+                        text = if (state.isRunning) strings.todoPomodoroPause else strings.todoPomodoroStart,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 15.sp
                     )
@@ -414,10 +435,11 @@ fun FloatingFocusTimerOverlay(
             }
 
             GymOutlineButton(
-                text = "Завершить и закрыть задачу",
+                text = strings.focusFinishClose,
                 onClick = onCompleteSession,
                 fillWidth = true,
-                textColor = AccentLime
+                textColor = EmeraldDark,
+                borderColor = EmeraldBorder
             )
 
             Spacer(modifier = Modifier.height(12.dp))

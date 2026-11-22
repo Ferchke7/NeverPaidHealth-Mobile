@@ -61,6 +61,9 @@ import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymSectionTitle
 import dev.neverpaid.health.core.designsystem.GymTextField
+import dev.neverpaid.health.core.designsystem.HeroMuted
+import dev.neverpaid.health.core.designsystem.InkWhite
+import dev.neverpaid.health.core.designsystem.RoyalHeroCard
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.designsystem.TextSoft
@@ -221,15 +224,57 @@ fun ExercisesScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item(key = "header", contentType = "header") {
-            GymPageHeader(
-                title = strings.navExercises,
-                subtitle = when (lang) {
-                    "uz" -> "Harakatlar katalogi va bajarish texnikasi"
-                    "en" -> "Movement catalog and execution cues"
-                    else -> "Каталог движений и техника выполнения"
-                },
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            RoyalHeroCard(
+                modifier = Modifier.padding(bottom = 8.dp),
+                bottomExtraPadding = 20.dp
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = "DUDA · EXERCISES",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp,
+                            color = HeroMuted
+                        )
+                        Text(
+                            text = strings.navExercises,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-0.7).sp,
+                            color = InkWhite
+                        )
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "Harakatlar katalogi va bajarish texnikasi"
+                                "en" -> "Movement catalog and execution cues"
+                                else -> "Каталог движений и техника выполнения"
+                            },
+                            fontSize = 14.sp,
+                            color = HeroMuted
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(InkWhite.copy(alpha = 0.16f))
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${state.exercises.size}",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Black,
+                            color = InkWhite,
+                            style = TextStyle(fontFeatureSettings = "tnum")
+                        )
+                    }
+                }
+            }
         }
 
         item(key = "controls", contentType = "controls") {

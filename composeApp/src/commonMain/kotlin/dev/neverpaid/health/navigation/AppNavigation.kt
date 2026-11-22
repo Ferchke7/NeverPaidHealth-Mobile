@@ -30,13 +30,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import dev.neverpaid.health.core.designsystem.DarkBackground
+import dev.neverpaid.health.core.designsystem.RoyalCanvas
 import dev.neverpaid.health.core.designsystem.FloatingActiveWorkoutPill
 import dev.neverpaid.health.core.designsystem.FloatingFocusTimerOverlay
 import dev.neverpaid.health.core.designsystem.GymBottomNavBar
 import dev.neverpaid.health.core.designsystem.GymHeaderBar
 import dev.neverpaid.health.core.designsystem.GymNavDestination
 import dev.neverpaid.health.core.designsystem.GymSectionMenuSheet
+import dev.neverpaid.health.core.designsystem.SurfaceWhite
 import dev.neverpaid.health.core.designsystem.WorkoutSummaryBottomSheet
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.i18n.getDudaStrings
@@ -210,12 +211,12 @@ fun DudaMobileApp() {
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            containerColor = DarkBackground,
+            containerColor = RoyalCanvas,
             topBar = {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(DarkBackground)
+                        .background(SurfaceWhite)
                         .statusBarsPadding()
                 ) {
                     GymHeaderBar(
@@ -234,7 +235,7 @@ fun DudaMobileApp() {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(DarkBackground)
+                        .background(RoyalCanvas)
                 ) {
                     if (focusTimerState.isOpen && focusTimerState.isMinimized) {
                         FloatingFocusTimerOverlay(

@@ -32,13 +32,18 @@ class HistoryViewModel(
     }
 
     private fun refreshHistory() {
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.refreshWorkoutHistory()
         }
     }
 
     private fun loadHistory() {
-        launchGuarded {
+        launchGuarded(
+            onError = { err ->
+                updateState { copy(isLoading = false) }
+                sendError(err)
+            }
+        ) {
             repository.getWorkoutHistory().collectLatest { list ->
                 val now = PlatformBridge.currentTimeMillis()
                 val dayMs = 86400000L
@@ -68,7 +73,12 @@ class HistoryViewModel(
     }
 
     private fun repeatWorkout(workout: Workout) {
-        launchGuarded {
+        launchGuarded(
+            onError = { err ->
+                sendError(err)
+                sendEffect(HistoryUiEffect.ShowToast(err.message ?: "Ошибка запуска тренировки"))
+            }
+        ) {
             val resetExercises = workout.exercises.map { ex ->
                 ex.copy(
                     sets = ex.sets.map { s ->

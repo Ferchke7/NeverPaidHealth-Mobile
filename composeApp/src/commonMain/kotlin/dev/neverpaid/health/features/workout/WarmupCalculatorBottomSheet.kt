@@ -206,14 +206,31 @@ fun WarmupCalculatorBottomSheet(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Protocol Selector (flat pill tabs, zero hairline borders)
+            val lang = when (strings.navWorkouts) {
+                "Mashg'ulotlar" -> "uz"
+                "Workouts" -> "en"
+                else -> "ru"
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 listOf(
-                    WarmupProtocol.STANDARD_HYPERTROPHY to "Hypertrophy",
-                    WarmupProtocol.POWERLIFTING_HEAVY to "Heavy Single",
-                    WarmupProtocol.QUICK_POTENTIATION to "Activation"
+                    WarmupProtocol.STANDARD_HYPERTROPHY to when (lang) {
+                        "uz" -> "Gipertrofiya"
+                        "en" -> "Hypertrophy"
+                        else -> "Гипертрофия"
+                    },
+                    WarmupProtocol.POWERLIFTING_HEAVY to when (lang) {
+                        "uz" -> "Og'ir singl"
+                        "en" -> "Heavy Single"
+                        else -> "Тяжёлый сингл"
+                    },
+                    WarmupProtocol.QUICK_POTENTIATION to when (lang) {
+                        "uz" -> "Faollashtirish"
+                        "en" -> "Activation"
+                        else -> "Активация"
+                    }
                 ).forEach { (protocol, label) ->
                     GymPillTab(
                         text = label,
@@ -270,7 +287,7 @@ fun WarmupCalculatorBottomSheet(
                         }
 
                         Text(
-                            text = "${set.weightKg} кг × ${set.reps}",
+                            text = "${set.weightKg} ${strings.unitKg} × ${set.reps}",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Black,
                             color = TextPrimary,
@@ -278,7 +295,7 @@ fun WarmupCalculatorBottomSheet(
                         )
 
                         Text(
-                            text = "${set.suggestedRestSeconds}с",
+                            text = "${set.suggestedRestSeconds}s",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = TextMuted,

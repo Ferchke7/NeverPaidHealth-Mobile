@@ -70,9 +70,14 @@ import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymSectionTitle
 import dev.neverpaid.health.core.designsystem.GymStatTile
 import dev.neverpaid.health.core.designsystem.GymTextField
+import dev.neverpaid.health.core.designsystem.HeroMuted
+import dev.neverpaid.health.core.designsystem.InkWhite
+import dev.neverpaid.health.core.designsystem.RoyalHeroCard
+import dev.neverpaid.health.core.designsystem.SurfaceWhite
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.designsystem.VioletPrimary
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.domain.model.FeedbackItem
@@ -175,7 +180,7 @@ fun ProfileScreen(
             }
         }
 
-        // 1. Athlete Card
+        // 1. Royal Violet Athlete Profile Hero + Language Preference Card (Figma Screen 10)
         item(key = "account_card", contentType = "account") {
             val displayName = if (state.isGuest) {
                 when (lang) { "uz" -> "Mehmon"; "en" -> "Guest Athlete"; else -> "Гость" }
@@ -184,79 +189,95 @@ fun ProfileScreen(
             }
             val initial = displayName.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D"
 
-            GymCard {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(CircleShape)
-                            .background(AccentLimeSubtle),
-                        contentAlignment = Alignment.Center
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                RoyalHeroCard(bottomExtraPadding = 22.dp) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text(
-                            text = initial,
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Black,
-                            color = AccentLime
-                        )
-                    }
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = displayName,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = TextPrimary
-                        )
-                        if (state.userEmail.isNotBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .size(60.dp)
+                                .clip(CircleShape)
+                                .background(InkWhite),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Text(
-                                text = state.userEmail,
+                                text = initial,
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Black,
+                                color = VioletPrimary
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = displayName,
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Black,
+                                color = InkWhite
+                            )
+                            if (state.userEmail.isNotBlank()) {
+                                Text(
+                                    text = state.userEmail,
+                                    fontSize = 13.sp,
+                                    color = HeroMuted
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SurfaceWhite)
+                                .clickable {
+                                    if (state.isGuest) {
+                                        onAction(ProfileUiAction.OnLogoutClick)
+                                    } else {
+                                        onAction(ProfileUiAction.OnRefresh)
+                                    }
+                                }
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (state.isGuest) {
+                                    when (lang) { "uz" -> "Kirish"; "en" -> "Sign in"; else -> "Войти" }
+                                } else {
+                                    when (lang) { "uz" -> "Yangilash"; "en" -> "Sync"; else -> "Синхр." }
+                                },
                                 fontSize = 13.sp,
-                                color = TextSecondary
+                                fontWeight = FontWeight.ExtraBold,
+                                color = VioletPrimary
                             )
                         }
                     }
-
-                    if (state.isGuest) {
-                        GymPrimaryButton(
-                            text = when (lang) { "uz" -> "Kirish"; "en" -> "Sign in"; else -> "Войти" },
-                            onClick = { onAction(ProfileUiAction.OnLogoutClick) }
-                        )
-                    } else {
-                        GymOutlineButton(
-                            text = when (lang) { "uz" -> "Yangilash"; "en" -> "Sync"; else -> "Синхр." },
-                            onClick = { onAction(ProfileUiAction.OnRefresh) }
-                        )
-                    }
                 }
 
-                GymDivider()
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = strings.profileLanguage,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        languages.forEach { (code, label) ->
-                            GymPillTab(
-                                text = label,
-                                selected = state.languageCode.equals(code, ignoreCase = true),
-                                onClick = { onAction(ProfileUiAction.OnSelectLanguage(code)) }
-                            )
+                GymCard {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = strings.profileLanguage,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            languages.forEach { (code, label) ->
+                                GymPillTab(
+                                    text = label,
+                                    selected = state.languageCode.equals(code, ignoreCase = true),
+                                    onClick = { onAction(ProfileUiAction.OnSelectLanguage(code)) }
+                                )
+                            }
                         }
                     }
                 }

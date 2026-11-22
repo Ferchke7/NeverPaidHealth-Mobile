@@ -53,6 +53,7 @@ import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
+import dev.neverpaid.health.core.designsystem.FloatingQuickDock
 import dev.neverpaid.health.core.designsystem.GymCard
 import dev.neverpaid.health.core.designsystem.GymInkOnLight
 import dev.neverpaid.health.core.designsystem.GymInnerWell
@@ -66,7 +67,10 @@ import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymProgressBar
 import dev.neverpaid.health.core.designsystem.GymSectionTitle
 import dev.neverpaid.health.core.designsystem.GymWell
+import dev.neverpaid.health.core.designsystem.HeroMuted
 import dev.neverpaid.health.core.designsystem.InfoAccent
+import dev.neverpaid.health.core.designsystem.InkWhite
+import dev.neverpaid.health.core.designsystem.RoyalHeroCard
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -262,64 +266,70 @@ fun NutritionScreen(
             }
         }
 
-        // Hero Card: Daily Calorie & Macros Summary
+        // Hero Card: Royal Violet Daily Calorie & Macros Summary (Figma Screen 06)
         item(key = "daily_balance_card", contentType = "balance") {
             val remainingKcal = (state.targetCalories - state.totalCalories).coerceAtLeast(0)
-            GymCard {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    GymKicker(text = "Дневной баланс")
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(AccentLimeSubtle)
-                            .padding(horizontal = 12.dp, vertical = 5.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                RoyalHeroCard(bottomExtraPadding = 22.dp) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Осталось $remainingKcal ккал",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AccentLime,
+                            text = "DUDA · NUTRITION",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp,
+                            color = HeroMuted
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(InkWhite.copy(alpha = 0.18f))
+                                .padding(horizontal = 12.dp, vertical = 5.dp)
+                        ) {
+                            Text(
+                                text = "Осталось $remainingKcal ккал",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = InkWhite,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.Bottom,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = formatSpacedInt(state.totalCalories),
+                            fontSize = 44.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-1.5).sp,
+                            color = InkWhite,
                             style = TextStyle(fontFeatureSettings = "tnum")
                         )
+                        Text(
+                            text = "/ ${formatSpacedInt(state.targetCalories)} ккал",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = HeroMuted,
+                            style = TextStyle(fontFeatureSettings = "tnum"),
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        )
                     }
-                }
 
-                Row(
-                    verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = formatSpacedInt(state.totalCalories),
-                        fontSize = 48.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = (-1.5).sp,
-                        color = AccentLime,
-                        style = TextStyle(fontFeatureSettings = "tnum")
-                    )
-                    Text(
-                        text = "/ ${formatSpacedInt(state.targetCalories)} ккал",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextSecondary,
-                        style = TextStyle(fontFeatureSettings = "tnum"),
-                        modifier = Modifier.padding(bottom = 6.dp)
+                    GymProgressBar(
+                        progress = caloriesProgress,
+                        heightDp = 9,
+                        color = InkWhite,
+                        trackColor = InkWhite.copy(alpha = 0.22f)
                     )
                 }
 
-                GymProgressBar(
-                    progress = caloriesProgress,
-                    heightDp = 10,
-                    color = AccentLime
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
+                FloatingQuickDock {
                     MacroSummaryTile(
                         label = "Белки",
                         current = state.totalProtein,
@@ -782,7 +792,7 @@ fun NutritionScreen(
                 GymProgressBar(
                     progress = waterProgress,
                     heightDp = 8,
-                    color = AccentLime
+                    color = InfoAccent
                 )
 
                 Row(

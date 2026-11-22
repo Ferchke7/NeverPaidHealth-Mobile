@@ -55,6 +55,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,15 +64,19 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
+import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
+import dev.neverpaid.health.core.designsystem.EmeraldBg
+import dev.neverpaid.health.core.designsystem.EmeraldSuccess
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
+import dev.neverpaid.health.core.designsystem.FloatingQuickDock
 import dev.neverpaid.health.core.designsystem.GymCard
 import dev.neverpaid.health.core.designsystem.GymEmptyCard
 import dev.neverpaid.health.core.designsystem.GymInkOnLight
@@ -85,11 +90,16 @@ import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymSectionTitle
 import dev.neverpaid.health.core.designsystem.GymTextField
+import dev.neverpaid.health.core.designsystem.HeroMuted
+import dev.neverpaid.health.core.designsystem.InkWhite
 import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
+import dev.neverpaid.health.core.designsystem.RoyalHeroCard
+import dev.neverpaid.health.core.designsystem.SurfaceWhite
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.designsystem.TextSoft
+import dev.neverpaid.health.core.designsystem.VioletPrimary
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.domain.model.ActiveProgramBundle
@@ -234,10 +244,51 @@ fun DashboardScreen(
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 36.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // 1. Page Header + Quick Hub Shortcuts
+        // 1. Royal Violet Hero Header + Floating Quick Dock
         item(key = "page_header", contentType = "header") {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                GymPageHeader(title = strings.navWorkouts)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                RoyalHeroCard(bottomExtraPadding = 22.dp) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "DUDA · TRAINING HUB",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.sp,
+                                color = HeroMuted
+                            )
+                            Text(
+                                text = strings.navWorkouts,
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = (-0.7).sp,
+                                color = InkWhite
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(InkWhite.copy(alpha = 0.16f))
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${state.totalWorkouts} ${strings.workoutsDone}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = InkWhite,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                        }
+                    }
+                }
                 TrainingHubQuickActions(onNavigateToScreen = onNavigateToScreen)
             }
         }
@@ -421,10 +472,7 @@ private fun ActiveWorkoutBannerCard(
     lang: String,
     onResumeClick: () -> Unit
 ) {
-    GymCard(
-        backgroundColor = AccentLime,
-        contentPadding = PaddingValues(20.dp)
-    ) {
+    RoyalHeroCard(bottomExtraPadding = 20.dp) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -443,13 +491,13 @@ private fun ActiveWorkoutBannerCard(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 1.sp,
-                    color = GymInkOnLight.copy(alpha = 0.7f)
+                    color = HeroMuted
                 )
                 Text(
                     text = title,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Black,
-                    color = GymInkOnLight,
+                    color = InkWhite,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -461,7 +509,7 @@ private fun ActiveWorkoutBannerCard(
                     },
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = GymInkOnLight.copy(alpha = 0.8f)
+                    color = HeroMuted
                 )
             }
 
@@ -470,7 +518,7 @@ private fun ActiveWorkoutBannerCard(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(14.dp))
-                    .background(GymInkOnLight)
+                    .background(SurfaceWhite)
                     .clickable(onClick = onResumeClick)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 contentAlignment = Alignment.Center
@@ -483,7 +531,7 @@ private fun ActiveWorkoutBannerCard(
                     },
                     fontSize = 14.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = AccentLime
+                    color = VioletPrimary
                 )
             }
         }
@@ -551,7 +599,11 @@ private fun ActiveProgramScheduleSection(
         ?: days.find { it.dayNumber == currentDayNumber }
         ?: days.firstOrNull()
 
-    GymCard(backgroundColor = DarkSurface) {
+    GymCard(
+        backgroundColor = DarkSurface,
+        borderColor = BorderHighlight
+    ) {
+        val strings = LocalDudaStrings.current
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -577,6 +629,21 @@ private fun ActiveProgramScheduleSection(
                     .clip(RoundedCornerShape(8.dp))
                     .clickable(onClick = onNavigateToPrograms)
                     .padding(horizontal = 6.dp, vertical = 2.dp)
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(EmeraldBg)
+                .padding(horizontal = 10.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = strings.dashboardPersonalCopyAutoSave,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = EmeraldSuccess,
+                maxLines = 1
             )
         }
 
@@ -1141,31 +1208,28 @@ fun TrainingHubQuickActions(
     onNavigateToScreen: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalDudaStrings.current
     val items = listOf(
-        Triple("programs", "Программы", Icons.Default.Layers),
-        Triple("exercises", "Упражнения", Icons.Default.FitnessCenter),
-        Triple("history", "История", Icons.Default.History),
-        Triple("body", "Замеры", Icons.Default.MonitorWeight)
+        Triple("programs", strings.navPrograms, Icons.Default.Layers),
+        Triple("exercises", strings.navExercises, Icons.Default.FitnessCenter),
+        Triple("history", strings.historyTitle, Icons.Default.History),
+        Triple("body", strings.navBody, Icons.Default.MonitorWeight)
     )
 
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
+    FloatingQuickDock(modifier = modifier) {
         items.forEach { (route, title, icon) ->
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(DarkSurface)
+                    .clip(RoundedCornerShape(14.dp))
                     .clickable { onNavigateToScreen(route) }
-                    .padding(vertical = 12.dp, horizontal = 6.dp),
+                    .padding(vertical = 8.dp, horizontal = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(34.dp)
+                        .size(38.dp)
                         .clip(CircleShape)
                         .background(AccentLimeSubtle),
                     contentAlignment = Alignment.Center
@@ -1174,12 +1238,12 @@ fun TrainingHubQuickActions(
                         imageVector = icon,
                         contentDescription = title,
                         tint = AccentLime,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(19.dp)
                     )
                 }
                 Text(
                     text = title,
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,
                     maxLines = 1,

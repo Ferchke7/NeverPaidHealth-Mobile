@@ -63,11 +63,15 @@ import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.AccentLimeDark
 import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.AmberWarm
+import dev.neverpaid.health.core.designsystem.BorderLilac
 import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
+import dev.neverpaid.health.core.designsystem.EmeraldBg
+import dev.neverpaid.health.core.designsystem.EmeraldBorder
+import dev.neverpaid.health.core.designsystem.EmeraldSuccess
 import dev.neverpaid.health.core.designsystem.ExerciseInfoBottomSheet
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
@@ -85,12 +89,19 @@ import dev.neverpaid.health.core.designsystem.GymProgressBar
 import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.GymWell
 import dev.neverpaid.health.core.designsystem.GymWhiteButton
+import dev.neverpaid.health.core.designsystem.HeroMuted
+import dev.neverpaid.health.core.designsystem.InkWhite
 import dev.neverpaid.health.core.designsystem.InteractivePlateCalculator
+import dev.neverpaid.health.core.designsystem.RoyalHeroCard
+import dev.neverpaid.health.core.designsystem.RoyalWell
 import dev.neverpaid.health.core.designsystem.SetTypeBadge
+import dev.neverpaid.health.core.designsystem.SurfaceLilac
+import dev.neverpaid.health.core.designsystem.SurfaceWhite
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.designsystem.TextSoft
+import dev.neverpaid.health.core.designsystem.VioletPrimary
 import dev.neverpaid.health.core.designsystem.localizeMuscleName
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.math.SetHistoryCalculator
@@ -385,6 +396,11 @@ fun WorkoutScreen(
     modifier: Modifier = Modifier
 ) {
     val strings = LocalDudaStrings.current
+    val lang = when (strings.navWorkouts) {
+        "Mashg'ulotlar" -> "uz"
+        "Workouts" -> "en"
+        else -> "ru"
+    }
     val workout = state.workout
     var showAllExercises by remember(workout?.id) { mutableStateOf(false) }
     var prevExerciseCount by remember(workout?.id) { mutableIntStateOf(workout?.exercises?.size ?: 0) }
@@ -477,10 +493,10 @@ fun WorkoutScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Top workout header card: clean bold workout title, big heavy tabular live elapsed timer,
-            // thin lime progress bar of completed sets, primary "Завершить" and quiet secondary "Отменить"
+            // Top workout header card: Royal Violet Hero Card with clean bold workout title,
+            // big heavy tabular live elapsed timer, emerald progress bar, and crisp white actions
             item(key = "session_summary_card", contentType = "summary") {
-                GymCard {
+                RoyalHeroCard(bottomExtraPadding = 20.dp) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -492,21 +508,46 @@ fun WorkoutScreen(
                                 .clickable { showSessionNoteEditor = !showSessionNoteEditor }
                         ) {
                             Text(
-                                text = workout.title.ifBlank { "Свободная тренировка" },
-                                fontSize = 24.sp,
+                                text = "DUDA · LIVE SESSION",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.sp,
+                                color = HeroMuted
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = workout.title.ifBlank {
+                                    when (lang) {
+                                        "uz" -> "Erkin mashg'ulot"
+                                        "en" -> "Freestyle Workout"
+                                        else -> "Свободная тренировка"
+                                    }
+                                },
+                                fontSize = 23.sp,
                                 fontWeight = FontWeight.Black,
                                 letterSpacing = (-0.6).sp,
-                                lineHeight = 28.sp,
-                                color = TextPrimary,
+                                lineHeight = 27.sp,
+                                color = InkWhite,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = if (showSessionNoteEditor) "Скрыть название" else "Изменить название",
+                                text = when {
+                                    showSessionNoteEditor -> when (lang) {
+                                        "uz" -> "Yopish"
+                                        "en" -> "Hide editor"
+                                        else -> "Скрыть название"
+                                    }
+                                    else -> when (lang) {
+                                        "uz" -> "Nomini o'zgartirish"
+                                        "en" -> "Edit title & notes"
+                                        else -> "Изменить название"
+                                    }
+                                },
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = TextMuted
+                                color = HeroMuted
                             )
                         }
 
@@ -517,12 +558,12 @@ fun WorkoutScreen(
                             fontSize = 36.sp,
                             fontWeight = FontWeight.Black,
                             letterSpacing = (-1.2).sp,
-                            color = AccentLime,
+                            color = InkWhite,
                             style = TextStyle(fontFeatureSettings = "tnum")
                         )
                     }
 
-                    // Thin lime progress bar of completed sets + compact live stats strip
+                    // Emerald progress bar of completed sets + compact live stats strip
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -530,79 +571,147 @@ fun WorkoutScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "$completedSetsCount из $totalSetsCount подходов · ${workout.exercises.size} упр.",
+                                text = when (lang) {
+                                    "uz" -> "$completedSetsCount / $totalSetsCount yondashuv · ${workout.exercises.size} mashq"
+                                    "en" -> "$completedSetsCount of $totalSetsCount sets · ${workout.exercises.size} ex."
+                                    else -> "$completedSetsCount из $totalSetsCount подходов · ${workout.exercises.size} упр."
+                                },
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = TextSecondary,
+                                color = HeroMuted,
                                 style = TextStyle(fontFeatureSettings = "tnum")
                             )
                             Text(
                                 text = "${formatRoundedInt(displayTotalVolume)} $unitLabel",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = TextPrimary,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Black,
+                                color = InkWhite,
                                 style = TextStyle(fontFeatureSettings = "tnum")
                             )
                         }
                         GymProgressBar(
                             progress = setsProgress,
-                            heightDp = 6,
-                            color = AccentLime
+                            heightDp = 7,
+                            color = EmeraldSuccess,
+                            trackColor = InkWhite.copy(alpha = 0.22f)
                         )
                     }
 
-                    // Primary "Завершить", "Комментарий" and quiet secondary "Отменить"
+                    // Primary crisp white Finish pill, translucent Comment & quiet Discard pills
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        GymPrimaryButton(
-                            text = strings.workoutFinish,
-                            onClick = onRequestFinish,
-                            modifier = Modifier.weight(1f)
-                        )
-                        GymOutlineButton(
-                            text = if (workout.notes.isNotBlank()) "Комментарий •" else "Комментарий",
-                            onClick = { showSessionNoteEditor = !showSessionNoteEditor },
-                            textColor = if (workout.notes.isNotBlank() || showSessionNoteEditor) AccentLime else TextPrimary
-                        )
-                        GymOutlineButton(
-                            text = strings.workoutDiscard,
-                            onClick = onRequestDiscard,
-                            textColor = TextSecondary
-                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SurfaceWhite)
+                                .clickable(onClick = onRequestFinish),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = strings.workoutFinish,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = VioletPrimary,
+                                maxLines = 1
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .height(46.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(
+                                    if (workout.notes.isNotBlank() || showSessionNoteEditor) {
+                                        InkWhite.copy(alpha = 0.24f)
+                                    } else {
+                                        InkWhite.copy(alpha = 0.14f)
+                                    }
+                                )
+                                .clickable { showSessionNoteEditor = !showSessionNoteEditor }
+                                .padding(horizontal = 14.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = when (lang) {
+                                    "uz" -> if (workout.notes.isNotBlank()) "Izoh •" else "Izoh"
+                                    "en" -> if (workout.notes.isNotBlank()) "Note •" else "Note"
+                                    else -> if (workout.notes.isNotBlank()) "Коммент •" else "Коммент"
+                                },
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = InkWhite,
+                                maxLines = 1
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .height(46.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(InkWhite.copy(alpha = 0.10f))
+                                .clickable(onClick = onRequestDiscard)
+                                .padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = strings.workoutDiscard,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = HeroMuted,
+                                maxLines = 1
+                            )
+                        }
                     }
 
                     if (workout.notes.isNotBlank() && !showSessionNoteEditor) {
-                        GymInnerWell(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(InkWhite.copy(alpha = 0.14f))
                                 .clickable { showSessionNoteEditor = true }
+                                .padding(12.dp)
                         ) {
                             Text(
-                                text = "Комментарий к тренировке",
+                                text = when (lang) {
+                                    "uz" -> "Mashg'ulot izohi"
+                                    "en" -> "Workout note"
+                                    else -> "Комментарий к тренировке"
+                                },
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = AccentLime
+                                color = HeroMuted
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = workout.notes,
                                 fontSize = 13.sp,
-                                color = TextPrimary
+                                color = InkWhite
                             )
                         }
                     }
 
                     AnimatedVisibility(visible = showSessionNoteEditor) {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            GymDivider()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(SurfaceWhite)
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
                             Text(
-                                text = "Комментарий к тренировке",
+                                text = when (lang) {
+                                    "uz" -> "Mashg'ulot izohi"
+                                    "en" -> "Workout notes"
+                                    else -> "Комментарий к тренировке"
+                                },
                                 fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = AccentLime
+                                fontWeight = FontWeight.Bold,
+                                color = VioletPrimary
                             )
                             GymTextField(
                                 value = sessionNotesDraft,
@@ -610,11 +719,19 @@ fun WorkoutScreen(
                                     sessionNotesDraft = it
                                     onAction(WorkoutUiAction.OnUpdateWorkoutNotes(it))
                                 },
-                                placeholder = "Самочувствие, рабочие веса, заметка на следующий раз...",
+                                placeholder = when (lang) {
+                                    "uz" -> "Holat, ishchi og'irliklar, eslatma..."
+                                    "en" -> "Feeling, working weights, cue for next time..."
+                                    else -> "Самочувствие, рабочие веса, заметка на следующий раз..."
+                                },
                                 singleLine = false
                             )
                             Text(
-                                text = "Название тренировки",
+                                text = when (lang) {
+                                    "uz" -> "Mashg'ulot nomi"
+                                    "en" -> "Workout title"
+                                    else -> "Название тренировки"
+                                },
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = TextSecondary
@@ -625,7 +742,7 @@ fun WorkoutScreen(
                                     sessionTitleDraft = it
                                     onAction(WorkoutUiAction.OnUpdateWorkoutTitle(it))
                                 },
-                                placeholder = "Push Hypertrophy · День 1"
+                                placeholder = "Push Hypertrophy"
                             )
                         }
                     }
@@ -1322,21 +1439,21 @@ private fun WorkoutSetRow(
     } else 0.0
 
     val rowBackground = when {
-        set.isCompleted -> AccentLimeSubtle
-        isSelected -> DarkSurfaceHigh.copy(alpha = 0.45f)
+        set.isCompleted -> EmeraldBg
+        isSelected -> SurfaceLilac
         else -> Color.Transparent
     }
-    val inputBackground = if (set.isCompleted) DarkSurface else GymWell
+    val inputBackground = if (set.isCompleted) SurfaceWhite else RoyalWell
 
     val weightBorder = when {
-        weightFocused -> AccentLime
-        set.isCompleted -> AccentLimeDark.copy(alpha = 0.55f)
-        else -> Color.Transparent
+        weightFocused -> VioletPrimary
+        set.isCompleted -> EmeraldBorder
+        else -> BorderLilac
     }
     val repsBorder = when {
-        repsFocused -> AccentLime
-        set.isCompleted -> AccentLimeDark.copy(alpha = 0.55f)
-        else -> Color.Transparent
+        repsFocused -> VioletPrimary
+        set.isCompleted -> EmeraldBorder
+        else -> BorderLilac
     }
 
     Row(
@@ -1501,19 +1618,19 @@ private fun WorkoutSetRow(
             )
         }
 
-        // 5. ✓ Completion Check Button (AccentLime + GymInkOnLight when completed)
+        // 5. ✓ Completion Check Button (Figma Emerald #10B981 + InkWhite when completed)
         Box(
             modifier = Modifier
                 .size(38.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(if (set.isCompleted) AccentLime else DarkSurfaceHigh)
+                .background(if (set.isCompleted) EmeraldSuccess else SurfaceLilac)
                 .clickable(onClick = onToggleComplete),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = "Отметить подход",
-                tint = if (set.isCompleted) GymInkOnLight else TextMuted,
+                contentDescription = "Mark set complete",
+                tint = if (set.isCompleted) InkWhite else TextMuted,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -1770,22 +1887,67 @@ private fun WorkoutFinishModalSheet(
                 }
 
                 FinishSheetStage.SUMMARY -> {
-                    GymKicker(text = "Тренировка завершена")
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Хорошая работа",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = (-0.6).sp,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "${workout.exercises.size} упражнения · $completedSetsCount подходов",
-                        fontSize = 14.sp,
-                        color = TextSecondary,
-                        style = TextStyle(fontFeatureSettings = "tnum")
-                    )
+                    val lang = when (strings.navWorkouts) {
+                        "Mashg'ulotlar" -> "uz"
+                        "Workouts" -> "en"
+                        else -> "ru"
+                    }
+                    // Figma Receipt Header: Emerald Checkmark Halo + Kicker + Headline
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(76.dp)
+                                .clip(CircleShape)
+                                .background(EmeraldBg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(CircleShape)
+                                    .background(EmeraldSuccess),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = InkWhite,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(14.dp))
+                        GymKicker(
+                            text = when (lang) {
+                                "uz" -> "Mashg'ulot yakunlandi"
+                                "en" -> "Session complete"
+                                else -> "Тренировка завершена"
+                            },
+                            color = EmeraldSuccess
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = strings.workoutAwesome,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-0.6).sp,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = when (lang) {
+                                "uz" -> "${workout.exercises.size} mashq · $completedSetsCount yondashuv"
+                                "en" -> "${workout.exercises.size} exercises · $completedSetsCount sets"
+                                else -> "${workout.exercises.size} упражнения · $completedSetsCount подходов"
+                            },
+                            fontSize = 14.sp,
+                            color = TextSecondary,
+                            style = TextStyle(fontFeatureSettings = "tnum")
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(18.dp))
 
@@ -1797,11 +1959,11 @@ private fun WorkoutFinishModalSheet(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(DarkSurfaceHigh)
+                                .background(RoyalWell)
                                 .padding(14.dp)
                         ) {
                             Text(
-                                text = "ОБЪЁМ",
+                                text = strings.workoutTotalVolume.uppercase(),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextMuted,
@@ -1812,7 +1974,7 @@ private fun WorkoutFinishModalSheet(
                                 text = tonnageStr,
                                 fontSize = 26.sp,
                                 fontWeight = FontWeight.Black,
-                                color = AccentLime,
+                                color = VioletPrimary,
                                 style = TextStyle(fontFeatureSettings = "tnum")
                             )
                         }
@@ -1820,11 +1982,15 @@ private fun WorkoutFinishModalSheet(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(DarkSurfaceHigh)
+                                .background(RoyalWell)
                                 .padding(14.dp)
                         ) {
                             Text(
-                                text = "ВРЕМЯ",
+                                text = when (lang) {
+                                    "uz" -> "VAQT"
+                                    "en" -> "DURATION"
+                                    else -> "ВРЕМЯ"
+                                },
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextMuted,
@@ -1847,7 +2013,7 @@ private fun WorkoutFinishModalSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(DarkSurfaceHigh)
+                                .background(RoyalWell)
                                 .padding(14.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
@@ -1871,7 +2037,7 @@ private fun WorkoutFinishModalSheet(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "$exCompleted с. · ${formatRoundedInt(exDispVol)} $unitLabel",
+                                        text = "$exCompleted · ${formatRoundedInt(exDispVol)} $unitLabel",
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = TextSecondary,
@@ -1888,13 +2054,25 @@ private fun WorkoutFinishModalSheet(
                     Spacer(modifier = Modifier.height(20.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         GymPrimaryButton(
-                            text = if (isFinishing) "Сохранение..." else strings.save,
+                            text = if (isFinishing) {
+                                when (lang) {
+                                    "uz" -> "Saqlanmoqda..."
+                                    "en" -> "Saving..."
+                                    else -> "Сохранение..."
+                                }
+                            } else {
+                                strings.save
+                            },
                             onClick = onConfirmSave,
                             enabled = !isFinishing,
                             fillWidth = true
                         )
                         GymOutlineButton(
-                            text = "Вернуться к тренировке",
+                            text = when (lang) {
+                                "uz" -> "Mashg'ulotga qaytish"
+                                "en" -> "Back to workout"
+                                else -> "Вернуться к тренировке"
+                            },
                             onClick = onDismiss,
                             fillWidth = true
                         )

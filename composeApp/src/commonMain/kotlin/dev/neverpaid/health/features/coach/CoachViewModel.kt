@@ -43,7 +43,7 @@ class CoachViewModel(
                 sendMessage(action.prompt, null)
             }
             CoachUiAction.OnClearChatHistory -> {
-                launchGuarded {
+                launchGuarded(onError = { err -> sendError(err) }) {
                     repository.clearCoachChatHistory()
                     sendEffect(CoachUiEffect.ShowToast("История чата очищена"))
                 }
@@ -115,7 +115,12 @@ class CoachViewModel(
     }
 
     private fun saveSuggestedRoutine(plan: SuggestedWorkoutPlan) {
-        launchGuarded {
+        launchGuarded(
+            onError = { err ->
+                sendError(err)
+                sendEffect(CoachUiEffect.ShowToast(err.message ?: "Ошибка сохранения шаблона"))
+            }
+        ) {
             val req = SaveRoutineRequestDto(
                 name = plan.title,
                 notes = plan.rationale,

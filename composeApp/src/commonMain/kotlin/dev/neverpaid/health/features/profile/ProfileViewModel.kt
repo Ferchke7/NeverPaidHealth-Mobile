@@ -88,7 +88,7 @@ class ProfileViewModel(
     private fun observeProfileAndPreferences() {
         updateState { copy(isGuest = repository.isGuestUser()) }
 
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.getUserPreferences().collectLatest { prefs ->
                 updateState {
                     copy(
@@ -102,7 +102,7 @@ class ProfileViewModel(
             }
         }
 
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.getCurrentUser().collectLatest { user ->
                 if (user != null) {
                     updateState {
@@ -213,7 +213,7 @@ class ProfileViewModel(
     }
 
     private fun logout() {
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.logout()
             sendEffect(ProfileUiEffect.NavigateToAuth)
         }
@@ -223,7 +223,7 @@ class ProfileViewModel(
         val updated = modify(currentState)
         updateState { updated }
 
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.updatePreferences(
                 UserPreferencesData(
                     useKilograms = updated.useKilograms,

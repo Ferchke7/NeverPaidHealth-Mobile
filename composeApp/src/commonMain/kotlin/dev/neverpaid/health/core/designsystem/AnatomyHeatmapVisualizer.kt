@@ -116,9 +116,9 @@ enum class VolumeStatus(
     val titleEn: String,
     val color: Color
 ) {
-    UNTRAINED("Не тренировалась", "Shug'ullanilmagan", "Untrained", DarkSurfaceHigh),
+    UNTRAINED("Не тренировалась", "Shug'ullanilmagan", "Untrained", BorderLilacStrong),
     UNDER_TRAINED("Ниже оптимального", "Optimaldan past", "Maintenance / Low", AmberWarm),
-    OPTIMAL("Оптимальный рост (Hypertrophy)", "Optimal o'sish", "Optimal Hypertrophy", AccentLime),
+    OPTIMAL("Оптимальный рост (Hypertrophy)", "Optimal o'sish", "Optimal Hypertrophy", VioletPrimary),
     OVER_REACHED("Высокое утомление", "Yuqori charchoq", "Overreaching / High Fatigue", CrimsonRed)
 }
 
@@ -194,9 +194,9 @@ fun InteractiveAnatomyHeatmap(
                         onClick = { isFrontView = true },
                         label = { Text("Спереди", fontSize = 11.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentLime,
-                            selectedLabelColor = DarkBackground,
-                            containerColor = DarkSurfaceVariant,
+                            selectedContainerColor = VioletPrimary,
+                            selectedLabelColor = InkWhite,
+                            containerColor = RoyalWell,
                             labelColor = TextPrimary
                         )
                     )
@@ -205,9 +205,9 @@ fun InteractiveAnatomyHeatmap(
                         onClick = { isFrontView = false },
                         label = { Text("Сзади", fontSize = 11.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentLime,
-                            selectedLabelColor = DarkBackground,
-                            containerColor = DarkSurfaceVariant,
+                            selectedContainerColor = VioletPrimary,
+                            selectedLabelColor = InkWhite,
+                            containerColor = RoyalWell,
                             labelColor = TextPrimary
                         )
                     )

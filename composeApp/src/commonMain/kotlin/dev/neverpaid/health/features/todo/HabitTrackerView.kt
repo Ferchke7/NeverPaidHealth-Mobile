@@ -49,10 +49,14 @@ import dev.neverpaid.health.core.designsystem.BorderHighlight
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
+import dev.neverpaid.health.core.designsystem.EmeraldBg
+import dev.neverpaid.health.core.designsystem.EmeraldBorder
+import dev.neverpaid.health.core.designsystem.EmeraldSuccess
 import dev.neverpaid.health.core.designsystem.GymCard
 import dev.neverpaid.health.core.designsystem.GymIconBadge
 import dev.neverpaid.health.core.designsystem.GymInkOnLight
 import dev.neverpaid.health.core.designsystem.GymOutlineButton
+import dev.neverpaid.health.core.designsystem.InkWhite
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -145,10 +149,10 @@ fun HabitTrackerView(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(rowShape)
-                            .background(if (isDone) AccentLimeSubtle else DarkSurfaceHigh)
+                            .background(if (isDone) EmeraldBg else DarkSurfaceHigh)
                             .then(
                                 if (isDone) {
-                                    Modifier.border(1.dp, BorderHighlight, rowShape)
+                                    Modifier.border(1.dp, EmeraldBorder, rowShape)
                                 } else {
                                     Modifier
                                 }
@@ -170,14 +174,14 @@ fun HabitTrackerView(
                                 modifier = Modifier
                                     .size(28.dp)
                                     .clip(CircleShape)
-                                    .background(if (isDone) AccentLime else DarkSurfaceElevated),
+                                    .background(if (isDone) EmeraldSuccess else DarkSurfaceElevated),
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (isDone) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
                                         contentDescription = null,
-                                        tint = GymInkOnLight,
+                                        tint = InkWhite,
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }

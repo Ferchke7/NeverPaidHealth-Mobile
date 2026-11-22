@@ -56,12 +56,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.neverpaid.health.core.designsystem.AccentLime
 import dev.neverpaid.health.core.designsystem.AccentLimeSubtle
 import dev.neverpaid.health.core.designsystem.BorderHighlight
+import dev.neverpaid.health.core.designsystem.BorderLilac
 import dev.neverpaid.health.core.designsystem.BorderSubtle
 import dev.neverpaid.health.core.designsystem.CrimsonRed
 import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
+import dev.neverpaid.health.core.designsystem.EmeraldBg
+import dev.neverpaid.health.core.designsystem.EmeraldBorder
+import dev.neverpaid.health.core.designsystem.EmeraldSuccess
 import dev.neverpaid.health.core.designsystem.ExercisePickerBottomSheet
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnail
 import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
@@ -79,6 +83,11 @@ import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymSectionTitle
 import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.GymWell
+import dev.neverpaid.health.core.designsystem.HeroMuted
+import dev.neverpaid.health.core.designsystem.InkWhite
+import dev.neverpaid.health.core.designsystem.RoyalHeroCard
+import dev.neverpaid.health.core.designsystem.SurfaceLilac
+import dev.neverpaid.health.core.designsystem.SurfaceWhite
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -236,15 +245,31 @@ fun ProgramsScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item(key = "header", contentType = "header") {
-            GymPageHeader(
-                title = strings.navPrograms,
-                subtitle = when (lang) {
-                    "uz" -> "Kutubxona, hamjamiyat va shaxsiy splitlar"
-                    "en" -> "Library, community and your custom splits"
-                    else -> "Библиотека, сообщество и ваши сплиты"
-                },
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            RoyalHeroCard(
+                modifier = Modifier.padding(bottom = 8.dp),
+                bottomExtraPadding = 20.dp
+            ) {
+                GymKicker(
+                    text = "duda · training plans",
+                    color = HeroMuted
+                )
+                Text(
+                    text = strings.navPrograms,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-0.7).sp,
+                    color = InkWhite
+                )
+                Text(
+                    text = when (lang) {
+                        "uz" -> "Kutubxona, hamjamiyat va shaxsiy splitlar"
+                        "en" -> "Library, community and your custom splits"
+                        else -> "Библиотека, сообщество и ваши сплиты"
+                    },
+                    fontSize = 14.sp,
+                    color = HeroMuted
+                )
+            }
         }
 
         if (activeProgram != null) {
@@ -395,7 +420,6 @@ fun ProgramsScreen(
                     onActivate = { onAction(ProgramsUiAction.OnActivateProgram(program.id)) },
                     onEdit = { onAction(ProgramsUiAction.OnOpenEditor(program)) },
                     onDelete = { onAction(ProgramsUiAction.OnDeleteProgram(program.id)) },
-                    onToggleLike = { onAction(ProgramsUiAction.OnToggleLike(program.id)) },
                     onOpenComments = { onAction(ProgramsUiAction.OnOpenComments(program.id)) },
                     onOpenAuthor = {
                         if (program.authorUserId.isNotBlank()) {
@@ -429,17 +453,38 @@ private fun ActiveProgramHeroCard(
 
     GymCard(
         modifier = modifier,
-        backgroundColor = AccentLimeSubtle,
-        borderColor = AccentLime
+        backgroundColor = SurfaceWhite,
+        borderColor = BorderHighlight
     ) {
-        GymKicker(
-            text = when (lang) {
-                "uz" -> "Faol dastur"
-                "en" -> "Active program"
-                else -> "Активная программа"
-            },
-            color = AccentLime
-        )
+        val strings = LocalDudaStrings.current
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            GymKicker(
+                text = when (lang) {
+                    "uz" -> "Faol dastur"
+                    "en" -> "Active program"
+                    else -> "Активная программа"
+                },
+                color = AccentLime
+            )
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(EmeraldBg)
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = strings.dashboardPersonalCopyAutoSave,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = EmeraldSuccess,
+                    maxLines = 1
+                )
+            }
+        }
 
         Text(
             text = program.title,
@@ -669,7 +714,6 @@ private fun ProgramCard(
     onActivate: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    onToggleLike: () -> Unit,
     onOpenComments: () -> Unit,
     onOpenAuthor: () -> Unit
 ) {
@@ -793,12 +837,13 @@ private fun ProgramCard(
                     onClick = onOpenAuthor
                 )
             }
-            GymOutlineButton(
-                text = "♥ ${program.likesCount}",
-                textColor = if (program.isLiked) AccentLime else TextPrimary,
-                borderColor = if (program.isLiked) BorderHighlight else BorderSubtle,
-                onClick = onToggleLike
-            )
+            val strings = LocalDudaStrings.current
+            if (program.installsCount > 0) {
+                ProgramMetaPill(
+                    text = "${program.installsCount} ${strings.programsInstallsLabel}",
+                    highlight = false
+                )
+            }
             GymOutlineButton(
                 text = "${if (lang == "en") "Comments" else if (lang == "uz") "Izohlar" else "Комментарии"} · ${program.commentsCount}",
                 onClick = onOpenComments
@@ -1048,11 +1093,12 @@ private fun AthleteProfileBottomSheet(
                         fontWeight = FontWeight.ExtraBold,
                         color = TextPrimary
                     )
+                    val strings = LocalDudaStrings.current
                     Text(
                         text = when (lang) {
-                            "uz" -> "${profile.totalWorkouts} mashg'ulot · ${StrengthCalculator.formatVolume(profile.totalVolumeKg)} kg · ${profile.totalLikesReceived} yoqdi"
-                            "en" -> "${profile.totalWorkouts} workouts · ${StrengthCalculator.formatVolume(profile.totalVolumeKg)} kg · ${profile.totalLikesReceived} likes"
-                            else -> "${profile.totalWorkouts} тренировок · ${StrengthCalculator.formatVolume(profile.totalVolumeKg)} кг · ${profile.totalLikesReceived} лайков"
+                            "uz" -> "${profile.totalWorkouts} mashg'ulot · ${StrengthCalculator.formatVolume(profile.totalVolumeKg)} kg · ${profile.publicPrograms.size} ${strings.programsPublicCount}"
+                            "en" -> "${profile.totalWorkouts} workouts · ${StrengthCalculator.formatVolume(profile.totalVolumeKg)} kg · ${profile.publicPrograms.size} ${strings.programsPublicCount}"
+                            else -> "${profile.totalWorkouts} тренировок · ${StrengthCalculator.formatVolume(profile.totalVolumeKg)} кг · ${profile.publicPrograms.size} ${strings.programsPublicCount}"
                         },
                         fontSize = 13.sp,
                         color = TextSecondary,
@@ -1094,8 +1140,9 @@ private fun AthleteProfileBottomSheet(
                                     fontWeight = FontWeight.Bold,
                                     color = TextPrimary
                                 )
+                                val strings = LocalDudaStrings.current
                                 Text(
-                                    text = "${prog.daysPerWeek} дн/нед · ♥ ${prog.likesCount}",
+                                    text = "${formatDaysPerWeekLabel(prog.daysPerWeek, lang)} · ${prog.installsCount} ${strings.programsInstallsLabel}",
                                     fontSize = 12.sp,
                                     color = TextSecondary
                                 )

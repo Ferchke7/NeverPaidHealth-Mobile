@@ -6,7 +6,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Heavy, compact headings and tabular figures: reads like a training log, not a document.
+// Clean geometric typography with crisp tabular figures matching the Royal Violet & Clean White UI Kit.
 val AthleticTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = FontFamily.Default,

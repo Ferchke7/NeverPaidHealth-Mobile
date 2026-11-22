@@ -87,7 +87,7 @@ fun ExerciseThumbnail(
         modifier = modifier
             .size(size.dpSize)
             .clip(shape)
-            .background(DarkSurfaceHigh)
+            .background(RoyalWell)
             .let { base -> if (onClick != null) base.clickable(onClick = onClick) else base },
         contentAlignment = Alignment.Center
     ) {
@@ -162,7 +162,7 @@ fun AnimatedExerciseFramesCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(DarkSurfaceHigh)
+            .background(SurfaceWhite)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -213,7 +213,7 @@ fun AnimatedExerciseFramesCard(
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(if (selected) AccentLime else DarkSurfaceElevated)
+                            .background(if (selected) VioletPrimary else SurfaceLilac)
                             .clickable {
                                 isAutoPlaying = false
                                 activeFrame = idx
@@ -224,7 +224,7 @@ fun AnimatedExerciseFramesCard(
                             text = label,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = if (selected) GymInkOnLight else TextSecondary
+                            color = if (selected) InkWhite else TextSecondary
                         )
                     }
                 }

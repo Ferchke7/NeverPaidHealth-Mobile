@@ -67,6 +67,9 @@ import dev.neverpaid.health.core.designsystem.GymProgressBar
 import dev.neverpaid.health.core.designsystem.GymSectionTitle
 import dev.neverpaid.health.core.designsystem.GymStatTile
 import dev.neverpaid.health.core.designsystem.GymTextField
+import dev.neverpaid.health.core.designsystem.HeroMuted
+import dev.neverpaid.health.core.designsystem.InkWhite
+import dev.neverpaid.health.core.designsystem.RoyalHeroCard
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -198,7 +201,51 @@ fun CoachScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item(key = "header", contentType = "header") {
-            GymPageHeader(title = strings.navCoach)
+            RoyalHeroCard(bottomExtraPadding = 20.dp) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = "DUDA · AI COACH",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp,
+                            color = HeroMuted
+                        )
+                        Text(
+                            text = strings.navCoach,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-0.7).sp,
+                            color = InkWhite
+                        )
+                    }
+                    Column(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(InkWhite.copy(alpha = 0.16f))
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            text = "${state.insight.cnsScore}/100",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Black,
+                            color = InkWhite,
+                            style = TextStyle(fontFeatureSettings = "tnum")
+                        )
+                        Text(
+                            text = state.insight.readinessLevel,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = HeroMuted
+                        )
+                    }
+                }
+            }
         }
 
         if (state.isLoading && state.chatMessages.isEmpty()) {

@@ -69,6 +69,9 @@ import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymSectionTitle
 import dev.neverpaid.health.core.designsystem.GymStatTile
 import dev.neverpaid.health.core.designsystem.GymWell
+import dev.neverpaid.health.core.designsystem.HeroMuted
+import dev.neverpaid.health.core.designsystem.InkWhite
+import dev.neverpaid.health.core.designsystem.RoyalHeroCard
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -201,10 +204,29 @@ fun HistoryScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item(key = "header", contentType = "header") {
-            GymPageHeader(
-                title = strings.historyTitle,
-                subtitle = "Календарь, выполненные сеты и тоннаж"
-            )
+            RoyalHeroCard(bottomExtraPadding = 20.dp) {
+                Text(
+                    text = "DUDA · HISTORY",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp,
+                    color = HeroMuted
+                )
+                Text(
+                    text = strings.historyTitle,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-0.7).sp,
+                    color = InkWhite
+                )
+                Text(
+                    text = "$monthHeaderLabel · ${monthWorkouts.size} / $monthVolValue $monthVolUnit",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = HeroMuted,
+                    style = TextStyle(fontFeatureSettings = "tnum")
+                )
+            }
         }
 
         // Monthly KPI Grid
@@ -848,7 +870,7 @@ private fun HistoryMonthCalendarCard(
                     text = if (selectedDate != null) {
                         "Выбрано: ${formatFullRuDate(selectedDate)}"
                     } else {
-                        "Дни с тренировкой отмечены лаймом"
+                        "Дни с тренировкой отмечены фиолетовым"
                     },
                     fontSize = 12.sp,
                     color = TextSecondary

@@ -35,7 +35,6 @@ sealed interface ProgramsUiAction : UiAction {
     data class OnOpenProgramDetail(val program: TrainingProgram?) : ProgramsUiAction
     data class OnActivateProgram(val programId: String) : ProgramsUiAction
     data object OnDeactivateProgram : ProgramsUiAction
-    data class OnToggleLike(val programId: String) : ProgramsUiAction
     data class OnOpenComments(val programId: String) : ProgramsUiAction
     data object OnCloseComments : ProgramsUiAction
     data class OnCommentTextChanged(val text: String) : ProgramsUiAction

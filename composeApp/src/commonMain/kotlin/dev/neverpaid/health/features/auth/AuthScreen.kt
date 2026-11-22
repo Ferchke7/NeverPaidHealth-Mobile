@@ -69,6 +69,9 @@ import dev.neverpaid.health.core.designsystem.GymOutlineButton
 import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymTextField
+import dev.neverpaid.health.core.designsystem.HeroMuted
+import dev.neverpaid.health.core.designsystem.InkWhite
+import dev.neverpaid.health.core.designsystem.RoyalHeroCard
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -216,12 +219,12 @@ fun AuthScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Hero headline
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Royal Violet Hero Card (Figma Screen 11 Login)
+        RoyalHeroCard(bottomExtraPadding = 24.dp) {
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
-                    .background(AccentLimeSubtle)
+                    .background(InkWhite.copy(alpha = 0.16f))
                     .padding(horizontal = 14.dp, vertical = 6.dp)
             ) {
                 Text(
@@ -233,7 +236,7 @@ fun AuthScreen(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 1.sp,
-                    color = AccentLime
+                    color = InkWhite
                 )
             }
 
@@ -243,11 +246,11 @@ fun AuthScreen(
                     "en" -> "Workouts that adapt to you."
                     else -> "Тренировки, которые подстраиваются под тебя."
                 },
-                fontSize = 34.sp,
+                fontSize = 30.sp,
                 fontWeight = FontWeight.Black,
-                lineHeight = 38.sp,
-                letterSpacing = (-1).sp,
-                color = TextPrimary
+                lineHeight = 35.sp,
+                letterSpacing = (-0.9).sp,
+                color = InkWhite
             )
 
             Text(
@@ -256,9 +259,9 @@ fun AuthScreen(
                     "en" -> "Programs, set logging, nutrition and body metrics in one focused training log."
                     else -> "Программы, дневник подходов, питание и метрики тела без лишнего шума."
                 },
-                fontSize = 15.sp,
-                lineHeight = 22.sp,
-                color = TextSecondary
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                color = HeroMuted
             )
         }
 
@@ -335,7 +338,7 @@ fun AuthScreen(
                             modifier = Modifier
                                 .size(30.dp)
                                 .clip(CircleShape)
-                                .background(TextPrimary),
+                                .background(InkWhite),
                             contentAlignment = Alignment.Center
                         ) {
                             GoogleLogoIcon(modifier = Modifier.size(18.dp))

@@ -36,7 +36,6 @@ class ProgramsViewModel(
             }
             is ProgramsUiAction.OnActivateProgram -> activateProgram(action.programId)
             ProgramsUiAction.OnDeactivateProgram -> deactivateProgram()
-            is ProgramsUiAction.OnToggleLike -> toggleLike(action.programId)
             is ProgramsUiAction.OnOpenComments -> openComments(action.programId)
             ProgramsUiAction.OnCloseComments -> closeComments()
             is ProgramsUiAction.OnCommentTextChanged -> {
@@ -106,28 +105,22 @@ class ProgramsViewModel(
     }
 
     private fun activateProgram(programId: String) {
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.activateProgram(programId)
             sendEffect(ProgramsUiEffect.ShowToast("Программа установлена как активная"))
         }
     }
 
     private fun deactivateProgram() {
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.deactivateProgram()
             sendEffect(ProgramsUiEffect.ShowToast("Активная программа отключена"))
         }
     }
 
-    private fun toggleLike(programId: String) {
-        launchGuarded {
-            repository.toggleLikeProgram(programId)
-        }
-    }
-
     private fun openComments(programId: String) {
         updateState { copy(activeCommentsProgramId = programId, comments = emptyList()) }
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.refreshProgramComments(programId)
             repository.getProgramComments(programId).collect { commentList ->
                 if (currentState.activeCommentsProgramId == programId) {
@@ -155,35 +148,35 @@ class ProgramsViewModel(
         val parentId = currentState.replyingToComment?.id
         updateState { copy(newCommentText = "", replyingToComment = null) }
 
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.addProgramComment(programId, text, parentId)
         }
     }
 
     private fun upvoteComment(commentId: String) {
         val programId = currentState.activeCommentsProgramId ?: return
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.toggleUpvoteProgramComment(programId, commentId)
         }
     }
 
     private fun deleteComment(commentId: String) {
         val programId = currentState.activeCommentsProgramId ?: return
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.deleteProgramComment(programId, commentId)
         }
     }
 
     private fun openAthleteProfile(userId: String) {
         if (userId.isBlank()) return
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             val profile = repository.getAthleteProfile(userId)
             updateState { copy(athleteProfile = profile) }
         }
     }
 
     private fun saveProgram(request: SaveProgramRequestDto, editingId: String?) {
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             if (!editingId.isNullOrBlank()) {
                 repository.updateProgram(editingId, request)
                 sendEffect(ProgramsUiEffect.ShowToast("Программа обновлена"))
@@ -196,7 +189,7 @@ class ProgramsViewModel(
     }
 
     private fun deleteProgram(programId: String) {
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.deleteProgram(programId)
             updateState { copy(detailProgram = null) }
             sendEffect(ProgramsUiEffect.ShowToast("Программа удалена"))

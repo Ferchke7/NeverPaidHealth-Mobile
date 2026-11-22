@@ -28,7 +28,12 @@ class BodyViewModel(
             BodyUiAction.OnDismissAddDialog -> updateState { copy(isAddDialogOpen = false) }
             is BodyUiAction.OnSaveFullMeasurement -> {
                 updateState { copy(isAddDialogOpen = false) }
-                launchGuarded {
+                launchGuarded(
+                    onError = { err ->
+                        sendError(err)
+                        sendEffect(BodyUiEffect.ShowToast(err.message ?: "Ошибка сохранения замера"))
+                    }
+                ) {
                     val today = PlatformBridge.formatDate(PlatformBridge.currentTimeMillis(), "yyyy-MM-dd")
                     repository.saveBodyMeasurementFull(
                         SaveBodyLogRequestDto(
@@ -45,7 +50,12 @@ class BodyViewModel(
                 }
             }
             is BodyUiAction.OnDeleteMeasurement -> {
-                launchGuarded {
+                launchGuarded(
+                    onError = { err ->
+                        sendError(err)
+                        sendEffect(BodyUiEffect.ShowToast(err.message ?: "Ошибка удаления"))
+                    }
+                ) {
                     repository.deleteBodyMeasurement(action.loggedDate)
                     sendEffect(BodyUiEffect.ShowToast("Запись удалена"))
                 }
@@ -70,7 +80,12 @@ class BodyViewModel(
             }
             is BodyUiAction.OnSaveTargetWeight -> {
                 updateState { copy(isTargetWeightModalOpen = false, targetWeightKg = action.targetKg) }
-                launchGuarded {
+                launchGuarded(
+                    onError = { err ->
+                        sendError(err)
+                        sendEffect(BodyUiEffect.ShowToast(err.message ?: "Ошибка обновления цели"))
+                    }
+                ) {
                     val prefs = repository.getUserPreferences().first()
                     repository.updateProfilePreferences(prefs.copy(targetWeightKg = action.targetKg ?: 75.0))
                     sendEffect(BodyUiEffect.ShowToast("Целевой вес обновлён"))

@@ -3,6 +3,7 @@ package dev.neverpaid.health.features.todo
 import androidx.lifecycle.viewModelScope
 import dev.neverpaid.health.core.mvi.BaseViewModel
 import dev.neverpaid.health.core.platform.PlatformBridge
+import dev.neverpaid.health.domain.model.DayCalendarItem
 import dev.neverpaid.health.domain.model.SaveTodoRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
 import dev.neverpaid.health.domain.repository.NeverPaidRepository
@@ -33,7 +34,7 @@ class TodoViewModel(
             is TodoUiAction.OnSetViewMode -> {
                 updateState { copy(viewMode = action.mode) }
                 if (action.mode == "log") {
-                    launchGuarded { repository.getActivityLogs() }
+                    launchGuarded(onError = { err -> sendError(err) }) { repository.getActivityLogs() }
                 }
             }
             is TodoUiAction.OnSelectDate -> selectDate(action.date)
@@ -150,7 +151,7 @@ class TodoViewModel(
         val task = currentState.allTasks.find { it.id == taskId } ?: return
         val willBeCompleted = !task.isCompletedOn(date)
 
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.toggleTodo(taskId, date)
             if (willBeCompleted) {
                 sendEffect(TodoUiEffect.TriggerHaptic)
@@ -159,14 +160,14 @@ class TodoViewModel(
     }
 
     private fun deleteTask(taskId: String) {
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.deleteTodo(taskId)
         }
     }
 
     private fun saveTask(request: SaveTodoRequestDto, editingId: String?) {
         updateState { copy(isTaskModalOpen = false, editingTask = null) }
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             if (!editingId.isNullOrBlank()) {
                 repository.updateTodo(editingId, request)
                 sendEffect(TodoUiEffect.ShowToast("Задача обновлена"))

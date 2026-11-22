@@ -613,7 +613,7 @@ data class CreateFeedbackRequestDto(
 )
 
 // ============================================================================
-// 6. TODOS, DAILY SCHEDULE & FOCUS TIMER
+// 6. TASKS, DAILY SCHEDULE & FOCUS TIMER
 // ============================================================================
 
 @Serializable
@@ -1149,4 +1149,12 @@ data class BodyTrendResponseDto(
     @SerialName("delta_30day_kg") val delta30DayKg: Double? = null,
     @SerialName("delta_90day_kg") val delta90DayKg: Double? = null,
     @SerialName("trend_points") val trendPoints: List<BodyTrendPointDto> = emptyList()
+)
+
+data class DayCalendarItem(
+    val dateString: String, // "YYYY-MM-DD"
+    val dayName: String,
+    val dayNumber: String,
+    val isToday: Boolean,
+    val isSelected: Boolean
 )

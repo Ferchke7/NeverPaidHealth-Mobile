@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -43,6 +45,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
@@ -57,20 +61,22 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.math.StrengthCalculator
 
 // ============================================================================
-// Gym design system: shared primitives
-// Flat tonal cards, big rounded corners, one lime accent, heavy numerals.
+// Royal Violet & Clean White Design System: Shared Primitives
+// Canvas #F4F3FA, Elevated White #FFFFFF, Lilac Hairline #ECEAF6,
+// Royal Violet Primary #6D28D9 -> #8B5CF6, Deep Hero Gradient #1B0552..#6D28D9.
 // ============================================================================
 
-private val CardRadius = 20.dp
+private val CardRadius = 22.dp
 private val ControlRadius = 16.dp
 private val TileRadius = 14.dp
 
 private fun brandWordmark(): AnnotatedString = buildAnnotatedString {
     withStyle(SpanStyle(color = TextPrimary, fontWeight = FontWeight.Black)) { append("duda") }
-    withStyle(SpanStyle(color = AccentLime, fontWeight = FontWeight.Black)) { append(".uz") }
+    withStyle(SpanStyle(color = VioletPrimary, fontWeight = FontWeight.Black)) { append(".uz") }
 }
 
 @Composable
@@ -85,69 +91,98 @@ fun GymHeaderBar(
     onMenuClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = SurfaceWhite,
+        shadowElevation = 1.dp,
+        tonalElevation = 0.dp
     ) {
-        Text(
-            text = brandWordmark(),
-            fontSize = 24.sp,
-            letterSpacing = (-0.8).sp,
-            modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .clickable(onClick = onLogoClick)
-                .padding(vertical = 6.dp)
-        )
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            if (hasActiveWorkout && !isWorkoutScreen) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(
-                    modifier = Modifier
-                        .height(36.dp)
-                        .clip(CircleShape)
-                        .background(AccentLime)
-                        .clickable(onClick = onLiveClick)
-                        .padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(onClick = onLogoClick)
+                        .padding(vertical = 4.dp, horizontal = 2.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(GymInkOnLight)
-                    )
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(RoyalHeroBrush),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "D",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Black,
+                            color = InkWhite
+                        )
+                    }
                     Text(
-                        text = "LIVE",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 0.6.sp,
-                        color = GymInkOnLight
+                        text = brandWordmark(),
+                        fontSize = 22.sp,
+                        letterSpacing = (-0.7).sp
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (hasActiveWorkout && !isWorkoutScreen) {
+                        Row(
+                            modifier = Modifier
+                                .height(36.dp)
+                                .clip(CircleShape)
+                                .background(VioletButtonBrush)
+                                .clickable(onClick = onLiveClick)
+                                .padding(horizontal = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(EmeraldSuccess)
+                            )
+                            Text(
+                                text = "LIVE",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 0.6.sp,
+                                color = InkWhite
+                            )
+                        }
+                    }
+
+                    if (hasFocusOpen) {
+                        RoundIconButton(
+                            icon = Icons.Default.Timer,
+                            contentDescription = LocalDudaStrings.current.todoPomodoroTitle,
+                            tint = VioletPrimary,
+                            onClick = onFocusClick
+                        )
+                    }
+
+                    RoundIconButton(
+                        icon = Icons.Default.Apps,
+                        contentDescription = menuLabel,
+                        tint = TextPrimary,
+                        onClick = onMenuClick
                     )
                 }
             }
-
-            if (hasFocusOpen) {
-                RoundIconButton(
-                    icon = Icons.Default.Timer,
-                    contentDescription = "Focus Timer",
-                    tint = AccentLime,
-                    onClick = onFocusClick
-                )
-            }
-
-            RoundIconButton(
-                icon = Icons.Default.Apps,
-                contentDescription = menuLabel,
-                tint = TextPrimary,
-                onClick = onMenuClick
-            )
+            HorizontalDivider(thickness = 1.dp, color = BorderLilac)
         }
     }
 }
@@ -164,7 +199,8 @@ private fun RoundIconButton(
         modifier = modifier
             .size(40.dp)
             .clip(CircleShape)
-            .background(DarkSurfaceHigh)
+            .background(SurfaceLilac)
+            .border(1.dp, BorderLilac, CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -191,56 +227,86 @@ fun GymBottomNavBar(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(12.dp, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        color = DarkSurface,
+        color = SurfaceWhite,
         tonalElevation = 0.dp,
         shadowElevation = 0.dp
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 8.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            items.forEach { item ->
-                val isSelected = item.route == selectedRoute
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(TileRadius))
-                        .clickable { onSelectRoute(item.route) }
-                        .padding(vertical = 2.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Box(
+        Column {
+            HorizontalDivider(thickness = 1.dp, color = BorderLilac)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                items.forEachIndexed { index, item ->
+                    val isSelected = item.route == selectedRoute
+                    val isCenterDock = items.size == 5 && index == 2
+                    Column(
                         modifier = Modifier
-                            .width(52.dp)
-                            .height(30.dp)
-                            .clip(CircleShape)
-                            .background(if (isSelected) AccentLime else Color.Transparent),
-                        contentAlignment = Alignment.Center
+                            .weight(1f)
+                            .clip(RoundedCornerShape(TileRadius))
+                            .clickable { onSelectRoute(item.route) }
+                            .padding(vertical = 2.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        if (item.icon != null) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.label,
-                                tint = if (isSelected) GymInkOnLight else TextMuted,
-                                modifier = Modifier.size(22.dp)
-                            )
+                        if (isCenterDock) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isSelected) VioletButtonBrush else Brush.linearGradient(listOf(VioletPrimary, VioletRoyal)))
+                                    .border(
+                                        width = if (isSelected) 2.dp else 0.dp,
+                                        color = if (isSelected) BorderLilacStrong else Color.Transparent,
+                                        shape = CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (item.icon != null) {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = item.label,
+                                        tint = InkWhite,
+                                        modifier = Modifier.size(21.dp)
+                                    )
+                                }
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .width(50.dp)
+                                    .height(30.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isSelected) SurfaceLilac else Color.Transparent),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (item.icon != null) {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = item.label,
+                                        tint = if (isSelected) VioletPrimary else TextMuted,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
                         }
+                        Text(
+                            text = item.label,
+                            fontSize = 11.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) VioletPrimary else TextMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center
+                        )
                     }
-                    Text(
-                        text = item.label,
-                        fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) TextPrimary else TextMuted,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center
-                    )
                 }
             }
         }
@@ -261,7 +327,7 @@ fun GymSectionMenuSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = SurfaceWhite,
         contentColor = TextPrimary,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = {
@@ -271,7 +337,7 @@ fun GymSectionMenuSheet(
                     .width(40.dp)
                     .height(4.dp)
                     .clip(CircleShape)
-                    .background(DarkSurfaceElevated)
+                    .background(BorderLilacStrong)
             )
         }
     ) {
@@ -307,19 +373,27 @@ fun GymSectionMenuSheet(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(CardRadius))
-                                    .background(if (isSelected) AccentLime else DarkSurfaceHigh)
+                                    .then(
+                                        if (isSelected) {
+                                            Modifier.background(RoyalHeroBrush)
+                                        } else {
+                                            Modifier
+                                                .background(RoyalWell)
+                                                .border(1.dp, BorderLilac, RoundedCornerShape(CardRadius))
+                                        }
+                                    )
                                     .clickable {
                                         onSelectRoute(dest.route)
                                         onDismiss()
                                     }
                                     .padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(14.dp)
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 if (dest.icon != null) {
                                     Icon(
                                         imageVector = dest.icon,
                                         contentDescription = null,
-                                        tint = if (isSelected) GymInkOnLight else AccentLime,
+                                        tint = if (isSelected) InkWhite else VioletPrimary,
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
@@ -327,7 +401,7 @@ fun GymSectionMenuSheet(
                                     text = dest.label,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) GymInkOnLight else TextPrimary,
+                                    color = if (isSelected) InkWhite else TextPrimary,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -343,6 +417,55 @@ fun GymSectionMenuSheet(
     }
 }
 
+/**
+ * Reusable Royal Violet Hero Banner (matching Figma E-Wallet screens 01–12).
+ */
+@Composable
+fun RoyalHeroCard(
+    modifier: Modifier = Modifier,
+    bottomExtraPadding: Dp = 20.dp,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(RoyalHeroBrush)
+            .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = bottomExtraPadding),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        content = content
+    )
+}
+
+/**
+ * Overlapping floating White Card dock placed beneath RoyalHeroCard (-24.dp offset).
+ */
+@Composable
+fun FloatingQuickDock(
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp)
+            .offset(y = (-24).dp)
+            .shadow(10.dp, RoundedCornerShape(22.dp)),
+        shape = RoundedCornerShape(22.dp),
+        color = SurfaceWhite,
+        border = BorderStroke(1.dp, BorderLilac)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            content = content
+        )
+    }
+}
+
 @Composable
 fun GymPageHeader(
     title: String,
@@ -355,10 +478,10 @@ fun GymPageHeader(
     ) {
         Text(
             text = title,
-            fontSize = 32.sp,
+            fontSize = 28.sp,
             fontWeight = FontWeight.Black,
-            lineHeight = 36.sp,
-            letterSpacing = (-1).sp,
+            lineHeight = 32.sp,
+            letterSpacing = (-0.8).sp,
             color = TextPrimary
         )
         if (!subtitle.isNullOrBlank()) {
@@ -372,7 +495,7 @@ fun GymPageHeader(
     }
 }
 
-/** Section heading inside a screen, with an optional lime text action on the right. */
+/** Section heading inside a screen, with an optional Royal Violet action on the right. */
 @Composable
 fun GymSectionTitle(
     title: String,
@@ -387,7 +510,7 @@ fun GymSectionTitle(
     ) {
         Text(
             text = title,
-            fontSize = 20.sp,
+            fontSize = 19.sp,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = (-0.4).sp,
             color = TextPrimary,
@@ -396,9 +519,9 @@ fun GymSectionTitle(
         if (actionLabel != null && onAction != null) {
             Text(
                 text = actionLabel,
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
-                color = AccentLime,
+                color = VioletPrimary,
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .clickable(onClick = onAction)
@@ -413,7 +536,7 @@ fun GymSectionTitle(
 fun GymKicker(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = AccentLime
+    color: Color = VioletPrimary
 ) {
     Text(
         text = text.uppercase(),
@@ -430,8 +553,8 @@ fun GymKicker(
 fun GymIconBadge(
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    tint: Color = AccentLime,
-    background: Color = AccentLimeSubtle,
+    tint: Color = VioletPrimary,
+    background: Color = SurfaceLilac,
     size: Dp = 44.dp
 ) {
     Box(
@@ -462,7 +585,8 @@ fun GymStatTile(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(CardRadius))
-            .background(DarkSurface)
+            .background(SurfaceWhite)
+            .border(1.dp, BorderLilac, RoundedCornerShape(CardRadius))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -477,7 +601,7 @@ fun GymStatTile(
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 text = value,
-                fontSize = 28.sp,
+                fontSize = 26.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = (-0.5).sp,
                 color = valueColor,
@@ -487,10 +611,10 @@ fun GymStatTile(
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = unit,
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextSecondary,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    modifier = Modifier.padding(bottom = 3.dp)
                 )
             }
         }
@@ -500,25 +624,26 @@ fun GymStatTile(
 @Composable
 fun GymCard(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = DarkSurface,
-    borderColor: Color = Color.Transparent,
-    contentPadding: PaddingValues = PaddingValues(20.dp),
+    backgroundColor: Color = SurfaceWhite,
+    borderColor: Color = BorderLilac,
+    contentPadding: PaddingValues = PaddingValues(18.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val effectiveBorder = if (borderColor == Color.Transparent) BorderLilac else borderColor
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, borderColor, RoundedCornerShape(CardRadius)),
+            .border(1.dp, effectiveBorder, RoundedCornerShape(CardRadius)),
         shape = RoundedCornerShape(CardRadius),
         color = backgroundColor,
         tonalElevation = 0.dp,
-        shadowElevation = 0.dp
+        shadowElevation = 2.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(contentPadding),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             content = content
         )
     }
@@ -527,7 +652,7 @@ fun GymCard(
 @Composable
 fun GymDivider(
     modifier: Modifier = Modifier,
-    color: Color = BorderDivider
+    color: Color = BorderLilac
 ) {
     HorizontalDivider(
         modifier = modifier.fillMaxWidth(),
@@ -547,8 +672,8 @@ private fun GymButtonLabel(text: String) {
     )
 }
 
-private val ButtonPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp)
-private val ButtonMinHeight = 52.dp
+private val ButtonPadding = PaddingValues(horizontal = 18.dp, vertical = 14.dp)
+private val ButtonMinHeight = 50.dp
 
 @Composable
 fun GymPrimaryButton(
@@ -562,11 +687,11 @@ fun GymPrimaryButton(
         onClick = onClick,
         enabled = enabled,
         shape = RoundedCornerShape(ControlRadius),
-        elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+        elevation = ButtonDefaults.buttonElevation(2.dp, 0.dp, 0.dp, 0.dp, 0.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = AccentLime,
-            contentColor = GymInkOnLight,
-            disabledContainerColor = DarkSurfaceHigh,
+            containerColor = VioletPrimary,
+            contentColor = InkWhite,
+            disabledContainerColor = SurfaceLilac,
             disabledContentColor = TextMuted
         ),
         contentPadding = ButtonPadding,
@@ -577,7 +702,7 @@ fun GymPrimaryButton(
     }
 }
 
-/** Secondary action: tonal fill, no outline. Name kept for call-site compatibility. */
+/** Secondary action: Clean White / Soft Lilac fill with hairline lilac border. */
 @Composable
 fun GymOutlineButton(
     text: String,
@@ -586,18 +711,18 @@ fun GymOutlineButton(
     enabled: Boolean = true,
     fillWidth: Boolean = false,
     textColor: Color = TextPrimary,
-    borderColor: Color = BorderSubtle
+    borderColor: Color = BorderLilac
 ) {
     Button(
         onClick = onClick,
         enabled = enabled,
         shape = RoundedCornerShape(ControlRadius),
         elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-        border = if (borderColor == BorderSubtle) null else BorderStroke(1.dp, borderColor),
+        border = BorderStroke(1.dp, borderColor),
         colors = ButtonDefaults.buttonColors(
-            containerColor = DarkSurfaceHigh,
+            containerColor = RoyalWell,
             contentColor = textColor,
-            disabledContainerColor = DarkSurfaceHigh,
+            disabledContainerColor = RoyalWell,
             disabledContentColor = TextMuted
         ),
         contentPadding = ButtonPadding,
@@ -620,11 +745,12 @@ fun GymWhiteButton(
         onClick = onClick,
         enabled = enabled,
         shape = RoundedCornerShape(ControlRadius),
-        elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+        elevation = ButtonDefaults.buttonElevation(2.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+        border = BorderStroke(1.dp, BorderLilacStrong),
         colors = ButtonDefaults.buttonColors(
-            containerColor = TextPrimary,
-            contentColor = GymInkOnLight,
-            disabledContainerColor = DarkSurfaceHigh,
+            containerColor = SurfaceWhite,
+            contentColor = VioletPrimary,
+            disabledContainerColor = RoyalWell,
             disabledContentColor = TextMuted
         ),
         contentPadding = ButtonPadding,
@@ -635,7 +761,7 @@ fun GymWhiteButton(
     }
 }
 
-/** Filter / tab chip: lime when selected, tonal otherwise. */
+/** Filter / tab chip: Royal Violet when selected, crisp White with hairline border otherwise. */
 @Composable
 fun GymPillTab(
     text: String,
@@ -647,16 +773,17 @@ fun GymPillTab(
         modifier = modifier
             .defaultMinSize(minHeight = 40.dp)
             .clip(CircleShape)
-            .background(if (selected) AccentLime else DarkSurfaceHigh)
+            .background(if (selected) VioletPrimary else SurfaceWhite)
+            .border(1.dp, if (selected) VioletPrimary else BorderLilac, CircleShape)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 9.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
-            color = if (selected) GymInkOnLight else TextSecondary,
+            color = if (selected) InkWhite else TextSecondary,
             maxLines = 1
         )
     }
@@ -697,13 +824,13 @@ fun GymTextField(
         ),
         shape = RoundedCornerShape(ControlRadius),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = DarkSurfaceHigh,
-            unfocusedContainerColor = DarkSurfaceHigh,
-            focusedBorderColor = AccentLime,
-            unfocusedBorderColor = Color.Transparent,
+            focusedContainerColor = SurfaceWhite,
+            unfocusedContainerColor = RoyalWell,
+            focusedBorderColor = VioletPrimary,
+            unfocusedBorderColor = BorderLilac,
             focusedTextColor = TextPrimary,
             unfocusedTextColor = TextPrimary,
-            cursorColor = AccentLime
+            cursorColor = VioletPrimary
         ),
         modifier = modifier
             .fillMaxWidth()
@@ -752,8 +879,9 @@ fun GymInnerWell(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(ControlRadius))
-            .background(DarkSurfaceHigh)
-            .padding(16.dp),
+            .background(RoyalWell)
+            .border(1.dp, BorderLilac, RoundedCornerShape(ControlRadius))
+            .padding(14.dp),
         content = content
     )
 }
@@ -763,7 +891,8 @@ fun GymProgressBar(
     progress: Float,
     modifier: Modifier = Modifier,
     heightDp: Int = 8,
-    color: Color = AccentLime
+    color: Color = VioletPrimary,
+    trackColor: Color = SurfaceLilac
 ) {
     val clamped = progress.coerceIn(0f, 1f)
     Box(
@@ -771,7 +900,7 @@ fun GymProgressBar(
             .fillMaxWidth()
             .height(heightDp.dp)
             .clip(CircleShape)
-            .background(DarkSurfaceHigh)
+            .background(trackColor)
     ) {
         if (clamped > 0f) {
             Box(
@@ -804,21 +933,21 @@ fun GymLoadingCard(
                     .fillMaxWidth(0.55f)
                     .height(16.dp)
                     .clip(CircleShape)
-                    .background(DarkSurfaceHigh)
+                    .background(SurfaceLilac)
             )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
                     .clip(RoundedCornerShape(ControlRadius))
-                    .background(DarkSurfaceHigh)
+                    .background(RoyalWell)
             )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
                     .clip(RoundedCornerShape(ControlRadius))
-                    .background(DarkSurfaceHigh)
+                    .background(RoyalWell)
             )
         }
         Text(
@@ -870,7 +999,7 @@ fun GymEmptyCard(
 }
 
 // ============================================================================
-// Domain components (names kept for existing call sites)
+// Domain components (names kept for call-site compatibility)
 // ============================================================================
 
 @Composable
@@ -898,7 +1027,7 @@ fun DudaTopHeader(
     modifier: Modifier = Modifier
 ) {
     GymHeaderBar(
-        menuLabel = "Меню",
+        menuLabel = LocalDudaStrings.current.menuButton,
         onLogoClick = onLogoClick,
         onMenuClick = onProfileClick,
         modifier = modifier
@@ -938,18 +1067,19 @@ fun DudaQuickNavPills(
 fun AthleticCard(
     modifier: Modifier = Modifier,
     shape: RoundedCornerShape = RoundedCornerShape(CardRadius),
-    backgroundColor: Color = DarkSurface,
-    borderColor: Color = Color.Transparent,
+    backgroundColor: Color = SurfaceWhite,
+    borderColor: Color = BorderLilac,
     content: @Composable () -> Unit
 ) {
+    val effectiveBorder = if (borderColor == Color.Transparent) BorderLilac else borderColor
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .border(width = 1.dp, color = borderColor, shape = shape),
+            .border(width = 1.dp, color = effectiveBorder, shape = shape),
         shape = shape,
         color = backgroundColor,
         tonalElevation = 0.dp,
-        shadowElevation = 0.dp
+        shadowElevation = 2.dp
     ) {
         content()
     }
@@ -963,10 +1093,10 @@ fun SetTypeBadge(
     onClick: () -> Unit = {}
 ) {
     val (badgeText, badgeColor, textColor) = when (type.lowercase()) {
-        "warmup", "w" -> Triple("W", AmberWarm, GymInkOnLight)
-        "drop", "d" -> Triple("D", InfoAccent, GymInkOnLight)
-        "failure", "f" -> Triple("F", CrimsonRed, TextPrimary)
-        else -> Triple("$setIndex", DarkSurfaceElevated, TextPrimary)
+        "warmup", "w" -> Triple("W", AmberSubtle, AmberDark)
+        "drop", "d" -> Triple("D", InfoAccentLight, InfoAccent)
+        "failure", "f" -> Triple("F", CrimsonSubtle, CrimsonDark)
+        else -> Triple("$setIndex", SurfaceLilac, TextPrimary)
     }
 
     Box(
@@ -1001,11 +1131,11 @@ fun PrimaryAthleticButton(
             .defaultMinSize(minHeight = ButtonMinHeight),
         enabled = enabled,
         shape = RoundedCornerShape(ControlRadius),
-        elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+        elevation = ButtonDefaults.buttonElevation(2.dp, 0.dp, 0.dp, 0.dp, 0.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = AccentLime,
-            contentColor = GymInkOnLight,
-            disabledContainerColor = DarkSurfaceHigh,
+            containerColor = VioletPrimary,
+            contentColor = InkWhite,
+            disabledContainerColor = SurfaceLilac,
             disabledContentColor = TextMuted
         ),
         contentPadding = ButtonPadding
@@ -1034,10 +1164,11 @@ fun SecondaryAthleticButton(
         enabled = enabled,
         shape = RoundedCornerShape(ControlRadius),
         elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+        border = BorderStroke(1.dp, BorderLilac),
         colors = ButtonDefaults.buttonColors(
-            containerColor = DarkSurfaceHigh,
+            containerColor = RoyalWell,
             contentColor = TextPrimary,
-            disabledContainerColor = DarkSurfaceHigh,
+            disabledContainerColor = RoyalWell,
             disabledContentColor = TextMuted
         ),
         contentPadding = ButtonPadding
@@ -1073,7 +1204,7 @@ fun StatCounter(
             Text(
                 text = value,
                 fontWeight = FontWeight.Black,
-                fontSize = 28.sp,
+                fontSize = 26.sp,
                 letterSpacing = (-0.5).sp,
                 color = accentColor,
                 style = TextStyle(fontFeatureSettings = "tnum")
@@ -1083,9 +1214,9 @@ fun StatCounter(
                 Text(
                     text = unit,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
+                    fontSize = 14.sp,
                     color = accentColor,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    modifier = Modifier.padding(bottom = 3.dp)
                 )
             }
         }
@@ -1099,27 +1230,29 @@ fun RestTimerFloatingBar(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalDudaStrings.current
     val minutes = secondsRemaining / 60
     val seconds = secondsRemaining % 60
     val timeFormatted = StrengthCalculator.formatTime(minutes, seconds)
 
     GymCard(
         modifier = modifier.padding(16.dp),
-        backgroundColor = DarkSurfaceElevated,
-        contentPadding = PaddingValues(20.dp)
+        backgroundColor = SurfaceWhite,
+        borderColor = BorderLilacStrong,
+        contentPadding = PaddingValues(18.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            GymKicker(text = "Отдых")
+            GymKicker(text = strings.focusRestLabel)
             Text(
                 text = timeFormatted,
-                fontSize = 44.sp,
+                fontSize = 40.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = (-1).sp,
-                color = TextPrimary,
+                color = VioletPrimary,
                 style = TextStyle(fontFeatureSettings = "tnum")
             )
         }
@@ -1139,7 +1272,7 @@ fun RestTimerFloatingBar(
                 modifier = Modifier.weight(1f)
             )
             GymPrimaryButton(
-                text = "Пропустить",
+                text = strings.focusSkipLabel,
                 onClick = onSkip,
                 modifier = Modifier.weight(1.4f)
             )

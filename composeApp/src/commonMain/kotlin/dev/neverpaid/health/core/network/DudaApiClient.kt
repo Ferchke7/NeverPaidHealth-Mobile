@@ -74,7 +74,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 @Serializable
-data class ProblemDetailsDto(
+internal data class ProblemDetailsDto(
     @SerialName("type") val type: String? = null,
     @SerialName("title") val title: String? = null,
     @SerialName("status") val status: Int? = null,
@@ -570,7 +570,7 @@ class DudaApiClient(
     }
 
     // ========================================================================
-    // 6. TODOS, SCHEDULE & FOCUS SESSIONS (/todos)
+    // 6. TASKS, SCHEDULE & FOCUS SESSIONS (/todos)
     // ========================================================================
 
     suspend fun getDailySchedule(date: String): DailyScheduleResponseDto {

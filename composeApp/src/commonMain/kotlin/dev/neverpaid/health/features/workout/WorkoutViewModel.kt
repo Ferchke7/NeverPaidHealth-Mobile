@@ -88,12 +88,12 @@ class WorkoutViewModel(
     }
 
     private fun observeWorkoutAndCatalog() {
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.getPreviousNotesMap().collect { notesMap ->
                 updateState { copy(previousNotesMap = notesMap) }
             }
         }
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             combine(
                 repository.getActiveWorkout(),
                 repository.getExercises(),
@@ -322,7 +322,7 @@ class WorkoutViewModel(
         repository.updateActiveWorkout(updated)
 
         // Fetch previous performance for this exercise from backend
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             val prevMap = repository.getPreviousPerformance(listOf(exercise.id))
             val prevSets = prevMap[exercise.id].orEmpty()
             if (prevSets.isNotEmpty()) {

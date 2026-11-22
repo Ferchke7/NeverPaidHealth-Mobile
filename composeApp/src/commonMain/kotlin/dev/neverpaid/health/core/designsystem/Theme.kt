@@ -3,48 +3,55 @@ package dev.neverpaid.health.core.designsystem
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 
-private val DarkColorScheme = darkColorScheme(
-    primary = AccentLime,
-    onPrimary = GymInkOnLight,
-    primaryContainer = AccentLimeSubtle,
-    onPrimaryContainer = AccentLime,
-    secondary = AccentLime,
-    onSecondary = GymInkOnLight,
-    secondaryContainer = DarkSurfaceHigh,
+private val RoyalLightColorScheme = lightColorScheme(
+    primary = VioletPrimary,
+    onPrimary = InkWhite,
+    primaryContainer = SurfaceLilac,
+    onPrimaryContainer = TextPrimary,
+    secondary = VioletElectric,
+    onSecondary = InkWhite,
+    secondaryContainer = SurfaceLilac,
     onSecondaryContainer = TextPrimary,
-    tertiary = AmberWarm,
-    onTertiary = GymInkOnLight,
+    tertiary = EmeraldSuccess,
+    onTertiary = InkWhite,
     error = CrimsonRed,
-    onError = TextPrimary,
-    background = DarkBackground,
+    onError = InkWhite,
+    background = RoyalCanvas,
     onBackground = TextPrimary,
-    surface = DarkSurface,
+    surface = SurfaceWhite,
     onSurface = TextPrimary,
-    surfaceVariant = DarkSurfaceHigh,
+    surfaceVariant = RoyalWell,
     onSurfaceVariant = TextSecondary,
-    outline = BorderSubtle,
-    outlineVariant = BorderDivider
+    outline = BorderLilacStrong,
+    outlineVariant = BorderLilac
 )
 
 val GymShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
     small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(20.dp),
+    medium = RoundedCornerShape(18.dp),
+    large = RoundedCornerShape(22.dp),
     extraLarge = RoundedCornerShape(28.dp)
 )
 
 @Composable
 fun NeverPaidHealthTheme(
-    darkTheme: Boolean = true, // Gym UI is dark-only
+    darkTheme: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    DudaRoyalTheme(content = content)
+}
+
+@Composable
+fun DudaRoyalTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = DarkColorScheme,
+        colorScheme = RoyalLightColorScheme,
         typography = AthleticTypography,
         shapes = GymShapes,
         content = content

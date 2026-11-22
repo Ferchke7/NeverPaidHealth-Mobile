@@ -24,7 +24,12 @@ class ProgressViewModel(
     }
 
     private fun loadProgress() {
-        launchGuarded {
+        launchGuarded(
+            onError = { err ->
+                updateState { copy(isLoading = false) }
+                sendError(err)
+            }
+        ) {
             combine(
                 repository.getProgressSummary(),
                 repository.getWorkoutHistory()

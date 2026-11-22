@@ -165,7 +165,7 @@ fun BarbellSleeveCanvas(
                                 style = TextStyle(
                                     fontSize = if (plateHeight > 90f) 10.sp else 8.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = if (spec.colorHex == LightPlateHexColor) GymInkOnLight else TextPrimary
+                                    color = if (spec.colorHex == LightPlateHexColor) TextPrimary else InkWhite
                                 )
                             )
                             val textX = currentX + (plateWidth - textLayout.size.width) / 2f
@@ -358,9 +358,9 @@ fun InteractivePlateCalculator(
                         },
                         label = { Text("${bType.defaultWeightKg.toInt()} кг (${bType.displayNameRu.take(12)})") },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentLime,
-                            selectedLabelColor = DarkBackground,
-                            containerColor = DarkSurfaceVariant,
+                            selectedContainerColor = VioletPrimary,
+                            selectedLabelColor = InkWhite,
+                            containerColor = RoyalWell,
                             labelColor = TextPrimary
                         )
                     )
@@ -385,9 +385,9 @@ fun InteractivePlateCalculator(
                             onClick = { targetWeight = weight },
                             label = { Text("$pct% ($weight кг)", fontSize = 12.sp) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = BlueAccent,
-                                selectedLabelColor = TextPrimary,
-                                containerColor = DarkSurface,
+                                selectedContainerColor = VioletPrimary,
+                                selectedLabelColor = InkWhite,
+                                containerColor = SurfaceWhite,
                                 labelColor = TextSecondary
                             )
                         )

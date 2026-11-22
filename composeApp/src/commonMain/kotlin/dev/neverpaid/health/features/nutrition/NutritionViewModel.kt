@@ -101,7 +101,12 @@ class NutritionViewModel(
             repository.refreshDailyNutrition(date)
         }
 
-        mealsJob = launchGuarded {
+        mealsJob = launchGuarded(
+            onError = { err ->
+                updateState { copy(isLoading = false) }
+                sendError(err)
+            }
+        ) {
             repository.getMealLogs(date).collectLatest { logs ->
                 val cals = logs.sumOf { it.calories }
                 val prot = logs.sumOf { it.proteinG }.toInt()
@@ -121,7 +126,7 @@ class NutritionViewModel(
             }
         }
 
-        waterJob = launchGuarded {
+        waterJob = launchGuarded(onError = { err -> sendError(err) }) {
             repository.getWaterMl(date).collectLatest { ml ->
                 updateState { copy(waterMl = ml) }
             }
@@ -130,7 +135,7 @@ class NutritionViewModel(
 
     private fun addWater(amountMl: Int) {
         val date = currentState.selectedDate
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.addWater(date, amountMl)
         }
     }
@@ -242,7 +247,7 @@ class NutritionViewModel(
     }
 
     private fun deleteMeal(mealId: String) {
-        launchGuarded {
+        launchGuarded(onError = { err -> sendError(err) }) {
             repository.deleteMealLog(mealId, currentState.selectedDate)
         }
     }

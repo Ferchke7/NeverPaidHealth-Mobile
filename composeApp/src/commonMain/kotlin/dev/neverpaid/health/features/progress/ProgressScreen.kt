@@ -66,6 +66,8 @@ import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
+import dev.neverpaid.health.core.designsystem.DualBarWeeklyComparisonChart
+import dev.neverpaid.health.core.designsystem.EmeraldSuccess
 import dev.neverpaid.health.core.designsystem.GymCard
 import dev.neverpaid.health.core.designsystem.GymDivider
 import dev.neverpaid.health.core.designsystem.GymInnerWell
@@ -77,7 +79,12 @@ import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymProgressBar
 import dev.neverpaid.health.core.designsystem.GymSectionTitle
 import dev.neverpaid.health.core.designsystem.GymStatTile
+import dev.neverpaid.health.core.designsystem.HeroMuted
+import dev.neverpaid.health.core.designsystem.IndigoCardBrush
+import dev.neverpaid.health.core.designsystem.InkWhite
 import dev.neverpaid.health.core.designsystem.InteractiveAnatomyHeatmap
+import dev.neverpaid.health.core.designsystem.RoyalHeroBrush
+import dev.neverpaid.health.core.designsystem.RoyalHeroCard
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -181,14 +188,31 @@ fun ProgressScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item(key = "page_header", contentType = "header") {
-            GymPageHeader(
-                title = strings.progressTitle,
-                subtitle = when (state.selectedTab) {
-                    0 -> "Динамика рабочих весов и личные рекорды"
-                    1 -> "Мышечный баланс и недельный тоннаж"
-                    else -> "Расчёт 1RM и силовые ориентиры"
-                }
-            )
+            RoyalHeroCard(bottomExtraPadding = 20.dp) {
+                Text(
+                    text = "DUDA · ANALYTICS",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp,
+                    color = HeroMuted
+                )
+                Text(
+                    text = strings.progressTitle,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-0.7).sp,
+                    color = InkWhite
+                )
+                Text(
+                    text = when (state.selectedTab) {
+                        0 -> "Динамика рабочих весов и личные рекорды"
+                        1 -> "Мышечный баланс и недельный тоннаж"
+                        else -> "Расчёт 1RM и силовые ориентиры"
+                    },
+                    fontSize = 14.sp,
+                    color = HeroMuted
+                )
+            }
         }
 
         item(key = "top_tabs", contentType = "tabs") {
@@ -1137,6 +1161,13 @@ private fun TonnageTrendCard(
                 )
             }
         } else {
+            DualBarWeeklyComparisonChart(
+                bars = bars.map { it.label to it.volumeKg },
+                title = "",
+                primaryLegendLabel = "Тоннаж",
+                secondaryLegendLabel = "Среднее",
+                unitLabel = "кг"
+            )
             GymTonnageBarChart(samples = bars)
         }
     }

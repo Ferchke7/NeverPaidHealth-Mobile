@@ -54,7 +54,7 @@ class AuthViewModel(
                 submitManualToken()
             }
             is AuthUiAction.OnSelectLanguage -> {
-                launchGuarded {
+                launchGuarded(onError = { err -> sendError(err) }) {
                     val current = repository.getUserPreferences().first()
                     repository.updatePreferences(current.copy(languageCode = action.languageCode))
                 }

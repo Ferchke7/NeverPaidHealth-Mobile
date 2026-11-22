@@ -122,14 +122,147 @@ data class MacroTargetProgress(
  * - Interactive horizontal touch drag scrubber with snapped data badge
  * - Highlighted milestone markers for PR sessions
  */
+/**
+ * Dual-bar weekly progression card inspired by the Royal Violet E-Wallet Statistic chart
+ * (Deep Navy + Electric Violet vertical bars side-by-side per slot).
+ */
+@Composable
+fun DualBarWeeklyComparisonChart(
+    bars: List<Pair<String, Double>>,
+    title: String,
+    primaryLegendLabel: String,
+    secondaryLegendLabel: String,
+    unitLabel: String = "kg",
+    modifier: Modifier = Modifier
+) {
+    val maxVal = remember(bars) { (bars.maxOfOrNull { it.second } ?: 1000.0).coerceAtLeast(1.0) * 1.15 }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = SurfaceWhite,
+        border = androidx.compose.foundation.BorderStroke(1.dp, BorderLilac),
+        shadowElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = TextPrimary
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(ChartNavyBar))
+                        Text(text = primaryLegendLabel, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(ChartVioletBar))
+                        Text(text = secondaryLegendLabel, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                    }
+                }
+            }
+
+            if (bars.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(RoyalWell),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = LocalDudaStrings.current.noData,
+                        fontSize = 13.sp,
+                        color = TextMuted
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    val avg = (bars.sumOf { it.second } / bars.size.coerceAtLeast(1)).coerceAtLeast(1.0)
+                    bars.forEach { (label, valKg) ->
+                        val h1 = (valKg / maxVal).toFloat().coerceIn(0.08f, 1f)
+                        val h2 = ((valKg * 0.72 + avg * 0.28) / maxVal).toFloat().coerceIn(0.08f, 1f)
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Bottom
+                        ) {
+                            Text(
+                                text = if (valKg >= 1000) "${((valKg / 100.0).toInt() / 10.0)}t" else "${valKg.toInt()}",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextSecondary,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(12.dp)
+                                        .height((105f * h1).dp)
+                                        .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
+                                        .background(ChartNavyBar)
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .width(12.dp)
+                                        .height((105f * h2).dp)
+                                        .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
+                                        .background(ChartVioletBar)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = label,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecondary,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun InteractiveVolumeChart(
     dataPoints: List<VolumeDataPoint>,
     modifier: Modifier = Modifier,
-    lineColor: Color = AccentLime,
-    gradientStartColor: Color = AccentLimeGlow,
+    lineColor: Color = VioletPrimary,
+    gradientStartColor: Color = VioletGlow,
     gradientEndColor: Color = Color.Transparent,
-    gridColor: Color = BorderSubtle,
+    gridColor: Color = BorderLilac,
     textColor: Color = TextSecondary
 ) {
     val strings = LocalDudaStrings.current
@@ -142,8 +275,8 @@ fun InteractiveVolumeChart(
             modifier = modifier
                 .fillMaxWidth()
                 .height(220.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(DarkSurface),
+                .clip(RoundedCornerShape(22.dp))
+                .background(SurfaceWhite),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -163,10 +296,11 @@ fun InteractiveVolumeChart(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = DarkSurface,
+        shape = RoundedCornerShape(22.dp),
+        color = SurfaceWhite,
+        border = androidx.compose.foundation.BorderStroke(1.dp, BorderLilac),
         tonalElevation = 0.dp,
-        shadowElevation = 0.dp
+        shadowElevation = 2.dp
     ) {
         Column(
             modifier = Modifier
@@ -189,10 +323,10 @@ fun InteractiveVolumeChart(
                     )
                     Text(
                         text = "${((activePoint?.volumeKg ?: 0.0)).toInt()} ${strings.unitKg}",
-                        fontSize = 28.sp,
+                        fontSize = 26.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = (-0.6).sp,
-                        color = if (activePoint?.isPersonalRecord == true) AmberWarm else AccentLime,
+                        color = if (activePoint?.isPersonalRecord == true) EmeraldDark else VioletPrimary,
                         style = TextStyle(fontFeatureSettings = "tnum")
                     )
                 }
@@ -206,28 +340,28 @@ fun InteractiveVolumeChart(
                             Box(
                                 modifier = Modifier
                                     .clip(CircleShape)
-                                    .background(AmberSubtle)
+                                    .background(EmeraldBg)
                                     .padding(horizontal = 10.dp, vertical = 5.dp)
                             ) {
                                 Text(
                                     text = "PR",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = AmberWarm
+                                    color = EmeraldDark
                                 )
                             }
                         }
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(DarkSurfaceHigh)
+                                .background(SurfaceLilac)
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
                             Text(
                                 text = activePoint.date,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary,
+                                color = VioletPrimary,
                                 style = TextStyle(fontFeatureSettings = "tnum")
                             )
                         }
@@ -380,18 +514,18 @@ fun InteractiveVolumeChart(
                         val dp = dataPoints[index]
                         if (dp.isPersonalRecord) {
                             drawCircle(
-                                color = DarkBackground,
+                                color = SurfaceWhite,
                                 radius = 6.5.dp.toPx(),
                                 center = point
                             )
                             drawCircle(
-                                color = AmberWarm,
+                                color = EmeraldSuccess,
                                 radius = 4.5.dp.toPx(),
                                 center = point
                             )
                         } else {
                             drawCircle(
-                                color = DarkBackground,
+                                color = SurfaceWhite,
                                 radius = 5.dp.toPx(),
                                 center = point
                             )
@@ -421,7 +555,7 @@ fun InteractiveVolumeChart(
                             center = activePointCoord
                         )
                         drawCircle(
-                            color = DarkBackground,
+                            color = SurfaceWhite,
                             radius = 6.dp.toPx(),
                             center = activePointCoord
                         )
@@ -502,10 +636,11 @@ fun ConsistencyHeatmap84Day(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = DarkSurface,
+        shape = RoundedCornerShape(22.dp),
+        color = SurfaceWhite,
+        border = androidx.compose.foundation.BorderStroke(1.dp, BorderLilac),
         tonalElevation = 0.dp,
-        shadowElevation = 0.dp
+        shadowElevation = 2.dp
     ) {
         Column(
             modifier = Modifier
@@ -546,14 +681,14 @@ fun ConsistencyHeatmap84Day(
                         Icon(
                             imageVector = Icons.Default.LocalFireDepartment,
                             contentDescription = null,
-                            tint = AmberWarm,
+                            tint = AmberDark,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
                             text = "$activeStreak ${strings.daysStreak}",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Black,
-                            color = AmberWarm,
+                            color = AmberDark,
                             style = TextStyle(fontFeatureSettings = "tnum")
                         )
                     }
@@ -604,11 +739,11 @@ fun ConsistencyHeatmap84Day(
                             val y = d * (cellSize + gap)
 
                             val color = when (entry.tier) {
-                                1 -> AccentLimeDark.copy(alpha = 0.55f)
-                                2 -> AccentLime.copy(alpha = 0.75f)
-                                3 -> AccentLime
-                                4 -> AmberWarm
-                                else -> DarkSurfaceHigh
+                                1 -> BorderLilacStrong
+                                2 -> VioletSoft
+                                3 -> VioletPrimary
+                                4 -> EmeraldSuccess
+                                else -> RoyalWell
                             }
 
                             val isSelected = selectedDay?.date == entry.date && entry.date.isNotEmpty()
@@ -622,7 +757,7 @@ fun ConsistencyHeatmap84Day(
 
                             if (isSelected) {
                                 drawRoundRect(
-                                    color = TextPrimary,
+                                    color = VioletPrimary,
                                     topLeft = Offset(x - 1.dp.toPx(), y - 1.dp.toPx()),
                                     size = Size(cellSize + 2.dp.toPx(), cellSize + 2.dp.toPx()),
                                     cornerRadius = CornerRadius(4.dp.toPx()),
@@ -644,7 +779,7 @@ fun ConsistencyHeatmap84Day(
                     Text(
                         text = "${selectedDay?.date}: ${selectedDay?.workoutCount} ${strings.workoutsDone} (${selectedDay?.volumeKg?.toInt()} kg)",
                         fontSize = 12.sp,
-                        color = AccentLime,
+                        color = VioletPrimary,
                         fontWeight = FontWeight.Bold,
                         style = TextStyle(fontFeatureSettings = "tnum")
                     )
@@ -661,11 +796,11 @@ fun ConsistencyHeatmap84Day(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     listOf(
-                        DarkSurfaceHigh,
-                        AccentLimeDark.copy(alpha = 0.55f),
-                        AccentLime.copy(alpha = 0.75f),
-                        AccentLime,
-                        AmberWarm
+                        RoyalWell,
+                        BorderLilacStrong,
+                        VioletSoft,
+                        VioletPrimary,
+                        EmeraldSuccess
                     ).forEach { col ->
                         Box(
                             modifier = Modifier
@@ -717,10 +852,11 @@ fun MacronutrientDonutGauge(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = DarkSurface,
+        shape = RoundedCornerShape(22.dp),
+        color = SurfaceWhite,
+        border = androidx.compose.foundation.BorderStroke(1.dp, BorderLilac),
         tonalElevation = 0.dp,
-        shadowElevation = 0.dp
+        shadowElevation = 2.dp
     ) {
         Row(
             modifier = Modifier
@@ -743,19 +879,19 @@ fun MacronutrientDonutGauge(
                     val radius2 = radius1 - strokeWidth - gap
                     val radius3 = radius2 - strokeWidth - gap
 
-                    // Draw Tracks (background track rings)
+                    // Draw Tracks (soft lilac rings)
                     listOf(radius0, radius1, radius2, radius3).forEach { r ->
                         drawCircle(
-                            color = DarkSurfaceHigh,
+                            color = BorderLilac,
                             radius = r,
                             style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                         )
                     }
 
-                    // 1. Outer Ring: Calories (AccentLime)
+                    // 1. Outer Ring: Calories (Royal Violet)
                     val calSweep = animCalorieProgress * 360f
                     drawArc(
-                        color = if (animCalorieProgress > 1.0f) AmberWarm else AccentLime,
+                        color = if (animCalorieProgress > 1.0f) AmberWarm else VioletPrimary,
                         startAngle = -90f,
                         sweepAngle = calSweep,
                         useCenter = false,
@@ -764,7 +900,7 @@ fun MacronutrientDonutGauge(
                         style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                     )
 
-                    // 2. Protein Ring: Sky Info Accent
+                    // 2. Protein Ring: Emerald / Teal Accent
                     val protSweep = animProteinProgress * 360f
                     drawArc(
                         color = InfoAccent,
@@ -776,10 +912,10 @@ fun MacronutrientDonutGauge(
                         style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                     )
 
-                    // 3. Carbs Ring: Amber Gold
+                    // 3. Carbs Ring: Amber Warm
                     val carbsSweep = animCarbsProgress * 360f
                     drawArc(
-                        color = AmberGold,
+                        color = AmberWarm,
                         startAngle = -90f,
                         sweepAngle = carbsSweep,
                         useCenter = false,
@@ -788,10 +924,10 @@ fun MacronutrientDonutGauge(
                         style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                     )
 
-                    // 4. Fats Ring: Neutral Secondary
+                    // 4. Fats Ring: Soft Violet
                     val fatsSweep = animFatsProgress * 360f
                     drawArc(
-                        color = TextSecondary,
+                        color = VioletSoft,
                         startAngle = -90f,
                         sweepAngle = fatsSweep,
                         useCenter = false,
@@ -836,13 +972,13 @@ fun MacronutrientDonutGauge(
                     label = strings.carbs,
                     current = progress.currentCarbsGrams,
                     target = progress.targetCarbsGrams,
-                    color = AmberGold
+                    color = AmberWarm
                 )
                 MacroLegendRow(
                     label = strings.fats,
                     current = progress.currentFatsGrams,
                     target = progress.targetFatsGrams,
-                    color = TextSecondary
+                    color = VioletSoft
                 )
             }
         }
@@ -925,10 +1061,11 @@ fun WaterHydrationWave(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = DarkSurface,
+        shape = RoundedCornerShape(22.dp),
+        color = SurfaceWhite,
+        border = androidx.compose.foundation.BorderStroke(1.dp, BorderLilac),
         tonalElevation = 0.dp,
-        shadowElevation = 0.dp
+        shadowElevation = 2.dp
     ) {
         Column(
             modifier = Modifier
@@ -969,13 +1106,13 @@ fun WaterHydrationWave(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Wave Vessel Box (flat tonal well, no hairline border)
+            // Wave Vessel Box (Clean cyan tint well)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(90.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(DarkSurfaceHigh)
+                    .background(InfoAccentLight)
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val w = size.width
@@ -1047,7 +1184,7 @@ fun WaterHydrationWave(
                         modifier = Modifier
                             .height(42.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(DarkSurfaceElevated)
+                            .background(SurfaceWhite)
                             .clickable { onAddWater(250) }
                             .padding(horizontal = 14.dp),
                         contentAlignment = Alignment.Center
@@ -1067,7 +1204,7 @@ fun WaterHydrationWave(
                         modifier = Modifier
                             .height(42.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(DarkSurfaceElevated)
+                            .background(SurfaceWhite)
                             .clickable { onAddWater(500) }
                             .padding(horizontal = 14.dp),
                         contentAlignment = Alignment.Center

@@ -67,6 +67,9 @@ import dev.neverpaid.health.core.designsystem.DarkBackground
 import dev.neverpaid.health.core.designsystem.DarkSurface
 import dev.neverpaid.health.core.designsystem.DarkSurfaceElevated
 import dev.neverpaid.health.core.designsystem.DarkSurfaceHigh
+import dev.neverpaid.health.core.designsystem.EmeraldBg
+import dev.neverpaid.health.core.designsystem.EmeraldBorder
+import dev.neverpaid.health.core.designsystem.EmeraldSuccess
 import dev.neverpaid.health.core.designsystem.GymCard
 import dev.neverpaid.health.core.designsystem.GymInkOnLight
 import dev.neverpaid.health.core.designsystem.GymInnerWell
@@ -79,6 +82,9 @@ import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymProgressBar
 import dev.neverpaid.health.core.designsystem.GymSectionTitle
+import dev.neverpaid.health.core.designsystem.HeroMuted
+import dev.neverpaid.health.core.designsystem.InkWhite
+import dev.neverpaid.health.core.designsystem.RoyalHeroCard
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -214,10 +220,27 @@ fun TodoScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             item(key = "page_header", contentType = "header") {
-                GymPageHeader(
-                    title = strings.todoTitle,
-                    subtitle = strings.todoSubtitle
-                )
+                RoyalHeroCard(bottomExtraPadding = 20.dp) {
+                    Text(
+                        text = "DUDA · PLANNER",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp,
+                        color = HeroMuted
+                    )
+                    Text(
+                        text = strings.todoTitle,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.7).sp,
+                        color = InkWhite
+                    )
+                    Text(
+                        text = strings.todoSubtitle,
+                        fontSize = 14.sp,
+                        color = HeroMuted
+                    )
+                }
             }
 
             if (state.isLoading && state.allTasks.isEmpty()) {
@@ -433,7 +456,7 @@ fun TodoScreen(
                     GymCard {
                         GymSectionTitle(
                             title = when (lang) {
-                                "uz" -> "Kunlik режа"
+                                "uz" -> "Kunlik reja"
                                 "en" -> "Daily Tasks"
                                 else -> "Задачи дня"
                             },
@@ -929,10 +952,10 @@ private fun TodoChecklistRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(cardShape)
-            .background(if (isCompleted) AccentLimeSubtle else DarkSurfaceHigh)
+            .background(if (isCompleted) EmeraldBg else DarkSurfaceHigh)
             .then(
                 if (isCompleted) {
-                    Modifier.border(1.dp, BorderHighlight, cardShape)
+                    Modifier.border(1.dp, EmeraldBorder, cardShape)
                 } else {
                     Modifier
                 }
@@ -952,7 +975,7 @@ private fun TodoChecklistRow(
                     .padding(top = 2.dp)
                     .size(28.dp)
                     .clip(CircleShape)
-                    .background(if (isCompleted) AccentLime else DarkSurfaceElevated)
+                    .background(if (isCompleted) EmeraldSuccess else DarkSurfaceElevated)
                     .clickable(onClick = onToggle),
                 contentAlignment = Alignment.Center
             ) {
@@ -960,7 +983,7 @@ private fun TodoChecklistRow(
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
-                        tint = GymInkOnLight,
+                        tint = InkWhite,
                         modifier = Modifier.size(16.dp)
                     )
                 }

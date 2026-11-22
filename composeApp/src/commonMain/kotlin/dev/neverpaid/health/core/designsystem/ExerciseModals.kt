@@ -1,6 +1,7 @@
 package dev.neverpaid.health.core.designsystem
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,8 +26,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -87,11 +89,13 @@ fun localizeEquipmentName(equipment: String): String = when (equipment.lowercase
 @Composable
 fun ExercisePickerBottomSheet(
     exercises: List<Exercise>,
-    title: String = "Выбрать упражнение",
+    title: String = "",
     onSelectExercise: (Exercise) -> Unit,
     onInspectExercise: ((Exercise) -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
+    val strings = LocalDudaStrings.current
+    val effectiveTitle = title.ifBlank { strings.exercisePickTitle }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var searchQuery by remember { mutableStateOf("") }
     var selectedMuscle by remember { mutableStateOf("all") }
@@ -112,7 +116,7 @@ fun ExercisePickerBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = SurfaceWhite,
         contentColor = TextPrimary,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = {
@@ -121,7 +125,7 @@ fun ExercisePickerBottomSheet(
                     .padding(top = 12.dp, bottom = 4.dp)
                     .size(width = 40.dp, height = 4.dp)
                     .clip(CircleShape)
-                    .background(DarkSurfaceElevated)
+                    .background(BorderLilacStrong)
             )
         }
     ) {
@@ -138,20 +142,20 @@ fun ExercisePickerBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = title,
+                    text = effectiveTitle,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Black,
                     color = TextPrimary
                 )
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Закрыть", tint = TextSecondary)
+                    Icon(Icons.Default.Close, contentDescription = strings.commonClose, tint = TextSecondary)
                 }
             }
 
             GymTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = "Поиск упражнения или мышцы...",
+                placeholder = strings.exerciseSearchPlaceholder,
                 singleLine = true
             )
 
@@ -174,7 +178,8 @@ fun ExercisePickerBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(18.dp))
-                            .background(DarkSurfaceHigh)
+                            .background(RoyalWell)
+                            .border(1.dp, BorderLilac, RoundedCornerShape(18.dp))
                             .clickable {
                                 onSelectExercise(exercise)
                                 onDismiss()
@@ -262,7 +267,8 @@ fun ExerciseInfoBottomSheet(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val lang = LocalDudaStrings.current.languageCode
+    val strings = LocalDudaStrings.current
+    val lang = strings.languageCode
 
     val instructionsList = remember(exercise) {
         if (exercise.instructions.isNotBlank()) {
@@ -280,7 +286,7 @@ fun ExerciseInfoBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = SurfaceWhite,
         contentColor = TextPrimary,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = {
@@ -289,7 +295,7 @@ fun ExerciseInfoBottomSheet(
                     .padding(top = 12.dp, bottom = 4.dp)
                     .size(width = 40.dp, height = 4.dp)
                     .clip(CircleShape)
-                    .background(DarkSurfaceElevated)
+                    .background(BorderLilacStrong)
             )
         }
     ) {
@@ -322,20 +328,21 @@ fun ExerciseInfoBottomSheet(
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(AccentLimeSubtle)
+                                .background(SurfaceLilac)
                                 .padding(horizontal = 12.dp, vertical = 5.dp)
                         ) {
                             Text(
                                 text = localizeMuscleName(exercise.primaryMuscle),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = AccentLime
+                                color = VioletPrimary
                             )
                         }
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(DarkSurfaceHigh)
+                                .background(RoyalWell)
+                                .border(1.dp, BorderLilac, CircleShape)
                                 .padding(horizontal = 12.dp, vertical = 5.dp)
                         ) {
                             Text(
@@ -348,7 +355,8 @@ fun ExerciseInfoBottomSheet(
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(DarkSurfaceHigh)
+                                .background(RoyalWell)
+                                .border(1.dp, BorderLilac, CircleShape)
                                 .padding(horizontal = 12.dp, vertical = 5.dp)
                         ) {
                             Text(
@@ -361,7 +369,7 @@ fun ExerciseInfoBottomSheet(
                     }
                 }
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Закрыть", tint = TextSecondary)
+                    Icon(Icons.Default.Close, contentDescription = strings.commonClose, tint = TextSecondary)
                 }
             }
 
@@ -374,14 +382,15 @@ fun ExerciseInfoBottomSheet(
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                GymKicker(text = "Техника выполнения")
+                GymKicker(text = strings.exerciseTechniqueLabel)
 
                 instructionsList.forEachIndexed { idx, step ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(14.dp))
-                            .background(DarkSurfaceHigh)
+                            .background(RoyalWell)
+                            .border(1.dp, BorderLilac, RoundedCornerShape(14.dp))
                             .padding(12.dp),
                         verticalAlignment = Alignment.Top,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -390,14 +399,14 @@ fun ExerciseInfoBottomSheet(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(AccentLime),
+                                .background(VioletPrimary),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "${idx + 1}",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Black,
-                                color = GymInkOnLight
+                                color = InkWhite
                             )
                         }
                         Text(
@@ -413,7 +422,7 @@ fun ExerciseInfoBottomSheet(
 
             if (onStartWithExercise != null) {
                 PrimaryAthleticButton(
-                    text = "Добавить в тренировку",
+                    text = strings.exerciseAddToWorkout,
                     onClick = {
                         onStartWithExercise(exercise)
                         onDismiss()
@@ -433,14 +442,16 @@ fun WorkoutSummaryBottomSheet(
     workout: Workout,
     onDismiss: () -> Unit
 ) {
+    val strings = LocalDudaStrings.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val durationMinutes = (workout.durationSeconds / 60).coerceAtLeast(1)
     val completedSetsCount = workout.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
+    val tonsFormatted = ((workout.totalVolume / 100.0).toInt() / 10.0)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = SurfaceWhite,
         contentColor = TextPrimary,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = {
@@ -449,75 +460,109 @@ fun WorkoutSummaryBottomSheet(
                     .padding(top = 12.dp, bottom = 4.dp)
                     .size(width = 40.dp, height = 4.dp)
                     .clip(CircleShape)
-                    .background(DarkSurfaceElevated)
+                    .background(BorderLilacStrong)
             )
         }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
+                .padding(horizontal = 20.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(AccentLimeSubtle),
-                contentAlignment = Alignment.Center
+            // Royal Violet Receipt Hero Header + Overlapping Emerald Checkmark (Figma E-Wallet Receipt Card)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(
-                    imageVector = Icons.Default.EmojiEvents,
-                    contentDescription = null,
-                    tint = AmberWarm,
-                    modifier = Modifier.size(38.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(84.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(RoyalHeroBrush),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = strings.summaryReceiptTitle.uppercase(),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.2.sp,
+                        color = HeroMuted
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .offset(y = (-28).dp)
+                        .size(60.dp)
+                        .clip(CircleShape)
+                        .background(EmeraldSuccess)
+                        .border(4.dp, SurfaceWhite, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = InkWhite,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
             }
 
             Column(
+                modifier = Modifier.offset(y = (-14).dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = "ТРЕНИРОВКА ЗАКРЫТА!",
-                    fontSize = 24.sp,
+                    text = workout.title,
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Black,
                     color = TextPrimary
                 )
-                Text(
-                    text = workout.title,
-                    fontSize = 15.sp,
-                    color = AccentLime,
-                    fontWeight = FontWeight.ExtraBold
-                )
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(EmeraldBg)
+                        .border(1.dp, EmeraldBorder, CircleShape)
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "✓ ${strings.summaryAutoSavedBadge}",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = EmeraldDark
+                    )
+                }
             }
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(20.dp))
-                    .background(DarkSurfaceHigh)
+                    .background(RoyalWell)
+                    .border(1.dp, BorderLilac, RoundedCornerShape(20.dp))
                     .padding(vertical = 16.dp, horizontal = 12.dp),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 StatCounter(
-                    title = "Время",
+                    title = strings.summaryDurationLabel,
                     value = "$durationMinutes",
                     unit = "мин",
                     accentColor = TextPrimary
                 )
                 StatCounter(
-                    title = "Тоннаж",
-                    value = StrengthCalculator.formatVolume(workout.totalVolume),
-                    unit = "кг",
-                    accentColor = AccentLime
+                    title = strings.volumeTonnage,
+                    value = if (workout.totalVolume >= 1000) "$tonsFormatted" else StrengthCalculator.formatVolume(workout.totalVolume),
+                    unit = if (workout.totalVolume >= 1000) strings.summaryTonsUnit else strings.unitKg,
+                    accentColor = VioletPrimary
                 )
                 StatCounter(
-                    title = "Подходы",
+                    title = strings.dashboardSetsShort,
                     value = "$completedSetsCount",
-                    unit = "сет.",
-                    accentColor = AmberWarm
+                    unit = "",
+                    accentColor = EmeraldDark
                 )
             }
 
@@ -532,7 +577,8 @@ fun WorkoutSummaryBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(14.dp))
-                            .background(DarkSurfaceHigh)
+                            .background(RoyalWell)
+                            .border(1.dp, BorderLilac, RoundedCornerShape(14.dp))
                             .padding(horizontal = 14.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -546,10 +592,10 @@ fun WorkoutSummaryBottomSheet(
                         )
                         if (bestSet != null) {
                             Text(
-                                text = "${bestSet.weightKg.toInt()} кг × ${bestSet.reps}",
+                                text = "${bestSet.weightKg.toInt()} ${strings.unitKg} × ${bestSet.reps}",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = AccentLime
+                                color = VioletPrimary
                             )
                         }
                     }
@@ -557,7 +603,7 @@ fun WorkoutSummaryBottomSheet(
             }
 
             GymPrimaryButton(
-                text = "Готово",
+                text = strings.done,
                 onClick = onDismiss,
                 fillWidth = true
             )

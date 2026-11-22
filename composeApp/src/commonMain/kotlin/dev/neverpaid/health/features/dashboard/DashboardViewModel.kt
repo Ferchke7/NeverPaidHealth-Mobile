@@ -50,7 +50,12 @@ class DashboardViewModel(
                 sendEffect(DashboardUiEffect.NavigateToActiveWorkout)
             }
             DashboardUiAction.OnSkipRestDayClick -> {
-                launchGuarded {
+                launchGuarded(
+                    onError = { err ->
+                        sendError(err)
+                        sendEffect(DashboardUiEffect.ShowSnackbar(err.message ?: "Ошибка переключения дня"))
+                    }
+                ) {
                     val updated = repository.advanceActiveProgramDay()
                     val nextDay = updated?.userProgram?.currentDayNumber ?: 1
                     updateState {
@@ -134,7 +139,12 @@ class DashboardViewModel(
                 saveRoutine()
             }
             is DashboardUiAction.OnDeleteRoutineClick -> {
-                launchGuarded {
+                launchGuarded(
+                    onError = { err ->
+                        sendError(err)
+                        sendEffect(DashboardUiEffect.ShowSnackbar(err.message ?: "Ошибка удаления рутины"))
+                    }
+                ) {
                     repository.deleteRoutine(action.routineId)
                     sendEffect(DashboardUiEffect.ShowSnackbar("Рутина удалена"))
                 }

@@ -72,6 +72,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import dev.neverpaid.health.core.designsystem.RoyalVioletToolbarHex
 import dev.neverpaid.health.core.network.DudaApiClient
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -81,15 +82,20 @@ import java.util.Date
 import java.util.Locale
 import java.util.UUID
 
+private class AndroidPlatformHolder {
+    var appContext: Context? = null
+    val inMemoryFallback = HashMap<String, String>()
+}
+
 actual object PlatformBridge {
-    private var appContext: Context? = null
+    private val runtime = AndroidPlatformHolder()
 
     fun init(context: Context) {
-        appContext = context.applicationContext
+        runtime.appContext = context.applicationContext
     }
 
     actual fun vibrate() {
-        val ctx = appContext ?: return
+        val ctx = runtime.appContext ?: return
         val vibrator = ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
@@ -100,7 +106,7 @@ actual object PlatformBridge {
     }
 
     actual fun showToast(message: String) {
-        val ctx = appContext ?: return
+        val ctx = runtime.appContext ?: return
         Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show()
     }
 
@@ -120,21 +126,20 @@ actual object PlatformBridge {
         }
     }
 
-    private val inMemoryFallback = mutableMapOf<String, String>()
-    private fun prefs() = appContext?.getSharedPreferences("duda_storage", Context.MODE_PRIVATE)
+    private fun prefs() = runtime.appContext?.getSharedPreferences("duda_storage", Context.MODE_PRIVATE)
 
     actual fun putString(key: String, value: String) {
         val p = prefs()
         if (p != null) {
             p.edit().putString(key, value).apply()
         } else {
-            inMemoryFallback[key] = value
+            runtime.inMemoryFallback[key] = value
         }
     }
 
     actual fun getString(key: String): String? {
         val p = prefs()
-        return if (p != null) p.getString(key, null) else inMemoryFallback[key]
+        return if (p != null) p.getString(key, null) else runtime.inMemoryFallback[key]
     }
 
     actual fun remove(key: String) {
@@ -142,7 +147,7 @@ actual object PlatformBridge {
         if (p != null) {
             p.edit().remove(key).apply()
         } else {
-            inMemoryFallback.remove(key)
+            runtime.inMemoryFallback.remove(key)
         }
     }
 
@@ -151,7 +156,7 @@ actual object PlatformBridge {
         if (p != null) {
             p.edit().clear().apply()
         } else {
-            inMemoryFallback.clear()
+            runtime.inMemoryFallback.clear()
         }
     }
 
@@ -275,7 +280,7 @@ private fun launchCustomTabFallback(activity: Activity, onError: (String) -> Uni
             .setShowTitle(true)
             .setDefaultColorSchemeParams(
                 CustomTabColorSchemeParams.Builder()
-                    .setToolbarColor(0xFF0A0A0A.toInt())
+                    .setToolbarColor(android.graphics.Color.parseColor(RoyalVioletToolbarHex))
                     .build()
             )
             .build()

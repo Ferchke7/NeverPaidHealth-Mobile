@@ -4,17 +4,10 @@ import dev.neverpaid.health.core.mvi.UiAction
 import dev.neverpaid.health.core.mvi.UiEffect
 import dev.neverpaid.health.core.mvi.UiState
 import dev.neverpaid.health.domain.model.ActivityLogItem
+import dev.neverpaid.health.domain.model.DayCalendarItem
 import dev.neverpaid.health.domain.model.SaveTodoRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
 import dev.neverpaid.health.domain.model.Workout
-
-data class DayCalendarItem(
-    val dateString: String, // "YYYY-MM-DD"
-    val dayName: String,
-    val dayNumber: String,
-    val isToday: Boolean,
-    val isSelected: Boolean
-)
 
 data class TodoUiState(
     val viewMode: String = "list", // "list" | "calendar" | "log"

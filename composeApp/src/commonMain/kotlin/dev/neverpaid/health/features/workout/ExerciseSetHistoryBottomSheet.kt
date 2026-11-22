@@ -78,6 +78,11 @@ fun ExerciseSetHistoryBottomSheet(
     onDismiss: () -> Unit
 ) {
     val strings = LocalDudaStrings.current
+    val lang = when (strings.navWorkouts) {
+        "Mashg'ulotlar" -> "uz"
+        "Workouts" -> "en"
+        else -> "ru"
+    }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var selectedSetFilter by remember(initialSetNumber) {
@@ -317,7 +322,15 @@ fun ExerciseSetHistoryBottomSheet(
                         color = TextPrimary,
                         style = TextStyle(fontFeatureSettings = "tnum")
                     )
-                    Text(text = "подходов", fontSize = 10.sp, color = TextMuted)
+                    Text(
+                        text = when (lang) {
+                            "uz" -> "yondashuv"
+                            "en" -> "sets"
+                            else -> "подходов"
+                        },
+                        fontSize = 10.sp,
+                        color = TextMuted
+                    )
                 }
             }
 
@@ -339,7 +352,11 @@ fun ExerciseSetHistoryBottomSheet(
                 items(availableSetNumbers) { setNum ->
                     val count = history.count { it.setNumber == setNum }
                     GymPillTab(
-                        text = "Сет #$setNum ($count)",
+                        text = when (lang) {
+                            "uz" -> "Yondashuv #$setNum ($count)"
+                            "en" -> "Set #$setNum ($count)"
+                            else -> "Сет #$setNum ($count)"
+                        },
                         selected = selectedSetFilter == setNum,
                         onClick = { selectedSetFilter = setNum }
                     )
@@ -355,7 +372,11 @@ fun ExerciseSetHistoryBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${displayRecords.size} записей",
+                    text = when (lang) {
+                        "uz" -> "${displayRecords.size} yozuv"
+                        "en" -> "${displayRecords.size} records"
+                        else -> "${displayRecords.size} записей"
+                    },
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = TextMuted

@@ -75,9 +75,14 @@ import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymProgressBar
 import dev.neverpaid.health.core.designsystem.GymSectionTitle
 import dev.neverpaid.health.core.designsystem.GymStatTile
+import dev.neverpaid.health.core.designsystem.HeroMuted
+import dev.neverpaid.health.core.designsystem.InkWhite
+import dev.neverpaid.health.core.designsystem.RoyalHeroCard
+import dev.neverpaid.health.core.designsystem.SurfaceWhite
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
+import dev.neverpaid.health.core.designsystem.VioletPrimary
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.core.platform.PlatformBridge
@@ -230,13 +235,13 @@ fun BodyScreen(
                     )
                 }
             } else {
-                // Hero Card: Current Weight + Delta Pill + Target Progress
+                // Hero Card: Royal Violet Current Weight + Delta Pill + Target Progress (Figma Screen 09)
                 item(key = "weight_hero_card", contentType = "hero") {
                     val weightDelta = state.latestWeightKg - state.startWeightKg
                     val deltaSign = if (weightDelta > 0.0) "+" else ""
                     val deltaText = "$deltaSign${formatOneDecimal(weightDelta)} ${strings.unitKg}"
 
-                    GymCard {
+                    RoyalHeroCard(bottomExtraPadding = 22.dp) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -247,7 +252,7 @@ fun BodyScreen(
                                     text = strings.bodyCurrentWeight,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = TextSecondary
+                                    color = HeroMuted
                                 )
                                 Row(verticalAlignment = Alignment.Bottom) {
                                     Text(
@@ -255,7 +260,7 @@ fun BodyScreen(
                                         fontSize = 44.sp,
                                         fontWeight = FontWeight.Black,
                                         letterSpacing = (-1.2).sp,
-                                        color = TextPrimary,
+                                        color = InkWhite,
                                         style = TextStyle(fontFeatureSettings = "tnum")
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
@@ -263,7 +268,7 @@ fun BodyScreen(
                                         text = strings.unitKg,
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = AccentLime,
+                                        color = HeroMuted,
                                         modifier = Modifier.padding(bottom = 6.dp)
                                     )
                                 }
@@ -272,14 +277,14 @@ fun BodyScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(CircleShape)
-                                    .background(AccentLimeSubtle)
+                                    .background(InkWhite.copy(alpha = 0.18f))
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
                             ) {
                                 Text(
                                     text = deltaText,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = AccentLime,
+                                    color = InkWhite,
                                     style = TextStyle(fontFeatureSettings = "tnum")
                                 )
                             }
@@ -295,7 +300,7 @@ fun BodyScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(14.dp))
-                                    .background(DarkSurfaceHigh)
+                                    .background(InkWhite.copy(alpha = 0.14f))
                                     .clickable { onAction(BodyUiAction.OnOpenTargetWeightModal) }
                                     .padding(14.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -313,7 +318,7 @@ fun BodyScreen(
                                         },
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = TextPrimary,
+                                        color = InkWhite,
                                         style = TextStyle(fontFeatureSettings = "tnum")
                                     )
                                     Text(
@@ -324,21 +329,37 @@ fun BodyScreen(
                                         },
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = AccentLime
+                                        color = HeroMuted
                                     )
                                 }
-                                GymProgressBar(progress = progress, heightDp = 6, color = AccentLime)
+                                GymProgressBar(
+                                    progress = progress,
+                                    heightDp = 6,
+                                    color = InkWhite,
+                                    trackColor = InkWhite.copy(alpha = 0.22f)
+                                )
                             }
                         } else {
-                            GymOutlineButton(
-                                text = when (lang) {
-                                    "uz" -> "Maqsadli vaznni belgilash"
-                                    "en" -> "Set target weight"
-                                    else -> "Задать целевой вес"
-                                },
-                                onClick = { onAction(BodyUiAction.OnOpenTargetWeightModal) },
-                                fillWidth = true
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(SurfaceWhite)
+                                    .clickable { onAction(BodyUiAction.OnOpenTargetWeightModal) }
+                                    .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = when (lang) {
+                                        "uz" -> "Maqsadli vaznni belgilash"
+                                        "en" -> "Set target weight"
+                                        else -> "Задать целевой вес"
+                                    },
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = VioletPrimary
+                                )
+                            }
                         }
                     }
                 }
