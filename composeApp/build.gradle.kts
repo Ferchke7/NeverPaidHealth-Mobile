@@ -73,6 +73,14 @@ kotlin {
             implementation(libs.junit)
             implementation(libs.kotlinx.coroutines.test)
         }
+
+        val androidUnitTest by getting {
+            dependencies {
+                implementation("org.robolectric:robolectric:4.14.1")
+                implementation("androidx.compose.ui:ui-test-junit4:1.7.6")
+                implementation("androidx.test:core-ktx:1.6.1")
+            }
+        }
     }
 }
 
@@ -84,8 +92,8 @@ android {
         applicationId = "dev.neverpaid.health"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.0.3"
+        versionCode = 4
+        versionName = "0.0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -119,6 +127,23 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+            all {
+                it.testLogging {
+                    events("failed", "skipped")
+                    exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+                    showExceptions = true
+                    showCauses = true
+                    showStackTraces = true
+                    showStandardStreams = true
+                }
+            }
+        }
     }
 
     packaging {
