@@ -16,7 +16,7 @@
 ### 🤖 Для Android:
 Вы можете сразу скачать готовый установочный `.apk` файл на свой смартфон:
 
-* 📥 **[Скачать duda-v0.0.2-debug.apk (Прямая ссылка)](https://github.com/Ferchke7/NeverPaidHealth-Mobile/releases/download/v0.0.2/duda-v0.0.2-debug.apk)**
+* 📥 **[Скачать duda-v0.0.3-debug.apk (Прямая ссылка)](https://github.com/Ferchke7/NeverPaidHealth-Mobile/releases/download/v0.0.3/duda-v0.0.3-debug.apk)**
 * 📦 **[Страница всех релизов GitHub Releases](https://github.com/Ferchke7/NeverPaidHealth-Mobile/releases)**
 * ⚡ **[Свежие ночные сборки из GitHub Actions Artifacts](https://github.com/Ferchke7/NeverPaidHealth-Mobile/actions)** (вкладка *Artifacts* $\rightarrow$ `duda-Android-APK`)
 
@@ -25,7 +25,7 @@
 ## 🛠️ Инструкция по установке
 
 ### 1. Установка APK на Android-смартфон
-1. Нажмите на **[ссылку для скачивания APK](https://github.com/Ferchke7/NeverPaidHealth-Mobile/releases/download/v0.0.2/duda-v0.0.2-debug.apk)** в браузере телефона (Chrome, Samsung Internet, Яндекс и т.д.).
+1. Нажмите на **[ссылку для скачивания APK](https://github.com/Ferchke7/NeverPaidHealth-Mobile/releases/download/v0.0.3/duda-v0.0.3-debug.apk)** в браузере телефона (Chrome, Samsung Internet, Яндекс и т.д.).
 2. После завершения загрузки нажмите **Открыть** (или перейдите в папку *Загрузки / Downloads*).
 3. Если Android покажет предупреждение системы безопасности:
    - Нажмите **Настройки** $\rightarrow$ включите переключатель **«Разрешить установку из этого источника»**.
@@ -34,7 +34,7 @@
 
 > **Для разработчиков через ADB**:
 > ```bash
-> adb install -r duda-v0.0.2-debug.apk
+> adb install -r duda-v0.0.3-debug.apk
 > ```
 
 ---
@@ -159,7 +159,7 @@ graph TD
    - Запускает весь набор юнит-тестов (`:composeApp:testDebugUnitTest`).
    - Компилирует APK (`:composeApp:assembleDebug`).
    - Загружает файл в **GitHub Actions Artifacts**.
-   - Автоматически создает/обновляет **GitHub Release** и прикрепляет файл `NeverPaidHealth-v1.0.0-debug.apk` для свободного публичного скачивания.
+   - Автоматически создает/обновляет **GitHub Release** и прикрепляет файл `NeverPaidHealth-v0.0.3-debug.apk` для свободного публичного скачивания.
 2. **Runner `macos-latest` (Apple iOS)**:
    - Проверяет целостность сборки нативного iOS-фреймворка (`:composeApp:linkDebugFrameworkIosSimulatorArm64`).
 

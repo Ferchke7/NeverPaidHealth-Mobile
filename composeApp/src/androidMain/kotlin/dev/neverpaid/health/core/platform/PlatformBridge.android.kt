@@ -179,7 +179,7 @@ actual object PlatformBridge {
     }
 
     actual fun openUrl(url: String) {
-        val ctx = appContext ?: return
+        val ctx = runtime.appContext ?: return
         try {
             val intent = CustomTabsIntent.Builder().build()
             val activity = ctx.findActivity()
