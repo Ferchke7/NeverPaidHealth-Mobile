@@ -13,10 +13,12 @@ class NeverPaidHealthApplication : Application() {
         super.onCreate()
         PlatformBridge.init(this)
 
-        startKoin {
-            androidLogger()
-            androidContext(this@NeverPaidHealthApplication)
-            modules(appModule)
+        if (org.koin.core.context.GlobalContext.getOrNull() == null) {
+            startKoin {
+                androidLogger()
+                androidContext(this@NeverPaidHealthApplication)
+                modules(appModule)
+            }
         }
     }
 }

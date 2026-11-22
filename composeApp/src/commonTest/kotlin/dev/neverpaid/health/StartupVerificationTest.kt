@@ -1,5 +1,9 @@
 package dev.neverpaid.health
 
+import dev.neverpaid.health.core.i18n.EnDudaStrings
+import dev.neverpaid.health.core.i18n.RuDudaStrings
+import dev.neverpaid.health.core.i18n.UzDudaStrings
+import dev.neverpaid.health.core.i18n.getDudaStrings
 import dev.neverpaid.health.core.network.DudaApiClient
 import dev.neverpaid.health.data.catalog.ExerciseVisualResolver
 import dev.neverpaid.health.data.catalog.StandardExerciseCatalog
@@ -20,6 +24,18 @@ class StartupVerificationTest {
         val prefs = repo.getUserPreferences().first()
         assertFalse(prefs.darkTheme)
         assertEquals(repo.getPrebuiltRoutines().size, StandardExerciseCatalog.prebuiltRoutines.size)
+    }
+
+    @Test
+    fun localizedStrings_instantiateWithoutClassFormatLimit() {
+        assertEquals("ru", getDudaStrings("ru").languageCode)
+        assertEquals("uz", getDudaStrings("uz").languageCode)
+        assertEquals("en", getDudaStrings("en").languageCode)
+        assertEquals(RuDudaStrings.appName, UzDudaStrings.appName)
+        assertEquals(RuDudaStrings.appName, EnDudaStrings.appName)
+        assertFalse(RuDudaStrings.profileThemeLabel.isBlank())
+        assertFalse(UzDudaStrings.profileThemeLabel.isBlank())
+        assertFalse(EnDudaStrings.profileThemeLabel.isBlank())
     }
 
     @Test
