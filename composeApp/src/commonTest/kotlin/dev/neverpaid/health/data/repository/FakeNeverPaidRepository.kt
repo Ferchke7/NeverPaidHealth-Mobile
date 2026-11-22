@@ -360,14 +360,18 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     override fun startWorkoutWithExercises(
         title: String,
         exercises: List<WorkoutExercise>,
-        routineId: String?
+        routineId: String?,
+        programId: String?,
+        programDayNumber: Int?
     ): Workout {
         val workout = Workout(
             id = "active-1",
             title = title,
             startTimeEpochMs = 1730000000000L,
             exercises = exercises,
-            routineId = routineId
+            routineId = routineId,
+            programId = programId,
+            programDayNumber = programDayNumber
         )
         activeWorkoutFlow.value = workout
         return workout
