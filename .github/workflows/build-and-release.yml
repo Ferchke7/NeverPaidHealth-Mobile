@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: 'Release version tag (e.g. v0.0.3)'
+        description: 'Release version tag (e.g. v0.0.4)'
         required: false
-        default: 'v0.0.3'
+        default: 'v0.0.4'
 
 permissions:
   contents: write
@@ -51,7 +51,7 @@ jobs:
             if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
               VERSION_TAG="${{ github.ref_name }}"
             else
-              VERSION_TAG="v0.0.3"
+              VERSION_TAG="v0.0.4"
             fi
           fi
           echo "VERSION_TAG=$VERSION_TAG" >> "$GITHUB_ENV"
