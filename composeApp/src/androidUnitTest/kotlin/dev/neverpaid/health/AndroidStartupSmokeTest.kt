@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -68,10 +69,24 @@ class AndroidStartupSmokeTest {
             composeRule.waitForIdle()
         }
 
-        // Open menu sheet and navigate to Workouts/Programs/Exercises/History/Body/Profile.
-        composeRule.onNodeWithContentDescription(RuDudaStrings.menuButton).performClick()
+        // Open menu sheet and navigate across secondary routes (Programs, Exercises, History, Body, Profile).
+        listOf(
+            RuDudaStrings.navPrograms,
+            RuDudaStrings.navExercises,
+            RuDudaStrings.navHistory,
+            RuDudaStrings.navBody,
+            RuDudaStrings.navProfile
+        ).forEach { label ->
+            composeRule.onNodeWithContentDescription(RuDudaStrings.menuButton).performClick()
+            composeRule.waitForIdle()
+            composeRule.onAllNodesWithText(label).onLast().performClick()
+            composeRule.waitForIdle()
+        }
+
+        // Return to Workouts hub and start an empty workout to verify WorkoutScreen renders cleanly.
+        composeRule.onAllNodesWithText(RuDudaStrings.navWorkouts).onFirst().performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText(RuDudaStrings.navPrograms).performClick()
+        composeRule.onNodeWithText("+ Пустая тренировка").performClick()
         composeRule.waitForIdle()
     }
 }
