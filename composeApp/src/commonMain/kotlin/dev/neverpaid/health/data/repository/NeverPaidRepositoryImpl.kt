@@ -37,6 +37,8 @@ import dev.neverpaid.health.domain.model.PlatformStats
 import dev.neverpaid.health.domain.model.PreviousExerciseNote
 import dev.neverpaid.health.domain.model.PreviousSetData
 import dev.neverpaid.health.domain.model.ProgramComment
+import dev.neverpaid.health.domain.model.ProgramDay
+import dev.neverpaid.health.domain.model.ProgramDayExercise
 import dev.neverpaid.health.domain.model.ProgressSummary
 import dev.neverpaid.health.domain.model.Routine
 import dev.neverpaid.health.domain.model.RoutineExercise
@@ -96,8 +98,8 @@ class NeverPaidRepositoryImpl(
     private val workoutHistoryFlow = MutableStateFlow<List<Workout>>(DudaLocalStorage.getWorkoutHistory())
     private val recordGroupsFlow = MutableStateFlow<List<ExerciseRecordGroupDto>>(emptyList())
 
-    private val programsFlow = MutableStateFlow<List<TrainingProgram>>(emptyList())
-    private val activeProgramBundleFlow = MutableStateFlow<ActiveProgramBundle?>(null)
+    private val programsFlow = MutableStateFlow<List<TrainingProgram>>(DudaLocalStorage.getCustomPrograms())
+    private val activeProgramBundleFlow = MutableStateFlow<ActiveProgramBundle?>(DudaLocalStorage.getActiveProgramBundle())
     private val installedProgramsFlow = MutableStateFlow<List<ActiveProgramBundle>>(emptyList())
     private val programCommentsMap = mutableMapOf<String, MutableStateFlow<List<ProgramComment>>>()
 
@@ -568,13 +570,17 @@ class NeverPaidRepositoryImpl(
     override fun startWorkoutWithExercises(
         title: String,
         exercises: List<WorkoutExercise>,
-        routineId: String?
+        routineId: String?,
+        programId: String?,
+        programDayNumber: Int?
     ): Workout {
         val workoutId = PlatformBridge.generateUuid()
         val nowMs = PlatformBridge.currentTimeMillis()
         val newWorkout = Workout(
             id = workoutId,
             routineId = routineId,
+            programId = programId,
+            programDayNumber = programDayNumber,
             name = title.ifBlank { "Силовая тренировка" },
             status = "in_progress",
             startedAt = PlatformBridge.formatDate(nowMs, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
@@ -655,7 +661,15 @@ class NeverPaidRepositoryImpl(
         } catch (_: Exception) {}
     }
 
+    private fun workoutStructureSignature(w: Workout?): String {
+        if (w == null) return ""
+        return w.exercises.joinToString("|") { ex ->
+            "${ex.exerciseId}:${ex.exerciseName}:${ex.sets.count { it.setType != "warmup" }}:${ex.sets.size}"
+        }
+    }
+
     override fun updateActiveWorkout(workout: Workout) {
+        val prevSignature = workoutStructureSignature(activeWorkoutFlow.value)
         val allSets = workout.exercises.flatMap { it.sets }
         val calcInputs = allSets.map {
             SetCalculationInput(
@@ -673,6 +687,11 @@ class NeverPaidRepositoryImpl(
         )
         activeWorkoutFlow.value = updated
         DudaLocalStorage.setActiveWorkoutDraft(updated)
+
+        val nextSignature = workoutStructureSignature(updated)
+        if (prevSignature != nextSignature && updated.exercises.isNotEmpty()) {
+            syncProgramFromWorkout(updated, syncRemote = true)
+        }
     }
 
     override fun finishActiveWorkout(): Workout? {
@@ -704,6 +723,10 @@ class NeverPaidRepositoryImpl(
             exercises = validExercises,
             isFinished = true
         )
+
+        if (current.exercises.isNotEmpty()) {
+            syncProgramFromWorkout(current, syncRemote = true)
+        }
 
         val updatedHistory = listOf(finishedWorkout) + workoutHistoryFlow.value
         workoutHistoryFlow.value = updatedHistory
@@ -878,6 +901,145 @@ class NeverPaidRepositoryImpl(
     // 6. PROGRAMS, SPLITS & COMMUNITY
     // ========================================================================
 
+    private fun applyCustomProgramOverride(program: TrainingProgram): TrainingProgram {
+        val customList = DudaLocalStorage.getCustomPrograms()
+        val activeProg = activeProgramBundleFlow.value?.program
+        val match = customList.find { it.id == program.id }
+            ?: (if (activeProg != null && (activeProg.id == program.id || activeProg.name.equals(program.name, ignoreCase = true))) activeProg else null)
+            ?: customList.find { it.name.equals(program.name, ignoreCase = true) }
+        return if (match != null && match.days.isNotEmpty()) {
+            program.copy(days = match.days)
+        } else {
+            program
+        }
+    }
+
+    private fun persistCustomProgramOverride(program: TrainingProgram) {
+        val current = DudaLocalStorage.getCustomPrograms()
+        val updated = current.filterNot { it.id == program.id || it.name.equals(program.name, ignoreCase = true) } + program
+        DudaLocalStorage.setCustomPrograms(updated)
+    }
+
+    private fun syncProgramFromWorkout(workout: Workout, syncRemote: Boolean) {
+        if (workout.exercises.isEmpty()) return
+
+        val activeBundle = activeProgramBundleFlow.value
+        val activeProg = activeBundle?.program
+        val candidateProgId = workout.programId ?: workout.routineId
+
+        val targetProgram: TrainingProgram = when {
+            candidateProgId != null && activeProg?.id == candidateProgId -> activeProg
+            candidateProgId != null -> {
+                programsFlow.value.find { it.id == candidateProgId }
+                    ?: installedProgramsFlow.value.mapNotNull { it.program }.find { it.id == candidateProgId }
+                    ?: DudaLocalStorage.getCustomPrograms().find { it.id == candidateProgId }
+            }
+            activeProg != null && workout.name.startsWith(activeProg.name, ignoreCase = true) -> activeProg
+            else -> null
+        } ?: return
+
+        if (targetProgram.days.isEmpty()) return
+
+        val dayIndex = when {
+            workout.programDayNumber != null -> {
+                val byNum = targetProgram.days.indexOfFirst { it.dayNumber == workout.programDayNumber }
+                if (byNum >= 0) byNum else (workout.programDayNumber - 1).coerceIn(0, targetProgram.days.lastIndex)
+            }
+            else -> {
+                val byTitle = targetProgram.days.indexOfFirst { d ->
+                    d.name.isNotBlank() && workout.name.endsWith(d.name, ignoreCase = true)
+                }
+                if (byTitle >= 0) byTitle else 0
+            }
+        }
+
+        val existingDay = targetProgram.days[dayIndex]
+        val updatedDayExercises = workout.exercises.mapIndexed { idx, ex ->
+            val prevMatch = existingDay.exercises.find {
+                it.exerciseId == ex.exerciseId || it.exerciseName.equals(ex.exerciseName, ignoreCase = true)
+            }
+            val workingSets = ex.sets.filter { it.setType != "warmup" }
+            val targetSets = (if (workingSets.isNotEmpty()) workingSets.size else ex.sets.size).coerceAtLeast(1)
+            val repVals = (if (workingSets.isNotEmpty()) workingSets else ex.sets).map { it.reps }.filter { it > 0 }
+            val minReps = repVals.minOrNull() ?: prevMatch?.targetRepsMin ?: 8
+            val maxReps = (repVals.maxOrNull() ?: prevMatch?.targetRepsMax ?: 12).coerceAtLeast(minReps)
+            ProgramDayExercise(
+                id = prevMatch?.id.orEmpty(),
+                exerciseId = ex.exerciseId,
+                exerciseName = ex.exerciseName,
+                orderIndex = idx,
+                targetSets = targetSets,
+                targetRepsMin = minReps,
+                targetRepsMax = maxReps,
+                targetReps = "$minReps-$maxReps"
+            )
+        }
+
+        val updatedDays = targetProgram.days.mapIndexed { idx, d ->
+            if (idx == dayIndex) d.copy(exercises = updatedDayExercises) else d
+        }
+        val updatedProgram = targetProgram.copy(days = updatedDays)
+
+        persistCustomProgramOverride(updatedProgram)
+
+        if (activeProg != null && (activeProg.id == targetProgram.id || activeProg.name.equals(targetProgram.name, ignoreCase = true))) {
+            val newBundle = activeBundle.copy(program = updatedProgram)
+            activeProgramBundleFlow.value = newBundle
+            DudaLocalStorage.setActiveProgramBundle(newBundle)
+        }
+
+        installedProgramsFlow.value = installedProgramsFlow.value.map { b ->
+            val p = b.program
+            if (p != null && (p.id == targetProgram.id || p.name.equals(targetProgram.name, ignoreCase = true))) {
+                b.copy(program = updatedProgram)
+            } else b
+        }
+
+        programsFlow.value = programsFlow.value.map { p ->
+            if (p.id == targetProgram.id || p.name.equals(targetProgram.name, ignoreCase = true)) {
+                p.copy(days = updatedDays)
+            } else p
+        }
+
+        if (syncRemote && apiClient != null && !isGuestUser()) {
+            scope.launch {
+                try {
+                    val saved = apiClient.updateProgram(
+                        programId = targetProgram.id,
+                        request = SaveProgramRequestDto(
+                            name = updatedProgram.name,
+                            description = updatedProgram.description,
+                            splitType = updatedProgram.splitType,
+                            daysPerWeek = updatedProgram.daysPerWeek.coerceAtLeast(updatedDays.size),
+                            level = updatedProgram.level,
+                            durationWeeks = updatedProgram.durationWeeks,
+                            isPublic = updatedProgram.isPublic,
+                            days = updatedDays
+                        )
+                    )
+                    persistCustomProgramOverride(saved)
+                    val curActive = activeProgramBundleFlow.value
+                    if (curActive?.program != null &&
+                        (curActive.program.id == targetProgram.id || curActive.program.name.equals(saved.name, ignoreCase = true))
+                    ) {
+                        val updatedBundle = curActive.copy(
+                            program = saved.copy(isActive = true),
+                            userProgram = curActive.userProgram?.copy(programId = saved.id)
+                        )
+                        activeProgramBundleFlow.value = updatedBundle
+                        DudaLocalStorage.setActiveProgramBundle(updatedBundle)
+                    }
+                    val curWorkout = activeWorkoutFlow.value
+                    if (curWorkout != null && curWorkout.programId == targetProgram.id && saved.id != targetProgram.id) {
+                        val rebound = curWorkout.copy(programId = saved.id)
+                        activeWorkoutFlow.value = rebound
+                        DudaLocalStorage.setActiveWorkoutDraft(rebound)
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
     override fun getPrograms(): Flow<List<TrainingProgram>> = programsFlow.asStateFlow()
 
     override fun getActiveProgramBundle(): Flow<ActiveProgramBundle?> = activeProgramBundleFlow.asStateFlow()
@@ -886,9 +1048,15 @@ class NeverPaidRepositoryImpl(
 
     override suspend fun refreshPrograms(tab: String, splitType: String?, search: String?): List<TrainingProgram> {
         val client = apiClient ?: return programsFlow.value
-        val activeProgId = activeProgramBundleFlow.value?.program?.id
-        val list = client.getPrograms(tab = tab, splitType = splitType, search = search).map { p ->
-            p.copy(isActive = p.id == activeProgId)
+        val activeProg = activeProgramBundleFlow.value?.program
+        val list = try {
+            client.getPrograms(tab = tab, splitType = splitType, search = search).map { p ->
+                val isAct = activeProg != null && (p.id == activeProg.id || p.name.equals(activeProg.name, ignoreCase = true))
+                val overridden = if (isAct) applyCustomProgramOverride(p) else p
+                overridden.copy(isActive = isAct)
+            }
+        } catch (_: Exception) {
+            programsFlow.value
         }
         programsFlow.value = list
         return list
@@ -899,28 +1067,61 @@ class NeverPaidRepositoryImpl(
         val active = try {
             client.getActiveProgram()
         } catch (_: Exception) {
-            null
+            activeProgramBundleFlow.value ?: DudaLocalStorage.getActiveProgramBundle()
         }
-        activeProgramBundleFlow.value = active
-        val activeId = active?.program?.id
-        programsFlow.value = programsFlow.value.map { it.copy(isActive = it.id == activeId) }
-        return active
+        val effectiveActive = active?.let { bundle ->
+            val overriddenProg = bundle.program?.let { applyCustomProgramOverride(it).copy(isActive = true) }
+            bundle.copy(program = overriddenProg)
+        }
+        activeProgramBundleFlow.value = effectiveActive
+        if (effectiveActive != null) {
+            DudaLocalStorage.setActiveProgramBundle(effectiveActive)
+        }
+        val activeId = effectiveActive?.program?.id
+        val activeName = effectiveActive?.program?.name
+        programsFlow.value = programsFlow.value.map {
+            val isAct = it.id == activeId || (activeName != null && it.name.equals(activeName, ignoreCase = true))
+            (if (isAct) applyCustomProgramOverride(it) else it).copy(isActive = isAct)
+        }
+        return effectiveActive
     }
 
     override suspend fun refreshInstalledPrograms(): List<ActiveProgramBundle> {
         val client = apiClient ?: return installedProgramsFlow.value
-        val installed = client.getInstalledPrograms()
+        val installed = try {
+            client.getInstalledPrograms().map { b ->
+                b.copy(program = b.program?.let { applyCustomProgramOverride(it) })
+            }
+        } catch (_: Exception) {
+            installedProgramsFlow.value
+        }
         installedProgramsFlow.value = installed
         return installed
     }
 
     override suspend fun activateProgram(programId: String) {
-        if (apiClient != null) {
-            apiClient.installProgram(programId, setActive = true)
-            refreshActiveProgram()
-            refreshInstalledPrograms()
-        } else {
+        val localTarget = programsFlow.value.find { it.id == programId }
+            ?: DudaLocalStorage.getCustomPrograms().find { it.id == programId }
+
+        if (localTarget != null) {
+            val activeCopy = applyCustomProgramOverride(localTarget).copy(isActive = true)
+            val bundle = ActiveProgramBundle(
+                userProgramId = "up-${activeCopy.id}",
+                currentDayNumber = 1,
+                isActive = true,
+                program = activeCopy
+            )
+            activeProgramBundleFlow.value = bundle
+            DudaLocalStorage.setActiveProgramBundle(bundle)
             programsFlow.value = programsFlow.value.map { it.copy(isActive = it.id == programId) }
+        }
+
+        if (apiClient != null && !isGuestUser()) {
+            try {
+                apiClient.installProgram(programId, setActive = true)
+                refreshActiveProgram()
+                refreshInstalledPrograms()
+            } catch (_: Exception) {}
         }
     }
 
@@ -954,17 +1155,7 @@ class NeverPaidRepositoryImpl(
     }
 
     override suspend fun toggleLikeProgram(programId: String) {
-        if (apiClient != null) {
-            val res = apiClient.toggleLikeProgram(programId)
-            programsFlow.value = programsFlow.value.map { p ->
-                if (p.id == programId) {
-                    p.copy(
-                        isLiked = res.hasLiked,
-                        likesCount = res.likesCount ?: if (res.hasLiked) p.likesCount + 1 else (p.likesCount - 1).coerceAtLeast(0)
-                    )
-                } else p
-            }
-        } else {
+        val applyLocalToggle = {
             programsFlow.value = programsFlow.value.map { p ->
                 if (p.id == programId) {
                     val nextLiked = !p.isLiked
@@ -975,10 +1166,29 @@ class NeverPaidRepositoryImpl(
                 } else p
             }
         }
+        if (apiClient != null && !isGuestUser()) {
+            try {
+                val res = apiClient.toggleLikeProgram(programId)
+                programsFlow.value = programsFlow.value.map { p ->
+                    if (p.id == programId) {
+                        p.copy(
+                            isLiked = res.hasLiked,
+                            likesCount = res.likesCount ?: if (res.hasLiked) p.likesCount + 1 else (p.likesCount - 1).coerceAtLeast(0)
+                        )
+                    } else p
+                }
+            } catch (_: Exception) {
+                applyLocalToggle()
+            }
+        } else {
+            applyLocalToggle()
+        }
     }
 
     override fun getProgramComments(programId: String): Flow<List<ProgramComment>> {
-        val flow = programCommentsMap.getOrPut(programId) { MutableStateFlow(emptyList()) }
+        val flow = programCommentsMap.getOrPut(programId) {
+            MutableStateFlow(DudaLocalStorage.getProgramComments(programId).orEmpty())
+        }
         if (apiClient != null) {
             scope.launch {
                 try {
@@ -990,61 +1200,141 @@ class NeverPaidRepositoryImpl(
     }
 
     override suspend fun refreshProgramComments(programId: String): List<ProgramComment> {
-        val client = apiClient ?: return programCommentsMap[programId]?.value ?: emptyList()
-        val rawComments = client.getProgramComments(programId)
-        val rootComments = rawComments.filter { it.parentId.isNullOrBlank() }.map { root ->
-            val replies = rawComments.filter { it.parentId == root.id }
-            root.copy(replies = replies)
+        val flow = programCommentsMap.getOrPut(programId) {
+            MutableStateFlow(DudaLocalStorage.getProgramComments(programId).orEmpty())
         }
-        val flow = programCommentsMap.getOrPut(programId) { MutableStateFlow(emptyList()) }
-        flow.value = rootComments
-        return rootComments
+        val client = apiClient ?: return flow.value
+        return try {
+            val rawComments = client.getProgramComments(programId)
+            val rootComments = rawComments.filter { it.parentId.isNullOrBlank() }.map { root ->
+                val replies = rawComments.filter { it.parentId == root.id }
+                root.copy(replies = replies)
+            }
+            val localCached = DudaLocalStorage.getProgramComments(programId).orEmpty()
+            val remoteIds = rootComments.map { it.id }.toSet()
+            val merged = rootComments + localCached.filter { it.id !in remoteIds }
+            flow.value = merged
+            DudaLocalStorage.setProgramComments(programId, merged)
+            merged
+        } catch (_: Exception) {
+            flow.value
+        }
     }
 
     override suspend fun addProgramComment(programId: String, content: String, parentId: String?): ProgramComment {
         val user = currentUserFlow.value
-        if (apiClient != null) {
-            val created = apiClient.postProgramComment(
-                programId = programId,
-                content = content.trim(),
-                parentId = parentId,
-                authorName = user?.name ?: "Атлет",
-                avatarUrl = user?.avatarUrl
-            )
-            refreshProgramComments(programId)
-            programsFlow.value = programsFlow.value.map { p ->
-                if (p.id == programId) p.copy(commentsCount = p.commentsCount + 1) else p
-            }
-            return created
-        } else {
+        val flow = programCommentsMap.getOrPut(programId) {
+            MutableStateFlow(DudaLocalStorage.getProgramComments(programId).orEmpty())
+        }
+        val addLocalFallback = {
             val newComment = ProgramComment(
                 id = PlatformBridge.generateUuid(),
                 programId = programId,
                 userId = user?.id ?: "u-1",
                 authorName = user?.name ?: "Атлет",
+                avatarUrl = user?.avatarUrl,
                 content = content.trim(),
                 parentId = parentId
             )
-            val flow = programCommentsMap.getOrPut(programId) { MutableStateFlow(emptyList()) }
-            if (parentId == null) {
-                flow.value = listOf(newComment) + flow.value
+            val updated = if (parentId == null) {
+                listOf(newComment) + flow.value
             } else {
-                flow.value = flow.value.map { c ->
+                flow.value.map { c ->
                     if (c.id == parentId) c.copy(replies = c.replies + newComment) else c
                 }
             }
-            return newComment
+            flow.value = updated
+            DudaLocalStorage.setProgramComments(programId, updated)
+            programsFlow.value = programsFlow.value.map { p ->
+                if (p.id == programId) p.copy(commentsCount = p.commentsCount + 1) else p
+            }
+            activeProgramBundleFlow.value?.let { b ->
+                if (b.program?.id == programId) {
+                    activeProgramBundleFlow.value = b.copy(
+                        program = b.program.copy(commentsCount = b.program.commentsCount + 1)
+                    )
+                }
+            }
+            newComment
+        }
+
+        return if (apiClient != null && !isGuestUser()) {
+            try {
+                val created = apiClient.postProgramComment(
+                    programId = programId,
+                    content = content.trim(),
+                    parentId = parentId,
+                    authorName = user?.name ?: "Атлет",
+                    avatarUrl = user?.avatarUrl
+                )
+                refreshProgramComments(programId)
+                programsFlow.value = programsFlow.value.map { p ->
+                    if (p.id == programId) p.copy(commentsCount = p.commentsCount + 1) else p
+                }
+                activeProgramBundleFlow.value?.let { b ->
+                    if (b.program?.id == programId) {
+                        activeProgramBundleFlow.value = b.copy(
+                            program = b.program.copy(commentsCount = b.program.commentsCount + 1)
+                        )
+                    }
+                }
+                created
+            } catch (_: Exception) {
+                addLocalFallback()
+            }
+        } else {
+            addLocalFallback()
         }
     }
 
     override suspend fun upvoteProgramComment(programId: String, commentId: String) {
-        apiClient?.upvoteProgramComment(programId, commentId)
-        refreshProgramComments(programId)
+        try {
+            apiClient?.upvoteProgramComment(programId, commentId)
+            refreshProgramComments(programId)
+        } catch (_: Exception) {
+            val flow = programCommentsMap.getOrPut(programId) {
+                MutableStateFlow(DudaLocalStorage.getProgramComments(programId).orEmpty())
+            }
+            val updated = flow.value.map { c ->
+                if (c.id == commentId) {
+                    val next = !c.hasUpvoted
+                    c.copy(
+                        hasUpvoted = next,
+                        upvotes = if (next) c.upvotes + 1 else (c.upvotes - 1).coerceAtLeast(0)
+                    )
+                } else {
+                    c.copy(
+                        replies = c.replies.map { r ->
+                            if (r.id == commentId) {
+                                val next = !r.hasUpvoted
+                                r.copy(
+                                    hasUpvoted = next,
+                                    upvotes = if (next) r.upvotes + 1 else (r.upvotes - 1).coerceAtLeast(0)
+                                )
+                            } else r
+                        }
+                    )
+                }
+            }
+            flow.value = updated
+            DudaLocalStorage.setProgramComments(programId, updated)
+        }
     }
 
     override suspend fun deleteProgramComment(programId: String, commentId: String) {
-        apiClient?.deleteProgramComment(programId, commentId)
-        refreshProgramComments(programId)
+        try {
+            apiClient?.deleteProgramComment(programId, commentId)
+            refreshProgramComments(programId)
+        } catch (_: Exception) {
+            val flow = programCommentsMap.getOrPut(programId) {
+                MutableStateFlow(DudaLocalStorage.getProgramComments(programId).orEmpty())
+            }
+            val updated = flow.value.filterNot { it.id == commentId }.map { c ->
+                c.copy(replies = c.replies.filterNot { it.id == commentId })
+            }
+            flow.value = updated
+            DudaLocalStorage.setProgramComments(programId, updated)
+        }
     }
 
     override suspend fun getAthleteProfile(athleteId: String): AthleteProfile {

@@ -126,7 +126,13 @@ interface NeverPaidRepository {
     fun getPreviousSetsMap(): Flow<Map<String, List<PreviousSetData>>>
     fun getPreviousNotesMap(): Flow<Map<String, PreviousExerciseNote>>
     fun startWorkout(title: String, routine: Routine? = null): Workout
-    fun startWorkoutWithExercises(title: String, exercises: List<WorkoutExercise>, routineId: String? = null): Workout
+    fun startWorkoutWithExercises(
+        title: String,
+        exercises: List<WorkoutExercise>,
+        routineId: String? = null,
+        programId: String? = null,
+        programDayNumber: Int? = null
+    ): Workout
     fun updateActiveWorkout(workout: Workout)
     fun finishActiveWorkout(): Workout?
     fun discardActiveWorkout()
@@ -257,7 +263,9 @@ interface NeverPaidRepository {
         return startWorkoutWithExercises(
             title = "${program.name} — ${day.name}",
             exercises = exercises,
-            routineId = program.id
+            routineId = null,
+            programId = program.id,
+            programDayNumber = day.dayNumber
         )
     }
     suspend fun advanceActiveProgramDay(): ActiveProgramBundle? = refreshActiveProgram()

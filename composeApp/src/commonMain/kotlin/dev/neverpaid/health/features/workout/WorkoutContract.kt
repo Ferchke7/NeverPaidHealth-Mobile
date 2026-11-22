@@ -4,6 +4,7 @@ import dev.neverpaid.health.core.mvi.UiAction
 import dev.neverpaid.health.core.mvi.UiEffect
 import dev.neverpaid.health.core.mvi.UiState
 import dev.neverpaid.health.domain.model.Exercise
+import dev.neverpaid.health.domain.model.PreviousExerciseNote
 import dev.neverpaid.health.domain.model.Workout
 
 data class WorkoutUiState(
@@ -18,6 +19,7 @@ data class WorkoutUiState(
     val availableExercises: List<Exercise> = emptyList(),
     val isKgUnit: Boolean = true,
     val workoutHistory: List<Workout> = emptyList(),
+    val previousNotesMap: Map<String, PreviousExerciseNote> = emptyMap(),
     val historySheetExerciseId: String? = null,
     val historySheetExerciseName: String? = null,
     val historySheetSetNumber: Int? = null,
@@ -26,6 +28,7 @@ data class WorkoutUiState(
 
 sealed interface WorkoutUiAction : UiAction {
     data class OnUpdateWorkoutTitle(val title: String) : WorkoutUiAction
+    data class OnUpdateWorkoutNotes(val notes: String) : WorkoutUiAction
     data class OnUpdateWeight(val exerciseId: String, val setId: String, val weight: Double) : WorkoutUiAction
     data class OnUpdateReps(val exerciseId: String, val setId: String, val reps: Int) : WorkoutUiAction
     data class OnApplyPreviousSet(val exerciseId: String, val setId: String) : WorkoutUiAction

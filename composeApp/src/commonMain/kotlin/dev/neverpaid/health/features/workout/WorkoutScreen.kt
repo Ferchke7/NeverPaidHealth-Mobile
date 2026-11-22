@@ -390,6 +390,7 @@ fun WorkoutScreen(
     var prevExerciseCount by remember(workout?.id) { mutableIntStateOf(workout?.exercises?.size ?: 0) }
     var showSessionNoteEditor by remember { mutableStateOf(false) }
     var sessionTitleDraft by remember(workout?.id, workout?.title) { mutableStateOf(workout?.title ?: "") }
+    var sessionNotesDraft by remember(workout?.id) { mutableStateOf(workout?.notes ?: "") }
 
     LaunchedEffect(workout?.exercises?.size) {
         val count = workout?.exercises?.size ?: 0
@@ -550,10 +551,10 @@ fun WorkoutScreen(
                         )
                     }
 
-                    // Primary "Завершить" and quiet secondary "Отменить"
+                    // Primary "Завершить", "Комментарий" and quiet secondary "Отменить"
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         GymPrimaryButton(
@@ -562,17 +563,58 @@ fun WorkoutScreen(
                             modifier = Modifier.weight(1f)
                         )
                         GymOutlineButton(
+                            text = if (workout.notes.isNotBlank()) "Комментарий •" else "Комментарий",
+                            onClick = { showSessionNoteEditor = !showSessionNoteEditor },
+                            textColor = if (workout.notes.isNotBlank() || showSessionNoteEditor) AccentLime else TextPrimary
+                        )
+                        GymOutlineButton(
                             text = strings.workoutDiscard,
                             onClick = onRequestDiscard,
                             textColor = TextSecondary
                         )
                     }
 
+                    if (workout.notes.isNotBlank() && !showSessionNoteEditor) {
+                        GymInnerWell(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showSessionNoteEditor = true }
+                        ) {
+                            Text(
+                                text = "Комментарий к тренировке",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AccentLime
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = workout.notes,
+                                fontSize = 13.sp,
+                                color = TextPrimary
+                            )
+                        }
+                    }
+
                     AnimatedVisibility(visible = showSessionNoteEditor) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             GymDivider()
                             Text(
-                                text = "Название / заметка тренировки",
+                                text = "Комментарий к тренировке",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AccentLime
+                            )
+                            GymTextField(
+                                value = sessionNotesDraft,
+                                onValueChange = {
+                                    sessionNotesDraft = it
+                                    onAction(WorkoutUiAction.OnUpdateWorkoutNotes(it))
+                                },
+                                placeholder = "Самочувствие, рабочие веса, заметка на следующий раз...",
+                                singleLine = false
+                            )
+                            Text(
+                                text = "Название тренировки",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = TextSecondary
@@ -692,8 +734,22 @@ fun WorkoutScreen(
                     key = { idx, ex -> "${ex.id}_$idx" },
                     contentType = { _, _ -> "exercise_card" }
                 ) { _, exercise ->
+                    val prevNoteFromApi = state.previousNotesMap[exercise.exerciseId]?.note
+                        ?: state.previousNotesMap[exercise.exerciseName]?.note
+                        ?: state.previousNotesMap[exercise.exerciseName.lowercase()]?.note
+                    val prevNoteFromHistory = remember(state.workoutHistory, exercise.exerciseId, exercise.exerciseName) {
+                        state.workoutHistory.firstNotNullOfOrNull { w ->
+                            w.exercises.find {
+                                it.exerciseId == exercise.exerciseId ||
+                                    it.exerciseName.equals(exercise.exerciseName, ignoreCase = true)
+                            }?.notes?.trim()?.takeIf { it.isNotEmpty() }
+                        }
+                    }
+                    val effectivePreviousNote = prevNoteFromApi?.takeIf { it.isNotBlank() } ?: prevNoteFromHistory
+
                     WorkoutExerciseCard(
                         exercise = exercise,
+                        previousNote = effectivePreviousNote,
                         workoutHistory = state.workoutHistory,
                         isKgUnit = state.isKgUnit,
                         restPresetSeconds = restPresetSeconds,
@@ -775,6 +831,7 @@ fun WorkoutScreen(
 @Composable
 private fun WorkoutExerciseCard(
     exercise: WorkoutExercise,
+    previousNote: String? = null,
     workoutHistory: List<Workout>,
     isKgUnit: Boolean,
     restPresetSeconds: Int,
@@ -894,20 +951,20 @@ private fun WorkoutExerciseCard(
             }
         }
 
-        // 2. Clean Secondary Exercise Actions strip (Заметка, Разминка, Блины, Заменить, Убрать)
+        // 2. Clean Secondary Exercise Actions strip (Комментарий, Разминка, Блины, Заменить, Убрать)
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             WorkoutUtilityChip(
-                text = if (exercise.notes.isNotBlank()) "Заметка •" else "Заметка",
+                text = if (exercise.notes.isNotBlank() || !previousNote.isNullOrBlank()) "Комментарий •" else "Комментарий",
                 onClick = {
                     noteExpanded = true
                     editingNotes = !editingNotes
                 },
-                backgroundColor = if (exercise.notes.isNotBlank() || editingNotes) AccentLimeSubtle else DarkSurfaceHigh,
-                textColor = if (exercise.notes.isNotBlank() || editingNotes) AccentLime else TextSecondary
+                backgroundColor = if (exercise.notes.isNotBlank() || !previousNote.isNullOrBlank() || editingNotes) AccentLimeSubtle else DarkSurfaceHigh,
+                textColor = if (exercise.notes.isNotBlank() || !previousNote.isNullOrBlank() || editingNotes) AccentLime else TextSecondary
             )
             WorkoutUtilityChip(
                 text = "Разминка",
@@ -933,61 +990,31 @@ private fun WorkoutExerciseCard(
             )
         }
 
-        // Optional Note Editor / Viewer
-        if (exercise.notes.isNotBlank() || editingNotes) {
+        // Previous Workout Note + Current Exercise Comment Editor / Viewer
+        if (!previousNote.isNullOrBlank() || exercise.notes.isNotBlank() || editingNotes) {
             GymInnerWell {
-                Text(
-                    text = "Заметка к упражнению",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AccentLime
-                )
-                if (editingNotes) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    GymTextField(
-                        value = noteDraft,
-                        onValueChange = { noteDraft = it },
-                        placeholder = "Пауза 1 сек в нижней точке, лопатки сведены",
-                        singleLine = false
+                if (!previousNote.isNullOrBlank()) {
+                    Text(
+                        text = "Комментарий с прошлой тренировки",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AmberWarm
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        GymPrimaryButton(
-                            text = strings.save,
-                            onClick = {
-                                onUpdateNotes(noteDraft.trim())
-                                editingNotes = false
-                                noteExpanded = noteDraft.isNotBlank()
-                            }
-                        )
-                        GymOutlineButton(
-                            text = strings.cancel,
-                            onClick = {
-                                noteDraft = exercise.notes
-                                editingNotes = false
-                            }
-                        )
-                    }
-                } else {
-                    if (noteExpanded && exercise.notes.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = exercise.notes,
-                            fontSize = 13.sp,
-                            lineHeight = 19.sp,
-                            color = TextSoft
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = previousNote,
+                        fontSize = 13.sp,
+                        lineHeight = 19.sp,
+                        color = TextPrimary
+                    )
+                    if (exercise.notes.isNotBlank() || editingNotes) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        GymDivider()
+                        Spacer(modifier = Modifier.height(10.dp))
+                    } else {
+                        Spacer(modifier = Modifier.height(8.dp))
                         WorkoutUtilityChip(
-                            text = if (noteExpanded) "Свернуть" else "Показать",
-                            onClick = { noteExpanded = !noteExpanded },
-                            backgroundColor = GymWell,
-                            textColor = TextSecondary
-                        )
-                        WorkoutUtilityChip(
-                            text = "Изменить",
+                            text = "Оставить комментарий на следующую тренировку",
                             onClick = {
                                 noteExpanded = true
                                 editingNotes = true
@@ -995,6 +1022,72 @@ private fun WorkoutExerciseCard(
                             backgroundColor = GymWell,
                             textColor = AccentLime
                         )
+                    }
+                }
+
+                if (exercise.notes.isNotBlank() || editingNotes) {
+                    Text(
+                        text = "Комментарий к упражнению",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AccentLime
+                    )
+                    if (editingNotes) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        GymTextField(
+                            value = noteDraft,
+                            onValueChange = {
+                                noteDraft = it
+                                onUpdateNotes(it)
+                            },
+                            placeholder = "Пауза 1 сек в нижней точке, лопатки сведены...",
+                            singleLine = false
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            GymPrimaryButton(
+                                text = strings.save,
+                                onClick = {
+                                    onUpdateNotes(noteDraft.trim())
+                                    editingNotes = false
+                                    noteExpanded = noteDraft.isNotBlank()
+                                }
+                            )
+                            GymOutlineButton(
+                                text = strings.cancel,
+                                onClick = {
+                                    editingNotes = false
+                                }
+                            )
+                        }
+                    } else {
+                        if (noteExpanded && exercise.notes.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = exercise.notes,
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp,
+                                color = TextSoft
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            WorkoutUtilityChip(
+                                text = if (noteExpanded) "Свернуть" else "Показать",
+                                onClick = { noteExpanded = !noteExpanded },
+                                backgroundColor = GymWell,
+                                textColor = TextSecondary
+                            )
+                            WorkoutUtilityChip(
+                                text = "Изменить",
+                                onClick = {
+                                    noteExpanded = true
+                                    editingNotes = true
+                                },
+                                backgroundColor = GymWell,
+                                textColor = AccentLime
+                            )
+                        }
                     }
                 }
             }

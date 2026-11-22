@@ -228,6 +228,8 @@ data class WorkoutExercise(
 data class Workout(
     @SerialName("id") val id: String,
     @SerialName("routine_id") val routineId: String? = null,
+    @SerialName("program_id") val programId: String? = null,
+    @SerialName("program_day_number") val programDayNumber: Int? = null,
     @SerialName("name") val name: String = "Workout",
     @SerialName("status") val status: String = "completed",
     @SerialName("started_at") val startedAt: String = "",
@@ -251,10 +253,14 @@ data class Workout(
         isFinished: Boolean = false,
         exercises: List<WorkoutExercise> = emptyList(),
         routineId: String? = null,
-        notes: String = ""
+        notes: String = "",
+        programId: String? = null,
+        programDayNumber: Int? = null
     ) : this(
         id = id,
         routineId = routineId,
+        programId = programId,
+        programDayNumber = programDayNumber,
         name = title,
         durationSeconds = durationSeconds,
         totalVolumeKg = totalVolumeKg,

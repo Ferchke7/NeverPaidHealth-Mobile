@@ -254,6 +254,7 @@ fun ProgramsScreen(
                     lang = lang,
                     onStartDay = { day -> onAction(ProgramsUiAction.OnStartProgramDay(activeProgram, day)) },
                     onOpenDetail = { onAction(ProgramsUiAction.OnOpenProgramDetail(activeProgram)) },
+                    onOpenComments = { onAction(ProgramsUiAction.OnOpenComments(activeProgram.id)) },
                     onDeactivate = { onAction(ProgramsUiAction.OnDeactivateProgram) },
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -414,6 +415,7 @@ private fun ActiveProgramHeroCard(
     lang: String,
     onStartDay: (ProgramDay) -> Unit,
     onOpenDetail: () -> Unit,
+    onOpenComments: () -> Unit = {},
     onDeactivate: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -533,6 +535,10 @@ private fun ActiveProgramHeroCard(
                     else -> "Подробнее"
                 },
                 onClick = onOpenDetail
+            )
+            GymOutlineButton(
+                text = "${if (lang == "en") "Comments" else if (lang == "uz") "Izohlar" else "Комментарии"} · ${program.commentsCount}",
+                onClick = onOpenComments
             )
             GymOutlineButton(
                 text = when (lang) {
@@ -780,25 +786,23 @@ private fun ProgramCard(
                 )
             }
 
-            if (isCommunityTab || program.likesCount > 0 || program.commentsCount > 0) {
-                if (program.authorName.isNotBlank()) {
-                    GymOutlineButton(
-                        text = program.authorName.replace("NeverPaidHealth", "duda.uz"),
-                        textColor = TextSecondary,
-                        onClick = onOpenAuthor
-                    )
-                }
+            if (isCommunityTab && program.authorName.isNotBlank()) {
                 GymOutlineButton(
-                    text = "♥ ${program.likesCount}",
-                    textColor = if (program.isLiked) AccentLime else TextPrimary,
-                    borderColor = if (program.isLiked) BorderHighlight else BorderSubtle,
-                    onClick = onToggleLike
-                )
-                GymOutlineButton(
-                    text = "${if (lang == "en") "Comments" else if (lang == "uz") "Fikrlar" else "Отзывы"} · ${program.commentsCount}",
-                    onClick = onOpenComments
+                    text = program.authorName.replace("NeverPaidHealth", "duda.uz"),
+                    textColor = TextSecondary,
+                    onClick = onOpenAuthor
                 )
             }
+            GymOutlineButton(
+                text = "♥ ${program.likesCount}",
+                textColor = if (program.isLiked) AccentLime else TextPrimary,
+                borderColor = if (program.isLiked) BorderHighlight else BorderSubtle,
+                onClick = onToggleLike
+            )
+            GymOutlineButton(
+                text = "${if (lang == "en") "Comments" else if (lang == "uz") "Izohlar" else "Комментарии"} · ${program.commentsCount}",
+                onClick = onOpenComments
+            )
         }
     }
 }

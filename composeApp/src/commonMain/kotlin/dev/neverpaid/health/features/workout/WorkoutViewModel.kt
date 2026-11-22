@@ -31,6 +31,7 @@ class WorkoutViewModel(
     override fun onAction(action: WorkoutUiAction) {
         when (action) {
             is WorkoutUiAction.OnUpdateWorkoutTitle -> updateWorkoutTitle(action.title)
+            is WorkoutUiAction.OnUpdateWorkoutNotes -> updateWorkoutNotes(action.notes)
             is WorkoutUiAction.OnUpdateWeight -> updateWeight(action.exerciseId, action.setId, action.weight)
             is WorkoutUiAction.OnUpdateReps -> updateReps(action.exerciseId, action.setId, action.reps)
             is WorkoutUiAction.OnApplyPreviousSet -> applyPreviousSet(action.exerciseId, action.setId)
@@ -88,6 +89,11 @@ class WorkoutViewModel(
 
     private fun observeWorkoutAndCatalog() {
         launchGuarded {
+            repository.getPreviousNotesMap().collect { notesMap ->
+                updateState { copy(previousNotesMap = notesMap) }
+            }
+        }
+        launchGuarded {
             combine(
                 repository.getActiveWorkout(),
                 repository.getExercises(),
@@ -113,6 +119,13 @@ class WorkoutViewModel(
     private fun updateWorkoutTitle(title: String) {
         val currentWorkout = currentState.workout ?: return
         val updated = currentWorkout.copy(name = title)
+        updateState { copy(workout = updated) }
+        repository.updateActiveWorkout(updated)
+    }
+
+    private fun updateWorkoutNotes(notes: String) {
+        val currentWorkout = currentState.workout ?: return
+        val updated = currentWorkout.copy(notes = notes)
         updateState { copy(workout = updated) }
         repository.updateActiveWorkout(updated)
     }

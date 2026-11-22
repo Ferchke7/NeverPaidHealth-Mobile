@@ -1,11 +1,14 @@
 package dev.neverpaid.health.core.storage
 
 import dev.neverpaid.health.core.platform.PlatformBridge
+import dev.neverpaid.health.domain.model.ActiveProgramBundle
 import dev.neverpaid.health.domain.model.BodyMeasurement
 import dev.neverpaid.health.domain.model.FocusTimerState
 import dev.neverpaid.health.domain.model.MealLog
+import dev.neverpaid.health.domain.model.ProgramComment
 import dev.neverpaid.health.domain.model.Routine
 import dev.neverpaid.health.domain.model.TodoTask
+import dev.neverpaid.health.domain.model.TrainingProgram
 import dev.neverpaid.health.domain.model.UserProfileDto
 import dev.neverpaid.health.domain.model.Workout
 import dev.neverpaid.health.domain.repository.UserPreferencesData
@@ -31,6 +34,9 @@ object DudaLocalStorage {
     private const val KEY_MEAL_LOGS = "np_meal_logs_v2"
     private const val KEY_TODOS_PREFIX = "np_todos_v2_"
     private const val KEY_BODY_MEASUREMENTS = "np_body_measurements_v2"
+    private const val KEY_ACTIVE_PROGRAM_BUNDLE = "np_active_program_bundle_v2"
+    private const val KEY_CUSTOM_PROGRAMS = "np_custom_programs_v2"
+    private const val KEY_PROGRAM_COMMENTS_PREFIX = "np_prog_comments_v2_"
 
     fun getAccessToken(): String? {
         val raw = PlatformBridge.getString(KEY_ACCESS_TOKEN)
@@ -186,6 +192,49 @@ object DudaLocalStorage {
 
     fun setBodyMeasurements(list: List<BodyMeasurement>) {
         PlatformBridge.putString(KEY_BODY_MEASUREMENTS, json.encodeToString(list))
+    }
+
+    fun getActiveProgramBundle(): ActiveProgramBundle? {
+        val str = PlatformBridge.getString(KEY_ACTIVE_PROGRAM_BUNDLE) ?: return null
+        return try {
+            json.decodeFromString<ActiveProgramBundle>(str)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun setActiveProgramBundle(bundle: ActiveProgramBundle?) {
+        if (bundle == null) {
+            PlatformBridge.remove(KEY_ACTIVE_PROGRAM_BUNDLE)
+        } else {
+            PlatformBridge.putString(KEY_ACTIVE_PROGRAM_BUNDLE, json.encodeToString(bundle))
+        }
+    }
+
+    fun getCustomPrograms(): List<TrainingProgram> {
+        val str = PlatformBridge.getString(KEY_CUSTOM_PROGRAMS) ?: return emptyList()
+        return try {
+            json.decodeFromString<List<TrainingProgram>>(str)
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    fun setCustomPrograms(list: List<TrainingProgram>) {
+        PlatformBridge.putString(KEY_CUSTOM_PROGRAMS, json.encodeToString(list))
+    }
+
+    fun getProgramComments(programId: String): List<ProgramComment>? {
+        val str = PlatformBridge.getString(KEY_PROGRAM_COMMENTS_PREFIX + programId) ?: return null
+        return try {
+            json.decodeFromString<List<ProgramComment>>(str)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun setProgramComments(programId: String, list: List<ProgramComment>) {
+        PlatformBridge.putString(KEY_PROGRAM_COMMENTS_PREFIX + programId, json.encodeToString(list))
     }
 
     fun clearAuthSession() {
