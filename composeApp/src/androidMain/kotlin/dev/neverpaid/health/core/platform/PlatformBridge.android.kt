@@ -95,19 +95,32 @@ actual object PlatformBridge {
     }
 
     actual fun vibrate() {
-        val ctx = runtime.appContext ?: return
-        val vibrator = ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator?.vibrate(50)
+        try {
+            val ctx = runtime.appContext ?: return
+            val vibrator = ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(50)
+            }
+        } catch (_: Throwable) {
         }
     }
 
     actual fun showToast(message: String) {
         val ctx = runtime.appContext ?: return
-        Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show()
+        val showAction = Runnable {
+            try {
+                Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show()
+            } catch (_: Throwable) {
+            }
+        }
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            showAction.run()
+        } else {
+            Handler(Looper.getMainLooper()).post(showAction)
+        }
     }
 
     actual fun currentTimeMillis(): Long {
@@ -173,7 +186,7 @@ actual object PlatformBridge {
         if (bytes.isEmpty()) return null
         return try {
             BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             null
         }
     }

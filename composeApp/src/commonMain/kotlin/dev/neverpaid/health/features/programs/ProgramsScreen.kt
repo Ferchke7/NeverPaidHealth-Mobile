@@ -392,11 +392,11 @@ fun ProgramsScreen(
                 )
             }
         } else {
-            items(
+            itemsIndexed(
                 items = filteredPrograms,
-                key = { it.id },
-                contentType = { "program_card" }
-            ) { program ->
+                key = { idx, p -> "${p.id}_$idx" },
+                contentType = { _, _ -> "program_card" }
+            ) { _, program ->
                 val isOwn = program.authorUserId == state.currentUserId && state.currentUserId.isNotBlank()
                 ProgramCard(
                     program = program,
@@ -502,7 +502,7 @@ private fun ActiveProgramHeroCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                itemsIndexed(sortedDays, key = { _, d -> d.dayNumber }) { idx, day ->
+                itemsIndexed(sortedDays, key = { idx, d -> "${idx}_${d.dayNumber}" }) { idx, day ->
                     GymPillTab(
                         text = "${if (lang == "en") "Day" else if (lang == "uz") "Kun" else "День"} ${day.dayNumber} · ${day.title}",
                         selected = idx == safeIndex,
@@ -952,7 +952,7 @@ private fun ProgramDetailBottomSheet(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(sortedDays, key = { it.dayNumber }) { d ->
+                            itemsIndexed(sortedDays, key = { idx, d -> "tab_${idx}_${d.dayNumber}" }) { _, d ->
                                 GymPillTab(
                                     text = "${if (lang == "en") "Day" else if (lang == "uz") "Kun" else "День"} ${d.dayNumber}",
                                     selected = selectedDayNumber == d.dayNumber,
@@ -964,7 +964,7 @@ private fun ProgramDetailBottomSheet(
                 }
             }
 
-            items(sortedDays, key = { it.dayNumber }) { day ->
+            itemsIndexed(sortedDays, key = { idx, day -> "card_${idx}_${day.dayNumber}" }) { _, day ->
                 val isHighlighted = day.dayNumber == selectedDayNumber
                 GymCard(
                     backgroundColor = GymWell,
@@ -1577,7 +1577,7 @@ private fun ProgramCommentsBottomSheet(
                         )
                     }
                 } else {
-                    items(comments, key = { it.id }) { comment ->
+                    itemsIndexed(comments, key = { idx, c -> "${c.id}_$idx" }) { _, comment ->
                         CommentItem(
                             comment = comment,
                             canDelete = comment.userId == currentUserId && currentUserId.isNotBlank(),

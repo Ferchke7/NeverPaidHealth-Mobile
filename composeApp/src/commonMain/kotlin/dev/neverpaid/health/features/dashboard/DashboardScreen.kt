@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -419,11 +420,11 @@ fun DashboardScreen(
                 )
             }
         } else {
-            items(
+            itemsIndexed(
                 items = combinedRoutines,
-                key = { (isCustom, r) -> "${if (isCustom) "custom" else "prebuilt"}_${r.id}" },
-                contentType = { "routine_card" }
-            ) { (isCustom, routine) ->
+                key = { index, (isCustom, r) -> "${if (isCustom) "custom" else "prebuilt"}_${r.id}_$index" },
+                contentType = { _, _ -> "routine_card" }
+            ) { _, (isCustom, routine) ->
                 RoutineCardItem(
                     routine = routine,
                     isCustom = isCustom,
@@ -649,7 +650,7 @@ private fun ActiveProgramScheduleSection(
 
         if (days.isNotEmpty()) {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(days, key = { it.dayNumber }) { day ->
+                itemsIndexed(days, key = { index, day -> "${index}_${day.dayNumber}" }) { _, day ->
                     val isSelected = day.dayNumber == (selectedDay?.dayNumber ?: 1)
                     GymPillTab(
                         text = when (lang) {

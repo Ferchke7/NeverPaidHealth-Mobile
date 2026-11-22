@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -173,7 +174,7 @@ fun ExercisePickerBottomSheet(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(filtered, key = { it.id }) { exercise ->
+                itemsIndexed(filtered, key = { idx, ex -> "${ex.id}_$idx" }) { _, exercise ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

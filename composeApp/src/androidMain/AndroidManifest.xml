@@ -32,6 +32,12 @@
                 <data android:scheme="duda" android:host="oauth" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".CrashReportActivity"
+            android:exported="false"
+            android:process=":crash"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
     </application>
 
 </manifest>

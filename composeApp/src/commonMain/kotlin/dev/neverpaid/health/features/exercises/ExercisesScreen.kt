@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -415,11 +416,11 @@ fun ExercisesScreen(
             }
         } else {
             if (customExercises.isNotEmpty()) {
-                items(
+                itemsIndexed(
                     items = customExercises,
-                    key = { ex -> "custom_${ex.id}" },
-                    contentType = { "custom_card" }
-                ) { ex ->
+                    key = { idx, ex -> "custom_${ex.id}_$idx" },
+                    contentType = { _, _ -> "custom_card" }
+                ) { _, ex ->
                     ExerciseCatalogCard(
                         exercise = ex,
                         isCustom = true,
@@ -437,11 +438,11 @@ fun ExercisesScreen(
             }
 
             if (catalogExercises.isNotEmpty()) {
-                items(
+                itemsIndexed(
                     items = catalogExercises,
-                    key = { ex -> ex.id },
-                    contentType = { "catalog_row" }
-                ) { ex ->
+                    key = { idx, ex -> "cat_${ex.id}_$idx" },
+                    contentType = { _, _ -> "catalog_row" }
+                ) { _, ex ->
                     ExerciseCatalogCard(
                         exercise = ex,
                         isCustom = false,

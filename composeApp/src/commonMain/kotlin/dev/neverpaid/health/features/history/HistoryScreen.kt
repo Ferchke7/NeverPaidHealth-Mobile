@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -328,11 +329,11 @@ fun HistoryScreen(
                 }
             }
         } else {
-            items(
+            itemsIndexed(
                 items = shownWorkouts,
-                key = { it.id },
-                contentType = { "workout_card" }
-            ) { workout ->
+                key = { idx, it -> "${it.id}_$idx" },
+                contentType = { _, _ -> "workout_card" }
+            ) { _, workout ->
                 CompletedWorkoutCard(
                     workout = workout,
                     tz = tz,

@@ -58,7 +58,7 @@ object DudaLocalStorage {
         val str = PlatformBridge.getString(KEY_USER_PROFILE) ?: return null
         return try {
             json.decodeFromString<UserProfileDto>(str)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             null
         }
     }
@@ -75,7 +75,7 @@ object DudaLocalStorage {
         val str = PlatformBridge.getString(KEY_USER_PREFERENCES) ?: return UserPreferencesData()
         return try {
             json.decodeFromString<UserPreferencesData>(str)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             UserPreferencesData()
         }
     }
@@ -88,7 +88,7 @@ object DudaLocalStorage {
         val str = PlatformBridge.getString(KEY_ACTIVE_WORKOUT) ?: return null
         return try {
             json.decodeFromString<Workout>(str)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             null
         }
     }
@@ -105,7 +105,7 @@ object DudaLocalStorage {
         val str = PlatformBridge.getString(KEY_FOCUS_TIMER) ?: return FocusTimerState()
         return try {
             json.decodeFromString<FocusTimerState>(str)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             FocusTimerState()
         }
     }
@@ -133,7 +133,7 @@ object DudaLocalStorage {
         val str = PlatformBridge.getString(KEY_WORKOUT_HISTORY) ?: return emptyList()
         return try {
             json.decodeFromString<List<Workout>>(str)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             emptyList()
         }
     }
@@ -146,7 +146,7 @@ object DudaLocalStorage {
         val str = PlatformBridge.getString(KEY_USER_ROUTINES) ?: return emptyList()
         return try {
             json.decodeFromString<List<Routine>>(str)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             emptyList()
         }
     }
@@ -159,7 +159,7 @@ object DudaLocalStorage {
         val str = PlatformBridge.getString(KEY_MEAL_LOGS) ?: return emptyList()
         return try {
             json.decodeFromString<List<MealLog>>(str)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             emptyList()
         }
     }
@@ -172,7 +172,7 @@ object DudaLocalStorage {
         val str = PlatformBridge.getString(KEY_TODOS_PREFIX + date) ?: return null
         return try {
             json.decodeFromString<List<TodoTask>>(str)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             null
         }
     }
@@ -185,7 +185,7 @@ object DudaLocalStorage {
         val str = PlatformBridge.getString(KEY_BODY_MEASUREMENTS) ?: return emptyList()
         return try {
             json.decodeFromString<List<BodyMeasurement>>(str)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             emptyList()
         }
     }
@@ -198,7 +198,7 @@ object DudaLocalStorage {
         val str = PlatformBridge.getString(KEY_ACTIVE_PROGRAM_BUNDLE) ?: return null
         return try {
             json.decodeFromString<ActiveProgramBundle>(str)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             null
         }
     }
@@ -215,7 +215,7 @@ object DudaLocalStorage {
         val str = PlatformBridge.getString(KEY_CUSTOM_PROGRAMS) ?: return emptyList()
         return try {
             json.decodeFromString<List<TrainingProgram>>(str)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             emptyList()
         }
     }
@@ -228,7 +228,7 @@ object DudaLocalStorage {
         val str = PlatformBridge.getString(KEY_PROGRAM_COMMENTS_PREFIX + programId) ?: return null
         return try {
             json.decodeFromString<List<ProgramComment>>(str)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             null
         }
     }

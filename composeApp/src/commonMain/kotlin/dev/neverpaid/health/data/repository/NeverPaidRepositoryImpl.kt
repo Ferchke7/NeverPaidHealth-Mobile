@@ -57,8 +57,10 @@ import dev.neverpaid.health.domain.model.WorkoutExercise
 import dev.neverpaid.health.domain.model.WorkoutSet
 import dev.neverpaid.health.domain.repository.NeverPaidRepository
 import dev.neverpaid.health.domain.repository.UserPreferencesData
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,7 +76,9 @@ class NeverPaidRepositoryImpl(
     private val apiClient: DudaApiClient? = null
 ) : NeverPaidRepository {
 
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> }
+    )
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
@@ -137,7 +141,7 @@ class NeverPaidRepositoryImpl(
                         updatePreferences(currentPrefs.copy(useKilograms = useKg))
                     }
                     refreshInitialAuthenticatedData()
-                } catch (_: Exception) {
+                } catch (_: Throwable) {
                     if (DudaLocalStorage.getAccessToken() == null && !isGuestUser()) {
                         isAuthenticatedFlow.value = false
                         currentUserFlow.value = null
@@ -151,19 +155,19 @@ class NeverPaidRepositoryImpl(
         val client = apiClient ?: return
         try {
             exercisesFlow.value = client.getExercises()
-        } catch (_: Exception) {}
+        } catch (_: Throwable) {}
         try {
             userRoutinesFlow.value = client.getRoutines()
-        } catch (_: Exception) {}
+        } catch (_: Throwable) {}
         try {
             activeProgramBundleFlow.value = client.getActiveProgram()
-        } catch (_: Exception) {}
+        } catch (_: Throwable) {}
         try {
             workoutHistoryFlow.value = client.getWorkouts(limit = 50)
-        } catch (_: Exception) {}
+        } catch (_: Throwable) {}
         try {
             recordGroupsFlow.value = client.getProgressRecords()
-        } catch (_: Exception) {}
+        } catch (_: Throwable) {}
     }
 
     // ========================================================================

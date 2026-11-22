@@ -36,8 +36,10 @@ object ExerciseImageLoader {
     private const val JSDELIVR_PREFIX = "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/"
     private const val RAW_GITHUB_PREFIX = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/"
 
-    private val client = HttpClient {
-        followRedirects = true
+    private val client by lazy {
+        HttpClient {
+            followRedirects = true
+        }
     }
 
     private val cacheMutex = Mutex()
