@@ -29,6 +29,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -74,18 +76,21 @@ private val CardRadius = 22.dp
 private val ControlRadius = 16.dp
 private val TileRadius = 14.dp
 
+@Composable
 private fun brandWordmark(): AnnotatedString = buildAnnotatedString {
     withStyle(SpanStyle(color = TextPrimary, fontWeight = FontWeight.Black)) { append("duda") }
-    withStyle(SpanStyle(color = VioletPrimary, fontWeight = FontWeight.Black)) { append(".uz") }
+    withStyle(SpanStyle(color = VioletInk, fontWeight = FontWeight.Black)) { append(".uz") }
 }
 
 @Composable
 fun GymHeaderBar(
     menuLabel: String,
+    isDarkTheme: Boolean = false,
     hasActiveWorkout: Boolean = false,
     isWorkoutScreen: Boolean = false,
     hasFocusOpen: Boolean = false,
     onLogoClick: () -> Unit = {},
+    onToggleTheme: () -> Unit = {},
     onLiveClick: () -> Unit = {},
     onFocusClick: () -> Unit = {},
     onMenuClick: () -> Unit = {},
@@ -173,6 +178,13 @@ fun GymHeaderBar(
                             onClick = onFocusClick
                         )
                     }
+
+                    RoundIconButton(
+                        icon = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                        contentDescription = LocalDudaStrings.current.profileThemeLabel,
+                        tint = TextPrimary,
+                        onClick = onToggleTheme
+                    )
 
                     RoundIconButton(
                         icon = Icons.Default.Apps,
@@ -749,7 +761,7 @@ fun GymWhiteButton(
         border = BorderStroke(1.dp, BorderLilacStrong),
         colors = ButtonDefaults.buttonColors(
             containerColor = SurfaceWhite,
-            contentColor = VioletPrimary,
+            contentColor = VioletInk,
             disabledContainerColor = RoyalWell,
             disabledContentColor = TextMuted
         ),

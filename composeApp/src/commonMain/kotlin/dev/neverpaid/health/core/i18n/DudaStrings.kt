@@ -165,6 +165,9 @@ data class DudaStrings(
     // Profile & Settings
     val profileTitle: String,
     val profileLanguage: String,
+    val profileThemeLabel: String,
+    val profileThemeLight: String,
+    val profileThemeDark: String,
     val profileUnits: String,
     val profileRestTimer: String,
     val profileVibration: String,
@@ -473,6 +476,9 @@ val RuDudaStrings = DudaStrings(
 
     profileTitle = "Профиль атлета",
     profileLanguage = "Язык интерфейса",
+    profileThemeLabel = "Тема оформления",
+    profileThemeLight = "Светлая",
+    profileThemeDark = "Тёмная",
     profileUnits = "Система единиц",
     profileRestTimer = "Таймер отдыха по умолчанию",
     profileVibration = "Вибрация при завершении подхода",
@@ -777,6 +783,9 @@ val UzDudaStrings = DudaStrings(
 
     profileTitle = "Sportchi profili",
     profileLanguage = "Interfeys tili",
+    profileThemeLabel = "Mavzu",
+    profileThemeLight = "Yorug'",
+    profileThemeDark = "Qorong'i",
     profileUnits = "O'lchov tizimi",
     profileRestTimer = "Odatiy dam olish vaqti",
     profileVibration = "Yondashuvdan so'ng vibratsiya",
@@ -1081,6 +1090,9 @@ val EnDudaStrings = DudaStrings(
 
     profileTitle = "Athlete Profile",
     profileLanguage = "Interface Language",
+    profileThemeLabel = "Appearance",
+    profileThemeLight = "Light",
+    profileThemeDark = "Dark",
     profileUnits = "Unit System",
     profileRestTimer = "Default Rest Timer",
     profileVibration = "Haptic Vibration on Sets",

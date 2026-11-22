@@ -372,6 +372,7 @@ fun InteractiveVolumeChart(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Main Canvas
+            val dotBgColor = SurfaceWhite
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -514,7 +515,7 @@ fun InteractiveVolumeChart(
                         val dp = dataPoints[index]
                         if (dp.isPersonalRecord) {
                             drawCircle(
-                                color = SurfaceWhite,
+                                color = dotBgColor,
                                 radius = 6.5.dp.toPx(),
                                 center = point
                             )
@@ -525,7 +526,7 @@ fun InteractiveVolumeChart(
                             )
                         } else {
                             drawCircle(
-                                color = SurfaceWhite,
+                                color = dotBgColor,
                                 radius = 5.dp.toPx(),
                                 center = point
                             )
@@ -555,7 +556,7 @@ fun InteractiveVolumeChart(
                             center = activePointCoord
                         )
                         drawCircle(
-                            color = SurfaceWhite,
+                            color = dotBgColor,
                             radius = 6.dp.toPx(),
                             center = activePointCoord
                         )
@@ -697,6 +698,8 @@ fun ConsistencyHeatmap84Day(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            val heatTier1 = BorderLilacStrong
+            val heatTier0 = RoyalWell
             // Canvas Grid
             Box(
                 modifier = Modifier
@@ -739,11 +742,11 @@ fun ConsistencyHeatmap84Day(
                             val y = d * (cellSize + gap)
 
                             val color = when (entry.tier) {
-                                1 -> BorderLilacStrong
+                                1 -> heatTier1
                                 2 -> VioletSoft
                                 3 -> VioletPrimary
                                 4 -> EmeraldSuccess
-                                else -> RoyalWell
+                                else -> heatTier0
                             }
 
                             val isSelected = selectedDay?.date == entry.date && entry.date.isNotEmpty()
@@ -865,6 +868,7 @@ fun MacronutrientDonutGauge(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            val donutTrackColor = BorderLilac
             // Concentric Canvas Donut
             Box(
                 modifier = Modifier.size(150.dp),
@@ -882,7 +886,7 @@ fun MacronutrientDonutGauge(
                     // Draw Tracks (soft lilac rings)
                     listOf(radius0, radius1, radius2, radius3).forEach { r ->
                         drawCircle(
-                            color = BorderLilac,
+                            color = donutTrackColor,
                             radius = r,
                             style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                         )

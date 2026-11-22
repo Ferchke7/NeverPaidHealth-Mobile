@@ -22,6 +22,9 @@ class ProfileViewModel(
             is ProfileUiAction.OnSelectLanguage -> {
                 updatePrefs { copy(languageCode = action.languageCode) }
             }
+            is ProfileUiAction.OnToggleDarkTheme -> {
+                updatePrefs { copy(isDarkTheme = action.isDark) }
+            }
             is ProfileUiAction.OnToggleUnits -> {
                 updatePrefs { copy(useKilograms = action.useKg) }
             }
@@ -93,6 +96,7 @@ class ProfileViewModel(
                 updateState {
                     copy(
                         languageCode = prefs.languageCode,
+                        isDarkTheme = prefs.darkTheme,
                         useKilograms = prefs.useKilograms,
                         defaultRestSeconds = prefs.defaultRestSeconds,
                         soundAlertsEnabled = prefs.soundAlertsEnabled,
@@ -230,7 +234,8 @@ class ProfileViewModel(
                     defaultRestSeconds = updated.defaultRestSeconds,
                     soundAlertsEnabled = updated.soundAlertsEnabled,
                     vibrationEnabled = updated.vibrationEnabled,
-                    languageCode = updated.languageCode
+                    languageCode = updated.languageCode,
+                    darkTheme = updated.isDarkTheme
                 )
             )
         }

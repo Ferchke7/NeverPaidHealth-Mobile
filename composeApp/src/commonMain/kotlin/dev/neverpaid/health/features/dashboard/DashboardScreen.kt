@@ -258,15 +258,8 @@ fun DashboardScreen(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = "DUDA · TRAINING HUB",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp,
-                                color = HeroMuted
-                            )
-                            Text(
                                 text = strings.navWorkouts,
-                                fontSize = 28.sp,
+                                fontSize = 26.sp,
                                 fontWeight = FontWeight.Black,
                                 letterSpacing = (-0.7).sp,
                                 color = InkWhite
@@ -518,7 +511,7 @@ private fun ActiveWorkoutBannerCard(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(14.dp))
-                    .background(SurfaceWhite)
+                    .background(InkWhite)
                     .clickable(onClick = onResumeClick)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 contentAlignment = Alignment.Center

@@ -21,11 +21,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,7 +43,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -63,7 +61,6 @@ import dev.neverpaid.health.core.designsystem.GoogleBrandGreen
 import dev.neverpaid.health.core.designsystem.GoogleBrandRed
 import dev.neverpaid.health.core.designsystem.GoogleBrandYellow
 import dev.neverpaid.health.core.designsystem.GymCard
-import dev.neverpaid.health.core.designsystem.GymIconBadge
 import dev.neverpaid.health.core.designsystem.GymInkOnLight
 import dev.neverpaid.health.core.designsystem.GymOutlineButton
 import dev.neverpaid.health.core.designsystem.GymPillTab
@@ -72,6 +69,7 @@ import dev.neverpaid.health.core.designsystem.GymTextField
 import dev.neverpaid.health.core.designsystem.HeroMuted
 import dev.neverpaid.health.core.designsystem.InkWhite
 import dev.neverpaid.health.core.designsystem.RoyalHeroCard
+import dev.neverpaid.health.core.designsystem.SurfaceLilac
 import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
@@ -141,6 +139,8 @@ fun GoogleLogoIcon(modifier: Modifier = Modifier) {
 fun AuthRoute(
     viewModel: AuthViewModel,
     onNavigateToHome: () -> Unit,
+    isDarkTheme: Boolean = false,
+    onToggleTheme: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -167,6 +167,8 @@ fun AuthRoute(
     ) { innerPadding ->
         AuthScreen(
             state = state,
+            isDarkTheme = isDarkTheme,
+            onToggleTheme = onToggleTheme,
             onAction = viewModel::onAction,
             onTriggerGoogleSignIn = { googleAuthLauncher.signIn() },
             modifier = Modifier.padding(innerPadding)
@@ -179,6 +181,8 @@ fun AuthRoute(
 fun AuthScreen(
     state: AuthUiState,
     onAction: (AuthUiAction) -> Unit,
+    isDarkTheme: Boolean = false,
+    onToggleTheme: () -> Unit = {},
     onTriggerGoogleSignIn: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -195,7 +199,7 @@ fun AuthScreen(
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // Top bar: Brand + language pills
+        // Top bar: Brand + theme toggle + language pills
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -207,6 +211,21 @@ fun AuthScreen(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(SurfaceLilac)
+                        .clickable(onClick = onToggleTheme),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                        contentDescription = null,
+                        tint = TextPrimary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
                 listOf("ru" to "RU", "uz" to "UZ", "en" to "EN").forEach { (code, label) ->
                     GymPillTab(
                         text = label,
@@ -219,92 +238,19 @@ fun AuthScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Royal Violet Hero Card (Figma Screen 11 Login)
+        // Royal Violet Hero Card
         RoyalHeroCard(bottomExtraPadding = 24.dp) {
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(InkWhite.copy(alpha = 0.16f))
-                    .padding(horizontal = 14.dp, vertical = 6.dp)
-            ) {
-                Text(
-                    text = when (lang) {
-                        "uz" -> "KUCH VA PROGRESS"
-                        "en" -> "STRENGTH & PERFORMANCE"
-                        else -> "СИЛА И ПРОГРЕСС"
-                    },
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.sp,
-                    color = InkWhite
-                )
-            }
-
             Text(
                 text = when (lang) {
                     "uz" -> "Senga moslashadigan mashg'ulotlar."
                     "en" -> "Workouts that adapt to you."
                     else -> "Тренировки, которые подстраиваются под тебя."
                 },
-                fontSize = 30.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Black,
-                lineHeight = 35.sp,
-                letterSpacing = (-0.9).sp,
+                lineHeight = 33.sp,
+                letterSpacing = (-0.8).sp,
                 color = InkWhite
-            )
-
-            Text(
-                text = when (lang) {
-                    "uz" -> "Dasturlar, og'irliklar kundaligi, ovqatlanish va tana ko'rsatkichlari bitta ilovada."
-                    "en" -> "Programs, set logging, nutrition and body metrics in one focused training log."
-                    else -> "Программы, дневник подходов, питание и метрики тела без лишнего шума."
-                },
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                color = HeroMuted
-            )
-        }
-
-        // 3 gym pillars
-        GymCard(backgroundColor = DarkSurface) {
-            WelcomeFeatureRow(
-                icon = Icons.Default.FitnessCenter,
-                title = when (lang) {
-                    "uz" -> "Mashg'ulot kundaligi"
-                    "en" -> "Workout tracker"
-                    else -> "Дневник тренировок"
-                },
-                subtitle = when (lang) {
-                    "uz" -> "800+ mashqlar, taymer va shaxsiy rekordlar"
-                    "en" -> "800+ exercises, rest timer and personal records"
-                    else -> "800+ упражнений, таймер отдыха и личные рекорды"
-                }
-            )
-            WelcomeFeatureRow(
-                icon = Icons.AutoMirrored.Filled.ShowChart,
-                title = when (lang) {
-                    "uz" -> "Aniq progress"
-                    "en" -> "Real progression"
-                    else -> "Честная аналитика"
-                },
-                subtitle = when (lang) {
-                    "uz" -> "Tonnaj, 1RM va tana o'lchovlari dinamikasi"
-                    "en" -> "Volume, 1RM estimates and body measurements"
-                    else -> "Тоннаж, расчёт 1ПМ и замеры тела по неделям"
-                }
-            )
-            WelcomeFeatureRow(
-                icon = Icons.Default.Restaurant,
-                title = when (lang) {
-                    "uz" -> "KBJU va AI murabbiy"
-                    "en" -> "Macros & AI coach"
-                    else -> "КБЖУ и AI-тренер"
-                },
-                subtitle = when (lang) {
-                    "uz" -> "Ovqat tahlili va shaxsiy tavsiyalar"
-                    "en" -> "Meal analysis and adaptive training advice"
-                    else -> "Разбор рациона по фото и корректировка плана"
-                }
             )
         }
 
@@ -482,41 +428,5 @@ fun AuthScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-
-@Composable
-private fun WelcomeFeatureRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        GymIconBadge(
-            icon = icon,
-            tint = AccentLime,
-            background = DarkSurfaceHigh,
-            size = 44.dp
-        )
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(
-                text = title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-            Text(
-                text = subtitle,
-                fontSize = 13.sp,
-                color = TextSecondary
-            )
-        }
     }
 }

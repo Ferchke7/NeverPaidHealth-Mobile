@@ -12,6 +12,7 @@ data class ProfileUiState(
     val userName: String = "Атлет",
     val userEmail: String = "",
     val languageCode: String = "ru",
+    val isDarkTheme: Boolean = false,
     val useKilograms: Boolean = true,
     val defaultRestSeconds: Int = 90,
     val soundAlertsEnabled: Boolean = true,
@@ -38,6 +39,7 @@ data class ProfileUiState(
 sealed interface ProfileUiAction : UiAction {
     data object OnRefresh : ProfileUiAction
     data class OnSelectLanguage(val languageCode: String) : ProfileUiAction
+    data class OnToggleDarkTheme(val isDark: Boolean) : ProfileUiAction
     data class OnToggleUnits(val useKg: Boolean) : ProfileUiAction
     data class OnSelectDefaultRest(val seconds: Int) : ProfileUiAction
     data class OnToggleSound(val enabled: Boolean) : ProfileUiAction

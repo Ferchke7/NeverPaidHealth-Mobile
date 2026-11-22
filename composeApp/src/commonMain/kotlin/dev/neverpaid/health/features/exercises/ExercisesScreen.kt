@@ -233,29 +233,13 @@ fun ExercisesScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = "DUDA · EXERCISES",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp,
-                            color = HeroMuted
-                        )
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(
                             text = strings.navExercises,
-                            fontSize = 28.sp,
+                            fontSize = 26.sp,
                             fontWeight = FontWeight.Black,
                             letterSpacing = (-0.7).sp,
                             color = InkWhite
-                        )
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Harakatlar katalogi va bajarish texnikasi"
-                                "en" -> "Movement catalog and execution cues"
-                                else -> "Каталог движений и техника выполнения"
-                            },
-                            fontSize = 14.sp,
-                            color = HeroMuted
                         )
                     }
                     Box(

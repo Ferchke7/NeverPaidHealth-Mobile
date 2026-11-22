@@ -13,66 +13,57 @@ val AthleticTypography = Typography(
         fontWeight = FontWeight.Black,
         fontSize = 40.sp,
         lineHeight = 44.sp,
-        letterSpacing = (-1).sp,
-        color = TextPrimary
+        letterSpacing = (-1).sp
     ),
     headlineLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.ExtraBold,
         fontSize = 30.sp,
         lineHeight = 34.sp,
-        letterSpacing = (-0.8).sp,
-        color = TextPrimary
+        letterSpacing = (-0.8).sp
     ),
     headlineMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.ExtraBold,
         fontSize = 24.sp,
         lineHeight = 28.sp,
-        letterSpacing = (-0.5).sp,
-        color = TextPrimary
+        letterSpacing = (-0.5).sp
     ),
     titleLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 20.sp,
         lineHeight = 26.sp,
-        letterSpacing = (-0.3).sp,
-        color = TextPrimary
+        letterSpacing = (-0.3).sp
     ),
     titleMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
-        lineHeight = 22.sp,
-        color = TextPrimary
+        lineHeight = 22.sp
     ),
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 15.sp,
-        lineHeight = 22.sp,
-        color = TextPrimary
+        lineHeight = 22.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
-        lineHeight = 20.sp,
-        color = TextSecondary
+        lineHeight = 20.sp
     ),
     labelLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 14.sp,
-        lineHeight = 20.sp,
-        color = TextPrimary
+        lineHeight = 20.sp
     ),
     labelSmall = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
         fontSize = 12.sp,
-        lineHeight = 16.sp,
-        color = TextSecondary
+        lineHeight = 16.sp
     )
 )

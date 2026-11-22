@@ -136,6 +136,7 @@ fun CoachScreen(
     val clipboard = LocalClipboardManager.current
 
     var isReadinessSurveyOpen by remember { mutableStateOf(false) }
+    var isReadinessExpanded by remember { mutableStateOf(false) }
 
     if (isReadinessSurveyOpen) {
         ReadinessSurveyModal(
@@ -201,48 +202,55 @@ fun CoachScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item(key = "header", contentType = "header") {
-            RoyalHeroCard(bottomExtraPadding = 20.dp) {
+            RoyalHeroCard(bottomExtraPadding = 16.dp) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = "DUDA · AI COACH",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp,
-                            color = HeroMuted
-                        )
-                        Text(
-                            text = strings.navCoach,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = (-0.7).sp,
-                            color = InkWhite
-                        )
-                    }
-                    Column(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(InkWhite.copy(alpha = 0.16f))
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        horizontalAlignment = Alignment.End
+                    Text(
+                        text = strings.navCoach,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.6).sp,
+                        color = InkWhite,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "${state.insight.cnsScore}/100",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Black,
-                            color = InkWhite,
-                            style = TextStyle(fontFeatureSettings = "tnum")
-                        )
-                        Text(
-                            text = state.insight.readinessLevel,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = HeroMuted
-                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(InkWhite.copy(alpha = 0.18f))
+                                .clickable { isReadinessSurveyOpen = true }
+                                .padding(horizontal = 12.dp, vertical = 7.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = when (lang) { "uz" -> "Tekshiruv"; "en" -> "Check-in"; else -> "Чек-ап" },
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = InkWhite
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(InkWhite)
+                                .clickable { isReadinessExpanded = !isReadinessExpanded }
+                                .padding(horizontal = 12.dp, vertical = 7.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${state.insight.cnsScore}% ${if (isReadinessExpanded) "▴" else "▾"}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Black,
+                                color = AccentLime,
+                                style = TextStyle(fontFeatureSettings = "tnum")
+                            )
+                        }
                     }
                 }
             }
@@ -256,158 +264,99 @@ fun CoachScreen(
                 )
             }
         } else {
-            // 1. CNS Readiness Hero + Weekly Load
-            item(key = "readiness_card", contentType = "readiness") {
-                val weeklyTons = ((state.insight.weeklyVolumeKg / 1000.0) * 10.0).roundToInt() / 10.0
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    GymCard {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+            // Optional collapsible Telemetry & Overload Summary (hidden by default so Chat comes first)
+            if (isReadinessExpanded) {
+                item(key = "readiness_card", contentType = "readiness") {
+                    val weeklyTons = ((state.insight.weeklyVolumeKg / 1000.0) * 10.0).roundToInt() / 10.0
+                    val topTarget = state.insight.overloadTargets.firstOrNull()
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        GymCard {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                GymKicker(text = state.insight.readinessLevel)
                                 Text(
                                     text = when (lang) {
-                                        "uz" -> "CNS tayyorgarlik indeksi"
+                                        "uz" -> "MNS tayyorgarligi"
                                         "en" -> "CNS Readiness"
                                         else -> "Готовность ЦНС"
                                     },
-                                    fontSize = 20.sp,
+                                    fontSize = 18.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = TextPrimary
                                 )
-                            }
-                            Row(verticalAlignment = Alignment.Bottom) {
                                 Text(
-                                    text = "${state.insight.cnsScore}",
-                                    fontSize = 40.sp,
+                                    text = "${state.insight.cnsScore}/100 · ${state.insight.readinessLevel}",
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.Black,
-                                    letterSpacing = (-1).sp,
                                     color = AccentLime,
                                     style = TextStyle(fontFeatureSettings = "tnum")
                                 )
-                                Text(
-                                    text = "/100",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextSecondary,
-                                    modifier = Modifier.padding(bottom = 6.dp, start = 2.dp)
-                                )
+                            }
+
+                            GymProgressBar(
+                                progress = (state.insight.cnsScore / 100f).coerceIn(0f, 1f),
+                                heightDp = 7,
+                                color = AccentLime
+                            )
+
+                            Text(
+                                text = state.insight.statusMessage,
+                                fontSize = 13.sp,
+                                lineHeight = 18.sp,
+                                color = TextSecondary
+                            )
+
+                            if (topTarget != null) {
+                                GymInnerWell {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = topTarget.exerciseName,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextPrimary,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = "${topTarget.lastWeightKg} → ${topTarget.targetWeightKg} ${strings.unitKg}",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = AccentLime,
+                                            style = TextStyle(fontFeatureSettings = "tnum")
+                                        )
+                                    }
+                                }
                             }
                         }
 
-                        GymProgressBar(
-                            progress = (state.insight.cnsScore / 100f).coerceIn(0f, 1f),
-                            heightDp = 8,
-                            color = AccentLime
-                        )
-
-                        Text(
-                            text = state.insight.statusMessage,
-                            fontSize = 13.sp,
-                            lineHeight = 19.sp,
-                            color = TextSecondary
-                        )
-
-                        GymOutlineButton(
-                            text = when (lang) {
-                                "uz" -> "Ertalabki MNS so'rovini o'tish"
-                                "en" -> "Run CNS Readiness Check-in"
-                                else -> "Пройти чек-ап готовности ЦНС"
-                            },
-                            onClick = { isReadinessSurveyOpen = true },
-                            fillWidth = true
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        GymStatTile(
-                            label = when (lang) { "uz" -> "Haftalik hajm"; "en" -> "Weekly volume"; else -> "За неделю" },
-                            value = "$weeklyTons",
-                            unit = "т (${state.insight.weeklyWorkoutsCount} тр.)",
-                            valueColor = AccentLime,
-                            modifier = Modifier.weight(1f)
-                        )
-                        GymStatTile(
-                            label = when (lang) { "uz" -> "Dam olish"; "en" -> "Rest days"; else -> "Дней отдыха" },
-                            value = "${state.insight.daysSinceLastTrain}",
-                            unit = when (lang) { "uz" -> "kun"; "en" -> "d"; else -> "дн." },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
-
-            // 2. Progressive Overload Target
-            item(key = "overload_card", contentType = "overload") {
-                val topTarget = state.insight.overloadTargets.firstOrNull()
-                GymCard {
-                    GymKicker(
-                        text = when (lang) {
-                            "uz" -> "KEYINGI REKORD"
-                            "en" -> "OVERLOAD TARGET"
-                            else -> "ЦЕЛЬ ПРОГРЕССИИ"
-                        },
-                        color = AmberWarm
-                    )
-
-                    if (topTarget != null) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Text(
-                                text = topTarget.exerciseName,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = TextPrimary,
+                            GymStatTile(
+                                label = when (lang) { "uz" -> "Haftalik"; "en" -> "7d Vol"; else -> "За неделю" },
+                                value = "$weeklyTons",
+                                unit = "т (${state.insight.weeklyWorkoutsCount})",
+                                valueColor = AccentLime,
                                 modifier = Modifier.weight(1f)
                             )
-                            Text(
-                                text = "${topTarget.lastWeightKg} → ${topTarget.targetWeightKg} ${strings.unitKg}",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Black,
-                                color = AccentLime,
-                                style = TextStyle(fontFeatureSettings = "tnum")
+                            GymStatTile(
+                                label = when (lang) { "uz" -> "Dam olish"; "en" -> "Rest"; else -> "Отдых" },
+                                value = "${state.insight.daysSinceLastTrain}",
+                                unit = when (lang) { "uz" -> "kun"; "en" -> "d"; else -> "дн." },
+                                modifier = Modifier.weight(1f)
                             )
                         }
-                        Text(
-                            text = topTarget.reason.ifBlank {
-                                "${topTarget.lastReps} → ${topTarget.targetReps} повторений"
-                            },
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
-                    } else {
-                        Text(
-                            text = state.insight.progressiveOverloadTarget,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = AccentLime
-                        )
-                        Text(
-                            text = when (lang) {
-                                "uz" -> "Oxirgi yondashuvlar barqaror texnika bilan bajarilganda yuklamani oshiring."
-                                "en" -> "Increase load when recent sets feel solid and controlled."
-                                else -> "Добавляйте вес на штангу, когда закрываете верхнюю границу повторений."
-                            },
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
                     }
                 }
             }
 
-            // 3. Suggested Workout Card (if present)
+            // Suggested Workout Card (if present)
             state.insight.suggestedWorkout?.let { plan ->
                 item(key = "insight_suggested_workout", contentType = "suggested_workout") {
                     CoachSuggestedWorkoutCard(
@@ -420,22 +369,21 @@ fun CoachScreen(
                 }
             }
 
-            // 4. AI Coach Chat
+            // Clean Minimalist AI Coach Chat
             item(key = "coach_chat_card", contentType = "chat") {
                 GymCard {
-                    GymSectionTitle(
-                        title = when (lang) {
-                            "uz" -> "AI Murabbiy"
-                            "en" -> "AI Coach Chat"
-                            else -> "Чат с AI-тренером"
-                        },
-                        actionLabel = if (state.chatMessages.isNotEmpty()) {
-                            when (lang) { "uz" -> "Tozalash"; "en" -> "Clear"; else -> "Очистить" }
-                        } else null,
-                        onAction = if (state.chatMessages.isNotEmpty()) {
-                            { onAction(CoachUiAction.OnClearChatHistory) }
-                        } else null
-                    )
+                    if (state.chatMessages.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            GymPillTab(
+                                text = when (lang) { "uz" -> "Tozalash"; "en" -> "Clear chat"; else -> "Очистить чат" },
+                                selected = false,
+                                onClick = { onAction(CoachUiAction.OnClearChatHistory) }
+                            )
+                        }
+                    }
 
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(quickPrompts, key = { it.first }) { (label, prompt) ->
@@ -452,8 +400,8 @@ fun CoachScreen(
                             Text(
                                 text = when (lang) {
                                     "uz" -> "Mashg'ulot, texnika yoki ovqatlanish haqida so'rang — yoki tahlil uchun rasm yuboring."
-                                    "en" -> "Ask about programming, form, or macros — or attach a photo for instant analysis."
-                                    else -> "Спросите про рабочий вес, технику, замену упражнения или прикрепите фото формы / еды."
+                                    "en" -> "Ask about training, technique, or nutrition — or attach a photo."
+                                    else -> "Спросите про веса, технику или питание — или прикрепите фото."
                                 },
                                 fontSize = 14.sp,
                                 lineHeight = 20.sp,
@@ -461,7 +409,7 @@ fun CoachScreen(
                             )
                         }
                     } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             state.chatMessages.forEach { msg ->
                                 ChatMessageBlock(
                                     message = msg,
@@ -653,55 +601,37 @@ private fun ChatMessageBlock(
     } else {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (cleanedText.isNotBlank()) {
-                Column(
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth(0.92f)
                         .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomEnd = 20.dp, bottomStart = 6.dp))
                         .background(DarkSurfaceHigh)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = when (lang) { "uz" -> "AI MURABBIY"; "en" -> "AI COACH"; else -> "AI ТРЕНЕР" },
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 0.8.sp,
-                            color = AccentLime
-                        )
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Row(
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .background(DarkSurfaceElevated)
-                                .clickable { onCopy(cleanedText) }
-                                .padding(horizontal = 10.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
                         ) {
+                            Text(
+                                text = cleanedText,
+                                fontSize = 14.sp,
+                                lineHeight = 21.sp,
+                                color = TextPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.Default.ContentCopy,
                                 contentDescription = "Copy",
-                                tint = TextSecondary,
-                                modifier = Modifier.size(12.dp)
-                            )
-                            Text(
-                                text = when (lang) { "uz" -> "Nusxa"; "en" -> "Copy"; else -> "Копировать" },
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextSecondary
+                                tint = TextMuted,
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clickable { onCopy(cleanedText) }
                             )
                         }
                     }
-                    Text(
-                        text = cleanedText,
-                        fontSize = 14.sp,
-                        lineHeight = 21.sp,
-                        color = TextPrimary
-                    )
                 }
             }
 

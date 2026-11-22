@@ -277,11 +277,11 @@ fun NutritionScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "DUDA · NUTRITION",
-                            fontSize = 11.sp,
+                            text = strings.navNutrition,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp,
-                            color = HeroMuted
+                            letterSpacing = (-0.5).sp,
+                            color = InkWhite
                         )
                         Box(
                             modifier = Modifier

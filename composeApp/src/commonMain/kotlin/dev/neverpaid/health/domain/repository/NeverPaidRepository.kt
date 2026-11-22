@@ -59,7 +59,8 @@ data class UserPreferencesData(
     val age: Int = 26,
     val gender: String = "male",
     val activityLevel: String = "moderate",
-    val goalType: String = "maintain"
+    val goalType: String = "maintain",
+    val darkTheme: Boolean = false
 ) {
     val proteinTarget: Int get() = proteinTargetG
     val carbsTarget: Int get() = carbsTargetG
@@ -170,7 +171,7 @@ interface NeverPaidRepository {
     suspend fun submitFeedback(category: String, title: String, description: String): FeedbackReport
     suspend fun upvoteFeedback(feedbackId: String)
 
-    // --- 7. TODOS, CALENDAR & FOCUS TIMER ---
+    // --- 7. TASKS, CALENDAR & FOCUS TIMER ---
     fun getTodos(date: String): Flow<List<TodoTask>>
     fun getDailyScheduleFlow(): Flow<DailyScheduleResponseDto?>
     suspend fun fetchDailySchedule(date: String): DailyScheduleResponseDto

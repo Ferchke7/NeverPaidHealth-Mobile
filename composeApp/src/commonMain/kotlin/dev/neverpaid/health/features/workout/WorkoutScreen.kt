@@ -508,14 +508,6 @@ fun WorkoutScreen(
                                 .clickable { showSessionNoteEditor = !showSessionNoteEditor }
                         ) {
                             Text(
-                                text = "DUDA · LIVE SESSION",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp,
-                                color = HeroMuted
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
                                 text = workout.title.ifBlank {
                                     when (lang) {
                                         "uz" -> "Erkin mashg'ulot"
@@ -608,7 +600,7 @@ fun WorkoutScreen(
                                 .weight(1f)
                                 .height(46.dp)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(SurfaceWhite)
+                                .background(InkWhite)
                                 .clickable(onClick = onRequestFinish),
                             contentAlignment = Alignment.Center
                         ) {
@@ -996,6 +988,7 @@ private fun WorkoutExerciseCard(
 
     var noteExpanded by remember { mutableStateOf(exercise.notes.isNotBlank()) }
     var editingNotes by remember { mutableStateOf(false) }
+    var actionsExpanded by remember { mutableStateOf(false) }
     var noteDraft by remember(exercise.id, exercise.notes) { mutableStateOf(exercise.notes) }
 
     val muscleLabel = localizeMuscleName(exercise.primaryMuscleGroup)
@@ -1068,11 +1061,11 @@ private fun WorkoutExerciseCard(
             }
         }
 
-        // 2. Clean Secondary Exercise Actions strip (Комментарий, Разминка, Блины, Заменить, Убрать)
-        FlowRow(
+        // 2. Minimalist Secondary Actions Strip ([Comment] + [...] utility toggle)
+        Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalAlignment = Alignment.CenterVertically
         ) {
             WorkoutUtilityChip(
                 text = if (exercise.notes.isNotBlank() || !previousNote.isNullOrBlank()) "Комментарий •" else "Комментарий",
@@ -1084,27 +1077,54 @@ private fun WorkoutExerciseCard(
                 textColor = if (exercise.notes.isNotBlank() || !previousNote.isNullOrBlank() || editingNotes) AccentLime else TextSecondary
             )
             WorkoutUtilityChip(
-                text = "Разминка",
-                onClick = onOpenWarmup,
-                textColor = TextSecondary
+                text = if (actionsExpanded) "Скрыть ▴" else "Ещё ···",
+                onClick = { actionsExpanded = !actionsExpanded },
+                backgroundColor = if (actionsExpanded) AccentLimeSubtle else DarkSurfaceHigh,
+                textColor = if (actionsExpanded) AccentLime else TextSecondary
             )
-            if (supportsPlates) {
+        }
+
+        AnimatedVisibility(visible = actionsExpanded) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 WorkoutUtilityChip(
-                    text = "Блины",
-                    onClick = { onOpenPlates(activeSet?.id ?: "", plateWeightKg) },
+                    text = "Разминка",
+                    onClick = {
+                        actionsExpanded = false
+                        onOpenWarmup()
+                    },
                     textColor = TextSecondary
                 )
+                if (supportsPlates) {
+                    WorkoutUtilityChip(
+                        text = "Блины",
+                        onClick = {
+                            actionsExpanded = false
+                            onOpenPlates(activeSet?.id ?: "", plateWeightKg)
+                        },
+                        textColor = TextSecondary
+                    )
+                }
+                WorkoutUtilityChip(
+                    text = "Заменить",
+                    onClick = {
+                        actionsExpanded = false
+                        onSwap()
+                    },
+                    textColor = TextSecondary
+                )
+                WorkoutUtilityChip(
+                    text = "Убрать",
+                    onClick = {
+                        actionsExpanded = false
+                        onRemove()
+                    },
+                    textColor = CrimsonRed
+                )
             }
-            WorkoutUtilityChip(
-                text = "Заменить",
-                onClick = onSwap,
-                textColor = TextSecondary
-            )
-            WorkoutUtilityChip(
-                text = "Убрать",
-                onClick = onRemove,
-                textColor = TextMuted
-            )
         }
 
         // Previous Workout Note + Current Exercise Comment Editor / Viewer
@@ -2131,11 +2151,22 @@ private fun WorkoutDiscardModalSheet(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
                 )
-                GymWhiteButton(
-                    text = "Сбросить",
-                    onClick = onConfirmDiscard,
-                    modifier = Modifier.weight(1f)
-                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(CrimsonRed)
+                        .clickable(onClick = onConfirmDiscard),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = strings.workoutDiscard,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = InkWhite
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(16.dp))
         }

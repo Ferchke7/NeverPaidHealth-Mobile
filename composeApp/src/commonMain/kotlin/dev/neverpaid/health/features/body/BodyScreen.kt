@@ -344,7 +344,7 @@ fun BodyScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(14.dp))
-                                    .background(SurfaceWhite)
+                                    .background(InkWhite)
                                     .clickable { onAction(BodyUiAction.OnOpenTargetWeightModal) }
                                     .padding(vertical = 12.dp),
                                 contentAlignment = Alignment.Center
@@ -1007,6 +1007,9 @@ private fun BodyTrendLineChart(
                 )
             }
 
+            val gridDividerColor = BorderDivider
+            val dotBgColor = DarkBackground
+
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -1019,7 +1022,7 @@ private fun BodyTrendLineChart(
                     listOf(0f, 0.5f, 1f).forEach { frac ->
                         val y = frac * h
                         drawLine(
-                            color = BorderDivider,
+                            color = gridDividerColor,
                             start = Offset(0f, y),
                             end = Offset(w, y),
                             strokeWidth = 1.dp.toPx(),
@@ -1074,7 +1077,7 @@ private fun BodyTrendLineChart(
 
                     coords.forEach { pt ->
                         drawCircle(
-                            color = DarkBackground,
+                            color = dotBgColor,
                             radius = 5.5.dp.toPx(),
                             center = pt
                         )

@@ -116,7 +116,7 @@ enum class VolumeStatus(
     val titleEn: String,
     val color: Color
 ) {
-    UNTRAINED("Не тренировалась", "Shug'ullanilmagan", "Untrained", BorderLilacStrong),
+    UNTRAINED("Не тренировалась", "Shug'ullanilmagan", "Untrained", VioletSoft.copy(alpha = 0.25f)),
     UNDER_TRAINED("Ниже оптимального", "Optimaldan past", "Maintenance / Low", AmberWarm),
     OPTIMAL("Оптимальный рост (Hypertrophy)", "Optimal o'sish", "Optimal Hypertrophy", VioletPrimary),
     OVER_REACHED("Высокое утомление", "Yuqori charchoq", "Overreaching / High Fatigue", CrimsonRed)
@@ -214,6 +214,7 @@ fun InteractiveAnatomyHeatmap(
                 }
             }
 
+            val silhouetteColor = BorderSubtle
             // Vector Body Canvas
             Box(
                 modifier = Modifier
@@ -247,9 +248,9 @@ fun InteractiveAnatomyHeatmap(
                     val cx = w / 2f
 
                     if (isFrontView) {
-                        drawFrontBody(cx = cx, h = h, data = fullData)
+                        drawFrontBody(cx = cx, h = h, data = fullData, silhouetteColor = silhouetteColor)
                     } else {
-                        drawBackBody(cx = cx, h = h, data = fullData)
+                        drawBackBody(cx = cx, h = h, data = fullData, silhouetteColor = silhouetteColor)
                     }
                 }
             }
@@ -272,7 +273,12 @@ fun InteractiveAnatomyHeatmap(
 /**
  * Draws Front Musculature on Canvas with exact proportional bounding zones.
  */
-private fun DrawScope.drawFrontBody(cx: Float, h: Float, data: Map<MuscleZone, MuscleVolumeData>) {
+private fun DrawScope.drawFrontBody(
+    cx: Float,
+    h: Float,
+    data: Map<MuscleZone, MuscleVolumeData>,
+    silhouetteColor: Color
+) {
     val scale = h / 320f
     val headY = 22f * scale
     val neckY = 40f * scale
@@ -284,14 +290,14 @@ private fun DrawScope.drawFrontBody(cx: Float, h: Float, data: Map<MuscleZone, M
 
     // Head Outline
     drawCircle(
-        color = BorderSubtle,
+        color = silhouetteColor,
         radius = 16f * scale,
         center = Offset(cx, headY)
     )
 
     // Neck
     drawRoundRect(
-        color = BorderSubtle,
+        color = silhouetteColor,
         topLeft = Offset(cx - 8f * scale, headY + 12f * scale),
         size = Size(16f * scale, 16f * scale),
         cornerRadius = CornerRadius(2f, 2f)
@@ -432,7 +438,12 @@ private fun DrawScope.drawFrontBody(cx: Float, h: Float, data: Map<MuscleZone, M
 /**
  * Draws Back Musculature on Canvas with exact proportional bounding zones.
  */
-private fun DrawScope.drawBackBody(cx: Float, h: Float, data: Map<MuscleZone, MuscleVolumeData>) {
+private fun DrawScope.drawBackBody(
+    cx: Float,
+    h: Float,
+    data: Map<MuscleZone, MuscleVolumeData>,
+    silhouetteColor: Color
+) {
     val scale = h / 320f
     val headY = 22f * scale
     val trapsY = 38f * scale
@@ -444,7 +455,7 @@ private fun DrawScope.drawBackBody(cx: Float, h: Float, data: Map<MuscleZone, Mu
 
     // Head Outline
     drawCircle(
-        color = BorderSubtle,
+        color = silhouetteColor,
         radius = 16f * scale,
         center = Offset(cx, headY)
     )

@@ -233,7 +233,7 @@ fun ProfileScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(SurfaceWhite)
+                                .background(InkWhite)
                                 .clickable {
                                     if (state.isGuest) {
                                         onAction(ProfileUiAction.OnLogoutClick)
@@ -278,6 +278,33 @@ fun ProfileScreen(
                                     onClick = { onAction(ProfileUiAction.OnSelectLanguage(code)) }
                                 )
                             }
+                        }
+                    }
+
+                    GymDivider()
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = strings.profileThemeLabel,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            GymPillTab(
+                                text = strings.profileThemeLight,
+                                selected = !state.isDarkTheme,
+                                onClick = { onAction(ProfileUiAction.OnToggleDarkTheme(false)) }
+                            )
+                            GymPillTab(
+                                text = strings.profileThemeDark,
+                                selected = state.isDarkTheme,
+                                onClick = { onAction(ProfileUiAction.OnToggleDarkTheme(true)) }
+                            )
                         }
                     }
                 }

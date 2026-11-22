@@ -30,6 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import dev.neverpaid.health.core.designsystem.DudaRoyalTheme
 import dev.neverpaid.health.core.designsystem.RoyalCanvas
 import dev.neverpaid.health.core.designsystem.FloatingActiveWorkoutPill
 import dev.neverpaid.health.core.designsystem.FloatingFocusTimerOverlay
@@ -133,15 +134,24 @@ fun DudaMobileApp() {
     val focusTimerState by repository.getFocusTimerState().collectAsState(initial = FocusTimerState())
     val strings = remember(preferences.languageCode) { getDudaStrings(preferences.languageCode) }
 
-    CompositionLocalProvider(LocalDudaStrings provides strings) {
-        if (!isAuthenticated) {
-            val authViewModel: AuthViewModel = koinViewModel()
-            AuthRoute(
-                viewModel = authViewModel,
-                onNavigateToHome = {}
-            )
-            return@CompositionLocalProvider
-        }
+    DudaRoyalTheme(darkTheme = preferences.darkTheme) {
+        CompositionLocalProvider(LocalDudaStrings provides strings) {
+            if (!isAuthenticated) {
+                val authViewModel: AuthViewModel = koinViewModel()
+                AuthRoute(
+                    viewModel = authViewModel,
+                    isDarkTheme = preferences.darkTheme,
+                    onToggleTheme = {
+                        scope.launch {
+                            repository.updateProfilePreferences(
+                                preferences.copy(darkTheme = !preferences.darkTheme)
+                            )
+                        }
+                    },
+                    onNavigateToHome = {}
+                )
+                return@CompositionLocalProvider
+            }
 
         var currentScreen by remember { mutableStateOf<Screen>(Screen.Workouts) }
         var previousScreen by remember { mutableStateOf<Screen>(Screen.Workouts) }
@@ -221,10 +231,18 @@ fun DudaMobileApp() {
                 ) {
                     GymHeaderBar(
                         menuLabel = strings.menuButton,
+                        isDarkTheme = preferences.darkTheme,
                         hasActiveWorkout = activeWorkout != null,
                         isWorkoutScreen = isWorkoutActiveScreen,
                         hasFocusOpen = focusTimerState.isOpen,
                         onLogoClick = { navigateTo(Screen.Workouts) },
+                        onToggleTheme = {
+                            scope.launch {
+                                repository.updateProfilePreferences(
+                                    preferences.copy(darkTheme = !preferences.darkTheme)
+                                )
+                            }
+                        },
                         onLiveClick = { navigateTo(Screen.ActiveWorkout) },
                         onFocusClick = { repository.setFocusModalOpen(!focusTimerState.isModalOpen) },
                         onMenuClick = { isMenuSheetOpen = true }
@@ -398,5 +416,6 @@ fun DudaMobileApp() {
                 }
             }
         }
+    }
     }
 }

@@ -222,23 +222,11 @@ fun TodoScreen(
             item(key = "page_header", contentType = "header") {
                 RoyalHeroCard(bottomExtraPadding = 20.dp) {
                     Text(
-                        text = "DUDA · PLANNER",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp,
-                        color = HeroMuted
-                    )
-                    Text(
                         text = strings.todoTitle,
-                        fontSize = 28.sp,
+                        fontSize = 26.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = (-0.7).sp,
                         color = InkWhite
-                    )
-                    Text(
-                        text = strings.todoSubtitle,
-                        fontSize = 14.sp,
-                        color = HeroMuted
                     )
                 }
             }

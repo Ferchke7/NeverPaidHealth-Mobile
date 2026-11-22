@@ -249,25 +249,12 @@ fun ProgramsScreen(
                 modifier = Modifier.padding(bottom = 8.dp),
                 bottomExtraPadding = 20.dp
             ) {
-                GymKicker(
-                    text = "duda · training plans",
-                    color = HeroMuted
-                )
                 Text(
                     text = strings.navPrograms,
-                    fontSize = 28.sp,
+                    fontSize = 26.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = (-0.7).sp,
                     color = InkWhite
-                )
-                Text(
-                    text = when (lang) {
-                        "uz" -> "Kutubxona, hamjamiyat va shaxsiy splitlar"
-                        "en" -> "Library, community and your custom splits"
-                        else -> "Библиотека, сообщество и ваши сплиты"
-                    },
-                    fontSize = 14.sp,
-                    color = HeroMuted
                 )
             }
         }

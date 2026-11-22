@@ -190,27 +190,11 @@ fun ProgressScreen(
         item(key = "page_header", contentType = "header") {
             RoyalHeroCard(bottomExtraPadding = 20.dp) {
                 Text(
-                    text = "DUDA · ANALYTICS",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp,
-                    color = HeroMuted
-                )
-                Text(
                     text = strings.progressTitle,
-                    fontSize = 28.sp,
+                    fontSize = 26.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = (-0.7).sp,
                     color = InkWhite
-                )
-                Text(
-                    text = when (state.selectedTab) {
-                        0 -> "Динамика рабочих весов и личные рекорды"
-                        1 -> "Мышечный баланс и недельный тоннаж"
-                        else -> "Расчёт 1RM и силовые ориентиры"
-                    },
-                    fontSize = 14.sp,
-                    color = HeroMuted
                 )
             }
         }
@@ -643,6 +627,9 @@ private fun GymLineChart(
         fontFeatureSettings = "tnum"
     )
 
+    val gridDividerColor = BorderDivider
+    val dotBgColor = DarkBackground
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Canvas(
             modifier = Modifier
@@ -669,7 +656,7 @@ private fun GymLineChart(
                 val frac = i / steps.toFloat()
                 val y = topPad + chartH * (1f - frac)
                 drawLine(
-                    color = BorderDivider,
+                    color = gridDividerColor,
                     start = Offset(leftPad, y),
                     end = Offset(leftPad + chartW, y),
                     strokeWidth = 1.dp.toPx(),
@@ -731,7 +718,7 @@ private fun GymLineChart(
             val step = if (coords.size > 6) (coords.size / 5).coerceAtLeast(1) else 1
             coords.forEachIndexed { idx, pt ->
                 drawCircle(
-                    color = DarkBackground,
+                    color = dotBgColor,
                     radius = 5.5.dp.toPx(),
                     center = pt
                 )
@@ -1184,6 +1171,8 @@ private fun GymTonnageBarChart(samples: List<TonnageBarSample>) {
         fontFeatureSettings = "tnum"
     )
 
+    val gridDividerColor = BorderDivider
+
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
@@ -1202,7 +1191,7 @@ private fun GymTonnageBarChart(samples: List<TonnageBarSample>) {
             val frac = i / 3f
             val y = topPad + chartH * (1f - frac)
             drawLine(
-                color = BorderDivider,
+                color = gridDividerColor,
                 start = Offset(leftPad, y),
                 end = Offset(leftPad + chartW, y),
                 strokeWidth = 1.dp.toPx(),

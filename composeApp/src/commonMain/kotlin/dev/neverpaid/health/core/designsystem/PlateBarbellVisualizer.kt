@@ -75,6 +75,7 @@ fun BarbellSleeveCanvas(
         colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
         border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorder)
     ) {
+        val lightPlateLabelColor = TextPrimary
         Box(
             modifier = Modifier.fillMaxWidth().height(heightDp.dp),
             contentAlignment = Alignment.Center
@@ -165,7 +166,7 @@ fun BarbellSleeveCanvas(
                                 style = TextStyle(
                                     fontSize = if (plateHeight > 90f) 10.sp else 8.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = if (spec.colorHex == LightPlateHexColor) TextPrimary else InkWhite
+                                    color = if (spec.colorHex == LightPlateHexColor) lightPlateLabelColor else InkWhite
                                 )
                             )
                             val textX = currentX + (plateWidth - textLayout.size.width) / 2f
