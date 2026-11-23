@@ -132,7 +132,8 @@ fun DashboardRoute(
         val routine = state.previewRoutine!!
         RoutineDetailBottomSheet(
             routine = routine,
-            isCustom = !routine.id.startsWith("prebuilt-"),
+            isCustom = !routine.id.startsWith("prebuilt-") &&
+                routine.userId != "00000000-0000-0000-0000-000000000000",
             onStartWorkout = { viewModel.onAction(DashboardUiAction.OnSelectRoutineClick(routine)) },
             onEditRoutine = { viewModel.onAction(DashboardUiAction.OnOpenRoutineEditor(routine)) },
             onInspectExercise = { exId, name ->

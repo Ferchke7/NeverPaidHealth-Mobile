@@ -67,6 +67,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import kotlin.math.ceil
 import kotlin.math.max
@@ -79,6 +81,9 @@ class NeverPaidRepositoryImpl(
     private val scope = CoroutineScope(
         SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> }
     )
+    private val templateSyncMutex = Mutex()
+    private val routineForkAliases = mutableMapOf<String, String>()
+    private val programForkAliases = mutableMapOf<String, String>()
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
@@ -455,9 +460,20 @@ class NeverPaidRepositoryImpl(
 
     override fun getPrebuiltRoutines(): List<Routine> = StandardExerciseCatalog.prebuiltRoutines
 
+    private fun deduplicatePreferringPersonal(list: List<Routine>): List<Routine> {
+        val personalBases = list
+            .filter { it.userId != "00000000-0000-0000-0000-000000000000" }
+            .map { normalizeRoutineBaseName(it.name) }
+            .toSet()
+        return list.filter { rot ->
+            rot.userId != "00000000-0000-0000-0000-000000000000" ||
+                normalizeRoutineBaseName(rot.name) !in personalBases
+        }
+    }
+
     override suspend fun refreshRoutines(): List<Routine> {
         val client = apiClient ?: return userRoutinesFlow.value
-        val list = client.getRoutines()
+        val list = deduplicatePreferringPersonal(client.getRoutines())
         userRoutinesFlow.value = list
         DudaLocalStorage.setUserRoutines(list)
         return list
@@ -477,37 +493,69 @@ class NeverPaidRepositoryImpl(
         return saveRoutineFull(routineId = null, name = title, notes = description, exercises = routineExercises)
     }
 
+    private fun normalizeRoutineBaseName(raw: String): String {
+        var s = raw.trim().lowercase()
+        val suffixes = listOf("(custom)", "(своя)", "(shaxsiy)")
+        var changed = true
+        while (changed) {
+            changed = false
+            for (suffix in suffixes) {
+                if (s.endsWith(suffix)) {
+                    s = s.dropLast(suffix.length).trim()
+                    changed = true
+                }
+            }
+        }
+        return s
+    }
+
     override suspend fun saveRoutineFull(
         routineId: String?,
         name: String,
         notes: String?,
         exercises: List<RoutineExercise>
     ): Routine {
+        val cleanName = name.trim()
+        val isTemplateLikePrebuilt = !routineId.isNullOrBlank() && routineId.startsWith("prebuilt-")
+        val resolvedTargetId = routineId?.let { routineForkAliases[it] ?: it }
+        val existingOwnMatch = if (isTemplateLikePrebuilt) {
+            val base = normalizeRoutineBaseName(cleanName)
+            userRoutinesFlow.value.firstOrNull {
+                it.userId != "00000000-0000-0000-0000-000000000000" &&
+                    normalizeRoutineBaseName(it.name) == base
+            }
+        } else null
+
+        val effectiveId = existingOwnMatch?.id ?: resolvedTargetId?.takeIf { !it.startsWith("prebuilt-") }
         val req = SaveRoutineRequestDto(
-            name = name.trim(),
-            notes = notes?.trim()?.takeIf { it.isNotEmpty() },
+            name = cleanName,
+            notes = notes?.trim(),
             exercises = exercises.mapIndexed { idx, ex -> ex.copy(orderIndex = idx) }
         )
         val saved = if (apiClient != null) {
-            if (!routineId.isNullOrBlank() && !routineId.startsWith("prebuilt-")) {
-                apiClient.updateRoutine(routineId, req)
+            if (!effectiveId.isNullOrBlank()) {
+                apiClient.updateRoutine(effectiveId, req)
             } else {
                 apiClient.createRoutine(req)
             }
         } else {
             Routine(
-                id = routineId ?: PlatformBridge.generateUuid(),
+                id = effectiveId ?: PlatformBridge.generateUuid(),
                 name = req.name,
-                notes = req.notes,
+                notes = req.notes ?: existingOwnMatch?.notes,
                 exercises = req.exercises
             )
         }
+        if (!routineId.isNullOrBlank() && saved.id != routineId) {
+            routineForkAliases[routineId] = saved.id
+        }
         val exists = userRoutinesFlow.value.any { it.id == saved.id }
-        val updated = if (exists) {
+        val rawUpdated = if (exists) {
             userRoutinesFlow.value.map { if (it.id == saved.id) saved else it }
         } else {
             listOf(saved) + userRoutinesFlow.value
         }
+        val updated = deduplicatePreferringPersonal(rawUpdated)
         userRoutinesFlow.value = updated
         DudaLocalStorage.setUserRoutines(updated)
         return saved
@@ -567,7 +615,7 @@ class NeverPaidRepositoryImpl(
         return startWorkoutWithExercises(
             title = title.ifBlank { routine?.name ?: "Силовая тренировка" },
             exercises = exercises,
-            routineId = routine?.id?.takeIf { !it.startsWith("prebuilt-") }
+            routineId = routine?.id?.let { routineForkAliases[it] ?: it }
         )
     }
 
@@ -610,7 +658,7 @@ class NeverPaidRepositoryImpl(
                     apiClient.startWorkoutRemote(
                         StartWorkoutRequestDto(
                             id = workoutId,
-                            routineId = routineId,
+                            routineId = routineId?.takeIf { !it.startsWith("prebuilt-") },
                             name = newWorkout.name,
                             replaceActive = true
                         )
@@ -694,6 +742,7 @@ class NeverPaidRepositoryImpl(
 
         val nextSignature = workoutStructureSignature(updated)
         if (prevSignature != nextSignature && updated.exercises.isNotEmpty()) {
+            syncRoutineFromWorkout(updated)
             syncProgramFromWorkout(updated, syncRemote = true)
         }
     }
@@ -771,7 +820,7 @@ class NeverPaidRepositoryImpl(
                         apiClient.startWorkoutRemote(
                             StartWorkoutRequestDto(
                                 id = finishedWorkout.id,
-                                routineId = finishedWorkout.routineId,
+                                routineId = finishedWorkout.routineId?.takeIf { !it.startsWith("prebuilt-") },
                                 name = finishedWorkout.name,
                                 replaceActive = true
                             )
@@ -924,6 +973,87 @@ class NeverPaidRepositoryImpl(
         DudaLocalStorage.setCustomPrograms(updated)
     }
 
+    private fun syncRoutineFromWorkout(workout: Workout) {
+        val rawRoutineId = workout.routineId ?: return
+        if (workout.exercises.isEmpty()) return
+
+        val resolvedExercises = workout.exercises.mapIndexed { idx, ex ->
+            val workingSets = ex.sets.filter { it.setType != "warmup" }
+            val targetSets = (if (workingSets.isNotEmpty()) workingSets.size else ex.sets.size).coerceAtLeast(1)
+            val repVals = (if (workingSets.isNotEmpty()) workingSets else ex.sets).map { it.reps }.filter { it > 0 }
+            val minReps = repVals.minOrNull() ?: 8
+            val maxReps = (repVals.maxOrNull() ?: 12).coerceAtLeast(minReps)
+            RoutineExercise(
+                exerciseId = ex.exerciseId,
+                exerciseName = ex.exerciseName,
+                orderIndex = idx,
+                targetSets = targetSets,
+                targetRepsMin = minReps,
+                targetRepsMax = maxReps
+            )
+        }
+
+        if (apiClient == null || isGuestUser()) {
+            val base = normalizeRoutineBaseName(workout.name)
+            val existing = userRoutinesFlow.value.firstOrNull {
+                it.id == (routineForkAliases[rawRoutineId] ?: rawRoutineId) ||
+                    (it.userId != "00000000-0000-0000-0000-000000000000" &&
+                        normalizeRoutineBaseName(it.name) == base)
+            }
+            val saved = if (existing != null) {
+                existing.copy(name = existing.name, exercises = resolvedExercises)
+            } else {
+                Routine(
+                    id = PlatformBridge.generateUuid(),
+                    name = workout.name.ifBlank { "My Routine" },
+                    exercises = resolvedExercises
+                )
+            }
+            if (saved.id != rawRoutineId) {
+                routineForkAliases[rawRoutineId] = saved.id
+                val cur = activeWorkoutFlow.value
+                if (cur != null && cur.id == workout.id && cur.routineId != saved.id) {
+                    val rebound = cur.copy(routineId = saved.id)
+                    activeWorkoutFlow.value = rebound
+                    DudaLocalStorage.setActiveWorkoutDraft(rebound)
+                }
+            }
+            val nextList = deduplicatePreferringPersonal(
+                if (userRoutinesFlow.value.any { it.id == saved.id }) {
+                    userRoutinesFlow.value.map { if (it.id == saved.id) saved else it }
+                } else {
+                    listOf(saved) + userRoutinesFlow.value
+                }
+            )
+            userRoutinesFlow.value = nextList
+            DudaLocalStorage.setUserRoutines(nextList)
+            return
+        }
+
+        scope.launch {
+            templateSyncMutex.withLock {
+                try {
+                    val effectiveId = routineForkAliases[rawRoutineId] ?: rawRoutineId
+                    val saved = saveRoutineFull(
+                        routineId = effectiveId,
+                        name = workout.name,
+                        notes = null,
+                        exercises = resolvedExercises
+                    )
+                    if (saved.id != rawRoutineId) {
+                        routineForkAliases[rawRoutineId] = saved.id
+                    }
+                    val cur = activeWorkoutFlow.value
+                    if (cur != null && cur.id == workout.id && cur.routineId != saved.id) {
+                        val rebound = cur.copy(routineId = saved.id)
+                        activeWorkoutFlow.value = rebound
+                        DudaLocalStorage.setActiveWorkoutDraft(rebound)
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
     private fun syncProgramFromWorkout(workout: Workout, syncRemote: Boolean) {
         if (workout.exercises.isEmpty()) return
 
@@ -1007,39 +1137,46 @@ class NeverPaidRepositoryImpl(
 
         if (syncRemote && apiClient != null && !isGuestUser()) {
             scope.launch {
-                try {
-                    val saved = apiClient.updateProgram(
-                        programId = targetProgram.id,
-                        request = SaveProgramRequestDto(
-                            name = updatedProgram.name,
-                            description = updatedProgram.description,
-                            splitType = updatedProgram.splitType,
-                            daysPerWeek = updatedProgram.daysPerWeek.coerceAtLeast(updatedDays.size),
-                            level = updatedProgram.level,
-                            durationWeeks = updatedProgram.durationWeeks,
-                            isPublic = updatedProgram.isPublic,
-                            days = updatedDays
+                templateSyncMutex.withLock {
+                    try {
+                        val resolvedId = programForkAliases[targetProgram.id] ?: targetProgram.id
+                        val saved = apiClient.updateProgram(
+                            programId = resolvedId,
+                            request = SaveProgramRequestDto(
+                                name = updatedProgram.name,
+                                description = updatedProgram.description,
+                                splitType = updatedProgram.splitType,
+                                daysPerWeek = updatedProgram.daysPerWeek.coerceAtLeast(updatedDays.size),
+                                level = updatedProgram.level,
+                                durationWeeks = updatedProgram.durationWeeks,
+                                isPublic = updatedProgram.isPublic,
+                                days = updatedDays
+                            )
                         )
-                    )
-                    persistCustomProgramOverride(saved)
-                    val curActive = activeProgramBundleFlow.value
-                    if (curActive?.program != null &&
-                        (curActive.program.id == targetProgram.id || curActive.program.name.equals(saved.name, ignoreCase = true))
-                    ) {
-                        val updatedBundle = curActive.copy(
-                            program = saved.copy(isActive = true),
-                            userProgram = curActive.userProgram?.copy(programId = saved.id)
-                        )
-                        activeProgramBundleFlow.value = updatedBundle
-                        DudaLocalStorage.setActiveProgramBundle(updatedBundle)
-                    }
-                    val curWorkout = activeWorkoutFlow.value
-                    if (curWorkout != null && curWorkout.programId == targetProgram.id && saved.id != targetProgram.id) {
-                        val rebound = curWorkout.copy(programId = saved.id)
-                        activeWorkoutFlow.value = rebound
-                        DudaLocalStorage.setActiveWorkoutDraft(rebound)
-                    }
-                } catch (_: Exception) {}
+                        if (saved.id != resolvedId) {
+                            programForkAliases[targetProgram.id] = saved.id
+                            programForkAliases[resolvedId] = saved.id
+                        }
+                        persistCustomProgramOverride(saved)
+                        val curActive = activeProgramBundleFlow.value
+                        if (curActive?.program != null &&
+                            (curActive.program.id == targetProgram.id || curActive.program.name.equals(saved.name, ignoreCase = true))
+                        ) {
+                            val updatedBundle = curActive.copy(
+                                program = saved.copy(isActive = true),
+                                userProgram = curActive.userProgram?.copy(programId = saved.id)
+                            )
+                            activeProgramBundleFlow.value = updatedBundle
+                            DudaLocalStorage.setActiveProgramBundle(updatedBundle)
+                        }
+                        val curWorkout = activeWorkoutFlow.value
+                        if (curWorkout != null && (curWorkout.programId == targetProgram.id || curWorkout.programId == resolvedId) && saved.id != curWorkout.programId) {
+                            val rebound = curWorkout.copy(programId = saved.id)
+                            activeWorkoutFlow.value = rebound
+                            DudaLocalStorage.setActiveWorkoutDraft(rebound)
+                        }
+                    } catch (_: Exception) {}
+                }
             }
         }
     }
