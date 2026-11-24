@@ -311,7 +311,7 @@ class AndroidUpgradeStartupSmokeTest {
                 isRunning = true,
                 soundEnabled = true,
                 alarmPreset = "siren",
-                todoTitle = "Громкий тест фокуса"
+                taskTitle = "Громкий тест фокуса"
             )
         )
         nm.cancelAll()
