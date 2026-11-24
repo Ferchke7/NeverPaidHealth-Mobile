@@ -1997,6 +1997,7 @@ class NeverPaidRepositoryImpl(
         var current = st.copy(mode = mode, pomodoroPhase = normalizeFocusPhase(st.pomodoroPhase))
         var since = current.runningSinceEpochMs ?: now
         var phaseEnd = current.phaseEndEpochMs ?: (now + current.secondsRemaining.coerceAtLeast(0) * 1000L)
+        var crossedPhase = false
 
         repeat(64) {
             val nextRem = ceil((phaseEnd - now) / 1000.0).toInt().coerceAtLeast(0)
@@ -2013,7 +2014,7 @@ class NeverPaidRepositoryImpl(
                 )
                 if (updated != focusTimerFlow.value) {
                     focusTimerFlow.value = updated
-                    if (st.phaseEndEpochMs == null || st.runningSinceEpochMs == null) {
+                    if (crossedPhase || st.phaseEndEpochMs == null || st.runningSinceEpochMs == null) {
                         DudaLocalStorage.setFocusTimerState(updated)
                         scheduleOrCancelFocusNotification(updated)
                     }
@@ -2050,6 +2051,7 @@ class NeverPaidRepositoryImpl(
                 return
             }
 
+            crossedPhase = true
             if (current.pomodoroPhase == "work") {
                 val isLong = current.pomodoroRound % 4 == 0
                 val nextPhase = if (isLong) "long_break" else "short_break"
@@ -2079,11 +2081,6 @@ class NeverPaidRepositoryImpl(
                     phaseEndEpochMs = phaseEnd,
                     runningSinceEpochMs = since
                 )
-            }
-
-            if (phaseEnd > now) {
-                applyAndPersistFocusState(current)
-                return
             }
         }
 

@@ -130,7 +130,7 @@ class WorkoutViewModelTest {
         // Recreate ViewModel (e.g. user left workout tab and returned 15s later)
         fakeNow += 15_000L
         val restoredVm = WorkoutViewModel(repository) { fakeNow }
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
         assertTrue(restoredVm.state.value.isRestTimerActive)
         assertEquals(30, restoredVm.state.value.restTimerSecondsRemaining)
 
