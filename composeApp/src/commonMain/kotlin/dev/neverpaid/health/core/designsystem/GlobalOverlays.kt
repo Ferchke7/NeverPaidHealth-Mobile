@@ -307,7 +307,7 @@ fun FloatingFocusTimerOverlay(
             ) {
                 listOf(
                     Triple("pomodoro", strings.focusPomodoro, 25),
-                    Triple("timer", strings.focusTimer, state.customMinutes),
+                    Triple("target_timer", strings.focusTimer, state.customMinutes),
                     Triple("stopwatch", strings.focusStopwatch, 0)
                 ).forEach { (modeKey, label, mins) ->
                     val selected = state.mode == modeKey
@@ -317,7 +317,7 @@ fun FloatingFocusTimerOverlay(
                             .heightIn(min = 42.dp)
                             .clip(CircleShape)
                             .background(if (selected) VioletPrimary else Color.Transparent)
-                            .clickable { onSetMode(modeKey, "focus", mins.coerceAtLeast(15)) }
+                            .clickable { onSetMode(modeKey, "work", mins.coerceAtLeast(15)) }
                             .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -337,7 +337,7 @@ fun FloatingFocusTimerOverlay(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     listOf(
-                        Triple("focus", strings.todoPomodoroFocus, 25),
+                        Triple("work", strings.todoPomodoroFocus, 25),
                         Triple("short_break", strings.todoPomodoroShortBreak, 5),
                         Triple("long_break", "15m", 15)
                     ).forEach { (phaseKey, label, mins) ->
@@ -349,7 +349,7 @@ fun FloatingFocusTimerOverlay(
                         )
                     }
                 }
-            } else if (state.mode == "timer") {
+            } else if (state.mode == "target_timer") {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -358,7 +358,7 @@ fun FloatingFocusTimerOverlay(
                         GymPillTab(
                             text = "${mins}m",
                             selected = state.customMinutes == mins,
-                            onClick = { onSetMode("timer", "focus", mins) },
+                            onClick = { onSetMode("target_timer", "work", mins) },
                             modifier = Modifier.weight(1f)
                         )
                     }

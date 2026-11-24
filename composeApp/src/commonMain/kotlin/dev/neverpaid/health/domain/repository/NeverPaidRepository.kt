@@ -191,11 +191,15 @@ interface NeverPaidRepository {
     fun pauseFocusTimer()
     fun resumeFocusTimer()
     fun tickFocusTimer()
+    fun syncFocusTimerFromClock() = tickFocusTimer()
     fun skipFocusPhase()
     fun resetFocusPhase()
     fun setFocusMode(mode: String)
     fun setFocusSplitStrategy(strategy: String)
     fun setFocusBreakMinutes(minutes: Int)
+    fun setFocusPhase(phase: String, durationMinutes: Int? = null) {}
+    fun setFocusTargetMinutes(minutes: Int) {}
+    fun setFocusSoundEnabled(enabled: Boolean) {}
     fun setFocusModalOpen(isOpen: Boolean)
     suspend fun finishAndLogFocusSession(markCompleted: Boolean = true, notes: String = "")
     fun discardFocusTimer()

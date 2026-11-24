@@ -110,4 +110,46 @@ class WorkoutViewModelTest {
         assertTrue(updated.sets.all { it.weightKg == 0.0 && !it.isCompleted })
     }
 
+    @Test
+    fun restTimerSurvivesBackgroundWallClockJumpAndPersistsAcrossViewModelRecreation() = runTest {
+        var fakeNow = 1_000_000L
+        val timedVm = WorkoutViewModel(repository) { fakeNow }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        timedVm.onAction(WorkoutUiAction.OnStartManualRestTimer(90))
+        assertTrue(timedVm.state.value.isRestTimerActive)
+        assertEquals(90, timedVm.state.value.restTimerSecondsRemaining)
+        assertNotNull(dev.neverpaid.health.core.storage.DudaLocalStorage.getRestTimerState())
+
+        // Simulate app suspended / phone locked for 45 seconds without foreground ticks
+        fakeNow += 45_000L
+        timedVm.onAction(WorkoutUiAction.OnSyncRestTimer)
+        assertTrue(timedVm.state.value.isRestTimerActive)
+        assertEquals(45, timedVm.state.value.restTimerSecondsRemaining)
+
+        // Recreate ViewModel (e.g. user left workout tab and returned 15s later)
+        fakeNow += 15_000L
+        val restoredVm = WorkoutViewModel(repository) { fakeNow }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(restoredVm.state.value.isRestTimerActive)
+        assertEquals(30, restoredVm.state.value.restTimerSecondsRemaining)
+
+        // Add +15s while resting -> 45s remaining
+        restoredVm.onAction(WorkoutUiAction.OnRestTimerAddSeconds(15))
+        assertEquals(45, restoredVm.state.value.restTimerSecondsRemaining)
+
+        // Lock screen past the remaining 45s -> catches up to 0 and clears storage
+        fakeNow += 50_000L
+        restoredVm.onAction(WorkoutUiAction.OnSyncRestTimer)
+        assertFalse(restoredVm.state.value.isRestTimerActive)
+        assertEquals(0, restoredVm.state.value.restTimerSecondsRemaining)
+        assertEquals(null, dev.neverpaid.health.core.storage.DudaLocalStorage.getRestTimerState())
+
+        // Skip / subtract to zero cleans up immediately
+        restoredVm.onAction(WorkoutUiAction.OnStartManualRestTimer(15))
+        assertTrue(restoredVm.state.value.isRestTimerActive)
+        restoredVm.onAction(WorkoutUiAction.OnRestTimerAddSeconds(-15))
+        assertFalse(restoredVm.state.value.isRestTimerActive)
+    }
+
 }

@@ -10,6 +10,8 @@ import dev.neverpaid.health.domain.model.Workout
 data class WorkoutUiState(
     val workout: Workout? = null,
     val restTimerSecondsRemaining: Int = 0,
+    val restTimerTotalSeconds: Int = 90,
+    val restTimerEndEpochMs: Long = 0L,
     val isRestTimerActive: Boolean = false,
     val workoutStartTimeEpochMs: Long = 0,
     val isFinishing: Boolean = false,
@@ -51,6 +53,7 @@ sealed interface WorkoutUiAction : UiAction {
     data class OnRestTimerAddSeconds(val seconds: Int) : WorkoutUiAction
     data class OnStartManualRestTimer(val seconds: Int) : WorkoutUiAction
     data object OnRestTimerSkip : WorkoutUiAction
+    data object OnSyncRestTimer : WorkoutUiAction
 }
 
 sealed interface WorkoutUiEffect : UiEffect {

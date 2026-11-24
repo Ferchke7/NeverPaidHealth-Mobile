@@ -18,7 +18,8 @@ object AthleteSoundManager {
                 PlatformBridge.vibrate()
             }
             0 -> {
-                // Rest period finished: Double vibration alert
+                // Rest period finished: sound cue + vibration alert
+                PlatformBridge.playAlertSound()
                 PlatformBridge.vibrate()
             }
         }
@@ -35,6 +36,7 @@ object AthleteSoundManager {
      * Called when an athlete breaks an all-time 1RM or Volume Personal Record.
      */
     fun playPersonalRecordFanfare() {
+        PlatformBridge.playAlertSound()
         PlatformBridge.vibrate()
     }
 
@@ -42,6 +44,7 @@ object AthleteSoundManager {
      * Called when a Pomodoro focus or fasting interval completes.
      */
     fun playIntervalGong() {
+        PlatformBridge.playAlertSound()
         PlatformBridge.vibrate()
     }
 }

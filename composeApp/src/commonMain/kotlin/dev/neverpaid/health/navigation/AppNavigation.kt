@@ -22,7 +22,13 @@ import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -133,6 +139,26 @@ fun DudaMobileApp() {
     val lastFinishedWorkout by repository.getLastFinishedWorkoutSummary().collectAsState(initial = null)
     val focusTimerState by repository.getFocusTimerState().collectAsState(initial = FocusTimerState())
     val strings = remember(preferences.languageCode) { getDudaStrings(preferences.languageCode) }
+
+    LaunchedEffect(focusTimerState.isActive, focusTimerState.isRunning) {
+        if (focusTimerState.isActive && focusTimerState.isRunning) {
+            while (true) {
+                repository.tickFocusTimer()
+                delay(1000L)
+            }
+        }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, repository) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                repository.syncFocusTimerFromClock()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     DudaRoyalTheme(darkTheme = preferences.darkTheme) {
         CompositionLocalProvider(LocalDudaStrings provides strings) {
@@ -265,9 +291,12 @@ fun DudaMobileApp() {
                             onReset = { repository.resetFocusPhase() },
                             onMinimize = { min -> repository.setFocusModalOpen(!min) },
                             onClose = { repository.discardFocusTimer() },
-                            onSetMode = { mode, _, mins ->
+                            onSetMode = { mode, phase, mins ->
                                 repository.setFocusMode(mode)
-                                repository.setFocusSplitStrategy("${mins}m")
+                                when (mode) {
+                                    "target_timer", "timer" -> repository.setFocusTargetMinutes(mins)
+                                    "pomodoro" -> repository.setFocusPhase(phase, mins)
+                                }
                             },
                             onCompleteSession = {
                                 scope.launch { repository.finishAndLogFocusSession(markCompleted = true) }

@@ -633,18 +633,38 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     }
 
     override fun pauseFocusTimer() {
-        focusTimerFlow.value = focusTimerFlow.value.copy(isRunning = false)
+        focusTimerFlow.value = focusTimerFlow.value.copy(isRunning = false, phaseEndEpochMs = null, runningSinceEpochMs = null)
     }
 
     override fun resumeFocusTimer() {
-        focusTimerFlow.value = focusTimerFlow.value.copy(isRunning = true)
+        val st = focusTimerFlow.value
+        val now = dev.neverpaid.health.core.platform.PlatformBridge.currentTimeMillis()
+        focusTimerFlow.value = st.copy(
+            isActive = true,
+            isRunning = true,
+            phaseEndEpochMs = if (st.mode == "stopwatch") null else now + st.secondsRemaining * 1000L,
+            runningSinceEpochMs = now,
+            elapsedBeforePauseSec = st.secondsElapsedTotal
+        )
     }
 
     override fun tickFocusTimer() {}
+    override fun syncFocusTimerFromClock() {}
     override fun skipFocusPhase() {}
-    override fun resetFocusPhase() {}
+    override fun resetFocusPhase() {
+        val st = focusTimerFlow.value
+        focusTimerFlow.value = st.copy(
+            isRunning = false,
+            secondsRemaining = st.workDurationSec,
+            secondsElapsedTotal = 0,
+            phaseEndEpochMs = null,
+            runningSinceEpochMs = null,
+            elapsedBeforePauseSec = 0
+        )
+    }
     override fun setFocusMode(mode: String) {
-        focusTimerFlow.value = focusTimerFlow.value.copy(mode = mode)
+        val normalized = if (mode == "timer") "target_timer" else mode
+        focusTimerFlow.value = focusTimerFlow.value.copy(mode = normalized, isRunning = false, phaseEndEpochMs = null)
     }
 
     override fun setFocusSplitStrategy(strategy: String) {
@@ -652,6 +672,27 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     }
 
     override fun setFocusBreakMinutes(minutes: Int) {}
+    override fun setFocusPhase(phase: String, durationMinutes: Int?) {
+        val normalized = if (phase == "focus") "work" else phase
+        val sec = (durationMinutes ?: 25) * 60
+        focusTimerFlow.value = focusTimerFlow.value.copy(
+            pomodoroPhase = normalized,
+            secondsRemaining = sec,
+            isRunning = false,
+            phaseEndEpochMs = null
+        )
+    }
+    override fun setFocusTargetMinutes(minutes: Int) {
+        focusTimerFlow.value = focusTimerFlow.value.copy(
+            targetTotalMinutes = minutes,
+            secondsRemaining = minutes * 60,
+            isRunning = false,
+            phaseEndEpochMs = null
+        )
+    }
+    override fun setFocusSoundEnabled(enabled: Boolean) {
+        focusTimerFlow.value = focusTimerFlow.value.copy(soundEnabled = enabled)
+    }
     override fun setFocusModalOpen(isOpen: Boolean) {
         focusTimerFlow.value = focusTimerFlow.value.copy(isModalOpen = isOpen)
     }

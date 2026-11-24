@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import org.jetbrains.skia.Image as SkiaImage
+import platform.AudioToolbox.AudioServicesPlaySystemSound
 import platform.Foundation.NSDate
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSUUID
@@ -35,8 +36,17 @@ import platform.Foundation.NSUserDefaults
 import platform.Foundation.NSURL
 import platform.Foundation.timeIntervalSince1970
 import platform.UIKit.UIApplication
+import platform.UIKit.UIApplicationState
 import platform.UIKit.UIImpactFeedbackGenerator
 import platform.UIKit.UIImpactFeedbackStyle
+import platform.UserNotifications.UNAuthorizationOptionAlert
+import platform.UserNotifications.UNAuthorizationOptionBadge
+import platform.UserNotifications.UNAuthorizationOptionSound
+import platform.UserNotifications.UNMutableNotificationContent
+import platform.UserNotifications.UNNotificationRequest
+import platform.UserNotifications.UNNotificationSound
+import platform.UserNotifications.UNTimeIntervalNotificationTrigger
+import platform.UserNotifications.UNUserNotificationCenter
 
 actual object PlatformBridge {
 
@@ -112,6 +122,73 @@ actual object PlatformBridge {
     actual fun openUrl(url: String) {
         val nsUrl = platform.Foundation.NSURL.URLWithString(url) ?: return
         platform.UIKit.UIApplication.sharedApplication.openURL(nsUrl)
+    }
+
+    actual fun scheduleTimerNotification(
+        timerId: String,
+        triggerAtEpochMs: Long,
+        title: String,
+        body: String,
+        showOngoingCountdown: Boolean,
+        ongoingTitle: String,
+        ongoingBody: String
+    ) {
+        val center = UNUserNotificationCenter.currentNotificationCenter()
+        center.removePendingNotificationRequestsWithIdentifiers(listOf(timerId))
+        val delaySec = ((triggerAtEpochMs - currentTimeMillis()) / 1000.0).coerceAtLeast(1.0)
+        val content = UNMutableNotificationContent().apply {
+            setTitle(title)
+            setBody(body)
+            setSound(UNNotificationSound.defaultSound)
+        }
+        val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(
+            timeInterval = delaySec,
+            repeats = false
+        )
+        val request = UNNotificationRequest.requestWithIdentifier(
+            identifier = timerId,
+            content = content,
+            trigger = trigger
+        )
+        center.addNotificationRequest(request) { _ -> }
+    }
+
+    actual fun cancelTimerNotification(timerId: String) {
+        val center = UNUserNotificationCenter.currentNotificationCenter()
+        center.removePendingNotificationRequestsWithIdentifiers(listOf(timerId))
+        center.removeDeliveredNotificationsWithIdentifiers(listOf(timerId))
+    }
+
+    actual fun showTimerAlertNotification(timerId: String, title: String, body: String) {
+        val center = UNUserNotificationCenter.currentNotificationCenter()
+        val content = UNMutableNotificationContent().apply {
+            setTitle(title)
+            setBody(body)
+            setSound(UNNotificationSound.defaultSound)
+        }
+        val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(
+            timeInterval = 0.2,
+            repeats = false
+        )
+        val request = UNNotificationRequest.requestWithIdentifier(
+            identifier = timerId,
+            content = content,
+            trigger = trigger
+        )
+        center.addNotificationRequest(request) { _ -> }
+    }
+
+    actual fun playAlertSound() {
+        AudioServicesPlaySystemSound(1007u)
+    }
+
+    actual fun requestNotificationPermission() {
+        val options = UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
+        UNUserNotificationCenter.currentNotificationCenter().requestAuthorizationWithOptions(options) { _, _ -> }
+    }
+
+    actual fun isAppInForeground(): Boolean {
+        return UIApplication.sharedApplication.applicationState == UIApplicationState.UIApplicationStateActive
     }
 }
 

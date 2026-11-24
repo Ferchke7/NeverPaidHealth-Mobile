@@ -150,4 +150,55 @@ class AndroidUpgradeStartupSmokeTest {
         controller.get()
         controller.pause().stop().destroy()
     }
+
+    @Test
+    fun timerNotificationScheduleBroadcastAndCancel_postsAndClearsNotificationCleanly() {
+        val context = ApplicationProvider.getApplicationContext<android.app.Application>()
+        org.robolectric.Shadows.shadowOf(context).grantPermissions(
+            android.Manifest.permission.POST_NOTIFICATIONS
+        )
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val shadowNm = org.robolectric.Shadows.shadowOf(nm)
+
+        val triggerAt = System.currentTimeMillis() + 60_000L
+        dev.neverpaid.health.core.platform.PlatformBridge.scheduleTimerNotification(
+            timerId = dev.neverpaid.health.core.platform.TimerNotificationIds.REST,
+            triggerAtEpochMs = triggerAt,
+            title = "Отдых завершён",
+            body = "Время на следующий подход!",
+            showOngoingCountdown = true,
+            ongoingTitle = "Отдых",
+            ongoingBody = "Push Day"
+        )
+        org.junit.Assert.assertTrue(
+            "Expected ongoing chronometer notification after scheduling",
+            shadowNm.allNotifications.isNotEmpty()
+        )
+
+        val receiver = dev.neverpaid.health.core.platform.TimerAlarmReceiver()
+        val alarmIntent = Intent(context, dev.neverpaid.health.core.platform.TimerAlarmReceiver::class.java).apply {
+            action = "dev.neverpaid.health.ACTION_TIMER_ALARM_${dev.neverpaid.health.core.platform.TimerNotificationIds.REST}"
+            putExtra(dev.neverpaid.health.core.platform.TimerAlarmReceiver.EXTRA_TIMER_ID, dev.neverpaid.health.core.platform.TimerNotificationIds.REST)
+            putExtra(dev.neverpaid.health.core.platform.TimerAlarmReceiver.EXTRA_TRIGGER_AT, triggerAt)
+            putExtra(dev.neverpaid.health.core.platform.TimerAlarmReceiver.EXTRA_TITLE, "Отдых завершён")
+            putExtra(dev.neverpaid.health.core.platform.TimerAlarmReceiver.EXTRA_BODY, "Время на следующий подход!")
+        }
+        receiver.onReceive(context, alarmIntent)
+
+        org.junit.Assert.assertTrue(
+            "Expected alert notification after alarm broadcast fires",
+            shadowNm.allNotifications.any { notif ->
+                val title = notif.extras.getString(android.app.Notification.EXTRA_TITLE)
+                title == "Отдых завершён"
+            }
+        )
+
+        dev.neverpaid.health.core.platform.PlatformBridge.cancelTimerNotification(
+            dev.neverpaid.health.core.platform.TimerNotificationIds.REST
+        )
+        org.junit.Assert.assertTrue(
+            "Expected notifications cleared after cancel",
+            shadowNm.allNotifications.isEmpty()
+        )
+    }
 }

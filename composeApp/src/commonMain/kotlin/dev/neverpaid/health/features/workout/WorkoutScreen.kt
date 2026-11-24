@@ -38,6 +38,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -57,6 +58,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.neverpaid.health.core.audio.AthleteSoundManager
 import dev.neverpaid.health.core.designsystem.AccentLime
@@ -138,10 +142,21 @@ fun WorkoutRoute(
     var showRestSheet by remember { mutableStateOf(false) }
     var lastRestPresetSeconds by remember { mutableIntStateOf(90) }
 
-    LaunchedEffect(state.isRestTimerActive, state.restTimerSecondsRemaining) {
-        if (state.isRestTimerActive && state.restTimerSecondsRemaining > restSheetTotalSeconds) {
-            restSheetTotalSeconds = state.restTimerSecondsRemaining
+    LaunchedEffect(state.isRestTimerActive, state.restTimerSecondsRemaining, state.restTimerTotalSeconds) {
+        if (state.isRestTimerActive) {
+            restSheetTotalSeconds = maxOf(state.restTimerTotalSeconds, state.restTimerSecondsRemaining, 1)
         }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.onAction(WorkoutUiAction.OnSyncRestTimer)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     CollectEffect(viewModel.effect) { effect ->
@@ -149,7 +164,7 @@ fun WorkoutRoute(
             is WorkoutUiEffect.WorkoutFinishedSummary -> completedSummaryWorkout = effect.workout
             WorkoutUiEffect.NavigateBack -> onNavigateBack()
             WorkoutUiEffect.TriggerHaptic -> PlatformBridge.vibrate()
-            is WorkoutUiEffect.ShowToast -> {}
+            is WorkoutUiEffect.ShowToast -> PlatformBridge.showToast(effect.message)
         }
     }
 

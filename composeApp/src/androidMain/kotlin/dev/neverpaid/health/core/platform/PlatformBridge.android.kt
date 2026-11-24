@@ -1,19 +1,35 @@
 package dev.neverpaid.health.core.platform
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlarmManager
+import android.app.Application
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.RingtoneManager
+import android.media.ToneGenerator
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Base64
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
@@ -77,13 +93,23 @@ import dev.neverpaid.health.core.network.DudaApiClient
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
+import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
 
+private const val CHANNEL_TIMER_ALERTS = "duda_timer_alerts_v1"
+private const val CHANNEL_TIMER_ONGOING = "duda_timer_ongoing_v1"
+private const val PREFS_TIMER_ALARMS = "duda_timer_alarms"
+private const val KEY_NOTIF_PROMPTED = "notif_prompted_v1"
+private const val REQUEST_CODE_POST_NOTIFICATIONS = 9401
+
 private class AndroidPlatformHolder {
     var appContext: Context? = null
+    var lifecycleRegistered = false
+    var resumedActivityCount = 0
+    var currentActivityRef: WeakReference<Activity>? = null
     val inMemoryFallback = HashMap<String, String>()
 }
 
@@ -91,7 +117,38 @@ actual object PlatformBridge {
     private val runtime = AndroidPlatformHolder()
 
     fun init(context: Context) {
-        runtime.appContext = context.applicationContext
+        val appCtx = context.applicationContext
+        runtime.appContext = appCtx
+        if (!runtime.lifecycleRegistered && appCtx is Application) {
+            runtime.lifecycleRegistered = true
+            appCtx.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
+                override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                    runtime.currentActivityRef = WeakReference(activity)
+                }
+
+                override fun onActivityStarted(activity: Activity) {
+                    runtime.currentActivityRef = WeakReference(activity)
+                }
+
+                override fun onActivityResumed(activity: Activity) {
+                    runtime.resumedActivityCount += 1
+                    runtime.currentActivityRef = WeakReference(activity)
+                    requestNotificationPermission()
+                }
+
+                override fun onActivityPaused(activity: Activity) {
+                    runtime.resumedActivityCount = (runtime.resumedActivityCount - 1).coerceAtLeast(0)
+                }
+
+                override fun onActivityStopped(activity: Activity) {}
+                override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+                override fun onActivityDestroyed(activity: Activity) {
+                    if (runtime.currentActivityRef?.get() === activity) {
+                        runtime.currentActivityRef = null
+                    }
+                }
+            })
+        }
     }
 
     actual fun vibrate() {
@@ -211,6 +268,306 @@ actual object PlatformBridge {
             ctx.startActivity(browserIntent)
         }
     }
+
+    private data class TimerNotificationSlots(
+        val alarmRequestCode: Int,
+        val ongoingNotificationId: Int,
+        val alertNotificationId: Int
+    )
+
+    private fun slotsForTimer(timerId: String): TimerNotificationSlots = when (timerId) {
+        TimerNotificationIds.REST -> TimerNotificationSlots(1001, 2001, 3001)
+        TimerNotificationIds.FOCUS -> TimerNotificationSlots(1002, 2002, 3002)
+        else -> {
+            val base = (timerId.hashCode() and 0x0FFF) + 4000
+            TimerNotificationSlots(base, base + 1000, base + 2000)
+        }
+    }
+
+    private fun alarmPrefs(ctx: Context) = ctx.getSharedPreferences(PREFS_TIMER_ALARMS, Context.MODE_PRIVATE)
+
+    private fun ensureNotificationChannels(ctx: Context, nm: NotificationManager) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        if (nm.getNotificationChannel(CHANNEL_TIMER_ALERTS) == null) {
+            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val audioAttrs = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            val alertChannel = NotificationChannel(
+                CHANNEL_TIMER_ALERTS,
+                "Таймеры и отдых",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Оповещения об окончании отдыха и фокус-сессий"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0L, 280L, 140L, 380L)
+                setSound(soundUri, audioAttrs)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            }
+            nm.createNotificationChannel(alertChannel)
+        }
+        if (nm.getNotificationChannel(CHANNEL_TIMER_ONGOING) == null) {
+            val ongoingChannel = NotificationChannel(
+                CHANNEL_TIMER_ONGOING,
+                "Активный таймер",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Отображение обратного отсчёта в шторке уведомлений"
+                setSound(null, null)
+                enableVibration(false)
+                setShowBadge(false)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            }
+            nm.createNotificationChannel(ongoingChannel)
+        }
+    }
+
+    private fun hasPostNotificationsPermission(ctx: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun createAppLaunchIntent(ctx: Context): Intent {
+        val launchIntent = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)
+            ?: Intent(ctx, dev.neverpaid.health.MainActivity::class.java)
+        return launchIntent.apply {
+            addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
+    }
+
+    private fun createAlarmBroadcastIntent(
+        ctx: Context,
+        timerId: String,
+        triggerAtEpochMs: Long,
+        title: String,
+        body: String
+    ): Intent {
+        return Intent(ctx, TimerAlarmReceiver::class.java).apply {
+            action = "dev.neverpaid.health.ACTION_TIMER_ALARM_$timerId"
+            putExtra(TimerAlarmReceiver.EXTRA_TIMER_ID, timerId)
+            putExtra(TimerAlarmReceiver.EXTRA_TRIGGER_AT, triggerAtEpochMs)
+            putExtra(TimerAlarmReceiver.EXTRA_TITLE, title)
+            putExtra(TimerAlarmReceiver.EXTRA_BODY, body)
+        }
+    }
+
+    actual fun scheduleTimerNotification(
+        timerId: String,
+        triggerAtEpochMs: Long,
+        title: String,
+        body: String,
+        showOngoingCountdown: Boolean,
+        ongoingTitle: String,
+        ongoingBody: String
+    ) {
+        val ctx = runtime.appContext ?: return
+        try {
+            val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            val slots = slotsForTimer(timerId)
+            if (nm != null) {
+                ensureNotificationChannels(ctx, nm)
+                nm.cancel(slots.alertNotificationId)
+            }
+
+            alarmPrefs(ctx).edit()
+                .putLong("trigger_$timerId", triggerAtEpochMs)
+                .putString("title_$timerId", title)
+                .putString("body_$timerId", body)
+                .apply()
+
+            val broadcastIntent = createAlarmBroadcastIntent(ctx, timerId, triggerAtEpochMs, title, body)
+            val alarmPendingIntent = PendingIntent.getBroadcast(
+                ctx,
+                slots.alarmRequestCode,
+                broadcastIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val showPendingIntent = PendingIntent.getActivity(
+                ctx,
+                slots.alarmRequestCode + 100,
+                createAppLaunchIntent(ctx),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            if (alarmManager != null && triggerAtEpochMs > System.currentTimeMillis()) {
+                val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    alarmManager.canScheduleExactAlarms()
+                } else {
+                    true
+                }
+                if (canExact) {
+                    try {
+                        val clockInfo = AlarmManager.AlarmClockInfo(triggerAtEpochMs, showPendingIntent)
+                        alarmManager.setAlarmClock(clockInfo, alarmPendingIntent)
+                    } catch (_: SecurityException) {
+                        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtEpochMs, alarmPendingIntent)
+                    }
+                } else {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtEpochMs, alarmPendingIntent)
+                }
+            }
+
+            if (showOngoingCountdown && nm != null && hasPostNotificationsPermission(ctx)) {
+                val ongoingNotification = NotificationCompat.Builder(ctx, CHANNEL_TIMER_ONGOING)
+                    .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                    .setContentTitle(ongoingTitle.ifBlank { title })
+                    .apply {
+                        if (ongoingBody.isNotBlank()) setContentText(ongoingBody)
+                    }
+                    .setWhen(triggerAtEpochMs)
+                    .setShowWhen(true)
+                    .setUsesChronometer(true)
+                    .setChronometerCountDown(true)
+                    .setOngoing(true)
+                    .setOnlyAlertOnce(true)
+                    .setSilent(true)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .setContentIntent(showPendingIntent)
+                    .build()
+                nm.notify(slots.ongoingNotificationId, ongoingNotification)
+            }
+        } catch (_: Throwable) {
+        }
+    }
+
+    actual fun cancelTimerNotification(timerId: String) {
+        val ctx = runtime.appContext ?: return
+        try {
+            alarmPrefs(ctx).edit()
+                .remove("trigger_$timerId")
+                .remove("title_$timerId")
+                .remove("body_$timerId")
+                .apply()
+
+            val slots = slotsForTimer(timerId)
+            val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            val existing = PendingIntent.getBroadcast(
+                ctx,
+                slots.alarmRequestCode,
+                createAlarmBroadcastIntent(ctx, timerId, 0L, "", ""),
+                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+            )
+            if (existing != null) {
+                alarmManager?.cancel(existing)
+                existing.cancel()
+            }
+            val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            nm?.cancel(slots.ongoingNotificationId)
+            nm?.cancel(slots.alertNotificationId)
+        } catch (_: Throwable) {
+        }
+    }
+
+    internal fun handleAlarmBroadcast(
+        context: Context,
+        timerId: String,
+        triggerAtEpochMs: Long,
+        title: String,
+        body: String
+    ) {
+        if (runtime.appContext == null) {
+            runtime.appContext = context.applicationContext
+        }
+        val prefs = alarmPrefs(context)
+        val scheduledTriggerAt = prefs.getLong("trigger_$timerId", -1L)
+        if (scheduledTriggerAt <= 0L || (triggerAtEpochMs > 0L && scheduledTriggerAt != triggerAtEpochMs)) {
+            return
+        }
+        val storedTitle = title.ifBlank { prefs.getString("title_$timerId", "").orEmpty() }
+        val storedBody = body.ifBlank { prefs.getString("body_$timerId", "").orEmpty() }
+        prefs.edit()
+            .remove("trigger_$timerId")
+            .remove("title_$timerId")
+            .remove("body_$timerId")
+            .apply()
+        showTimerAlertNotification(
+            timerId = timerId,
+            title = storedTitle.ifBlank { "duda.uz" },
+            body = storedBody.ifBlank { "Таймер завершён" }
+        )
+    }
+
+    actual fun showTimerAlertNotification(timerId: String, title: String, body: String) {
+        val ctx = runtime.appContext ?: return
+        try {
+            val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+            ensureNotificationChannels(ctx, nm)
+            val slots = slotsForTimer(timerId)
+            nm.cancel(slots.ongoingNotificationId)
+
+            if (!hasPostNotificationsPermission(ctx)) return
+            val showPendingIntent = PendingIntent.getActivity(
+                ctx,
+                slots.alarmRequestCode + 200,
+                createAppLaunchIntent(ctx),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val notification = NotificationCompat.Builder(ctx, CHANNEL_TIMER_ALERTS)
+                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setAutoCancel(true)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setContentIntent(showPendingIntent)
+                .build()
+            nm.notify(slots.alertNotificationId, notification)
+        } catch (_: Throwable) {
+        }
+    }
+
+    actual fun playAlertSound() {
+        val ctx = runtime.appContext ?: return
+        try {
+            val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            val ringtone = if (uri != null) RingtoneManager.getRingtone(ctx, uri) else null
+            if (ringtone != null) {
+                ringtone.play()
+                return
+            }
+        } catch (_: Throwable) {
+        }
+        try {
+            val tg = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 85)
+            tg.startTone(ToneGenerator.TONE_PROP_BEEP2, 280)
+            Handler(Looper.getMainLooper()).postDelayed({
+                try {
+                    tg.release()
+                } catch (_: Throwable) {
+                }
+            }, 400L)
+        } catch (_: Throwable) {
+        }
+    }
+
+    actual fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val ctx = runtime.appContext ?: return
+        if (hasPostNotificationsPermission(ctx)) return
+        val prefs = alarmPrefs(ctx)
+        if (prefs.getBoolean(KEY_NOTIF_PROMPTED, false)) return
+        val activity = runtime.currentActivityRef?.get() ?: return
+        prefs.edit().putBoolean(KEY_NOTIF_PROMPTED, true).apply()
+        activity.runOnUiThread {
+            try {
+                ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    REQUEST_CODE_POST_NOTIFICATIONS
+                )
+            } catch (_: Throwable) {
+            }
+        }
+    }
+
+    actual fun isAppInForeground(): Boolean = runtime.resumedActivityCount > 0
 }
 
 internal fun Context.findActivity(): Activity? {

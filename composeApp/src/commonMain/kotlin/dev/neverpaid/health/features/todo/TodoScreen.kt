@@ -105,17 +105,6 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 
-private enum class FocusMode {
-    POMODORO,
-    TIMER,
-    STOPWATCH
-}
-
-private enum class FocusPhase {
-    WORK,
-    BREAK
-}
-
 @Composable
 fun TodoRoute(
     viewModel: TodoViewModel,
@@ -158,40 +147,12 @@ fun TodoScreen(
     var habits by remember { mutableStateOf(StandardHabitsCatalog.standardPresets.take(4)) }
     var inlineEditingTask by remember { mutableStateOf<TodoTask?>(null) }
 
-    // Inline Focus Timer State
-    var focusMode by rememberSaveable { mutableStateOf(FocusMode.POMODORO) }
-    var focusPhase by rememberSaveable { mutableStateOf(FocusPhase.WORK) }
-    var activeTaskTitle by rememberSaveable { mutableStateOf<String?>(null) }
-    var timerSecondsLeft by rememberSaveable { mutableIntStateOf(25 * 60) }
-    var stopwatchElapsedSeconds by rememberSaveable { mutableIntStateOf(0) }
-    var isTimerRunning by rememberSaveable { mutableStateOf(false) }
-    var hasStartedSession by rememberSaveable { mutableStateOf(false) }
-    var soundEnabled by rememberSaveable { mutableStateOf(true) }
-
-    LaunchedEffect(isTimerRunning, focusMode, focusPhase) {
-        while (isTimerRunning) {
-            delay(1000L)
-            if (focusMode == FocusMode.STOPWATCH) {
-                stopwatchElapsedSeconds += 1
-            } else {
-                if (timerSecondsLeft > 0) {
-                    timerSecondsLeft -= 1
-                } else {
-                    isTimerRunning = false
-                    if (soundEnabled) {
-                        AthleteSoundManager.playIntervalGong()
-                    }
-                    PlatformBridge.showToast(
-                        when (lang) {
-                            "uz" -> "Fokus sessiyasi yakunlandi"
-                            "en" -> "Focus session finished"
-                            else -> "Сессия фокуса завершена"
-                        }
-                    )
-                }
-            }
-        }
-    }
+    val ft = state.focusTimer
+    val isFocusActive = ft.isActive
+    val effectiveMode = if (isFocusActive) ft.mode else state.selectedFocusMode
+    val effectivePhase = if (isFocusActive) ft.pomodoroPhase else state.selectedFocusPhase
+    val isTimerRunning = isFocusActive && ft.isRunning
+    val soundEnabled = ft.soundEnabled
 
     // Keep inline edit selection synchronized if task is updated/deleted
     LaunchedEffect(state.allTasks) {
@@ -533,12 +494,6 @@ fun TodoScreen(
                                             )
                                         },
                                         onStartFocus = {
-                                            activeTaskTitle = task.title
-                                            focusMode = FocusMode.POMODORO
-                                            focusPhase = FocusPhase.WORK
-                                            timerSecondsLeft = task.pomodoroMinutes * 60
-                                            hasStartedSession = true
-                                            isTimerRunning = true
                                             onAction(TodoUiAction.OnStartFocusTimer(task))
                                         }
                                     )
@@ -598,8 +553,9 @@ fun TodoScreen(
                                     .clip(CircleShape)
                                     .background(if (soundEnabled) AccentLimeSubtle else DarkSurfaceHigh)
                                     .clickable {
-                                        soundEnabled = !soundEnabled
-                                        if (soundEnabled) {
+                                        val nextSound = !soundEnabled
+                                        onAction(TodoUiAction.OnToggleFocusSound(nextSound))
+                                        if (nextSound) {
                                             AthleteSoundManager.playIntervalGong()
                                         }
                                     }
@@ -624,73 +580,52 @@ fun TodoScreen(
                         ) {
                             GymPillTab(
                                 text = when (lang) { "uz" -> "Pomodoro"; "en" -> "Pomodoro"; else -> "Помодоро" },
-                                selected = focusMode == FocusMode.POMODORO,
-                                onClick = {
-                                    focusMode = FocusMode.POMODORO
-                                    isTimerRunning = false
-                                    hasStartedSession = false
-                                    timerSecondsLeft = if (focusPhase == FocusPhase.WORK) 25 * 60 else 5 * 60
-                                }
+                                selected = effectiveMode == "pomodoro",
+                                onClick = { onAction(TodoUiAction.OnSelectFocusCardMode("pomodoro")) }
                             )
                             GymPillTab(
                                 text = when (lang) { "uz" -> "Taymer"; "en" -> "Timer"; else -> "Таймер" },
-                                selected = focusMode == FocusMode.TIMER,
-                                onClick = {
-                                    focusMode = FocusMode.TIMER
-                                    isTimerRunning = false
-                                    hasStartedSession = false
-                                    timerSecondsLeft = 15 * 60
-                                }
+                                selected = effectiveMode == "target_timer",
+                                onClick = { onAction(TodoUiAction.OnSelectFocusCardMode("target_timer")) }
                             )
                             GymPillTab(
                                 text = when (lang) { "uz" -> "Sekundomer"; "en" -> "Stopwatch"; else -> "Секундомер" },
-                                selected = focusMode == FocusMode.STOPWATCH,
-                                onClick = {
-                                    focusMode = FocusMode.STOPWATCH
-                                    isTimerRunning = false
-                                    hasStartedSession = false
-                                    stopwatchElapsedSeconds = 0
-                                }
+                                selected = effectiveMode == "stopwatch",
+                                onClick = { onAction(TodoUiAction.OnSelectFocusCardMode("stopwatch")) }
                             )
                         }
 
-                        if (focusMode == FocusMode.POMODORO) {
+                        if (effectiveMode == "pomodoro") {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 GymPillTab(
                                     text = when (lang) { "uz" -> "Ish 25m"; "en" -> "Work 25m"; else -> "Работа 25м" },
-                                    selected = focusPhase == FocusPhase.WORK,
-                                    onClick = {
-                                        focusPhase = FocusPhase.WORK
-                                        isTimerRunning = false
-                                        timerSecondsLeft = 25 * 60
-                                    }
+                                    selected = effectivePhase == "work",
+                                    onClick = { onAction(TodoUiAction.OnSelectFocusCardPhase("work")) }
                                 )
                                 GymPillTab(
                                     text = when (lang) { "uz" -> "Tanaffus 5m"; "en" -> "Break 5m"; else -> "Перерыв 5м" },
-                                    selected = focusPhase == FocusPhase.BREAK,
-                                    onClick = {
-                                        focusPhase = FocusPhase.BREAK
-                                        isTimerRunning = false
-                                        timerSecondsLeft = 5 * 60
-                                    }
+                                    selected = effectivePhase != "work",
+                                    onClick = { onAction(TodoUiAction.OnSelectFocusCardPhase("short_break")) }
                                 )
                             }
                         }
 
-                        val displayedSeconds = if (focusMode == FocusMode.STOPWATCH) {
-                            stopwatchElapsedSeconds
-                        } else {
-                            timerSecondsLeft
+                        val displayedSeconds = when {
+                            effectiveMode == "stopwatch" -> if (isFocusActive) ft.secondsElapsedTotal else 0
+                            isFocusActive -> ft.secondsRemaining
+                            effectiveMode == "target_timer" -> 15 * 60
+                            effectivePhase != "work" -> 5 * 60
+                            else -> 25 * 60
                         }
 
                         val statusText = when {
-                            activeTaskTitle != null -> activeTaskTitle!!
-                            focusMode == FocusMode.STOPWATCH -> when (lang) {
+                            isFocusActive && ft.taskTitle.isNotBlank() -> ft.taskTitle
+                            effectiveMode == "stopwatch" -> when (lang) {
                                 "uz" -> "Sekundomer"
                                 "en" -> "Stopwatch"
                                 else -> "Секундомер"
                             }
-                            focusPhase == FocusPhase.WORK -> when (lang) {
+                            effectivePhase == "work" -> when (lang) {
                                 "uz" -> "Ish sessiyasi (25 min)"
                                 "en" -> "Work session (25 min)"
                                 else -> "Рабочая сессия (25 мин)"
@@ -738,35 +673,22 @@ fun TodoScreen(
                             GymPrimaryButton(
                                 text = when {
                                     isTimerRunning -> when (lang) { "uz" -> "Faol"; "en" -> "Running"; else -> "Идёт" }
-                                    hasStartedSession -> when (lang) { "uz" -> "Davom"; "en" -> "Resume"; else -> "Старт" }
+                                    isFocusActive -> when (lang) { "uz" -> "Davom"; "en" -> "Resume"; else -> "Старт" }
                                     else -> strings.todoPomodoroStart
                                 },
-                                onClick = {
-                                    hasStartedSession = true
-                                    isTimerRunning = true
-                                },
+                                onClick = { onAction(TodoUiAction.OnStartOrResumeFocusCard) },
                                 enabled = !isTimerRunning,
                                 modifier = Modifier.weight(1.2f)
                             )
                             GymOutlineButton(
                                 text = strings.todoPomodoroPause,
-                                onClick = { isTimerRunning = false },
+                                onClick = { onAction(TodoUiAction.OnPauseFocusCard) },
                                 enabled = isTimerRunning,
                                 modifier = Modifier.weight(1f)
                             )
                             GymOutlineButton(
                                 text = strings.todoPomodoroReset,
-                                onClick = {
-                                    isTimerRunning = false
-                                    hasStartedSession = false
-                                    activeTaskTitle = null
-                                    stopwatchElapsedSeconds = 0
-                                    timerSecondsLeft = when (focusMode) {
-                                        FocusMode.POMODORO -> if (focusPhase == FocusPhase.WORK) 25 * 60 else 5 * 60
-                                        FocusMode.TIMER -> 15 * 60
-                                        FocusMode.STOPWATCH -> 0
-                                    }
-                                },
+                                onClick = { onAction(TodoUiAction.OnResetFocusCard) },
                                 modifier = Modifier.weight(1f)
                             )
                         }

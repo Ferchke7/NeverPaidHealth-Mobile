@@ -328,6 +328,13 @@ interface DudaStrings {
     val exerciseSearchPlaceholder: String
     val exerciseTechniqueLabel: String
     val exerciseAddToWorkout: String
+    val restOngoingTitle: String
+    val restNotificationTitle: String
+    val focusOngoingTitle: String
+    val focusWorkDoneTitle: String
+    val focusWorkDoneBody: String
+    val focusBreakDoneTitle: String
+    val focusBreakDoneBody: String
 }
 
 object RuDudaStrings : DudaStrings {
@@ -635,6 +642,13 @@ object RuDudaStrings : DudaStrings {
     override val exerciseSearchPlaceholder = "Поиск упражнения или мышцы..."
     override val exerciseTechniqueLabel = "Техника выполнения"
     override val exerciseAddToWorkout = "Добавить в тренировку"
+    override val restOngoingTitle = "Отдых между подходами"
+    override val restNotificationTitle = "Время отдыха вышло!"
+    override val focusOngoingTitle = "Таймер фокуса"
+    override val focusWorkDoneTitle = "Фокус-сессия завершена!"
+    override val focusWorkDoneBody = "Сделайте короткий перерыв или отметьте задачу."
+    override val focusBreakDoneTitle = "Перерыв окончен!"
+    override val focusBreakDoneBody = "Пора вернуться к работе."
 }
 
 object UzDudaStrings : DudaStrings {
@@ -942,6 +956,13 @@ object UzDudaStrings : DudaStrings {
     override val exerciseSearchPlaceholder = "Mashq yoki mushak qidirish..."
     override val exerciseTechniqueLabel = "Bajarish texnikasi"
     override val exerciseAddToWorkout = "Mashg'ulotga qo'shish"
+    override val restOngoingTitle = "Yondashuvlar orasida dam olish"
+    override val restNotificationTitle = "Dam olish vaqti tugadi!"
+    override val focusOngoingTitle = "Fokus taymeri"
+    override val focusWorkDoneTitle = "Fokus sessiyasi yakunlandi!"
+    override val focusWorkDoneBody = "Qisqa tanaffus qiling yoki vazifani belgilang."
+    override val focusBreakDoneTitle = "Tanaffus tugadi!"
+    override val focusBreakDoneBody = "Ishga qaytish vaqti keldi."
 }
 
 object EnDudaStrings : DudaStrings {
@@ -1249,6 +1270,13 @@ object EnDudaStrings : DudaStrings {
     override val exerciseSearchPlaceholder = "Search exercise or muscle..."
     override val exerciseTechniqueLabel = "Execution Technique"
     override val exerciseAddToWorkout = "Add to Workout"
+    override val restOngoingTitle = "Rest Between Sets"
+    override val restNotificationTitle = "Rest time is up!"
+    override val focusOngoingTitle = "Focus Timer"
+    override val focusWorkDoneTitle = "Focus Session Complete!"
+    override val focusWorkDoneBody = "Take a short break or mark your task complete."
+    override val focusBreakDoneTitle = "Break Is Over!"
+    override val focusBreakDoneBody = "Time to get back to work."
 }
 
 fun getDudaStrings(languageCode: String): DudaStrings {

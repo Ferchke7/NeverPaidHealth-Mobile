@@ -5,6 +5,7 @@ import dev.neverpaid.health.core.mvi.UiEffect
 import dev.neverpaid.health.core.mvi.UiState
 import dev.neverpaid.health.domain.model.ActivityLogItem
 import dev.neverpaid.health.domain.model.DayCalendarItem
+import dev.neverpaid.health.domain.model.FocusTimerState
 import dev.neverpaid.health.domain.model.SaveTodoRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
 import dev.neverpaid.health.domain.model.Workout
@@ -23,7 +24,10 @@ data class TodoUiState(
     val highPriorityRemaining: Int = 0,
     val isTaskModalOpen: Boolean = false,
     val editingTask: TodoTask? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val focusTimer: FocusTimerState = FocusTimerState(),
+    val selectedFocusMode: String = "pomodoro",
+    val selectedFocusPhase: String = "work"
 ) : UiState
 
 sealed interface TodoUiAction : UiAction {
@@ -36,6 +40,12 @@ sealed interface TodoUiAction : UiAction {
     data object OnCloseTaskModal : TodoUiAction
     data class OnSaveTask(val request: SaveTodoRequestDto, val editingId: String? = null) : TodoUiAction
     data class OnStartFocusTimer(val task: TodoTask?) : TodoUiAction
+    data class OnSelectFocusCardMode(val mode: String) : TodoUiAction
+    data class OnSelectFocusCardPhase(val phase: String) : TodoUiAction
+    data object OnStartOrResumeFocusCard : TodoUiAction
+    data object OnPauseFocusCard : TodoUiAction
+    data object OnResetFocusCard : TodoUiAction
+    data class OnToggleFocusSound(val enabled: Boolean) : TodoUiAction
     data object OnRefresh : TodoUiAction
 }
 

@@ -62,11 +62,59 @@ class TodoViewModel(
                     )
                 }
             }
+            is TodoUiAction.OnSelectFocusCardMode -> {
+                updateState { copy(selectedFocusMode = action.mode, selectedFocusPhase = "work") }
+                if (currentState.focusTimer.isActive) {
+                    repository.setFocusMode(action.mode)
+                    if (action.mode == "target_timer") {
+                        repository.setFocusTargetMinutes(15)
+                    }
+                }
+            }
+            is TodoUiAction.OnSelectFocusCardPhase -> {
+                updateState { copy(selectedFocusMode = "pomodoro", selectedFocusPhase = action.phase) }
+                if (currentState.focusTimer.isActive) {
+                    val mins = if (action.phase == "short_break") 5 else 25
+                    repository.setFocusPhase(action.phase, mins)
+                }
+            }
+            TodoUiAction.OnStartOrResumeFocusCard -> {
+                val ft = currentState.focusTimer
+                if (ft.isActive) {
+                    repository.resumeFocusTimer()
+                } else {
+                    val mode = currentState.selectedFocusMode
+                    val phase = currentState.selectedFocusPhase
+                    val mins = when {
+                        mode == "target_timer" -> 15
+                        mode == "pomodoro" && phase == "short_break" -> 5
+                        else -> 25
+                    }
+                    repository.startQuickFocusSession(
+                        title = "",
+                        targetMinutes = mins,
+                        mode = mode
+                    )
+                    if (mode == "pomodoro" && phase != "work") {
+                        repository.setFocusPhase(phase, mins)
+                        repository.resumeFocusTimer()
+                    }
+                    repository.setFocusModalOpen(false)
+                }
+            }
+            TodoUiAction.OnPauseFocusCard -> repository.pauseFocusTimer()
+            TodoUiAction.OnResetFocusCard -> repository.discardFocusTimer()
+            is TodoUiAction.OnToggleFocusSound -> repository.setFocusSoundEnabled(action.enabled)
             TodoUiAction.OnRefresh -> refreshRemoteTodos()
         }
     }
 
     private fun observeTodoStreams() {
+        launchGuarded(onError = {}) {
+            repository.getFocusTimerState().collect { ft ->
+                updateState { copy(focusTimer = ft) }
+            }
+        }
         combine(
             repository.observeAllTodos(),
             repository.observeActivityLogs(),

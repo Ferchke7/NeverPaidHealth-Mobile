@@ -1,9 +1,14 @@
 package dev.neverpaid.health.features.workout
 
 import androidx.lifecycle.viewModelScope
+import dev.neverpaid.health.core.audio.AthleteSoundManager
+import dev.neverpaid.health.core.i18n.getDudaStrings
 import dev.neverpaid.health.core.mvi.BaseViewModel
 import dev.neverpaid.health.core.platform.PlatformBridge
+import dev.neverpaid.health.core.platform.TimerNotificationIds
+import dev.neverpaid.health.core.storage.DudaLocalStorage
 import dev.neverpaid.health.domain.model.Exercise
+import dev.neverpaid.health.domain.model.PersistedRestTimerState
 import dev.neverpaid.health.domain.model.Workout
 import dev.neverpaid.health.domain.model.WorkoutExercise
 import dev.neverpaid.health.domain.model.WorkoutSet
@@ -14,14 +19,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
 
 class WorkoutViewModel(
-    private val repository: NeverPaidRepository
+    private val repository: NeverPaidRepository,
+    private val nowProvider: () -> Long = { PlatformBridge.currentTimeMillis() }
 ) : BaseViewModel<WorkoutUiAction, WorkoutUiState, WorkoutUiEffect>(
     initialState = WorkoutUiState()
 ) {
 
     private var restTimerJob: Job? = null
+    private var restTimerEndEpochMs: Long = 0L
+    private var restTimerTotalSeconds: Int = 90
+    private var restTimerVirtualRemaining: Int = 0
+    private var lastForegroundRestAlertEndMs: Long = 0L
+    private var restoredRestWorkoutId: String? = null
     private var defaultRestSeconds = 90
 
     init {
@@ -84,6 +96,7 @@ class WorkoutViewModel(
             is WorkoutUiAction.OnRestTimerAddSeconds -> addSecondsToRestTimer(action.seconds)
             is WorkoutUiAction.OnStartManualRestTimer -> startRestTimer(action.seconds)
             WorkoutUiAction.OnRestTimerSkip -> stopRestTimer()
+            WorkoutUiAction.OnSyncRestTimer -> syncRestTimerFromClock()
         }
     }
 
@@ -106,11 +119,15 @@ class WorkoutViewModel(
                 updateState {
                     copy(
                         workout = active,
-                        workoutStartTimeEpochMs = active?.startTimeEpochMs ?: PlatformBridge.currentTimeMillis(),
+                        workoutStartTimeEpochMs = active?.startTimeEpochMs ?: nowProvider(),
                         availableExercises = exercises,
                         isKgUnit = prefs.useKilograms,
                         workoutHistory = history
                     )
+                }
+                if (active != null && restoredRestWorkoutId != active.id) {
+                    restoredRestWorkoutId = active.id
+                    restoreRestTimerIfNeeded(active.id)
                 }
             }
         }
@@ -374,48 +391,209 @@ class WorkoutViewModel(
         sendEffect(WorkoutUiEffect.NavigateBack)
     }
 
-    private fun startRestTimer(seconds: Int) {
-        restTimerJob?.cancel()
+    private fun currentStrings() = getDudaStrings(DudaLocalStorage.getUserPreferences().languageCode)
+
+    private fun scheduleRestAlarm(endMs: Long) {
+        val strings = currentStrings()
+        PlatformBridge.requestNotificationPermission()
+        PlatformBridge.scheduleTimerNotification(
+            timerId = TimerNotificationIds.REST,
+            triggerAtEpochMs = endMs,
+            title = strings.restNotificationTitle,
+            body = strings.workoutRestUp,
+            showOngoingCountdown = true,
+            ongoingTitle = strings.restOngoingTitle,
+            ongoingBody = currentState.workout?.title.orEmpty()
+        )
+    }
+
+    private fun restoreRestTimerIfNeeded(workoutId: String) {
+        if (restTimerEndEpochMs > 0L) return
+        val saved = DudaLocalStorage.getRestTimerState() ?: return
+        if (saved.workoutId.isNotBlank() && saved.workoutId != workoutId) return
+        val now = nowProvider()
+        val remaining = ceil((saved.endEpochMs - now) / 1000.0).toInt().coerceAtLeast(0)
+        if (remaining <= 0) {
+            DudaLocalStorage.setRestTimerState(null)
+            PlatformBridge.cancelTimerNotification(TimerNotificationIds.REST)
+            return
+        }
+        restTimerEndEpochMs = saved.endEpochMs
+        restTimerTotalSeconds = saved.totalSeconds.coerceAtLeast(remaining)
+        restTimerVirtualRemaining = remaining
         updateState {
             copy(
-                restTimerSecondsRemaining = seconds,
+                restTimerSecondsRemaining = remaining,
+                restTimerTotalSeconds = restTimerTotalSeconds,
+                restTimerEndEpochMs = restTimerEndEpochMs,
                 isRestTimerActive = true
             )
         }
+        launchRestTickerLoop()
+    }
+
+    private fun startRestTimer(seconds: Int) {
+        restTimerJob?.cancel()
+        val safeSec = seconds.coerceAtLeast(1)
+        val now = nowProvider()
+        val endMs = now + safeSec * 1000L
+        restTimerEndEpochMs = endMs
+        restTimerTotalSeconds = safeSec
+        restTimerVirtualRemaining = safeSec
+        DudaLocalStorage.setRestTimerState(
+            PersistedRestTimerState(
+                workoutId = currentState.workout?.id.orEmpty(),
+                endEpochMs = endMs,
+                totalSeconds = safeSec
+            )
+        )
+        scheduleRestAlarm(endMs)
+        updateState {
+            copy(
+                restTimerSecondsRemaining = safeSec,
+                restTimerTotalSeconds = safeSec,
+                restTimerEndEpochMs = endMs,
+                isRestTimerActive = true
+            )
+        }
+        launchRestTickerLoop()
+    }
+
+    private fun launchRestTickerLoop() {
+        restTimerJob?.cancel()
         restTimerJob = viewModelScope.launch {
-            while (isActive && currentState.restTimerSecondsRemaining > 0) {
-                delay(1000)
-                updateState {
-                    val remaining = restTimerSecondsRemaining - 1
-                    copy(
-                        restTimerSecondsRemaining = remaining,
-                        isRestTimerActive = remaining > 0
-                    )
+            while (isActive && restTimerEndEpochMs > 0L && currentState.isRestTimerActive) {
+                delay(1000L)
+                if (restTimerEndEpochMs <= 0L || !currentState.isRestTimerActive) break
+                val now = nowProvider()
+                val wallRemaining = ceil((restTimerEndEpochMs - now) / 1000.0).toInt().coerceAtLeast(0)
+                restTimerVirtualRemaining = (restTimerVirtualRemaining - 1).coerceAtLeast(0)
+                val remaining = minOf(restTimerVirtualRemaining, wallRemaining)
+                restTimerVirtualRemaining = remaining
+                if (remaining <= 0) {
+                    val expiredLongAgo = wallRemaining <= 0 && (now - restTimerEndEpochMs) > 2500L
+                    completeRestTimer(expiredInBackground = expiredLongAgo)
+                    break
+                } else {
+                    if (remaining in 1..3) {
+                        AthleteSoundManager.playRestCountdown(remaining)
+                    }
+                    updateState {
+                        copy(
+                            restTimerSecondsRemaining = remaining,
+                            isRestTimerActive = true
+                        )
+                    }
                 }
-            }
-            if (currentState.restTimerSecondsRemaining <= 0) {
-                sendEffect(WorkoutUiEffect.TriggerHaptic)
-                sendEffect(WorkoutUiEffect.ShowToast("Отдых завершён! Пора на следующий подход."))
             }
         }
     }
 
+    fun syncRestTimerFromClock() {
+        val now = nowProvider()
+        var endMs = restTimerEndEpochMs
+        var totalSec = restTimerTotalSeconds
+        if (endMs <= 0L) {
+            val saved = DudaLocalStorage.getRestTimerState() ?: return
+            val activeWorkoutId = currentState.workout?.id
+            if (!activeWorkoutId.isNullOrBlank() && saved.workoutId.isNotBlank() && saved.workoutId != activeWorkoutId) {
+                return
+            }
+            endMs = saved.endEpochMs
+            totalSec = saved.totalSeconds.coerceAtLeast(1)
+            restTimerEndEpochMs = endMs
+            restTimerTotalSeconds = totalSec
+        }
+        if (endMs <= 0L) return
+        val remaining = ceil((endMs - now) / 1000.0).toInt().coerceAtLeast(0)
+        if (remaining <= 0) {
+            completeRestTimer(expiredInBackground = (now - endMs) > 2500L)
+        } else {
+            restTimerVirtualRemaining = remaining
+            updateState {
+                copy(
+                    restTimerSecondsRemaining = remaining,
+                    restTimerTotalSeconds = totalSec,
+                    restTimerEndEpochMs = endMs,
+                    isRestTimerActive = true
+                )
+            }
+            if (restTimerJob == null || restTimerJob?.isActive != true) {
+                launchRestTickerLoop()
+            }
+        }
+    }
+
+    private fun completeRestTimer(expiredInBackground: Boolean) {
+        val finishedEndMs = restTimerEndEpochMs
+        restTimerJob?.cancel()
+        restTimerJob = null
+        restTimerEndEpochMs = 0L
+        restTimerVirtualRemaining = 0
+        DudaLocalStorage.setRestTimerState(null)
+        PlatformBridge.cancelTimerNotification(TimerNotificationIds.REST)
+        updateState {
+            copy(
+                restTimerSecondsRemaining = 0,
+                restTimerEndEpochMs = 0L,
+                isRestTimerActive = false
+            )
+        }
+        if (!expiredInBackground && finishedEndMs > 0L && finishedEndMs != lastForegroundRestAlertEndMs) {
+            lastForegroundRestAlertEndMs = finishedEndMs
+            AthleteSoundManager.playRestCountdown(0)
+            sendEffect(WorkoutUiEffect.TriggerHaptic)
+            sendEffect(WorkoutUiEffect.ShowToast(currentStrings().workoutRestUp))
+        }
+    }
+
     private fun addSecondsToRestTimer(seconds: Int) {
-        val updated = (currentState.restTimerSecondsRemaining + seconds).coerceAtLeast(0)
+        val now = nowProvider()
+        val baseEnd = if (restTimerEndEpochMs > now) restTimerEndEpochMs else (now + currentState.restTimerSecondsRemaining * 1000L)
+        val newEnd = baseEnd + seconds * 1000L
+        val wallUpdated = ceil((newEnd - now) / 1000.0).toInt().coerceAtLeast(0)
+        val virtualUpdated = (restTimerVirtualRemaining + seconds).coerceAtLeast(0)
+        val updated = minOf(wallUpdated, virtualUpdated)
+        if (updated <= 0 || newEnd <= now) {
+            stopRestTimer()
+            return
+        }
+        val newTotal = maxOf(restTimerTotalSeconds, updated)
+        restTimerEndEpochMs = newEnd
+        restTimerTotalSeconds = newTotal
+        restTimerVirtualRemaining = updated
+        DudaLocalStorage.setRestTimerState(
+            PersistedRestTimerState(
+                workoutId = currentState.workout?.id.orEmpty(),
+                endEpochMs = newEnd,
+                totalSeconds = newTotal
+            )
+        )
+        scheduleRestAlarm(newEnd)
         updateState {
             copy(
                 restTimerSecondsRemaining = updated,
-                isRestTimerActive = updated > 0
+                restTimerTotalSeconds = newTotal,
+                restTimerEndEpochMs = newEnd,
+                isRestTimerActive = true
             )
+        }
+        if (restTimerJob == null || restTimerJob?.isActive != true) {
+            launchRestTickerLoop()
         }
     }
 
     private fun stopRestTimer() {
         restTimerJob?.cancel()
         restTimerJob = null
+        restTimerEndEpochMs = 0L
+        restTimerVirtualRemaining = 0
+        DudaLocalStorage.setRestTimerState(null)
+        PlatformBridge.cancelTimerNotification(TimerNotificationIds.REST)
         updateState {
             copy(
                 restTimerSecondsRemaining = 0,
+                restTimerEndEpochMs = 0L,
                 isRestTimerActive = false
             )
         }

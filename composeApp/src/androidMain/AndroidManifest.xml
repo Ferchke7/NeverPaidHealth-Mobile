@@ -4,6 +4,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <application
         android:name=".NeverPaidHealthApplication"
@@ -38,6 +40,9 @@
             android:exported="false"
             android:process=":crash"
             android:theme="@android:style/Theme.Material.NoActionBar" />
+        <receiver
+            android:name=".core.platform.TimerAlarmReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

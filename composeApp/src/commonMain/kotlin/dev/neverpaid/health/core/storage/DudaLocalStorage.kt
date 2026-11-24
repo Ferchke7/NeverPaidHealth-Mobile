@@ -5,6 +5,7 @@ import dev.neverpaid.health.domain.model.ActiveProgramBundle
 import dev.neverpaid.health.domain.model.BodyMeasurement
 import dev.neverpaid.health.domain.model.FocusTimerState
 import dev.neverpaid.health.domain.model.MealLog
+import dev.neverpaid.health.domain.model.PersistedRestTimerState
 import dev.neverpaid.health.domain.model.ProgramComment
 import dev.neverpaid.health.domain.model.Routine
 import dev.neverpaid.health.domain.model.TodoTask
@@ -29,6 +30,7 @@ object DudaLocalStorage {
     private const val KEY_USER_PROFILE = "np_user_cache"
     private const val KEY_USER_PREFERENCES = "np_user_preferences_v2"
     private const val KEY_ACTIVE_WORKOUT = "neverpaid_active_workout_v2"
+    private const val KEY_REST_TIMER = "np_rest_timer_v1"
     private const val KEY_FOCUS_TIMER = "np_focus_timer_state_v4"
     private const val KEY_WATER_PREFIX = "np_water_"
     private const val KEY_WORKOUT_HISTORY = "np_workout_history_v2"
@@ -117,6 +119,23 @@ object DudaLocalStorage {
             PlatformBridge.remove(KEY_FOCUS_TIMER)
         } else {
             PlatformBridge.putString(KEY_FOCUS_TIMER, json.encodeToString(state))
+        }
+    }
+
+    fun getRestTimerState(): PersistedRestTimerState? {
+        val str = PlatformBridge.getString(KEY_REST_TIMER) ?: return null
+        return try {
+            json.decodeFromString<PersistedRestTimerState>(str)
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    fun setRestTimerState(state: PersistedRestTimerState?) {
+        if (state == null || state.endEpochMs <= 0L) {
+            PlatformBridge.remove(KEY_REST_TIMER)
+        } else {
+            PlatformBridge.putString(KEY_REST_TIMER, json.encodeToString(state))
         }
     }
 
@@ -243,6 +262,7 @@ object DudaLocalStorage {
         setAccessToken(null)
         setUserProfile(null)
         setActiveWorkoutDraft(null)
+        setRestTimerState(null)
         setFocusTimerState(null)
         setActiveProgramBundle(null)
         PlatformBridge.remove(KEY_USER_ROUTINES)

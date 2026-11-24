@@ -4,10 +4,13 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import dev.neverpaid.health.core.audio.AthleteSoundManager
+import dev.neverpaid.health.core.i18n.getDudaStrings
 import dev.neverpaid.health.core.math.SetCalculationInput
 import dev.neverpaid.health.core.math.StrengthCalculator
 import dev.neverpaid.health.core.network.DudaApiClient
 import dev.neverpaid.health.core.platform.PlatformBridge
+import dev.neverpaid.health.core.platform.TimerNotificationIds
 import dev.neverpaid.health.core.storage.DudaLocalStorage
 import dev.neverpaid.health.data.catalog.StandardExerciseCatalog
 import dev.neverpaid.health.domain.model.ActiveProgramBundle
@@ -79,7 +82,8 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 class NeverPaidRepositoryImpl(
-    private val apiClient: DudaApiClient? = null
+    private val apiClient: DudaApiClient? = null,
+    private val nowProvider: () -> Long = { PlatformBridge.currentTimeMillis() }
 ) : NeverPaidRepository {
 
     private val scope = CoroutineScope(
@@ -134,6 +138,7 @@ class NeverPaidRepositoryImpl(
     private val bodyTrendFlow = MutableStateFlow<BodyTrendResponseDto?>(null)
 
     init {
+        syncFocusTimerFromClock()
         apiClient?.onUnauthorized = {
             if (!isGuestUser()) {
                 isAuthenticatedFlow.value = false
@@ -167,6 +172,7 @@ class NeverPaidRepositoryImpl(
     }
 
     override suspend fun syncWithServer() {
+        syncFocusTimerFromClock()
         if (apiClient == null || !isAuthenticatedFlow.value || isGuestUser()) return
         try { refreshExercises() } catch (_: Throwable) {}
         try { refreshRoutines() } catch (_: Throwable) {}
@@ -1795,22 +1801,78 @@ class NeverPaidRepositoryImpl(
 
     override fun getFocusTimerState(): Flow<FocusTimerState> = focusTimerFlow.asStateFlow()
 
+    private fun normalizeFocusMode(mode: String): String = when (mode.lowercase()) {
+        "timer", "target_timer" -> "target_timer"
+        "stopwatch" -> "stopwatch"
+        else -> "pomodoro"
+    }
+
+    private fun normalizeFocusPhase(phase: String): String = when (phase.lowercase()) {
+        "short_break" -> "short_break"
+        "long_break" -> "long_break"
+        else -> "work"
+    }
+
+    private fun durationForCurrentPhase(state: FocusTimerState): Int = when (normalizeFocusMode(state.mode)) {
+        "stopwatch" -> 0
+        "target_timer" -> (state.targetTotalMinutes * 60).coerceAtLeast(60)
+        else -> when (normalizeFocusPhase(state.pomodoroPhase)) {
+            "short_break" -> state.shortBreakDurationSec.coerceAtLeast(60)
+            "long_break" -> state.longBreakDurationSec.coerceAtLeast(60)
+            else -> state.roundDurationsSec.getOrElse(state.pomodoroRound - 1) { state.workDurationSec }.coerceAtLeast(60)
+        }
+    }
+
+    private fun currentFocusStrings() = getDudaStrings(preferencesFlow.value.languageCode)
+
+    private fun scheduleOrCancelFocusNotification(state: FocusTimerState) {
+        val endMs = state.phaseEndEpochMs
+        if (!state.isActive || !state.isRunning || normalizeFocusMode(state.mode) == "stopwatch" || endMs == null || endMs <= nowProvider()) {
+            PlatformBridge.cancelTimerNotification(TimerNotificationIds.FOCUS)
+            return
+        }
+        val strings = currentFocusStrings()
+        val isWork = normalizeFocusMode(state.mode) != "pomodoro" || normalizeFocusPhase(state.pomodoroPhase) == "work"
+        val alertTitle = if (isWork) strings.focusWorkDoneTitle else strings.focusBreakDoneTitle
+        val prefix = state.taskTitle.trim().takeIf { it.isNotEmpty() }?.let { "$it — " } ?: ""
+        val alertBody = prefix + if (isWork) strings.focusWorkDoneBody else strings.focusBreakDoneBody
+        PlatformBridge.requestNotificationPermission()
+        PlatformBridge.scheduleTimerNotification(
+            timerId = TimerNotificationIds.FOCUS,
+            triggerAtEpochMs = endMs,
+            title = alertTitle,
+            body = alertBody,
+            showOngoingCountdown = true,
+            ongoingTitle = strings.focusOngoingTitle,
+            ongoingBody = state.taskTitle.ifBlank { strings.focusSessionDefault }
+        )
+    }
+
+    private fun applyAndPersistFocusState(next: FocusTimerState) {
+        focusTimerFlow.value = next
+        DudaLocalStorage.setFocusTimerState(next)
+        scheduleOrCancelFocusNotification(next)
+    }
+
     override fun startFocusForTodo(todo: TodoTask, strategy: String, mode: String) {
         val totalMin = max(1, todo.durationMinutes)
+        val normalizedMode = normalizeFocusMode(mode)
         val rounds = calculatePomodoroRounds(totalMin, strategy)
         val firstRoundSec = rounds.firstOrNull() ?: (25 * 60)
-        val initialRem = when (mode) {
+        val initialRem = when (normalizedMode) {
             "stopwatch" -> 0
             "target_timer" -> totalMin * 60
             else -> firstRoundSec
         }
+        val now = nowProvider()
+        val phaseEnd = if (normalizedMode == "stopwatch" || initialRem <= 0) null else now + initialRem * 1000L
         val next = FocusTimerState(
             isActive = true,
             isRunning = true,
             todoId = todo.id,
             taskTitle = todo.title,
             category = todo.category,
-            mode = mode,
+            mode = normalizedMode,
             pomodoroPhase = "work",
             pomodoroRound = 1,
             totalPomodoroRounds = rounds.size,
@@ -1820,10 +1882,13 @@ class NeverPaidRepositoryImpl(
             workDurationSec = firstRoundSec,
             secondsRemaining = initialRem,
             secondsElapsedTotal = 0,
-            isModalOpen = true
+            isModalOpen = true,
+            phaseEndEpochMs = phaseEnd,
+            runningSinceEpochMs = now,
+            elapsedBeforePauseSec = 0,
+            soundEnabled = focusTimerFlow.value.soundEnabled
         )
-        focusTimerFlow.value = next
-        DudaLocalStorage.setFocusTimerState(next)
+        applyAndPersistFocusState(next)
     }
 
     override fun startQuickFocusSession(
@@ -1834,20 +1899,23 @@ class NeverPaidRepositoryImpl(
         mode: String
     ) {
         val totalMin = max(1, targetMinutes)
+        val normalizedMode = normalizeFocusMode(mode)
         val rounds = calculatePomodoroRounds(totalMin, strategy)
         val firstRoundSec = rounds.firstOrNull() ?: (25 * 60)
-        val initialRem = when (mode) {
+        val initialRem = when (normalizedMode) {
             "stopwatch" -> 0
             "target_timer" -> totalMin * 60
             else -> firstRoundSec
         }
+        val now = nowProvider()
+        val phaseEnd = if (normalizedMode == "stopwatch" || initialRem <= 0) null else now + initialRem * 1000L
         val next = FocusTimerState(
             isActive = true,
             isRunning = true,
             todoId = null,
-            taskTitle = title.ifBlank { "Фокус-сессия" },
+            taskTitle = title.ifBlank { currentFocusStrings().focusSessionDefault },
             category = category,
-            mode = mode,
+            mode = normalizedMode,
             pomodoroPhase = "work",
             pomodoroRound = 1,
             totalPomodoroRounds = rounds.size,
@@ -1857,59 +1925,193 @@ class NeverPaidRepositoryImpl(
             workDurationSec = firstRoundSec,
             secondsRemaining = initialRem,
             secondsElapsedTotal = 0,
-            isModalOpen = true
+            isModalOpen = true,
+            phaseEndEpochMs = phaseEnd,
+            runningSinceEpochMs = now,
+            elapsedBeforePauseSec = 0,
+            soundEnabled = focusTimerFlow.value.soundEnabled
         )
-        focusTimerFlow.value = next
-        DudaLocalStorage.setFocusTimerState(next)
+        applyAndPersistFocusState(next)
     }
 
     override fun pauseFocusTimer() {
-        val next = focusTimerFlow.value.copy(isRunning = false)
-        focusTimerFlow.value = next
-        DudaLocalStorage.setFocusTimerState(next)
+        syncFocusTimerFromClock()
+        val st = focusTimerFlow.value
+        val next = st.copy(
+            isRunning = false,
+            phaseEndEpochMs = null,
+            runningSinceEpochMs = null,
+            elapsedBeforePauseSec = st.secondsElapsedTotal
+        )
+        applyAndPersistFocusState(next)
     }
 
     override fun resumeFocusTimer() {
-        val next = focusTimerFlow.value.copy(isRunning = true)
-        focusTimerFlow.value = next
-        DudaLocalStorage.setFocusTimerState(next)
+        val st = focusTimerFlow.value
+        val mode = normalizeFocusMode(st.mode)
+        val rem = if (mode != "stopwatch" && st.secondsRemaining <= 0) durationForCurrentPhase(st) else st.secondsRemaining
+        val now = nowProvider()
+        val phaseEnd = if (mode == "stopwatch" || rem <= 0) null else now + rem * 1000L
+        val next = st.copy(
+            isActive = true,
+            isRunning = true,
+            mode = mode,
+            secondsRemaining = rem,
+            phaseEndEpochMs = phaseEnd,
+            runningSinceEpochMs = now,
+            elapsedBeforePauseSec = st.secondsElapsedTotal
+        )
+        applyAndPersistFocusState(next)
+    }
+
+    override fun syncFocusTimerFromClock() {
+        tickFocusTimer()
     }
 
     override fun tickFocusTimer() {
         val st = focusTimerFlow.value
         if (!st.isActive || !st.isRunning) return
-        val isWork = st.mode != "pomodoro" || st.pomodoroPhase == "work"
-        val nextElapsed = if (isWork) st.secondsElapsedTotal + 1 else st.secondsElapsedTotal
 
-        if (st.mode == "stopwatch") {
-            val next = st.copy(secondsElapsedTotal = nextElapsed)
-            focusTimerFlow.value = next
+        val now = nowProvider()
+        val mode = normalizeFocusMode(st.mode)
+
+        if (mode == "stopwatch") {
+            val since = st.runningSinceEpochMs ?: now
+            val elapsedDelta = ((now - since) / 1000L).toInt().coerceAtLeast(0)
+            val total = st.elapsedBeforePauseSec + elapsedDelta
+            if (total != st.secondsElapsedTotal || st.runningSinceEpochMs == null || st.mode != mode) {
+                val updated = st.copy(
+                    mode = mode,
+                    secondsElapsedTotal = total,
+                    runningSinceEpochMs = since,
+                    phaseEndEpochMs = null
+                )
+                focusTimerFlow.value = updated
+                if (st.runningSinceEpochMs == null) {
+                    DudaLocalStorage.setFocusTimerState(updated)
+                }
+            }
             return
         }
 
-        val nextRem = (st.secondsRemaining - 1).coerceAtLeast(0)
-        if (nextRem > 0) {
-            focusTimerFlow.value = st.copy(
-                secondsRemaining = nextRem,
-                secondsElapsedTotal = nextElapsed
-            )
-            return
+        var current = st.copy(mode = mode, pomodoroPhase = normalizeFocusPhase(st.pomodoroPhase))
+        var since = current.runningSinceEpochMs ?: now
+        var phaseEnd = current.phaseEndEpochMs ?: (now + current.secondsRemaining.coerceAtLeast(0) * 1000L)
+
+        repeat(64) {
+            val nextRem = ceil((phaseEnd - now) / 1000.0).toInt().coerceAtLeast(0)
+            val isWork = current.mode != "pomodoro" || current.pomodoroPhase == "work"
+
+            if (nextRem > 0) {
+                val elapsedSinceStart = ((now - since) / 1000L).toInt().coerceAtLeast(0)
+                val nextElapsed = if (isWork) current.elapsedBeforePauseSec + elapsedSinceStart else current.secondsElapsedTotal
+                val updated = current.copy(
+                    secondsRemaining = nextRem,
+                    secondsElapsedTotal = nextElapsed,
+                    phaseEndEpochMs = phaseEnd,
+                    runningSinceEpochMs = since
+                )
+                if (updated != focusTimerFlow.value) {
+                    focusTimerFlow.value = updated
+                    if (st.phaseEndEpochMs == null || st.runningSinceEpochMs == null) {
+                        DudaLocalStorage.setFocusTimerState(updated)
+                        scheduleOrCancelFocusNotification(updated)
+                    }
+                }
+                return
+            }
+
+            // Phase finished at `phaseEnd`
+            val fullPhaseSec = ((phaseEnd - since) / 1000L).toInt().coerceAtLeast(0)
+            val completedElapsed = if (isWork) current.elapsedBeforePauseSec + fullPhaseSec else current.secondsElapsedTotal
+            val justCompletedInForeground = (now - phaseEnd) <= 3000L
+
+            PlatformBridge.cancelTimerNotification(TimerNotificationIds.FOCUS)
+            if (justCompletedInForeground) {
+                if (current.soundEnabled) {
+                    AthleteSoundManager.playIntervalGong()
+                } else {
+                    PlatformBridge.vibrate()
+                }
+                val strings = currentFocusStrings()
+                PlatformBridge.showToast(if (isWork) strings.focusWorkDoneTitle else strings.focusBreakDoneTitle)
+            }
+
+            if (current.mode == "target_timer" || (current.pomodoroPhase == "work" && current.pomodoroRound >= current.totalPomodoroRounds)) {
+                val finished = current.copy(
+                    secondsRemaining = 0,
+                    secondsElapsedTotal = completedElapsed,
+                    elapsedBeforePauseSec = completedElapsed,
+                    isRunning = false,
+                    phaseEndEpochMs = null,
+                    runningSinceEpochMs = null
+                )
+                applyAndPersistFocusState(finished)
+                return
+            }
+
+            if (current.pomodoroPhase == "work") {
+                val isLong = current.pomodoroRound % 4 == 0
+                val nextPhase = if (isLong) "long_break" else "short_break"
+                val breakDur = if (isLong) current.longBreakDurationSec else current.shortBreakDurationSec
+                since = phaseEnd
+                phaseEnd = phaseEnd + breakDur * 1000L
+                current = current.copy(
+                    pomodoroPhase = nextPhase,
+                    secondsRemaining = breakDur,
+                    secondsElapsedTotal = completedElapsed,
+                    elapsedBeforePauseSec = completedElapsed,
+                    phaseEndEpochMs = phaseEnd,
+                    runningSinceEpochMs = since
+                )
+            } else {
+                val nextRound = (current.pomodoroRound + 1).coerceAtMost(current.totalPomodoroRounds)
+                val roundDur = current.roundDurationsSec.getOrElse(nextRound - 1) { current.workDurationSec }
+                since = phaseEnd
+                phaseEnd = phaseEnd + roundDur * 1000L
+                current = current.copy(
+                    pomodoroPhase = "work",
+                    pomodoroRound = nextRound,
+                    workDurationSec = roundDur,
+                    secondsRemaining = roundDur,
+                    secondsElapsedTotal = completedElapsed,
+                    elapsedBeforePauseSec = completedElapsed,
+                    phaseEndEpochMs = phaseEnd,
+                    runningSinceEpochMs = since
+                )
+            }
+
+            if (phaseEnd > now) {
+                applyAndPersistFocusState(current)
+                return
+            }
         }
 
-        // Phase finished
-        PlatformBridge.vibrate()
-        if (st.mode == "target_timer") {
-            val next = st.copy(secondsRemaining = 0, secondsElapsedTotal = nextElapsed, isRunning = false)
-            focusTimerFlow.value = next
-            DudaLocalStorage.setFocusTimerState(next)
-            return
-        }
+        val cappedFinished = current.copy(
+            secondsRemaining = 0,
+            isRunning = false,
+            phaseEndEpochMs = null,
+            runningSinceEpochMs = null,
+            elapsedBeforePauseSec = current.secondsElapsedTotal
+        )
+        applyAndPersistFocusState(cappedFinished)
+    }
 
-        if (st.pomodoroPhase == "work") {
+    override fun skipFocusPhase() {
+        syncFocusTimerFromClock()
+        val st = focusTimerFlow.value
+        if (normalizeFocusMode(st.mode) != "pomodoro") return
+        val now = nowProvider()
+        if (normalizeFocusPhase(st.pomodoroPhase) == "work") {
             if (st.pomodoroRound >= st.totalPomodoroRounds) {
-                val next = st.copy(secondsRemaining = 0, secondsElapsedTotal = nextElapsed, isRunning = false)
-                focusTimerFlow.value = next
-                DudaLocalStorage.setFocusTimerState(next)
+                val next = st.copy(
+                    secondsRemaining = 0,
+                    isRunning = false,
+                    phaseEndEpochMs = null,
+                    runningSinceEpochMs = null,
+                    elapsedBeforePauseSec = st.secondsElapsedTotal
+                )
+                applyAndPersistFocusState(next)
             } else {
                 val isLong = st.pomodoroRound % 4 == 0
                 val nextPhase = if (isLong) "long_break" else "short_break"
@@ -1917,10 +2119,11 @@ class NeverPaidRepositoryImpl(
                 val next = st.copy(
                     pomodoroPhase = nextPhase,
                     secondsRemaining = breakDur,
-                    secondsElapsedTotal = nextElapsed
+                    elapsedBeforePauseSec = st.secondsElapsedTotal,
+                    runningSinceEpochMs = if (st.isRunning) now else null,
+                    phaseEndEpochMs = if (st.isRunning) now + breakDur * 1000L else null
                 )
-                focusTimerFlow.value = next
-                DudaLocalStorage.setFocusTimerState(next)
+                applyAndPersistFocusState(next)
             }
         } else {
             val nextRound = (st.pomodoroRound + 1).coerceAtMost(st.totalPomodoroRounds)
@@ -1930,67 +2133,90 @@ class NeverPaidRepositoryImpl(
                 pomodoroRound = nextRound,
                 workDurationSec = roundDur,
                 secondsRemaining = roundDur,
-                secondsElapsedTotal = nextElapsed
+                elapsedBeforePauseSec = st.secondsElapsedTotal,
+                runningSinceEpochMs = if (st.isRunning) now else null,
+                phaseEndEpochMs = if (st.isRunning) now + roundDur * 1000L else null
             )
-            focusTimerFlow.value = next
-            DudaLocalStorage.setFocusTimerState(next)
-        }
-    }
-
-    override fun skipFocusPhase() {
-        val st = focusTimerFlow.value
-        if (st.mode != "pomodoro") return
-        if (st.pomodoroPhase == "work") {
-            if (st.pomodoroRound >= st.totalPomodoroRounds) {
-                val next = st.copy(secondsRemaining = 0, isRunning = false)
-                focusTimerFlow.value = next
-                DudaLocalStorage.setFocusTimerState(next)
-            } else {
-                val isLong = st.pomodoroRound % 4 == 0
-                val nextPhase = if (isLong) "long_break" else "short_break"
-                val breakDur = if (isLong) st.longBreakDurationSec else st.shortBreakDurationSec
-                val next = st.copy(pomodoroPhase = nextPhase, secondsRemaining = breakDur)
-                focusTimerFlow.value = next
-                DudaLocalStorage.setFocusTimerState(next)
-            }
-        } else {
-            val nextRound = (st.pomodoroRound + 1).coerceAtMost(st.totalPomodoroRounds)
-            val roundDur = st.roundDurationsSec.getOrElse(nextRound - 1) { st.workDurationSec }
-            val next = st.copy(
-                pomodoroPhase = "work",
-                pomodoroRound = nextRound,
-                workDurationSec = roundDur,
-                secondsRemaining = roundDur
-            )
-            focusTimerFlow.value = next
-            DudaLocalStorage.setFocusTimerState(next)
+            applyAndPersistFocusState(next)
         }
     }
 
     override fun resetFocusPhase() {
         val st = focusTimerFlow.value
-        val dur = when (st.mode) {
-            "stopwatch" -> 0
-            "target_timer" -> st.targetTotalMinutes * 60
-            else -> when (st.pomodoroPhase) {
-                "short_break" -> st.shortBreakDurationSec
-                "long_break" -> st.longBreakDurationSec
-                else -> st.roundDurationsSec.getOrElse(st.pomodoroRound - 1) { st.workDurationSec }
-            }
-        }
-        val next = st.copy(secondsRemaining = dur)
-        focusTimerFlow.value = next
-        DudaLocalStorage.setFocusTimerState(next)
+        val dur = durationForCurrentPhase(st)
+        val next = st.copy(
+            isRunning = false,
+            secondsRemaining = dur,
+            secondsElapsedTotal = if (normalizeFocusMode(st.mode) == "stopwatch") 0 else st.secondsElapsedTotal,
+            phaseEndEpochMs = null,
+            runningSinceEpochMs = null,
+            elapsedBeforePauseSec = if (normalizeFocusMode(st.mode) == "stopwatch") 0 else st.secondsElapsedTotal
+        )
+        applyAndPersistFocusState(next)
     }
 
     override fun setFocusMode(mode: String) {
         val st = focusTimerFlow.value
-        val rem = when (mode) {
+        val normalizedMode = normalizeFocusMode(mode)
+        val rem = when (normalizedMode) {
             "stopwatch" -> 0
             "target_timer" -> st.targetTotalMinutes * 60
             else -> st.workDurationSec
         }
-        val next = st.copy(mode = mode, pomodoroPhase = "work", secondsRemaining = rem)
+        val next = st.copy(
+            mode = normalizedMode,
+            pomodoroPhase = "work",
+            secondsRemaining = rem,
+            isRunning = false,
+            phaseEndEpochMs = null,
+            runningSinceEpochMs = null,
+            secondsElapsedTotal = if (normalizedMode == "stopwatch") 0 else st.secondsElapsedTotal,
+            elapsedBeforePauseSec = if (normalizedMode == "stopwatch") 0 else st.secondsElapsedTotal
+        )
+        applyAndPersistFocusState(next)
+    }
+
+    override fun setFocusPhase(phase: String, durationMinutes: Int?) {
+        val st = focusTimerFlow.value
+        val normalizedPhase = normalizeFocusPhase(phase)
+        val explicitSec = durationMinutes?.let { max(1, it) * 60 }
+        val nextWorkSec = if (normalizedPhase == "work" && explicitSec != null) explicitSec else st.workDurationSec
+        val nextShortSec = if (normalizedPhase == "short_break" && explicitSec != null) explicitSec else st.shortBreakDurationSec
+        val nextLongSec = if (normalizedPhase == "long_break" && explicitSec != null) explicitSec else st.longBreakDurationSec
+        val rem = explicitSec ?: when (normalizedPhase) {
+            "short_break" -> nextShortSec
+            "long_break" -> nextLongSec
+            else -> st.roundDurationsSec.getOrElse(st.pomodoroRound - 1) { nextWorkSec }
+        }
+        val next = st.copy(
+            mode = "pomodoro",
+            pomodoroPhase = normalizedPhase,
+            workDurationSec = nextWorkSec,
+            shortBreakDurationSec = nextShortSec,
+            longBreakDurationSec = nextLongSec,
+            secondsRemaining = rem,
+            isRunning = false,
+            phaseEndEpochMs = null,
+            runningSinceEpochMs = null
+        )
+        applyAndPersistFocusState(next)
+    }
+
+    override fun setFocusTargetMinutes(minutes: Int) {
+        val safeMin = max(1, minutes)
+        val st = focusTimerFlow.value
+        val next = st.copy(
+            targetTotalMinutes = safeMin,
+            secondsRemaining = if (normalizeFocusMode(st.mode) == "target_timer") safeMin * 60 else st.secondsRemaining,
+            isRunning = false,
+            phaseEndEpochMs = null,
+            runningSinceEpochMs = null
+        )
+        applyAndPersistFocusState(next)
+    }
+
+    override fun setFocusSoundEnabled(enabled: Boolean) {
+        val next = focusTimerFlow.value.copy(soundEnabled = enabled)
         focusTimerFlow.value = next
         DudaLocalStorage.setFocusTimerState(next)
     }
@@ -2000,27 +2226,34 @@ class NeverPaidRepositoryImpl(
         val rounds = calculatePomodoroRounds(st.targetTotalMinutes, strategy)
         val roundIdx = st.pomodoroRound.coerceAtMost(rounds.size)
         val roundSec = rounds.getOrElse(roundIdx - 1) { rounds.first() }
+        val isWork = normalizeFocusPhase(st.pomodoroPhase) == "work"
+        val rem = if (isWork) roundSec else st.secondsRemaining
+        val now = nowProvider()
         val next = st.copy(
             splitStrategy = strategy,
             roundDurationsSec = rounds,
             totalPomodoroRounds = rounds.size,
             pomodoroRound = roundIdx,
             workDurationSec = roundSec,
-            secondsRemaining = if (st.pomodoroPhase == "work") roundSec else st.secondsRemaining
+            secondsRemaining = rem,
+            runningSinceEpochMs = if (st.isRunning && isWork) now else st.runningSinceEpochMs,
+            phaseEndEpochMs = if (st.isRunning && isWork) now + rem * 1000L else st.phaseEndEpochMs
         )
-        focusTimerFlow.value = next
-        DudaLocalStorage.setFocusTimerState(next)
+        applyAndPersistFocusState(next)
     }
 
     override fun setFocusBreakMinutes(minutes: Int) {
         val st = focusTimerFlow.value
         val sec = max(1, minutes) * 60
+        val isBreak = normalizeFocusPhase(st.pomodoroPhase) == "short_break"
+        val now = nowProvider()
         val next = st.copy(
             shortBreakDurationSec = sec,
-            secondsRemaining = if (st.pomodoroPhase == "short_break") sec else st.secondsRemaining
+            secondsRemaining = if (isBreak) sec else st.secondsRemaining,
+            runningSinceEpochMs = if (st.isRunning && isBreak) now else st.runningSinceEpochMs,
+            phaseEndEpochMs = if (st.isRunning && isBreak) now + sec * 1000L else st.phaseEndEpochMs
         )
-        focusTimerFlow.value = next
-        DudaLocalStorage.setFocusTimerState(next)
+        applyAndPersistFocusState(next)
     }
 
     override fun setFocusModalOpen(isOpen: Boolean) {
@@ -2030,11 +2263,12 @@ class NeverPaidRepositoryImpl(
     }
 
     override suspend fun finishAndLogFocusSession(markCompleted: Boolean, notes: String) {
+        syncFocusTimerFromClock()
         val st = focusTimerFlow.value
         if (!st.isActive) return
         val durationMins = max(1, (st.secondsElapsedTotal / 60.0).roundToInt())
         val today = dailyScheduleFlow.value?.date
-            ?: PlatformBridge.formatDate(PlatformBridge.currentTimeMillis(), "yyyy-MM-dd")
+            ?: PlatformBridge.formatDate(nowProvider(), "yyyy-MM-dd")
 
         if (apiClient != null) {
             apiClient.logFocusSession(
@@ -2055,7 +2289,8 @@ class NeverPaidRepositoryImpl(
     }
 
     override fun discardFocusTimer() {
-        val cleared = FocusTimerState(isActive = false)
+        PlatformBridge.cancelTimerNotification(TimerNotificationIds.FOCUS)
+        val cleared = FocusTimerState(isActive = false, soundEnabled = focusTimerFlow.value.soundEnabled)
         focusTimerFlow.value = cleared
         DudaLocalStorage.setFocusTimerState(null)
     }

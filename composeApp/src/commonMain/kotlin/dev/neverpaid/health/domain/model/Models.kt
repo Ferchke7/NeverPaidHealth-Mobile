@@ -768,16 +768,35 @@ data class FocusTimerState(
     val longBreakDurationSec: Int = 15 * 60,
     val secondsRemaining: Int = 25 * 60,
     val secondsElapsedTotal: Int = 0,
-    val isModalOpen: Boolean = false
+    val isModalOpen: Boolean = false,
+    val phaseEndEpochMs: Long? = null,
+    val runningSinceEpochMs: Long? = null,
+    val elapsedBeforePauseSec: Int = 0,
+    val soundEnabled: Boolean = true
 ) {
     val isOpen: Boolean get() = isActive
     val isMinimized: Boolean get() = isActive && !isModalOpen
     val elapsedSeconds: Int get() = secondsElapsedTotal
     val secondsLeft: Int get() = secondsRemaining
-    val totalSeconds: Int get() = workDurationSec.coerceAtLeast(1)
+    val totalSeconds: Int get() = when (mode) {
+        "target_timer" -> (targetTotalMinutes * 60).coerceAtLeast(1)
+        "pomodoro" -> when (pomodoroPhase) {
+            "short_break" -> shortBreakDurationSec.coerceAtLeast(1)
+            "long_break" -> longBreakDurationSec.coerceAtLeast(1)
+            else -> workDurationSec.coerceAtLeast(1)
+        }
+        else -> workDurationSec.coerceAtLeast(1)
+    }
     val customMinutes: Int get() = targetTotalMinutes
     val pomodoroCount: Int get() = pomodoroRound
 }
+
+@Serializable
+data class PersistedRestTimerState(
+    val workoutId: String = "",
+    val endEpochMs: Long = 0L,
+    val totalSeconds: Int = 0
+)
 
 // ============================================================================
 // 7. NUTRITION & AI FOOD ANALYZER
