@@ -200,6 +200,10 @@ interface NeverPaidRepository {
     fun setFocusPhase(phase: String, durationMinutes: Int? = null) {}
     fun setFocusTargetMinutes(minutes: Int) {}
     fun setFocusSoundEnabled(enabled: Boolean) {}
+    fun setFocusAlarmPreset(preset: String) {}
+    fun previewFocusAlarm(preset: String) {}
+    fun stopFocusAlarm() {}
+    fun observeFocusAlarmRinging(): Flow<Boolean> = kotlinx.coroutines.flow.flowOf(false)
     fun setFocusModalOpen(isOpen: Boolean)
     suspend fun finishAndLogFocusSession(markCompleted: Boolean = true, notes: String = "")
     fun discardFocusTimer()

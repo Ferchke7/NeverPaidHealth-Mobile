@@ -27,6 +27,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.skia.Image as SkiaImage
 import platform.AudioToolbox.AudioServicesPlaySystemSound
 import platform.Foundation.NSDate
@@ -48,7 +54,15 @@ import platform.UserNotifications.UNNotificationSound
 import platform.UserNotifications.UNTimeIntervalNotificationTrigger
 import platform.UserNotifications.UNUserNotificationCenter
 
+private class IosPlatformHolder {
+    val alarmScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    var focusAlarmJob: Job? = null
+    var focusAlarmRinging = false
+    var focusAlarmListener: ((Boolean) -> Unit)? = null
+}
+
 actual object PlatformBridge {
+    private val runtime = IosPlatformHolder()
 
     actual fun vibrate() {
         val generator = UIImpactFeedbackGenerator(style = UIImpactFeedbackStyle.UIImpactFeedbackStyleMedium)
@@ -180,6 +194,48 @@ actual object PlatformBridge {
 
     actual fun playAlertSound() {
         AudioServicesPlaySystemSound(1007u)
+    }
+
+    actual fun playFocusAlarm(preset: String, durationSeconds: Int) {
+        stopFocusAlarm()
+        val safeSec = durationSeconds.coerceIn(1, 15)
+        val soundId: UInt = when (preset.lowercase()) {
+            "bell" -> 1013u
+            "gong" -> 1023u
+            "siren" -> 1009u
+            else -> 1005u
+        }
+        runtime.focusAlarmRinging = true
+        runtime.focusAlarmListener?.invoke(true)
+        runtime.focusAlarmJob = runtime.alarmScope.launch {
+            try {
+                val beats = maxOf(1, safeSec)
+                repeat(beats) {
+                    AudioServicesPlaySystemSound(soundId)
+                    vibrate()
+                    delay(1000L)
+                }
+            } finally {
+                runtime.focusAlarmRinging = false
+                runtime.focusAlarmListener?.invoke(false)
+            }
+        }
+    }
+
+    actual fun stopFocusAlarm() {
+        runtime.focusAlarmJob?.cancel()
+        runtime.focusAlarmJob = null
+        if (runtime.focusAlarmRinging) {
+            runtime.focusAlarmRinging = false
+            runtime.focusAlarmListener?.invoke(false)
+        }
+    }
+
+    actual fun isFocusAlarmRinging(): Boolean = runtime.focusAlarmRinging
+
+    actual fun setFocusAlarmRingingListener(listener: ((Boolean) -> Unit)?) {
+        runtime.focusAlarmListener = listener
+        listener?.invoke(runtime.focusAlarmRinging)
     }
 
     actual fun requestNotificationPermission() {

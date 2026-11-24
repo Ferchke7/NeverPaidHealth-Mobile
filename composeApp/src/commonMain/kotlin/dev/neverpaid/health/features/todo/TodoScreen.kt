@@ -556,7 +556,7 @@ fun TodoScreen(
                                         val nextSound = !soundEnabled
                                         onAction(TodoUiAction.OnToggleFocusSound(nextSound))
                                         if (nextSound) {
-                                            AthleteSoundManager.playIntervalGong()
+                                            onAction(TodoUiAction.OnPreviewFocusAlarm)
                                         }
                                     }
                                     .padding(horizontal = 12.dp, vertical = 6.dp)
@@ -691,6 +691,81 @@ fun TodoScreen(
                                 onClick = { onAction(TodoUiAction.OnResetFocusCard) },
                                 modifier = Modifier.weight(1f)
                             )
+                        }
+
+                        if (state.isFocusAlarmRinging) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(CrimsonRed)
+                                    .clickable { onAction(TodoUiAction.OnStopFocusAlarm) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = strings.focusAlarmRingingLabel,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = InkWhite
+                                    )
+                                    Text(
+                                        text = strings.focusStopAlarmBtn,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = InkWhite
+                                    )
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = strings.focusSoundPresetLabel,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecondary
+                            )
+                            Text(
+                                text = if (state.isFocusAlarmRinging) strings.focusStopAlarmBtn else strings.focusTestSoundBtn,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (state.isFocusAlarmRinging) CrimsonRed else AccentLime,
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(if (state.isFocusAlarmRinging) CrimsonRed.copy(alpha = 0.14f) else AccentLimeSubtle)
+                                    .clickable {
+                                        if (state.isFocusAlarmRinging) onAction(TodoUiAction.OnStopFocusAlarm)
+                                        else onAction(TodoUiAction.OnPreviewFocusAlarm)
+                                    }
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(
+                                "radar" to strings.focusSoundRadar,
+                                "bell" to strings.focusSoundBell,
+                                "gong" to strings.focusSoundGong,
+                                "siren" to strings.focusSoundSiren
+                            ).forEach { (presetId, presetLabel) ->
+                                GymPillTab(
+                                    text = presetLabel,
+                                    selected = ft.alarmPreset == presetId,
+                                    onClick = { onAction(TodoUiAction.OnSelectFocusAlarmPreset(presetId)) }
+                                )
+                            }
                         }
                     }
                 }

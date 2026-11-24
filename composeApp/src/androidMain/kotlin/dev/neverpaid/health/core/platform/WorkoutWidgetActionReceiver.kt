@@ -19,5 +19,6 @@ class WorkoutWidgetActionReceiver : BroadcastReceiver() {
         const val ACTION_REST_START = "dev.neverpaid.health.WIDGET_REST_START"
         const val ACTION_REST_ADD_15 = "dev.neverpaid.health.WIDGET_REST_ADD_15"
         const val ACTION_REST_SKIP = "dev.neverpaid.health.WIDGET_REST_SKIP"
+        const val ACTION_STOP_FOCUS_ALARM = "dev.neverpaid.health.ACTION_STOP_FOCUS_ALARM"
     }
 }

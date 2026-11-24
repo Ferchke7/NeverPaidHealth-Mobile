@@ -772,7 +772,8 @@ data class FocusTimerState(
     val phaseEndEpochMs: Long? = null,
     val runningSinceEpochMs: Long? = null,
     val elapsedBeforePauseSec: Int = 0,
-    val soundEnabled: Boolean = true
+    val soundEnabled: Boolean = true,
+    val alarmPreset: String = "radar"
 ) {
     val isOpen: Boolean get() = isActive
     val isMinimized: Boolean get() = isActive && !isModalOpen

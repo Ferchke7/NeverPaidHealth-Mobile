@@ -52,6 +52,10 @@ expect object PlatformBridge {
     fun cancelTimerNotification(timerId: String)
     fun showTimerAlertNotification(timerId: String, title: String, body: String)
     fun playAlertSound()
+    fun playFocusAlarm(preset: String = "radar", durationSeconds: Int = 8)
+    fun stopFocusAlarm()
+    fun isFocusAlarmRinging(): Boolean
+    fun setFocusAlarmRingingListener(listener: ((Boolean) -> Unit)?)
     fun requestNotificationPermission()
     fun isAppInForeground(): Boolean
     fun updateLiveWorkoutWidget(state: LiveWorkoutWidgetState?)

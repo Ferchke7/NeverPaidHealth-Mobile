@@ -293,4 +293,93 @@ class AndroidUpgradeStartupSmokeTest {
             shadowNm.allNotifications.isEmpty()
         )
     }
+
+    @Test
+    fun focusAlarmPlaysStopsViaNotificationAction_andPostsFocusAlertChannel() {
+        val context = ApplicationProvider.getApplicationContext<android.app.Application>()
+        org.robolectric.Shadows.shadowOf(context).grantPermissions(
+            android.Manifest.permission.POST_NOTIFICATIONS
+        )
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val shadowNm = org.robolectric.Shadows.shadowOf(nm)
+        dev.neverpaid.health.core.platform.PlatformBridge.updateLiveWorkoutWidget(null)
+        dev.neverpaid.health.core.platform.PlatformBridge.stopFocusAlarm()
+        dev.neverpaid.health.core.storage.DudaLocalStorage.setFocusAlarmPreset("siren")
+        dev.neverpaid.health.core.storage.DudaLocalStorage.setFocusTimerState(
+            dev.neverpaid.health.domain.model.FocusTimerState(
+                isActive = true,
+                isRunning = true,
+                soundEnabled = true,
+                alarmPreset = "siren",
+                todoTitle = "Громкий тест фокуса"
+            )
+        )
+        nm.cancelAll()
+
+        dev.neverpaid.health.core.platform.PlatformBridge.playFocusAlarm("siren", durationSeconds = 8)
+        org.junit.Assert.assertTrue(
+            "Expected focus alarm to report ringing after playFocusAlarm",
+            dev.neverpaid.health.core.platform.PlatformBridge.isFocusAlarmRinging()
+        )
+
+        val actionReceiver = dev.neverpaid.health.core.platform.WorkoutWidgetActionReceiver()
+        actionReceiver.onReceive(
+            context,
+            Intent(context, dev.neverpaid.health.core.platform.WorkoutWidgetActionReceiver::class.java).apply {
+                action = dev.neverpaid.health.core.platform.WorkoutWidgetActionReceiver.ACTION_STOP_FOCUS_ALARM
+            }
+        )
+        org.junit.Assert.assertFalse(
+            "Expected ACTION_STOP_FOCUS_ALARM to stop active alarm",
+            dev.neverpaid.health.core.platform.PlatformBridge.isFocusAlarmRinging()
+        )
+
+        val triggerAt = System.currentTimeMillis() + 60_000L
+        dev.neverpaid.health.core.platform.PlatformBridge.scheduleTimerNotification(
+            timerId = dev.neverpaid.health.core.platform.TimerNotificationIds.FOCUS,
+            triggerAtEpochMs = triggerAt,
+            title = "Фокус завершён",
+            body = "Время на отчёт!",
+            showOngoingCountdown = false
+        )
+
+        val receiver = dev.neverpaid.health.core.platform.TimerAlarmReceiver()
+        val alarmIntent = Intent(context, dev.neverpaid.health.core.platform.TimerAlarmReceiver::class.java).apply {
+            action = "dev.neverpaid.health.ACTION_TIMER_ALARM_${dev.neverpaid.health.core.platform.TimerNotificationIds.FOCUS}"
+            putExtra(dev.neverpaid.health.core.platform.TimerAlarmReceiver.EXTRA_TIMER_ID, dev.neverpaid.health.core.platform.TimerNotificationIds.FOCUS)
+            putExtra(dev.neverpaid.health.core.platform.TimerAlarmReceiver.EXTRA_TRIGGER_AT, triggerAt)
+            putExtra(dev.neverpaid.health.core.platform.TimerAlarmReceiver.EXTRA_TITLE, "Фокус завершён")
+            putExtra(dev.neverpaid.health.core.platform.TimerAlarmReceiver.EXTRA_BODY, "Время на отчёт!")
+        }
+        receiver.onReceive(context, alarmIntent)
+
+        org.junit.Assert.assertTrue(
+            "Expected focus alarm to ring automatically when FOCUS alarm broadcast fires",
+            dev.neverpaid.health.core.platform.PlatformBridge.isFocusAlarmRinging()
+        )
+        val focusNotif = shadowNm.allNotifications.firstOrNull { notif ->
+            notif.extras.getString(android.app.Notification.EXTRA_TITLE) == "Фокус завершён"
+        }
+        org.junit.Assert.assertNotNull("Expected FOCUS alert notification after broadcast", focusNotif)
+        org.junit.Assert.assertEquals("duda_focus_alarm_v1", focusNotif!!.channelId)
+        org.junit.Assert.assertTrue(
+            "Expected Stop action button on focus alarm notification",
+            focusNotif.actions?.any { act ->
+                act.title?.toString()?.isNotBlank() == true
+            } == true
+        )
+
+        actionReceiver.onReceive(
+            context,
+            Intent(context, dev.neverpaid.health.core.platform.WorkoutWidgetActionReceiver::class.java).apply {
+                action = dev.neverpaid.health.core.platform.WorkoutWidgetActionReceiver.ACTION_STOP_FOCUS_ALARM
+            }
+        )
+        dev.neverpaid.health.core.platform.PlatformBridge.cancelTimerNotification(
+            dev.neverpaid.health.core.platform.TimerNotificationIds.FOCUS
+        )
+        dev.neverpaid.health.core.storage.DudaLocalStorage.setFocusTimerState(null)
+        org.junit.Assert.assertFalse(dev.neverpaid.health.core.platform.PlatformBridge.isFocusAlarmRinging())
+        org.junit.Assert.assertTrue(shadowNm.allNotifications.isEmpty())
+    }
 }

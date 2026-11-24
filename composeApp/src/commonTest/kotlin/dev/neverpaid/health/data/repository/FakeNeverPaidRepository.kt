@@ -693,6 +693,9 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     override fun setFocusSoundEnabled(enabled: Boolean) {
         focusTimerFlow.value = focusTimerFlow.value.copy(soundEnabled = enabled)
     }
+    override fun setFocusAlarmPreset(preset: String) {
+        focusTimerFlow.value = focusTimerFlow.value.copy(alarmPreset = preset)
+    }
     override fun setFocusModalOpen(isOpen: Boolean) {
         focusTimerFlow.value = focusTimerFlow.value.copy(isModalOpen = isOpen)
     }

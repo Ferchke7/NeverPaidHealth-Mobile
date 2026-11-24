@@ -126,6 +126,7 @@ class NeverPaidRepositoryImpl(
     private val dailyScheduleFlow = MutableStateFlow<DailyScheduleResponseDto?>(null)
     private val todosMapByDate = mutableMapOf<String, MutableStateFlow<List<TodoTask>>>()
     private val focusTimerFlow = MutableStateFlow(DudaLocalStorage.getFocusTimerState())
+    private val focusAlarmRingingFlow = MutableStateFlow(PlatformBridge.isFocusAlarmRinging())
 
     private val nutritionSummaryFlow = MutableStateFlow<DailyNutritionSummaryDto?>(null)
     private val mealLogsFlow = MutableStateFlow<List<MealLog>>(DudaLocalStorage.getMealLogs())
@@ -141,6 +142,9 @@ class NeverPaidRepositoryImpl(
     init {
         syncFocusTimerFromClock()
         publishLiveWorkoutWidget(activeWorkoutFlow.value)
+        PlatformBridge.setFocusAlarmRingingListener { ringing ->
+            focusAlarmRingingFlow.value = ringing
+        }
         apiClient?.onUnauthorized = {
             if (!isGuestUser()) {
                 isAuthenticatedFlow.value = false
@@ -1934,7 +1938,8 @@ class NeverPaidRepositoryImpl(
             phaseEndEpochMs = phaseEnd,
             runningSinceEpochMs = now,
             elapsedBeforePauseSec = 0,
-            soundEnabled = focusTimerFlow.value.soundEnabled
+            soundEnabled = focusTimerFlow.value.soundEnabled,
+            alarmPreset = DudaLocalStorage.getFocusAlarmPreset()
         )
         applyAndPersistFocusState(next)
     }
@@ -1977,12 +1982,14 @@ class NeverPaidRepositoryImpl(
             phaseEndEpochMs = phaseEnd,
             runningSinceEpochMs = now,
             elapsedBeforePauseSec = 0,
-            soundEnabled = focusTimerFlow.value.soundEnabled
+            soundEnabled = focusTimerFlow.value.soundEnabled,
+            alarmPreset = DudaLocalStorage.getFocusAlarmPreset()
         )
         applyAndPersistFocusState(next)
     }
 
     override fun pauseFocusTimer() {
+        PlatformBridge.stopFocusAlarm()
         syncFocusTimerFromClock()
         val st = focusTimerFlow.value
         val next = st.copy(
@@ -2078,7 +2085,7 @@ class NeverPaidRepositoryImpl(
             PlatformBridge.cancelTimerNotification(TimerNotificationIds.FOCUS)
             if (justCompletedInForeground) {
                 if (current.soundEnabled) {
-                    AthleteSoundManager.playIntervalGong()
+                    AthleteSoundManager.playFocusAlarm(current.alarmPreset)
                 } else {
                     PlatformBridge.vibrate()
                 }
@@ -2264,7 +2271,31 @@ class NeverPaidRepositoryImpl(
         val next = focusTimerFlow.value.copy(soundEnabled = enabled)
         focusTimerFlow.value = next
         DudaLocalStorage.setFocusTimerState(next)
+        if (!enabled) {
+            PlatformBridge.stopFocusAlarm()
+        }
     }
+
+    override fun setFocusAlarmPreset(preset: String) {
+        DudaLocalStorage.setFocusAlarmPreset(preset)
+        val normalized = DudaLocalStorage.getFocusAlarmPreset()
+        val next = focusTimerFlow.value.copy(alarmPreset = normalized)
+        focusTimerFlow.value = next
+        if (next.isActive) {
+            DudaLocalStorage.setFocusTimerState(next)
+        }
+    }
+
+    override fun previewFocusAlarm(preset: String) {
+        setFocusAlarmPreset(preset)
+        AthleteSoundManager.playFocusAlarm(DudaLocalStorage.getFocusAlarmPreset(), preview = true)
+    }
+
+    override fun stopFocusAlarm() {
+        PlatformBridge.stopFocusAlarm()
+    }
+
+    override fun observeFocusAlarmRinging(): Flow<Boolean> = focusAlarmRingingFlow.asStateFlow()
 
     override fun setFocusSplitStrategy(strategy: String) {
         val st = focusTimerFlow.value
@@ -2334,8 +2365,13 @@ class NeverPaidRepositoryImpl(
     }
 
     override fun discardFocusTimer() {
+        PlatformBridge.stopFocusAlarm()
         PlatformBridge.cancelTimerNotification(TimerNotificationIds.FOCUS)
-        val cleared = FocusTimerState(isActive = false, soundEnabled = focusTimerFlow.value.soundEnabled)
+        val cleared = FocusTimerState(
+            isActive = false,
+            soundEnabled = focusTimerFlow.value.soundEnabled,
+            alarmPreset = DudaLocalStorage.getFocusAlarmPreset()
+        )
         focusTimerFlow.value = cleared
         DudaLocalStorage.setFocusTimerState(null)
     }

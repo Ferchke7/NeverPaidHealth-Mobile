@@ -1,5 +1,6 @@
 package dev.neverpaid.health.data.repository
 
+import dev.neverpaid.health.core.storage.DudaLocalStorage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
@@ -111,5 +112,39 @@ class NeverPaidRepositoryTest {
         assertEquals(125, state.secondsElapsedTotal)
 
         realRepo.discardFocusTimer()
+    }
+
+    @Test
+    fun focusAlarmPresetPersistsAndCompletesCleanly() = runTest {
+        var fakeNow = 9_000_000L
+        DudaLocalStorage.setFocusAlarmPreset("radar")
+        val realRepo = NeverPaidRepositoryImpl(apiClient = null, nowProvider = { fakeNow })
+        realRepo.discardFocusTimer()
+
+        realRepo.setFocusAlarmPreset("bell")
+        assertEquals("bell", DudaLocalStorage.getFocusAlarmPreset())
+        assertEquals("bell", realRepo.getFocusTimerState().first().alarmPreset)
+
+        val freshRepo = NeverPaidRepositoryImpl(apiClient = null, nowProvider = { fakeNow })
+        assertEquals("bell", freshRepo.getFocusTimerState().first().alarmPreset)
+
+        freshRepo.startQuickFocusSession(
+            title = "WAP Check",
+            targetMinutes = 1,
+            strategy = "single",
+            mode = "target_timer"
+        )
+        assertEquals("bell", freshRepo.getFocusTimerState().first().alarmPreset)
+
+        fakeNow += 60_000L
+        freshRepo.syncFocusTimerFromClock()
+        val doneState = freshRepo.getFocusTimerState().first()
+        assertFalse(doneState.isRunning)
+        assertEquals(0, doneState.secondsRemaining)
+        assertEquals(60, doneState.secondsElapsedTotal)
+
+        freshRepo.stopFocusAlarm()
+        freshRepo.discardFocusTimer()
+        DudaLocalStorage.setFocusAlarmPreset("radar")
     }
 }

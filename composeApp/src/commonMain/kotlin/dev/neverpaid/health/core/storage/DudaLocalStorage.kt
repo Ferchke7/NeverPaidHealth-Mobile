@@ -32,6 +32,7 @@ object DudaLocalStorage {
     private const val KEY_ACTIVE_WORKOUT = "neverpaid_active_workout_v2"
     private const val KEY_REST_TIMER = "np_rest_timer_v1"
     private const val KEY_FOCUS_TIMER = "np_focus_timer_state_v4"
+    private const val KEY_FOCUS_ALARM_PRESET = "np_focus_alarm_preset_v1"
     private const val KEY_WATER_PREFIX = "np_water_"
     private const val KEY_WORKOUT_HISTORY = "np_workout_history_v2"
     private const val KEY_USER_ROUTINES = "np_user_routines_v2"
@@ -106,12 +107,30 @@ object DudaLocalStorage {
     }
 
     fun getFocusTimerState(): FocusTimerState {
-        val str = PlatformBridge.getString(KEY_FOCUS_TIMER) ?: return FocusTimerState()
+        val savedPreset = getFocusAlarmPreset()
+        val str = PlatformBridge.getString(KEY_FOCUS_TIMER) ?: return FocusTimerState(alarmPreset = savedPreset)
         return try {
-            json.decodeFromString<FocusTimerState>(str)
+            val decoded = json.decodeFromString<FocusTimerState>(str)
+            decoded.copy(alarmPreset = decoded.alarmPreset.ifBlank { savedPreset })
         } catch (_: Throwable) {
-            FocusTimerState()
+            FocusTimerState(alarmPreset = savedPreset)
         }
+    }
+
+    fun getFocusAlarmPreset(): String {
+        val raw = PlatformBridge.getString(KEY_FOCUS_ALARM_PRESET)?.lowercase()
+        return when (raw) {
+            "bell", "gong", "siren", "radar" -> raw
+            else -> "radar"
+        }
+    }
+
+    fun setFocusAlarmPreset(preset: String) {
+        val clean = when (preset.lowercase()) {
+            "bell", "gong", "siren", "radar" -> preset.lowercase()
+            else -> "radar"
+        }
+        PlatformBridge.putString(KEY_FOCUS_ALARM_PRESET, clean)
     }
 
     fun setFocusTimerState(state: FocusTimerState?) {

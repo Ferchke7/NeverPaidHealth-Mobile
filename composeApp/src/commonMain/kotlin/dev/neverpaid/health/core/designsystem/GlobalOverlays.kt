@@ -153,11 +153,14 @@ fun FloatingActiveWorkoutPill(
 @Composable
 fun FloatingFocusTimerOverlay(
     state: FocusTimerState,
+    isAlarmRinging: Boolean = false,
     onToggleRunning: () -> Unit,
     onReset: () -> Unit,
     onMinimize: (Boolean) -> Unit,
     onClose: () -> Unit,
     onSetMode: (String, String, Int) -> Unit,
+    onSelectAlarmPreset: (String) -> Unit = {},
+    onStopAlarm: () -> Unit = {},
     onCompleteSession: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -217,6 +220,23 @@ fun FloatingFocusTimerOverlay(
                             contentDescription = null,
                             tint = VioletPrimary
                         )
+                    }
+                    if (isAlarmRinging) {
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(CrimsonRed)
+                                .clickable(onClick = onStopAlarm)
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = strings.focusStopAlarmBtn,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Black,
+                                color = InkWhite
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
                     }
                     IconButton(onClick = onCompleteSession, modifier = Modifier.size(36.dp)) {
                         Icon(
@@ -441,6 +461,55 @@ fun FloatingFocusTimerOverlay(
                 textColor = EmeraldDark,
                 borderColor = EmeraldBorder
             )
+
+            if (isAlarmRinging) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(CrimsonRed)
+                        .clickable(onClick = onStopAlarm)
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = strings.focusAlarmRingingLabel,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = InkWhite
+                        )
+                        Text(
+                            text = strings.focusStopAlarmBtn,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Black,
+                            color = InkWhite
+                        )
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                listOf(
+                    "radar" to strings.focusSoundRadar,
+                    "bell" to strings.focusSoundBell,
+                    "gong" to strings.focusSoundGong,
+                    "siren" to strings.focusSoundSiren
+                ).forEach { (presetId, presetLabel) ->
+                    GymPillTab(
+                        text = presetLabel,
+                        selected = state.alarmPreset == presetId,
+                        onClick = { onSelectAlarmPreset(presetId) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
         }

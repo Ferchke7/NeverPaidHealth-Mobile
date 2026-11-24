@@ -44,7 +44,23 @@ object AthleteSoundManager {
      * Called when a Pomodoro focus or fasting interval completes.
      */
     fun playIntervalGong() {
-        PlatformBridge.playAlertSound()
+        PlatformBridge.playFocusAlarm(preset = "gong", durationSeconds = 8)
         PlatformBridge.vibrate()
+    }
+
+    /**
+     * Plays a distinct loud sustained Focus Timer alarm (default 8 seconds),
+     * or a brief ~3s preview when choosing presets.
+     */
+    fun playFocusAlarm(preset: String = "radar", preview: Boolean = false) {
+        PlatformBridge.playFocusAlarm(
+            preset = preset,
+            durationSeconds = if (preview) 3 else 8
+        )
+        PlatformBridge.vibrate()
+    }
+
+    fun stopFocusAlarm() {
+        PlatformBridge.stopFocusAlarm()
     }
 }

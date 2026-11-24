@@ -343,6 +343,14 @@ interface DudaStrings {
     val widgetAdd15Short: String
     val widgetResetRestShort: String
     val widgetSetsShort: String
+    val focusSoundPresetLabel: String
+    val focusSoundRadar: String
+    val focusSoundBell: String
+    val focusSoundGong: String
+    val focusSoundSiren: String
+    val focusTestSoundBtn: String
+    val focusStopAlarmBtn: String
+    val focusAlarmRingingLabel: String
 }
 
 object RuDudaStrings : DudaStrings {
@@ -665,6 +673,14 @@ object RuDudaStrings : DudaStrings {
     override val widgetAdd15Short = "+15с"
     override val widgetResetRestShort = "Сброс"
     override val widgetSetsShort = "подх."
+    override val focusSoundPresetLabel = "Мелодия сигнала"
+    override val focusSoundRadar = "Радар"
+    override val focusSoundBell = "Колокол"
+    override val focusSoundGong = "Гонг"
+    override val focusSoundSiren = "Сирена"
+    override val focusTestSoundBtn = "Тест"
+    override val focusStopAlarmBtn = "Остановить"
+    override val focusAlarmRingingLabel = "Сигнал таймера звучит…"
 }
 
 object UzDudaStrings : DudaStrings {
@@ -987,6 +1003,14 @@ object UzDudaStrings : DudaStrings {
     override val widgetAdd15Short = "+15s"
     override val widgetResetRestShort = "Qaytarish"
     override val widgetSetsShort = "set"
+    override val focusSoundPresetLabel = "Signal ohangi"
+    override val focusSoundRadar = "Radar"
+    override val focusSoundBell = "Qo'ng'iroq"
+    override val focusSoundGong = "Gong"
+    override val focusSoundSiren = "Sirena"
+    override val focusTestSoundBtn = "Sinov"
+    override val focusStopAlarmBtn = "To'xtatish"
+    override val focusAlarmRingingLabel = "Taymer signali chalinmoqda…"
 }
 
 object EnDudaStrings : DudaStrings {
@@ -1309,6 +1333,14 @@ object EnDudaStrings : DudaStrings {
     override val widgetAdd15Short = "+15s"
     override val widgetResetRestShort = "Skip"
     override val widgetSetsShort = "sets"
+    override val focusSoundPresetLabel = "Alarm Sound"
+    override val focusSoundRadar = "Radar"
+    override val focusSoundBell = "Bell"
+    override val focusSoundGong = "Gong"
+    override val focusSoundSiren = "Siren"
+    override val focusTestSoundBtn = "Test"
+    override val focusStopAlarmBtn = "Stop Alarm"
+    override val focusAlarmRingingLabel = "Timer alarm ringing…"
 }
 
 fun getDudaStrings(languageCode: String): DudaStrings {

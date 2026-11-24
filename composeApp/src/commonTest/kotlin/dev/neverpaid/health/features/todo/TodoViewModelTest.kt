@@ -106,4 +106,19 @@ class TodoViewModelTest {
         assertTrue(focusState.isActive)
         assertEquals(task.id, focusState.todoId)
     }
+
+    @Test
+    fun testFocusAlarmPresetSelectionAndStopAction() = runTest {
+        viewModel.onAction(TodoUiAction.OnSelectFocusAlarmPreset("gong"))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("gong", viewModel.state.value.focusTimer.alarmPreset)
+        assertEquals("gong", repository.getFocusTimerState().first().alarmPreset)
+
+        viewModel.onAction(TodoUiAction.OnPreviewFocusAlarm)
+        viewModel.onAction(TodoUiAction.OnStopFocusAlarm)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.state.value.isFocusAlarmRinging)
+    }
 }

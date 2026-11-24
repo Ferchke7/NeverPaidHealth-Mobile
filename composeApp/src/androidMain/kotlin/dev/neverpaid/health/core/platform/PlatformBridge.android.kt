@@ -18,7 +18,9 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.AudioAttributes
+import android.media.AudioFormat
 import android.media.AudioManager
+import android.media.AudioTrack
 import android.media.RingtoneManager
 import android.media.ToneGenerator
 import android.net.Uri
@@ -111,10 +113,15 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.PI
 import kotlin.math.ceil
+import kotlin.math.exp
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 private const val CHANNEL_TIMER_ALERTS = "duda_timer_alerts_v1"
+private const val CHANNEL_FOCUS_ALARM = "duda_focus_alarm_v1"
 private const val CHANNEL_TIMER_ONGOING = "duda_timer_ongoing_v1"
 private const val CHANNEL_LIVE_WORKOUT = "duda_live_workout_v1"
 private const val NOTIFICATION_ID_LIVE_WORKOUT = 2050
@@ -129,6 +136,12 @@ private class AndroidPlatformHolder {
     var resumedActivityCount = 0
     var currentActivityRef: WeakReference<Activity>? = null
     var onRestTimerExternalChange: (() -> Unit)? = null
+    var onFocusAlarmRingingChange: ((Boolean) -> Unit)? = null
+    val focusAlarmGeneration = AtomicInteger(0)
+    @Volatile var isFocusAlarmActive: Boolean = false
+    @Volatile var activeAudioTrack: AudioTrack? = null
+    var pendingAlarmStopRunnable: Runnable? = null
+    val mainHandler = Handler(Looper.getMainLooper())
     var pendingOpenActiveWorkout: Boolean = false
     val inMemoryFallback = HashMap<String, String>()
 }
@@ -341,6 +354,26 @@ actual object PlatformBridge {
             }
             nm.createNotificationChannel(ongoingChannel)
         }
+        if (nm.getNotificationChannel(CHANNEL_FOCUS_ALARM) == null) {
+            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val audioAttrs = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            val focusChannel = NotificationChannel(
+                CHANNEL_FOCUS_ALARM,
+                "Будильник задач и фокуса",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Громкий продолжительный сигнал окончания фокус-таймера"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0L, 600L, 220L, 600L, 220L, 700L, 220L, 700L)
+                setSound(alarmUri, audioAttrs)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            }
+            nm.createNotificationChannel(focusChannel)
+        }
         if (nm.getNotificationChannel(CHANNEL_LIVE_WORKOUT) == null) {
             val liveWorkoutChannel = NotificationChannel(
                 CHANNEL_LIVE_WORKOUT,
@@ -523,7 +556,12 @@ actual object PlatformBridge {
             title = storedTitle.ifBlank { "duda.uz" },
             body = storedBody.ifBlank { "Таймер завершён" }
         )
-        if (timerId == TimerNotificationIds.REST) {
+        if (timerId == TimerNotificationIds.FOCUS) {
+            val focusState = DudaLocalStorage.getFocusTimerState()
+            if (focusState.soundEnabled) {
+                playFocusAlarm(DudaLocalStorage.getFocusAlarmPreset(), durationSeconds = 8)
+            }
+        } else if (timerId == TimerNotificationIds.REST) {
             val cached = readCachedLiveWorkoutState(context)
             if (cached != null) {
                 val clearedState = cached.copy(restEndEpochMs = 0L, restTotalSeconds = 0)
@@ -554,7 +592,9 @@ actual object PlatformBridge {
                 launchIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            val notification = NotificationCompat.Builder(ctx, CHANNEL_TIMER_ALERTS)
+            val isFocus = timerId == TimerNotificationIds.FOCUS
+            val strings = getDudaStrings(DudaLocalStorage.getUserPreferences().languageCode)
+            val builder = NotificationCompat.Builder(ctx, if (isFocus) CHANNEL_FOCUS_ALARM else CHANNEL_TIMER_ALERTS)
                 .setSmallIcon(R.drawable.ic_widget_dumbbell)
                 .setContentTitle(title)
                 .setContentText(body)
@@ -565,8 +605,16 @@ actual object PlatformBridge {
                 .setAutoCancel(true)
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setContentIntent(showPendingIntent)
-                .build()
-            nm.notify(slots.alertNotificationId, notification)
+            if (isFocus) {
+                val stopPi = createWidgetActionPendingIntent(
+                    ctx,
+                    WorkoutWidgetActionReceiver.ACTION_STOP_FOCUS_ALARM,
+                    2199
+                )
+                builder.addAction(0, strings.focusStopAlarmBtn, stopPi)
+                builder.setDeleteIntent(stopPi)
+            }
+            nm.notify(slots.alertNotificationId, builder.build())
         } catch (_: Throwable) {
         }
     }
@@ -594,6 +642,217 @@ actual object PlatformBridge {
             }, 400L)
         } catch (_: Throwable) {
         }
+    }
+
+    private fun synthesizeFocusAlarmChunk(
+        preset: String,
+        sampleOffset: Int,
+        sampleCount: Int,
+        sampleRate: Int
+    ): ShortArray {
+        val buffer = ShortArray(sampleCount)
+        val cadenceSec = when (preset) {
+            "gong" -> 1.45
+            "bell" -> 1.15
+            "siren" -> 0.88
+            else -> 0.95
+        }
+        for (i in 0 until sampleCount) {
+            val t = (sampleOffset + i).toDouble() / sampleRate.toDouble()
+            val cycleT = t % cadenceSec
+            val sampleVal = when (preset) {
+                "bell" -> {
+                    val strike1 = cycleT
+                    val env1 = exp(-strike1 * 4.2)
+                    val strike2 = cycleT - 0.30
+                    val env2 = if (strike2 >= 0.0) exp(-strike2 * 4.8) else 0.0
+                    val w1 = 0.55 * sin(2.0 * PI * 880.0 * strike1) +
+                        0.28 * sin(2.0 * PI * 1318.51 * strike1) +
+                        0.17 * sin(2.0 * PI * 1760.0 * strike1)
+                    val w2 = if (strike2 >= 0.0) {
+                        0.6 * sin(2.0 * PI * 1174.66 * strike2) + 0.3 * sin(2.0 * PI * 1760.0 * strike2)
+                    } else 0.0
+                    (w1 * env1 + w2 * env2 * 0.85) * 0.92
+                }
+                "gong" -> {
+                    val env = exp(-cycleT * 1.95) * (1.0 - exp(-cycleT * 90.0))
+                    val w = 0.45 * sin(2.0 * PI * 293.66 * cycleT) +
+                        0.28 * sin(2.0 * PI * 440.0 * cycleT) +
+                        0.18 * sin(2.0 * PI * 587.33 * cycleT) +
+                        0.12 * sin(2.0 * PI * 880.0 * cycleT) +
+                        0.08 * sin(2.0 * PI * 1318.51 * cycleT)
+                    w * env * 0.95
+                }
+                "siren" -> {
+                    val half = cadenceSec / 2.0
+                    val freq = if (cycleT < half) {
+                        784.0 + (cycleT / half) * (1174.66 - 784.0)
+                    } else {
+                        1174.66 - ((cycleT - half) / half) * (1174.66 - 784.0)
+                    }
+                    val carrier = sin(2.0 * PI * freq * t) + 0.35 * sin(2.0 * PI * (freq * 2.0) * t)
+                    (carrier / 1.35) * 0.88
+                }
+                else -> { // "radar"
+                    val slot = (cycleT / 0.14).toInt()
+                    val localT = cycleT - slot * 0.14
+                    if (slot < 4 && localT < 0.115) {
+                        val freq = when (slot) {
+                            0, 2 -> 987.77
+                            1 -> 1318.51
+                            else -> 1479.98
+                        }
+                        val env = sin(PI * (localT / 0.115))
+                        val tone = 0.72 * sin(2.0 * PI * freq * localT) + 0.28 * sin(2.0 * PI * (freq * 2.0) * localT)
+                        tone * env * 0.94
+                    } else 0.0
+                }
+            }
+            val pcm = (sampleVal * 32000.0).toInt().coerceIn(-32767, 32767)
+            buffer[i] = pcm.toShort()
+        }
+        return buffer
+    }
+
+    actual fun playFocusAlarm(preset: String, durationSeconds: Int) {
+        val ctx = runtime.appContext ?: return
+        stopFocusAlarm()
+        val normalized = when (preset.lowercase()) {
+            "bell", "gong", "siren", "radar" -> preset.lowercase()
+            else -> "radar"
+        }
+        val safeSec = durationSeconds.coerceIn(1, 15)
+        val gen = runtime.focusAlarmGeneration.incrementAndGet()
+        runtime.isFocusAlarmActive = true
+        runtime.onFocusAlarmRingingChange?.invoke(true)
+
+        val autoStopRunnable = Runnable {
+            if (runtime.focusAlarmGeneration.get() == gen) {
+                stopFocusAlarm()
+            }
+        }
+        runtime.pendingAlarmStopRunnable = autoStopRunnable
+        runtime.mainHandler.postDelayed(autoStopRunnable, safeSec * 1000L)
+
+        try {
+            val vibrator = ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            if (vibrator != null) {
+                val pattern = if (safeSec <= 3) {
+                    longArrayOf(0L, 260L, 120L, 260L)
+                } else {
+                    longArrayOf(0L, 550L, 220L, 550L, 220L, 650L, 220L, 650L)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(pattern, -1)
+                }
+            }
+        } catch (_: Throwable) {
+        }
+
+        Thread {
+            var track: AudioTrack? = null
+            try {
+                val sampleRate = 22050
+                val minBuf = AudioTrack.getMinBufferSize(
+                    sampleRate,
+                    AudioFormat.CHANNEL_OUT_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT
+                )
+                if (minBuf <= 0) return@Thread
+                val chunkSamples = (sampleRate / 4).coerceAtLeast(minBuf / 2)
+                track = AudioTrack.Builder()
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
+                    .setAudioFormat(
+                        AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(sampleRate)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build()
+                    )
+                    .setBufferSizeInBytes(maxOf(minBuf, chunkSamples * 2))
+                    .setTransferMode(AudioTrack.MODE_STREAM)
+                    .build()
+
+                if (track.state != AudioTrack.STATE_INITIALIZED) {
+                    track.release()
+                    return@Thread
+                }
+                if (runtime.focusAlarmGeneration.get() != gen) {
+                    track.release()
+                    return@Thread
+                }
+                runtime.activeAudioTrack = track
+                track.play()
+
+                val totalSamples = sampleRate * safeSec
+                var offset = 0
+                while (offset < totalSamples && runtime.focusAlarmGeneration.get() == gen) {
+                    val count = minOf(chunkSamples, totalSamples - offset)
+                    val chunk = synthesizeFocusAlarmChunk(normalized, offset, count, sampleRate)
+                    if (runtime.focusAlarmGeneration.get() != gen) break
+                    val written = track.write(chunk, 0, count)
+                    if (written <= 0) break
+                    offset += count
+                }
+            } catch (_: Throwable) {
+            } finally {
+                try {
+                    track?.pause()
+                    track?.flush()
+                    track?.release()
+                } catch (_: Throwable) {
+                }
+                if (runtime.activeAudioTrack === track) {
+                    runtime.activeAudioTrack = null
+                }
+            }
+        }.apply {
+            isDaemon = true
+            name = "DudaFocusAlarmAudio"
+        }.start()
+    }
+
+    actual fun stopFocusAlarm() {
+        runtime.focusAlarmGeneration.incrementAndGet()
+        runtime.pendingAlarmStopRunnable?.let { runtime.mainHandler.removeCallbacks(it) }
+        runtime.pendingAlarmStopRunnable = null
+        val track = runtime.activeAudioTrack
+        runtime.activeAudioTrack = null
+        if (track != null) {
+            try {
+                track.pause()
+                track.flush()
+                track.release()
+            } catch (_: Throwable) {
+            }
+        }
+        try {
+            val ctx = runtime.appContext
+            val vibrator = ctx?.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            vibrator?.cancel()
+            val nm = ctx?.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            nm?.cancel(slotsForTimer(TimerNotificationIds.FOCUS).alertNotificationId)
+        } catch (_: Throwable) {
+        }
+        if (runtime.isFocusAlarmActive) {
+            runtime.isFocusAlarmActive = false
+            runtime.onFocusAlarmRingingChange?.invoke(false)
+        }
+    }
+
+    actual fun isFocusAlarmRinging(): Boolean = runtime.isFocusAlarmActive
+
+    actual fun setFocusAlarmRingingListener(listener: ((Boolean) -> Unit)?) {
+        runtime.onFocusAlarmRingingChange = listener
+        listener?.invoke(runtime.isFocusAlarmActive)
     }
 
     actual fun requestNotificationPermission() {
@@ -888,6 +1147,10 @@ actual object PlatformBridge {
             runtime.appContext = context.applicationContext
         }
         val ctx = runtime.appContext ?: context
+        if (action == WorkoutWidgetActionReceiver.ACTION_STOP_FOCUS_ALARM) {
+            stopFocusAlarm()
+            return
+        }
         val cached = readCachedLiveWorkoutState(ctx) ?: return
         val now = System.currentTimeMillis()
 

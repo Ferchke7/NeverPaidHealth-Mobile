@@ -27,7 +27,8 @@ data class TodoUiState(
     val isLoading: Boolean = false,
     val focusTimer: FocusTimerState = FocusTimerState(),
     val selectedFocusMode: String = "pomodoro",
-    val selectedFocusPhase: String = "work"
+    val selectedFocusPhase: String = "work",
+    val isFocusAlarmRinging: Boolean = false
 ) : UiState
 
 sealed interface TodoUiAction : UiAction {
@@ -46,6 +47,9 @@ sealed interface TodoUiAction : UiAction {
     data object OnPauseFocusCard : TodoUiAction
     data object OnResetFocusCard : TodoUiAction
     data class OnToggleFocusSound(val enabled: Boolean) : TodoUiAction
+    data class OnSelectFocusAlarmPreset(val preset: String) : TodoUiAction
+    data object OnPreviewFocusAlarm : TodoUiAction
+    data object OnStopFocusAlarm : TodoUiAction
     data object OnRefresh : TodoUiAction
 }
 

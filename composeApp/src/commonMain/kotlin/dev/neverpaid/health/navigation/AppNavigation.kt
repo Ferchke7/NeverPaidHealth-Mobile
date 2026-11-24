@@ -140,6 +140,7 @@ fun DudaMobileApp() {
     val activeWorkout by repository.getActiveWorkout().collectAsState(initial = null)
     val lastFinishedWorkout by repository.getLastFinishedWorkoutSummary().collectAsState(initial = null)
     val focusTimerState by repository.getFocusTimerState().collectAsState(initial = FocusTimerState())
+    val isFocusAlarmRinging by repository.observeFocusAlarmRinging().collectAsState(initial = false)
     val strings = remember(preferences.languageCode) { getDudaStrings(preferences.languageCode) }
 
     LaunchedEffect(focusTimerState.isActive, focusTimerState.isRunning) {
@@ -294,6 +295,7 @@ fun DudaMobileApp() {
                     if (focusTimerState.isOpen && focusTimerState.isMinimized) {
                         FloatingFocusTimerOverlay(
                             state = focusTimerState,
+                            isAlarmRinging = isFocusAlarmRinging,
                             onToggleRunning = {
                                 if (focusTimerState.isRunning) repository.pauseFocusTimer()
                                 else repository.resumeFocusTimer()
@@ -308,6 +310,8 @@ fun DudaMobileApp() {
                                     "pomodoro" -> repository.setFocusPhase(phase, mins)
                                 }
                             },
+                            onSelectAlarmPreset = { preset -> repository.previewFocusAlarm(preset) },
+                            onStopAlarm = { repository.stopFocusAlarm() },
                             onCompleteSession = {
                                 scope.launch { repository.finishAndLogFocusSession(markCompleted = true) }
                             }
@@ -345,6 +349,7 @@ fun DudaMobileApp() {
             if (focusTimerState.isOpen && !focusTimerState.isMinimized) {
                 FloatingFocusTimerOverlay(
                     state = focusTimerState,
+                    isAlarmRinging = isFocusAlarmRinging,
                     onToggleRunning = {
                         if (focusTimerState.isRunning) repository.pauseFocusTimer()
                         else repository.resumeFocusTimer()
@@ -352,10 +357,15 @@ fun DudaMobileApp() {
                     onReset = { repository.resetFocusPhase() },
                     onMinimize = { min -> repository.setFocusModalOpen(!min) },
                     onClose = { repository.discardFocusTimer() },
-                    onSetMode = { mode, _, mins ->
+                    onSetMode = { mode, phase, mins ->
                         repository.setFocusMode(mode)
-                        repository.setFocusSplitStrategy("${mins}m")
+                        when (mode) {
+                            "target_timer", "timer" -> repository.setFocusTargetMinutes(mins)
+                            "pomodoro" -> repository.setFocusPhase(phase, mins)
+                        }
                     },
+                    onSelectAlarmPreset = { preset -> repository.previewFocusAlarm(preset) },
+                    onStopAlarm = { repository.stopFocusAlarm() },
                     onCompleteSession = {
                         scope.launch { repository.finishAndLogFocusSession(markCompleted = true) }
                     }

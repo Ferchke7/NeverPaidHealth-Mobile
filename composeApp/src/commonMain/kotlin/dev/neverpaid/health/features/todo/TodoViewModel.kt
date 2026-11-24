@@ -105,6 +105,12 @@ class TodoViewModel(
             TodoUiAction.OnPauseFocusCard -> repository.pauseFocusTimer()
             TodoUiAction.OnResetFocusCard -> repository.discardFocusTimer()
             is TodoUiAction.OnToggleFocusSound -> repository.setFocusSoundEnabled(action.enabled)
+            is TodoUiAction.OnSelectFocusAlarmPreset -> repository.previewFocusAlarm(action.preset)
+            TodoUiAction.OnPreviewFocusAlarm -> {
+                val preset = currentState.focusTimer.alarmPreset
+                repository.previewFocusAlarm(preset)
+            }
+            TodoUiAction.OnStopFocusAlarm -> repository.stopFocusAlarm()
             TodoUiAction.OnRefresh -> refreshRemoteTodos()
         }
     }
@@ -113,6 +119,11 @@ class TodoViewModel(
         launchGuarded(onError = {}) {
             repository.getFocusTimerState().collect { ft ->
                 updateState { copy(focusTimer = ft) }
+            }
+        }
+        launchGuarded(onError = {}) {
+            repository.observeFocusAlarmRinging().collect { ringing ->
+                updateState { copy(isFocusAlarmRinging = ringing) }
             }
         }
         combine(
