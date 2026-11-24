@@ -114,8 +114,8 @@ class TodoViewModelTest {
 
         assertEquals("gong", viewModel.state.value.focusTimer.alarmPreset)
         assertEquals("gong", repository.getFocusTimerState().first().alarmPreset)
+        assertTrue(viewModel.state.value.isFocusAlarmRinging)
 
-        viewModel.onAction(TodoUiAction.OnPreviewFocusAlarm)
         viewModel.onAction(TodoUiAction.OnStopFocusAlarm)
         testDispatcher.scheduler.advanceUntilIdle()
 

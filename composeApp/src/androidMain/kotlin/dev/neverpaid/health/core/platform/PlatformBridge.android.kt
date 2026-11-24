@@ -716,7 +716,7 @@ actual object PlatformBridge {
 
     actual fun playFocusAlarm(preset: String, durationSeconds: Int) {
         val ctx = runtime.appContext ?: return
-        stopFocusAlarm()
+        stopFocusAlarmInternal(cancelNotification = false)
         val normalized = when (preset.lowercase()) {
             "bell", "gong", "siren", "radar" -> preset.lowercase()
             else -> "radar"
@@ -728,7 +728,7 @@ actual object PlatformBridge {
 
         val autoStopRunnable = Runnable {
             if (runtime.focusAlarmGeneration.get() == gen) {
-                stopFocusAlarm()
+                stopFocusAlarmInternal(cancelNotification = false)
             }
         }
         runtime.pendingAlarmStopRunnable = autoStopRunnable
@@ -821,6 +821,10 @@ actual object PlatformBridge {
     }
 
     actual fun stopFocusAlarm() {
+        stopFocusAlarmInternal(cancelNotification = true)
+    }
+
+    private fun stopFocusAlarmInternal(cancelNotification: Boolean) {
         runtime.focusAlarmGeneration.incrementAndGet()
         runtime.pendingAlarmStopRunnable?.let { runtime.mainHandler.removeCallbacks(it) }
         runtime.pendingAlarmStopRunnable = null
@@ -838,8 +842,10 @@ actual object PlatformBridge {
             val ctx = runtime.appContext
             val vibrator = ctx?.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
             vibrator?.cancel()
-            val nm = ctx?.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-            nm?.cancel(slotsForTimer(TimerNotificationIds.FOCUS).alertNotificationId)
+            if (cancelNotification) {
+                val nm = ctx?.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                nm?.cancel(slotsForTimer(TimerNotificationIds.FOCUS).alertNotificationId)
+            }
         } catch (_: Throwable) {
         }
         if (runtime.isFocusAlarmActive) {

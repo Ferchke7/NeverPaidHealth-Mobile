@@ -65,6 +65,7 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     private val routinesFlow = MutableStateFlow<List<Routine>>(StandardExerciseCatalog.prebuiltRoutines)
     private val activeWorkoutFlow = MutableStateFlow<Workout?>(null)
     private val activeSheetOpenFlow = MutableStateFlow(false)
+    private val focusAlarmRingingFlow = MutableStateFlow(false)
     private val lastFinishedWorkoutFlow = MutableStateFlow<Workout?>(null)
     private val workoutHistoryFlow = MutableStateFlow(
         listOf(
@@ -696,6 +697,14 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     override fun setFocusAlarmPreset(preset: String) {
         focusTimerFlow.value = focusTimerFlow.value.copy(alarmPreset = preset)
     }
+    override fun previewFocusAlarm(preset: String) {
+        setFocusAlarmPreset(preset)
+        focusAlarmRingingFlow.value = true
+    }
+    override fun stopFocusAlarm() {
+        focusAlarmRingingFlow.value = false
+    }
+    override fun observeFocusAlarmRinging(): Flow<Boolean> = focusAlarmRingingFlow.asStateFlow()
     override fun setFocusModalOpen(isOpen: Boolean) {
         focusTimerFlow.value = focusTimerFlow.value.copy(isModalOpen = isOpen)
     }
