@@ -152,4 +152,28 @@ class WorkoutViewModelTest {
         assertFalse(restoredVm.state.value.isRestTimerActive)
     }
 
+    @Test
+    fun externalWidgetRestTimerUpdateAndSkipSyncToViewModel() = runTest {
+        var fakeNow = 2_000_000L
+        val vm = WorkoutViewModel(repository) { fakeNow }
+        testDispatcher.scheduler.runCurrent()
+
+        val workoutId = vm.state.value.workout!!.id
+        dev.neverpaid.health.core.storage.DudaLocalStorage.setRestTimerState(
+            dev.neverpaid.health.domain.model.PersistedRestTimerState(
+                workoutId = workoutId,
+                endEpochMs = fakeNow + 60_000L,
+                totalSeconds = 60
+            )
+        )
+        vm.onAction(WorkoutUiAction.OnSyncRestTimer)
+        assertTrue(vm.state.value.isRestTimerActive)
+        assertEquals(60, vm.state.value.restTimerSecondsRemaining)
+
+        dev.neverpaid.health.core.storage.DudaLocalStorage.setRestTimerState(null)
+        vm.onAction(WorkoutUiAction.OnSyncRestTimer)
+        assertFalse(vm.state.value.isRestTimerActive)
+        assertEquals(0, vm.state.value.restTimerSecondsRemaining)
+    }
+
 }

@@ -335,6 +335,14 @@ interface DudaStrings {
     val focusWorkDoneBody: String
     val focusBreakDoneTitle: String
     val focusBreakDoneBody: String
+    val widgetLiveBadge: String
+    val widgetRestBadge: String
+    val widgetReadyTitle: String
+    val widgetReadySubtitle: String
+    val widgetStartRestShort: String
+    val widgetAdd15Short: String
+    val widgetResetRestShort: String
+    val widgetSetsShort: String
 }
 
 object RuDudaStrings : DudaStrings {
@@ -649,6 +657,14 @@ object RuDudaStrings : DudaStrings {
     override val focusWorkDoneBody = "Сделайте короткий перерыв или отметьте задачу."
     override val focusBreakDoneTitle = "Перерыв окончен!"
     override val focusBreakDoneBody = "Пора вернуться к работе."
+    override val widgetLiveBadge = "LIVE"
+    override val widgetRestBadge = "ОТДЫХ"
+    override val widgetReadyTitle = "Готовы к тренировке?"
+    override val widgetReadySubtitle = "Нажмите, чтобы открыть зал"
+    override val widgetStartRestShort = "Отдых"
+    override val widgetAdd15Short = "+15с"
+    override val widgetResetRestShort = "Сброс"
+    override val widgetSetsShort = "подх."
 }
 
 object UzDudaStrings : DudaStrings {
@@ -963,6 +979,14 @@ object UzDudaStrings : DudaStrings {
     override val focusWorkDoneBody = "Qisqa tanaffus qiling yoki vazifani belgilang."
     override val focusBreakDoneTitle = "Tanaffus tugadi!"
     override val focusBreakDoneBody = "Ishga qaytish vaqti keldi."
+    override val widgetLiveBadge = "LIVE"
+    override val widgetRestBadge = "DAM OLISH"
+    override val widgetReadyTitle = "Mashg'ulotga tayyormisiz?"
+    override val widgetReadySubtitle = "Zalni ochish uchun bosing"
+    override val widgetStartRestShort = "Dam"
+    override val widgetAdd15Short = "+15s"
+    override val widgetResetRestShort = "Qaytarish"
+    override val widgetSetsShort = "set"
 }
 
 object EnDudaStrings : DudaStrings {
@@ -1277,6 +1301,14 @@ object EnDudaStrings : DudaStrings {
     override val focusWorkDoneBody = "Take a short break or mark your task complete."
     override val focusBreakDoneTitle = "Break Is Over!"
     override val focusBreakDoneBody = "Time to get back to work."
+    override val widgetLiveBadge = "LIVE"
+    override val widgetRestBadge = "REST"
+    override val widgetReadyTitle = "Ready to train?"
+    override val widgetReadySubtitle = "Tap to open the gym"
+    override val widgetStartRestShort = "Rest"
+    override val widgetAdd15Short = "+15s"
+    override val widgetResetRestShort = "Skip"
+    override val widgetSetsShort = "sets"
 }
 
 fun getDudaStrings(languageCode: String): DudaStrings {

@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import dev.neverpaid.health.core.audio.AthleteSoundManager
 import dev.neverpaid.health.core.i18n.getDudaStrings
 import dev.neverpaid.health.core.mvi.BaseViewModel
+import dev.neverpaid.health.core.platform.LiveWorkoutWidgetState
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.core.platform.TimerNotificationIds
 import dev.neverpaid.health.core.storage.DudaLocalStorage
@@ -38,6 +39,11 @@ class WorkoutViewModel(
 
     init {
         observeWorkoutAndCatalog()
+        PlatformBridge.setRestTimerExternalListener {
+            viewModelScope.launch {
+                syncRestTimerFromClock()
+            }
+        }
     }
 
     override fun onAction(action: WorkoutUiAction) {
@@ -393,6 +399,30 @@ class WorkoutViewModel(
 
     private fun currentStrings() = getDudaStrings(DudaLocalStorage.getUserPreferences().languageCode)
 
+    private fun publishRestToWidget(endMs: Long, totalSec: Int) {
+        val workout = currentState.workout ?: return
+        val allSets = workout.exercises.flatMap { it.sets }
+        val currentEx = workout.exercises.firstOrNull { ex -> ex.sets.any { !it.isCompleted } }
+            ?: workout.exercises.lastOrNull()
+        val prefs = DudaLocalStorage.getUserPreferences()
+        PlatformBridge.updateLiveWorkoutWidget(
+            LiveWorkoutWidgetState(
+                workoutId = workout.id,
+                workoutTitle = workout.title,
+                startTimeEpochMs = workout.startTimeEpochMs.takeIf { it > 0L } ?: nowProvider(),
+                completedSets = allSets.count { it.isCompleted },
+                totalSets = allSets.size,
+                totalVolumeKg = workout.totalVolume,
+                currentExerciseName = currentEx?.exerciseName.orEmpty(),
+                restEndEpochMs = endMs,
+                restTotalSeconds = totalSec,
+                defaultRestSeconds = defaultRestSeconds,
+                useKilograms = currentState.isKgUnit,
+                languageCode = prefs.languageCode
+            )
+        )
+    }
+
     private fun scheduleRestAlarm(endMs: Long) {
         val strings = currentStrings()
         PlatformBridge.requestNotificationPermission()
@@ -447,6 +477,7 @@ class WorkoutViewModel(
                 totalSeconds = safeSec
             )
         )
+        publishRestToWidget(endMs, safeSec)
         scheduleRestAlarm(endMs)
         updateState {
             copy(
@@ -489,26 +520,44 @@ class WorkoutViewModel(
         }
     }
 
+    private fun clearLocalRestTimerUi() {
+        restTimerJob?.cancel()
+        restTimerJob = null
+        restTimerEndEpochMs = 0L
+        restTimerVirtualRemaining = 0
+        publishRestToWidget(0L, 0)
+        updateState {
+            copy(
+                restTimerSecondsRemaining = 0,
+                restTimerEndEpochMs = 0L,
+                isRestTimerActive = false
+            )
+        }
+    }
+
     fun syncRestTimerFromClock() {
         val now = nowProvider()
-        var endMs = restTimerEndEpochMs
-        var totalSec = restTimerTotalSeconds
-        if (endMs <= 0L) {
-            val saved = DudaLocalStorage.getRestTimerState() ?: return
-            val activeWorkoutId = currentState.workout?.id
-            if (!activeWorkoutId.isNullOrBlank() && saved.workoutId.isNotBlank() && saved.workoutId != activeWorkoutId) {
-                return
-            }
-            endMs = saved.endEpochMs
-            totalSec = saved.totalSeconds.coerceAtLeast(1)
-            restTimerEndEpochMs = endMs
-            restTimerTotalSeconds = totalSec
+        val saved = DudaLocalStorage.getRestTimerState()
+        val activeWorkoutId = currentState.workout?.id
+        val validSaved = saved?.takeIf {
+            activeWorkoutId.isNullOrBlank() || it.workoutId.isBlank() || it.workoutId == activeWorkoutId
         }
-        if (endMs <= 0L) return
+        if (validSaved == null) {
+            if (restTimerEndEpochMs > 0L || currentState.isRestTimerActive) {
+                clearLocalRestTimerUi()
+            }
+            return
+        }
+        val endMs = validSaved.endEpochMs
+        val totalSec = validSaved.totalSeconds.coerceAtLeast(1)
         val remaining = ceil((endMs - now) / 1000.0).toInt().coerceAtLeast(0)
         if (remaining <= 0) {
+            restTimerEndEpochMs = endMs
+            restTimerTotalSeconds = totalSec
             completeRestTimer(expiredInBackground = (now - endMs) > 2500L)
         } else {
+            restTimerEndEpochMs = endMs
+            restTimerTotalSeconds = totalSec
             restTimerVirtualRemaining = remaining
             updateState {
                 copy(
@@ -532,6 +581,7 @@ class WorkoutViewModel(
         restTimerVirtualRemaining = 0
         DudaLocalStorage.setRestTimerState(null)
         PlatformBridge.cancelTimerNotification(TimerNotificationIds.REST)
+        publishRestToWidget(0L, 0)
         updateState {
             copy(
                 restTimerSecondsRemaining = 0,
@@ -569,6 +619,7 @@ class WorkoutViewModel(
                 totalSeconds = newTotal
             )
         )
+        publishRestToWidget(newEnd, newTotal)
         scheduleRestAlarm(newEnd)
         updateState {
             copy(
@@ -590,6 +641,7 @@ class WorkoutViewModel(
         restTimerVirtualRemaining = 0
         DudaLocalStorage.setRestTimerState(null)
         PlatformBridge.cancelTimerNotification(TimerNotificationIds.REST)
+        publishRestToWidget(0L, 0)
         updateState {
             copy(
                 restTimerSecondsRemaining = 0,
@@ -602,6 +654,7 @@ class WorkoutViewModel(
     override fun onCleared() {
         super.onCleared()
         restTimerJob?.cancel()
+        PlatformBridge.setRestTimerExternalListener(null)
     }
 }
 

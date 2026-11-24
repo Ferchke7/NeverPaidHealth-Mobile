@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
 import dev.neverpaid.health.core.designsystem.NeverPaidHealthTheme
+import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.domain.repository.NeverPaidRepository
 import dev.neverpaid.health.navigation.NeverPaidHealthApp
 import kotlinx.coroutines.launch
@@ -19,7 +20,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        handleAuthIntent(intent)
+        handleIncomingIntent(intent)
 
         setContent {
             NeverPaidHealthTheme {
@@ -39,12 +40,20 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        handleAuthIntent(intent)
+        setIntent(intent)
+        handleIncomingIntent(intent)
     }
 
-    private fun handleAuthIntent(intent: Intent?) {
+    private fun handleIncomingIntent(intent: Intent?) {
+        if (intent?.getStringExtra(EXTRA_NAV_TARGET) == NAV_TARGET_ACTIVE_WORKOUT) {
+            PlatformBridge.markOpenActiveWorkoutPending()
+        }
         val uri = intent?.data ?: return
         if (uri.scheme.equals("duda", ignoreCase = true)) {
+            if (uri.host.equals("workout", ignoreCase = true)) {
+                PlatformBridge.markOpenActiveWorkoutPending()
+                return
+            }
             val token = uri.getQueryParameter("token") ?: uri.getQueryParameter("access_token")
             val idToken = uri.getQueryParameter("id_token")
             if (!token.isNullOrBlank()) {
@@ -57,5 +66,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    companion object {
+        const val EXTRA_NAV_TARGET = "extra_nav_target"
+        const val NAV_TARGET_ACTIVE_WORKOUT = "active_workout"
     }
 }

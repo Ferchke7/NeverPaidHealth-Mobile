@@ -159,6 +159,8 @@ class AndroidUpgradeStartupSmokeTest {
         )
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         val shadowNm = org.robolectric.Shadows.shadowOf(nm)
+        dev.neverpaid.health.core.platform.PlatformBridge.updateLiveWorkoutWidget(null)
+        shadowNm.cancelAll()
 
         val triggerAt = System.currentTimeMillis() + 60_000L
         dev.neverpaid.health.core.platform.PlatformBridge.scheduleTimerNotification(
@@ -198,6 +200,96 @@ class AndroidUpgradeStartupSmokeTest {
         )
         org.junit.Assert.assertTrue(
             "Expected notifications cleared after cancel",
+            shadowNm.allNotifications.isEmpty()
+        )
+    }
+
+    @Test
+    fun liveWorkoutNotificationAndHomeWidgetActions_updateRestAndClearCleanly() {
+        val context = ApplicationProvider.getApplicationContext<android.app.Application>()
+        org.robolectric.Shadows.shadowOf(context).grantPermissions(
+            android.Manifest.permission.POST_NOTIFICATIONS
+        )
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val shadowNm = org.robolectric.Shadows.shadowOf(nm)
+        shadowNm.cancelAll()
+        dev.neverpaid.health.core.storage.DudaLocalStorage.setRestTimerState(null)
+
+        dev.neverpaid.health.core.platform.PlatformBridge.updateLiveWorkoutWidget(
+            dev.neverpaid.health.core.platform.LiveWorkoutWidgetState(
+                workoutId = "w-live-1",
+                workoutTitle = "Push Hypertrophy",
+                startTimeEpochMs = System.currentTimeMillis() - 180_000L,
+                completedSets = 4,
+                totalSets = 12,
+                totalVolumeKg = 1480.0,
+                currentExerciseName = "Bench Press",
+                restEndEpochMs = 0L,
+                restTotalSeconds = 0,
+                defaultRestSeconds = 90,
+                useKilograms = true,
+                languageCode = "ru"
+            )
+        )
+
+        org.junit.Assert.assertTrue(
+            "Expected live workout notification after starting gym session",
+            shadowNm.allNotifications.any { notif ->
+                notif.extras.getString(android.app.Notification.EXTRA_TITLE) == "Push Hypertrophy"
+            }
+        )
+
+        val actionReceiver = dev.neverpaid.health.core.platform.WorkoutWidgetActionReceiver()
+        actionReceiver.onReceive(
+            context,
+            Intent(context, dev.neverpaid.health.core.platform.WorkoutWidgetActionReceiver::class.java).apply {
+                action = dev.neverpaid.health.core.platform.WorkoutWidgetActionReceiver.ACTION_REST_START
+            }
+        )
+        val startedRest = dev.neverpaid.health.core.storage.DudaLocalStorage.getRestTimerState()
+        org.junit.Assert.assertNotNull("Expected ACTION_REST_START to persist rest timer", startedRest)
+        org.junit.Assert.assertTrue(
+            "Expected live notification title to reflect active rest",
+            shadowNm.allNotifications.any { notif ->
+                notif.extras.getString(android.app.Notification.EXTRA_TITLE)?.contains("Push Hypertrophy") == true &&
+                    notif.extras.getString(android.app.Notification.EXTRA_TITLE)?.contains("ОТДЫХ") == true
+            }
+        )
+
+        actionReceiver.onReceive(
+            context,
+            Intent(context, dev.neverpaid.health.core.platform.WorkoutWidgetActionReceiver::class.java).apply {
+                action = dev.neverpaid.health.core.platform.WorkoutWidgetActionReceiver.ACTION_REST_ADD_15
+            }
+        )
+        val extendedRest = dev.neverpaid.health.core.storage.DudaLocalStorage.getRestTimerState()
+        org.junit.Assert.assertNotNull(extendedRest)
+        org.junit.Assert.assertTrue(
+            "Expected +15s action to extend endEpochMs",
+            extendedRest!!.endEpochMs >= startedRest!!.endEpochMs + 14_000L
+        )
+
+        actionReceiver.onReceive(
+            context,
+            Intent(context, dev.neverpaid.health.core.platform.WorkoutWidgetActionReceiver::class.java).apply {
+                action = dev.neverpaid.health.core.platform.WorkoutWidgetActionReceiver.ACTION_REST_SKIP
+            }
+        )
+        org.junit.Assert.assertNull(
+            "Expected ACTION_REST_SKIP to clear persisted rest timer",
+            dev.neverpaid.health.core.storage.DudaLocalStorage.getRestTimerState()
+        )
+
+        val appWidgetManager = android.appwidget.AppWidgetManager.getInstance(context)
+        dev.neverpaid.health.core.platform.DudaWorkoutAppWidgetProvider().onUpdate(
+            context,
+            appWidgetManager,
+            intArrayOf(1)
+        )
+
+        dev.neverpaid.health.core.platform.PlatformBridge.updateLiveWorkoutWidget(null)
+        org.junit.Assert.assertTrue(
+            "Expected live workout notification cleared when workout ends",
             shadowNm.allNotifications.isEmpty()
         )
     }

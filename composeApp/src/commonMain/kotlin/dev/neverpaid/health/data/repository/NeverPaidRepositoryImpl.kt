@@ -9,6 +9,7 @@ import dev.neverpaid.health.core.i18n.getDudaStrings
 import dev.neverpaid.health.core.math.SetCalculationInput
 import dev.neverpaid.health.core.math.StrengthCalculator
 import dev.neverpaid.health.core.network.DudaApiClient
+import dev.neverpaid.health.core.platform.LiveWorkoutWidgetState
 import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.core.platform.TimerNotificationIds
 import dev.neverpaid.health.core.storage.DudaLocalStorage
@@ -139,6 +140,7 @@ class NeverPaidRepositoryImpl(
 
     init {
         syncFocusTimerFromClock()
+        publishLiveWorkoutWidget(activeWorkoutFlow.value)
         apiClient?.onUnauthorized = {
             if (!isGuestUser()) {
                 isAuthenticatedFlow.value = false
@@ -367,6 +369,9 @@ class NeverPaidRepositoryImpl(
         workoutHistoryFlow.value = emptyList()
         routineForkAliases.clear()
         programForkAliases.clear()
+        PlatformBridge.cancelTimerNotification(TimerNotificationIds.REST)
+        PlatformBridge.cancelTimerNotification(TimerNotificationIds.FOCUS)
+        PlatformBridge.updateLiveWorkoutWidget(null)
     }
 
     // ========================================================================
@@ -667,6 +672,7 @@ class NeverPaidRepositoryImpl(
         activeWorkoutFlow.value = newWorkout
         isActiveWorkoutSheetOpenFlow.value = true
         DudaLocalStorage.setActiveWorkoutDraft(newWorkout)
+        publishLiveWorkoutWidget(newWorkout)
 
         // Sync start with backend & fetch previous sets/notes (matching useStartWorkout.ts)
         if (apiClient != null && !isGuestUser()) {
@@ -805,6 +811,7 @@ class NeverPaidRepositoryImpl(
             if (cur == null || cur.id != normalized.id || (pendingLocalWorkoutId != normalized.id && activeWorkoutSyncJob?.isActive != true)) {
                 activeWorkoutFlow.value = normalized
                 DudaLocalStorage.setActiveWorkoutDraft(normalized)
+                publishLiveWorkoutWidget(normalized)
                 fetchPreviousForActiveWorkout(normalized)
             }
             return normalized
@@ -814,9 +821,43 @@ class NeverPaidRepositoryImpl(
                 activeWorkoutFlow.value = null
                 isActiveWorkoutSheetOpenFlow.value = false
                 DudaLocalStorage.setActiveWorkoutDraft(null)
+                DudaLocalStorage.setRestTimerState(null)
+                PlatformBridge.cancelTimerNotification(TimerNotificationIds.REST)
+                publishLiveWorkoutWidget(null)
             }
             return null
         }
+    }
+
+    private fun publishLiveWorkoutWidget(workout: Workout?) {
+        if (workout == null) {
+            PlatformBridge.updateLiveWorkoutWidget(null)
+            return
+        }
+        val allSets = workout.exercises.flatMap { it.sets }
+        val currentEx = workout.exercises.firstOrNull { ex -> ex.sets.any { !it.isCompleted } }
+            ?: workout.exercises.lastOrNull()
+        val now = nowProvider()
+        val savedRest = DudaLocalStorage.getRestTimerState()?.takeIf {
+            (it.workoutId.isBlank() || it.workoutId == workout.id) && it.endEpochMs > now
+        }
+        val prefs = preferencesFlow.value
+        PlatformBridge.updateLiveWorkoutWidget(
+            LiveWorkoutWidgetState(
+                workoutId = workout.id,
+                workoutTitle = workout.title,
+                startTimeEpochMs = workout.startTimeEpochMs.takeIf { it > 0L } ?: now,
+                completedSets = allSets.count { it.isCompleted },
+                totalSets = allSets.size,
+                totalVolumeKg = workout.totalVolume,
+                currentExerciseName = currentEx?.exerciseName.orEmpty(),
+                restEndEpochMs = savedRest?.endEpochMs ?: 0L,
+                restTotalSeconds = savedRest?.totalSeconds ?: 0,
+                defaultRestSeconds = prefs.defaultRestSeconds,
+                useKilograms = prefs.useKilograms,
+                languageCode = prefs.languageCode
+            )
+        )
     }
 
     private fun workoutStructureSignature(w: Workout?): String {
@@ -845,6 +886,7 @@ class NeverPaidRepositoryImpl(
         )
         activeWorkoutFlow.value = updated
         DudaLocalStorage.setActiveWorkoutDraft(updated)
+        publishLiveWorkoutWidget(updated)
 
         val nextSignature = workoutStructureSignature(updated)
         if (prevSignature != nextSignature && updated.exercises.isNotEmpty()) {
@@ -915,6 +957,9 @@ class NeverPaidRepositoryImpl(
         activeWorkoutFlow.value = null
         isActiveWorkoutSheetOpenFlow.value = false
         DudaLocalStorage.setActiveWorkoutDraft(null)
+        DudaLocalStorage.setRestTimerState(null)
+        PlatformBridge.cancelTimerNotification(TimerNotificationIds.REST)
+        publishLiveWorkoutWidget(null)
 
         if (apiClient != null) {
             scope.launch {
@@ -951,6 +996,9 @@ class NeverPaidRepositoryImpl(
         activeWorkoutFlow.value = null
         isActiveWorkoutSheetOpenFlow.value = false
         DudaLocalStorage.setActiveWorkoutDraft(null)
+        DudaLocalStorage.setRestTimerState(null)
+        PlatformBridge.cancelTimerNotification(TimerNotificationIds.REST)
+        publishLiveWorkoutWidget(null)
         if (current != null && apiClient != null) {
             scope.launch {
                 try {
@@ -2608,5 +2656,6 @@ class NeverPaidRepositoryImpl(
     override suspend fun updatePreferences(preferences: UserPreferencesData) {
         preferencesFlow.value = preferences
         DudaLocalStorage.setUserPreferences(preferences)
+        activeWorkoutFlow.value?.let { publishLiveWorkoutWidget(it) }
     }
 }

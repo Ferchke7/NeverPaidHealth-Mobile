@@ -190,6 +190,22 @@ actual object PlatformBridge {
     actual fun isAppInForeground(): Boolean {
         return UIApplication.sharedApplication.applicationState == UIApplicationState.UIApplicationStateActive
     }
+
+    actual fun updateLiveWorkoutWidget(state: LiveWorkoutWidgetState?) {
+        // Store state snapshot cleanly for potential WidgetKit extension without requiring entitlements
+        val defaults = NSUserDefaults.standardUserDefaults
+        if (state == null) {
+            defaults.removeObjectForKey("np_live_workout_widget_id")
+        } else {
+            defaults.setObject(state.workoutId, forKey = "np_live_workout_widget_id")
+        }
+    }
+
+    actual fun setRestTimerExternalListener(listener: (() -> Unit)?) {
+        // Android notification/appwidget quick actions trigger this hook; no-op on iOS.
+    }
+
+    actual fun consumeOpenActiveWorkoutPending(): Boolean = false
 }
 
 @Composable

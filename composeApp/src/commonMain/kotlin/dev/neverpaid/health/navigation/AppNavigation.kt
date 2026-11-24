@@ -30,6 +30,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -48,6 +49,7 @@ import dev.neverpaid.health.core.designsystem.SurfaceWhite
 import dev.neverpaid.health.core.designsystem.WorkoutSummaryBottomSheet
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.i18n.getDudaStrings
+import dev.neverpaid.health.core.platform.PlatformBridge
 import dev.neverpaid.health.domain.model.FocusTimerState
 import dev.neverpaid.health.domain.repository.NeverPaidRepository
 import dev.neverpaid.health.domain.repository.UserPreferencesData
@@ -149,11 +151,13 @@ fun DudaMobileApp() {
         }
     }
 
+    var resumeEventCount by remember { mutableIntStateOf(0) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, repository) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 repository.syncFocusTimerFromClock()
+                resumeEventCount += 1
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -189,6 +193,12 @@ fun DudaMobileApp() {
             if (currentScreen != target) {
                 previousScreen = currentScreen
                 currentScreen = target
+            }
+        }
+
+        LaunchedEffect(isAuthenticated, activeWorkout?.id, resumeEventCount) {
+            if (activeWorkout != null && PlatformBridge.consumeOpenActiveWorkoutPending()) {
+                navigateTo(Screen.ActiveWorkout)
             }
         }
 

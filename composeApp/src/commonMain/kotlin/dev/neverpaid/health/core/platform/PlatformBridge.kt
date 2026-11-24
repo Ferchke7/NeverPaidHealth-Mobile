@@ -2,11 +2,28 @@ package dev.neverpaid.health.core.platform
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.ImageBitmap
+import kotlinx.serialization.Serializable
 
 object TimerNotificationIds {
     const val REST = "duda_rest_timer"
     const val FOCUS = "duda_focus_timer"
 }
+
+@Serializable
+data class LiveWorkoutWidgetState(
+    val workoutId: String,
+    val workoutTitle: String,
+    val startTimeEpochMs: Long,
+    val completedSets: Int,
+    val totalSets: Int,
+    val totalVolumeKg: Double,
+    val currentExerciseName: String = "",
+    val restEndEpochMs: Long = 0L,
+    val restTotalSeconds: Int = 0,
+    val defaultRestSeconds: Int = 90,
+    val useKilograms: Boolean = true,
+    val languageCode: String = "ru"
+)
 
 expect object PlatformBridge {
     fun vibrate()
@@ -37,6 +54,9 @@ expect object PlatformBridge {
     fun playAlertSound()
     fun requestNotificationPermission()
     fun isAppInForeground(): Boolean
+    fun updateLiveWorkoutWidget(state: LiveWorkoutWidgetState?)
+    fun setRestTimerExternalListener(listener: (() -> Unit)?)
+    fun consumeOpenActiveWorkoutPending(): Boolean
 }
 
 /**
