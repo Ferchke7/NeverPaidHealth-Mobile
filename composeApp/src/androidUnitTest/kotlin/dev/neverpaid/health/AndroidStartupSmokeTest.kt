@@ -160,7 +160,7 @@ class AndroidUpgradeStartupSmokeTest {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         val shadowNm = org.robolectric.Shadows.shadowOf(nm)
         dev.neverpaid.health.core.platform.PlatformBridge.updateLiveWorkoutWidget(null)
-        shadowNm.cancelAll()
+        nm.cancelAll()
 
         val triggerAt = System.currentTimeMillis() + 60_000L
         dev.neverpaid.health.core.platform.PlatformBridge.scheduleTimerNotification(
@@ -212,7 +212,7 @@ class AndroidUpgradeStartupSmokeTest {
         )
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         val shadowNm = org.robolectric.Shadows.shadowOf(nm)
-        shadowNm.cancelAll()
+        nm.cancelAll()
         dev.neverpaid.health.core.storage.DudaLocalStorage.setRestTimerState(null)
 
         dev.neverpaid.health.core.platform.PlatformBridge.updateLiveWorkoutWidget(
