@@ -1,5 +1,6 @@
 package dev.neverpaid.health.data.repository
 
+import kotlinx.datetime.Instant
 import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
@@ -51,6 +52,7 @@ import dev.neverpaid.health.domain.model.SaveTodoRequestDto
 import dev.neverpaid.health.domain.model.StartWorkoutRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
 import dev.neverpaid.health.domain.model.TrainingProgram
+import dev.neverpaid.health.domain.model.UpdateWorkoutRequestDto
 import dev.neverpaid.health.domain.model.UserProfileDto
 import dev.neverpaid.health.domain.model.Workout
 import dev.neverpaid.health.domain.model.WorkoutExercise
@@ -60,7 +62,9 @@ import dev.neverpaid.health.domain.repository.UserPreferencesData
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -82,6 +86,8 @@ class NeverPaidRepositoryImpl(
         SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> }
     )
     private val templateSyncMutex = Mutex()
+    private var activeWorkoutSyncJob: Job? = null
+    private var pendingLocalWorkoutId: String? = null
     private val routineForkAliases = mutableMapOf<String, String>()
     private val programForkAliases = mutableMapOf<String, String>()
     private val json = Json {
@@ -157,22 +163,18 @@ class NeverPaidRepositoryImpl(
     }
 
     private suspend fun refreshInitialAuthenticatedData() {
-        val client = apiClient ?: return
-        try {
-            exercisesFlow.value = client.getExercises()
-        } catch (_: Throwable) {}
-        try {
-            userRoutinesFlow.value = client.getRoutines()
-        } catch (_: Throwable) {}
-        try {
-            activeProgramBundleFlow.value = client.getActiveProgram()
-        } catch (_: Throwable) {}
-        try {
-            workoutHistoryFlow.value = client.getWorkouts(limit = 50)
-        } catch (_: Throwable) {}
-        try {
-            recordGroupsFlow.value = client.getProgressRecords()
-        } catch (_: Throwable) {}
+        syncWithServer()
+    }
+
+    override suspend fun syncWithServer() {
+        if (apiClient == null || !isAuthenticatedFlow.value || isGuestUser()) return
+        try { refreshExercises() } catch (_: Throwable) {}
+        try { refreshRoutines() } catch (_: Throwable) {}
+        try { refreshActiveProgram() } catch (_: Throwable) {}
+        try { refreshInstalledPrograms() } catch (_: Throwable) {}
+        try { refreshWorkoutHistory() } catch (_: Throwable) {}
+        try { refreshActiveWorkout() } catch (_: Throwable) {}
+        try { refreshProgressRecords() } catch (_: Throwable) {}
     }
 
     // ========================================================================
@@ -344,12 +346,21 @@ class NeverPaidRepositoryImpl(
     }
 
     override suspend fun logout() {
+        activeWorkoutSyncJob?.cancel()
+        pendingLocalWorkoutId = null
         apiClient?.logout()
         DudaLocalStorage.clearAuthSession()
         isAuthenticatedFlow.value = false
         currentUserFlow.value = null
         activeWorkoutFlow.value = null
         isActiveWorkoutSheetOpenFlow.value = false
+        userRoutinesFlow.value = emptyList()
+        activeProgramBundleFlow.value = null
+        installedProgramsFlow.value = emptyList()
+        programsFlow.value = emptyList()
+        workoutHistoryFlow.value = emptyList()
+        routineForkAliases.clear()
+        programForkAliases.clear()
     }
 
     // ========================================================================
@@ -652,7 +663,8 @@ class NeverPaidRepositoryImpl(
         DudaLocalStorage.setActiveWorkoutDraft(newWorkout)
 
         // Sync start with backend & fetch previous sets/notes (matching useStartWorkout.ts)
-        if (apiClient != null) {
+        if (apiClient != null && !isGuestUser()) {
+            pendingLocalWorkoutId = workoutId
             scope.launch {
                 try {
                     apiClient.startWorkoutRemote(
@@ -660,10 +672,16 @@ class NeverPaidRepositoryImpl(
                             id = workoutId,
                             routineId = routineId?.takeIf { !it.startsWith("prebuilt-") },
                             name = newWorkout.name,
-                            replaceActive = true
+                            replaceActive = true,
+                            exercises = buildWorkoutExercisePayloads(newWorkout.exercises, forceCompleted = false)
                         )
                     )
-                } catch (_: Exception) {}
+                } catch (_: Exception) {
+                } finally {
+                    if (pendingLocalWorkoutId == workoutId) {
+                        pendingLocalWorkoutId = null
+                    }
+                }
 
                 fetchPreviousForActiveWorkout(newWorkout)
             }
@@ -713,6 +731,88 @@ class NeverPaidRepositoryImpl(
         } catch (_: Exception) {}
     }
 
+    private fun buildWorkoutExercisePayloads(
+        exercises: List<WorkoutExercise>,
+        forceCompleted: Boolean
+    ): List<FinishExercisePayloadDto> {
+        return exercises.map { ex ->
+            FinishExercisePayloadDto(
+                exerciseId = ex.exerciseId,
+                exerciseName = ex.exerciseName,
+                measurementType = ex.measurementType,
+                notes = ex.notes.trim().takeIf { it.isNotEmpty() },
+                sets = ex.sets.mapIndexed { idx, s ->
+                    FinishSetPayloadDto(
+                        id = s.id.ifBlank { PlatformBridge.generateUuid() },
+                        setNumber = idx + 1,
+                        setType = s.setType,
+                        weightKg = s.weightKg,
+                        reps = s.reps,
+                        rpe = s.rpe,
+                        durationSeconds = s.durationSeconds,
+                        distanceMeters = s.distanceMeters,
+                        completed = if (forceCompleted) true else s.isCompleted
+                    )
+                }
+            )
+        }
+    }
+
+    private fun normalizeRemoteActiveWorkout(remote: Workout): Workout {
+        val parsedStartMs = if (remote.startTimeEpochMs > 0L) {
+            remote.startTimeEpochMs
+        } else {
+            runCatching { Instant.parse(remote.startedAt).toEpochMilliseconds() }
+                .getOrElse { PlatformBridge.currentTimeMillis() }
+        }
+        val normalizedExercises = remote.exercises.mapIndexed { exIdx, ex ->
+            ex.copy(
+                instanceId = ex.instanceId.ifBlank { PlatformBridge.generateUuid() },
+                orderIndex = ex.orderIndex.takeIf { it >= 0 } ?: exIdx,
+                sets = ex.sets.mapIndexed { sIdx, s ->
+                    s.copy(
+                        id = s.id.ifBlank { PlatformBridge.generateUuid() },
+                        setNumber = if (s.setNumber > 0) s.setNumber else sIdx + 1
+                    )
+                }
+            )
+        }
+        return remote.copy(
+            startTimeEpochMs = parsedStartMs,
+            exercises = normalizedExercises,
+            isFinished = false
+        )
+    }
+
+    override suspend fun refreshActiveWorkout(): Workout? {
+        val client = apiClient ?: return activeWorkoutFlow.value
+        if (isGuestUser()) return activeWorkoutFlow.value
+        val remote = try {
+            client.getActiveWorkoutRemote()
+        } catch (_: Exception) {
+            return activeWorkoutFlow.value
+        }
+
+        if (remote != null) {
+            val normalized = normalizeRemoteActiveWorkout(remote)
+            val cur = activeWorkoutFlow.value
+            if (cur == null || cur.id != normalized.id || (pendingLocalWorkoutId != normalized.id && activeWorkoutSyncJob?.isActive != true)) {
+                activeWorkoutFlow.value = normalized
+                DudaLocalStorage.setActiveWorkoutDraft(normalized)
+                fetchPreviousForActiveWorkout(normalized)
+            }
+            return normalized
+        } else {
+            val cur = activeWorkoutFlow.value
+            if (cur != null && pendingLocalWorkoutId != cur.id) {
+                activeWorkoutFlow.value = null
+                isActiveWorkoutSheetOpenFlow.value = false
+                DudaLocalStorage.setActiveWorkoutDraft(null)
+            }
+            return null
+        }
+    }
+
     private fun workoutStructureSignature(w: Workout?): String {
         if (w == null) return ""
         return w.exercises.joinToString("|") { ex ->
@@ -745,9 +845,30 @@ class NeverPaidRepositoryImpl(
             syncRoutineFromWorkout(updated)
             syncProgramFromWorkout(updated, syncRemote = true)
         }
+
+        if (apiClient != null && !isGuestUser()) {
+            activeWorkoutSyncJob?.cancel()
+            activeWorkoutSyncJob = scope.launch {
+                delay(450)
+                val latest = activeWorkoutFlow.value ?: return@launch
+                if (latest.id != updated.id) return@launch
+                try {
+                    apiClient.updateActiveWorkoutRemote(
+                        workoutId = latest.id,
+                        request = UpdateWorkoutRequestDto(
+                            routineId = latest.routineId?.takeIf { !it.startsWith("prebuilt-") },
+                            name = latest.name,
+                            exercises = buildWorkoutExercisePayloads(latest.exercises, forceCompleted = false)
+                        )
+                    )
+                } catch (_: Exception) {}
+            }
+        }
     }
 
     override fun finishActiveWorkout(): Workout? {
+        activeWorkoutSyncJob?.cancel()
+        pendingLocalWorkoutId = null
         val current = activeWorkoutFlow.value ?: return null
         val nowMs = PlatformBridge.currentTimeMillis()
         val startMs = if (current.startTimeEpochMs > 0) current.startTimeEpochMs else (nowMs - 1800_000L)
@@ -794,27 +915,7 @@ class NeverPaidRepositoryImpl(
                 try {
                     val finishReq = FinishWorkoutRequestDto(
                         durationSeconds = durationSec,
-                        exercises = validExercises.map { ex ->
-                            FinishExercisePayloadDto(
-                                exerciseId = ex.exerciseId,
-                                exerciseName = ex.exerciseName,
-                                measurementType = ex.measurementType,
-                                notes = ex.notes.trim().takeIf { it.isNotEmpty() },
-                                sets = ex.sets.mapIndexed { idx, s ->
-                                    FinishSetPayloadDto(
-                                        id = s.id.ifBlank { PlatformBridge.generateUuid() },
-                                        setNumber = idx + 1,
-                                        setType = s.setType,
-                                        weightKg = s.weightKg,
-                                        reps = s.reps,
-                                        rpe = s.rpe,
-                                        durationSeconds = s.durationSeconds,
-                                        distanceMeters = s.distanceMeters,
-                                        completed = true
-                                    )
-                                }
-                            )
-                        }
+                        exercises = buildWorkoutExercisePayloads(validExercises, forceCompleted = true)
                     )
                     try {
                         apiClient.startWorkoutRemote(
@@ -822,7 +923,8 @@ class NeverPaidRepositoryImpl(
                                 id = finishedWorkout.id,
                                 routineId = finishedWorkout.routineId?.takeIf { !it.startsWith("prebuilt-") },
                                 name = finishedWorkout.name,
-                                replaceActive = true
+                                replaceActive = true,
+                                exercises = buildWorkoutExercisePayloads(validExercises, forceCompleted = false)
                             )
                         )
                     } catch (_: Exception) {}
@@ -837,6 +939,8 @@ class NeverPaidRepositoryImpl(
     }
 
     override fun discardActiveWorkout() {
+        activeWorkoutSyncJob?.cancel()
+        pendingLocalWorkoutId = null
         val current = activeWorkoutFlow.value
         activeWorkoutFlow.value = null
         isActiveWorkoutSheetOpenFlow.value = false
@@ -1189,15 +1293,14 @@ class NeverPaidRepositoryImpl(
 
     override suspend fun refreshPrograms(tab: String, splitType: String?, search: String?): List<TrainingProgram> {
         val client = apiClient ?: return programsFlow.value
-        val activeProg = activeProgramBundleFlow.value?.program
+        val activeProgId = activeProgramBundleFlow.value?.program?.id
         val list = try {
             client.getPrograms(tab = tab, splitType = splitType, search = search).map { p ->
-                val isAct = activeProg != null && (p.id == activeProg.id || p.name.equals(activeProg.name, ignoreCase = true))
-                val overridden = if (isAct) applyCustomProgramOverride(p) else p
-                overridden.copy(isActive = isAct)
+                val isAct = activeProgId != null && p.id == activeProgId
+                p.copy(isActive = isAct)
             }
         } catch (_: Exception) {
-            programsFlow.value
+            programsFlow.value.ifEmpty { DudaLocalStorage.getCustomPrograms() }
         }
         programsFlow.value = list
         return list
@@ -1205,24 +1308,32 @@ class NeverPaidRepositoryImpl(
 
     override suspend fun refreshActiveProgram(): ActiveProgramBundle? {
         val client = apiClient ?: return activeProgramBundleFlow.value
+        var fromServer = false
         val active = try {
+            fromServer = true
             client.getActiveProgram()
         } catch (_: Exception) {
+            fromServer = false
             activeProgramBundleFlow.value ?: DudaLocalStorage.getActiveProgramBundle()
         }
         val effectiveActive = active?.let { bundle ->
-            val overriddenProg = bundle.program?.let { applyCustomProgramOverride(it).copy(isActive = true) }
-            bundle.copy(program = overriddenProg)
+            val prog = bundle.program?.let { p ->
+                if (fromServer) p.copy(isActive = true) else applyCustomProgramOverride(p).copy(isActive = true)
+            }
+            bundle.copy(program = prog)
         }
         activeProgramBundleFlow.value = effectiveActive
         if (effectiveActive != null) {
             DudaLocalStorage.setActiveProgramBundle(effectiveActive)
+            effectiveActive.program?.let { persistCustomProgramOverride(it) }
+        } else if (fromServer) {
+            DudaLocalStorage.setActiveProgramBundle(null)
         }
         val activeId = effectiveActive?.program?.id
-        val activeName = effectiveActive?.program?.name
         programsFlow.value = programsFlow.value.map {
-            val isAct = it.id == activeId || (activeName != null && it.name.equals(activeName, ignoreCase = true))
-            (if (isAct) applyCustomProgramOverride(it) else it).copy(isActive = isAct)
+            val isAct = it.id == activeId
+            val updated = if (isAct && effectiveActive?.program != null) effectiveActive.program else it
+            updated.copy(isActive = isAct)
         }
         return effectiveActive
     }
@@ -1230,9 +1341,9 @@ class NeverPaidRepositoryImpl(
     override suspend fun refreshInstalledPrograms(): List<ActiveProgramBundle> {
         val client = apiClient ?: return installedProgramsFlow.value
         val installed = try {
-            client.getInstalledPrograms().map { b ->
-                b.copy(program = b.program?.let { applyCustomProgramOverride(it) })
-            }
+            val remote = client.getInstalledPrograms()
+            remote.forEach { it.program?.let(::persistCustomProgramOverride) }
+            remote
         } catch (_: Exception) {
             installedProgramsFlow.value
         }

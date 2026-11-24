@@ -21,6 +21,8 @@ object DudaLocalStorage {
         ignoreUnknownKeys = true
         isLenient = true
         encodeDefaults = true
+        explicitNulls = false
+        coerceInputValues = true
     }
 
     private const val KEY_ACCESS_TOKEN = "np_access_token"
@@ -242,5 +244,9 @@ object DudaLocalStorage {
         setUserProfile(null)
         setActiveWorkoutDraft(null)
         setFocusTimerState(null)
+        setActiveProgramBundle(null)
+        PlatformBridge.remove(KEY_USER_ROUTINES)
+        PlatformBridge.remove(KEY_CUSTOM_PROGRAMS)
+        PlatformBridge.remove(KEY_WORKOUT_HISTORY)
     }
 }

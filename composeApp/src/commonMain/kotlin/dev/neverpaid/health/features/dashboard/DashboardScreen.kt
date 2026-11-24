@@ -48,6 +48,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -204,6 +205,10 @@ fun DashboardScreen(
     var searchQuery by remember { mutableStateOf("") }
     var sortMode by remember { mutableStateOf("custom") } // "custom" | "prebuilt" | "alpha"
 
+    LaunchedEffect(Unit) {
+        onAction(DashboardUiAction.OnRefreshClick)
+    }
+
     if (state.isLoading && state.prebuiltRoutines.isEmpty() && state.customRoutines.isEmpty()) {
         Box(
             modifier = modifier
@@ -220,12 +225,22 @@ fun DashboardScreen(
     }
 
     val combinedRoutines = remember(state.customRoutines, state.prebuiltRoutines, searchQuery, sortMode) {
-        val taggedCustom = state.customRoutines.map { true to it }
-        val taggedPrebuilt = state.prebuiltRoutines.map { false to it }
+        val personal = state.customRoutines
+            .filter { it.userId != "00000000-0000-0000-0000-000000000000" && !it.id.startsWith("prebuilt-") }
+            .map { true to it }
+        val systemLibrary = state.customRoutines
+            .filter { it.userId == "00000000-0000-0000-0000-000000000000" }
+            .map { false to it }
+        val personalTitles = personal.map { it.second.title.trim().lowercase() }.toSet()
+        val taggedPrebuilt = state.prebuiltRoutines
+            .filterNot { it.title.trim().lowercase() in personalTitles }
+            .map { false to it }
+        val allLibrary = if (systemLibrary.isNotEmpty()) systemLibrary else taggedPrebuilt
+
         val ordered = when (sortMode) {
-            "prebuilt" -> taggedPrebuilt + taggedCustom
-            "alpha" -> (taggedCustom + taggedPrebuilt).sortedBy { it.second.title.lowercase() }
-            else -> taggedCustom + taggedPrebuilt
+            "prebuilt" -> allLibrary
+            "alpha" -> personal.sortedBy { it.second.title.lowercase() }
+            else -> personal
         }
         val q = searchQuery.trim().lowercase()
         if (q.isEmpty()) {

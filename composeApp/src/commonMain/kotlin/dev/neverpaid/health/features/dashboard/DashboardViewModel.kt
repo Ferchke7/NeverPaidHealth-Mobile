@@ -24,6 +24,15 @@ class DashboardViewModel(
         refreshRemoteData()
     }
 
+    private fun refreshRemoteData() {
+        launchGuarded(
+            onError = { updateState { copy(isLoading = false) } }
+        ) {
+            repository.syncWithServer()
+            updateState { copy(isLoading = false) }
+        }
+    }
+
     override fun onAction(action: DashboardUiAction) {
         when (action) {
             DashboardUiAction.OnResumeWorkoutClick -> {
@@ -201,18 +210,6 @@ class DashboardViewModel(
                 )
             }
         }.launchIn(viewModelScope)
-    }
-
-    private fun refreshRemoteData() {
-        launchGuarded(
-            onError = { updateState { copy(isLoading = false) } }
-        ) {
-            repository.getRoutines()
-            repository.getActiveProgram()
-            repository.refreshExercises()
-            repository.refreshWorkouts()
-            updateState { copy(isLoading = false) }
-        }
     }
 
     private fun saveRoutine() {

@@ -137,6 +137,8 @@ interface NeverPaidRepository {
     fun updateActiveWorkout(workout: Workout)
     fun finishActiveWorkout(): Workout?
     fun discardActiveWorkout()
+    suspend fun refreshActiveWorkout(): Workout? = null
+    suspend fun syncWithServer() {}
 
     // --- 5. WORKOUT HISTORY & PROGRESS ---
     fun getWorkoutHistory(): Flow<List<Workout>>

@@ -28,6 +28,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (!repository.isGuestUser()) {
+            lifecycleScope.launch {
+                runCatching { repository.syncWithServer() }
+            }
+        }
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleAuthIntent(intent)

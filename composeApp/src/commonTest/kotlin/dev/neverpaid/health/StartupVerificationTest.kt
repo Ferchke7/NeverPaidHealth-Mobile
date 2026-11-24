@@ -8,9 +8,12 @@ import dev.neverpaid.health.core.network.DudaApiClient
 import dev.neverpaid.health.data.catalog.ExerciseVisualResolver
 import dev.neverpaid.health.data.catalog.StandardExerciseCatalog
 import dev.neverpaid.health.data.repository.NeverPaidRepositoryImpl
+import dev.neverpaid.health.domain.model.TrainingProgram
+import dev.neverpaid.health.domain.model.Workout
 import dev.neverpaid.health.domain.model.WorkoutSet
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -89,5 +92,57 @@ class StartupVerificationTest {
         val afterSecondEdit = repo.getUserRoutinesFlow().first()
         assertEquals(beforeCount + 1, afterSecondEdit.size)
         assertEquals(reboundId, repo.getActiveWorkout().first()?.routineId)
+
+        // Logout clears user-scoped caches cleanly
+        repo.logout()
+        assertEquals(0, repo.getUserRoutinesFlow().first().size)
+    }
+
+    @Test
+    fun backendJsonWithNullableFields_decodesCleanlyWithCoerceInputValues() {
+        val codec = Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            encodeDefaults = true
+            explicitNulls = false
+            coerceInputValues = true
+        }
+        val activeWorkoutJson = """
+            {
+              "id": "w-1",
+              "user_id": "u-1",
+              "name": "Push 1",
+              "routine_id": null,
+              "status": "in_progress",
+              "started_at": "2026-11-24T08:00:00Z",
+              "finished_at": null,
+              "total_volume_kg": null,
+              "completed_sets_count": null,
+              "duration_seconds": null,
+              "exercises": []
+            }
+        """.trimIndent()
+        val parsedWorkout = codec.decodeFromString<Workout>(activeWorkoutJson)
+        assertEquals("w-1", parsedWorkout.id)
+        assertEquals(0.0, parsedWorkout.totalVolumeKg)
+        assertEquals(0L, parsedWorkout.durationSeconds)
+
+        val programJson = """
+            {
+              "id": "p-1",
+              "user_id": "u-1",
+              "name": "Jeff Nippard PPL",
+              "description": null,
+              "split_type": "ppl",
+              "days_per_week": 6,
+              "level": "advanced",
+              "is_public": false,
+              "days": [],
+              "updated_at": "2026-11-24T08:00:00Z"
+            }
+        """.trimIndent()
+        val parsedProg = codec.decodeFromString<TrainingProgram>(programJson)
+        assertEquals("u-1", parsedProg.authorUserId)
+        assertEquals("2026-11-24T08:00:00Z", parsedProg.updatedAt)
     }
 }

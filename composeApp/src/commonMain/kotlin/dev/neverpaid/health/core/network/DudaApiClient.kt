@@ -48,6 +48,7 @@ import dev.neverpaid.health.domain.model.StartWorkoutRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
 import dev.neverpaid.health.domain.model.TrainingProgram
 import dev.neverpaid.health.domain.model.UpdateUnitPreferenceRequestDto
+import dev.neverpaid.health.domain.model.UpdateWorkoutRequestDto
 import dev.neverpaid.health.domain.model.UserProfileDto
 import dev.neverpaid.health.domain.model.UserProgram
 import dev.neverpaid.health.domain.model.Workout
@@ -89,6 +90,7 @@ class DudaApiClient(
         isLenient = true
         encodeDefaults = true
         explicitNulls = false
+        coerceInputValues = true
     }
 ) {
     companion object {
@@ -319,6 +321,25 @@ class DudaApiClient(
 
     suspend fun startWorkoutRemote(request: StartWorkoutRequestDto): Workout {
         val response = client.post("${baseUrl()}/workouts") {
+            contentType(ContentType.Application.Json)
+            header("Accept-Language", language())
+            token()?.let { header("Authorization", "Bearer $it") }
+            setBody(request)
+        }
+        return handleResponse(response)
+    }
+
+    suspend fun getActiveWorkoutRemote(): Workout? {
+        val response = client.get("${baseUrl()}/workouts/active") {
+            header("Accept-Language", language())
+            token()?.let { header("Authorization", "Bearer $it") }
+        }
+        if (response.status == HttpStatusCode.NoContent) return null
+        return handleResponse(response)
+    }
+
+    suspend fun updateActiveWorkoutRemote(workoutId: String, request: UpdateWorkoutRequestDto): Workout {
+        val response = client.put("${baseUrl()}/workouts/$workoutId") {
             contentType(ContentType.Application.Json)
             header("Accept-Language", language())
             token()?.let { header("Authorization", "Bearer $it") }

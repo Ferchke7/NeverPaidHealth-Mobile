@@ -288,7 +288,15 @@ data class StartWorkoutRequestDto(
     @SerialName("id") val id: String,
     @SerialName("routine_id") val routineId: String? = null,
     @SerialName("name") val name: String,
-    @SerialName("replace_active") val replaceActive: Boolean = true
+    @SerialName("replace_active") val replaceActive: Boolean = true,
+    @SerialName("exercises") val exercises: List<FinishExercisePayloadDto> = emptyList()
+)
+
+@Serializable
+data class UpdateWorkoutRequestDto(
+    @SerialName("routine_id") val routineId: String? = null,
+    @SerialName("name") val name: String,
+    @SerialName("exercises") val exercises: List<FinishExercisePayloadDto> = emptyList()
 )
 
 @Serializable
@@ -372,6 +380,7 @@ data class ProgramDay(
 @Serializable
 data class TrainingProgram(
     @SerialName("id") val id: String,
+    @SerialName("user_id") val userId: String? = null,
     @SerialName("author_id") val authorId: String? = null,
     @SerialName("author_name") val authorName: String = "Атлет",
     @SerialName("author_avatar") val authorAvatar: String? = null,
@@ -388,6 +397,7 @@ data class TrainingProgram(
     @SerialName("comments_count") val commentsCount: Int = 0,
     @SerialName("days") val days: List<ProgramDay> = emptyList(),
     @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
     @SerialName("is_liked") val isLiked: Boolean = false,
     @SerialName("is_active") val isActive: Boolean = false
 ) {
@@ -417,7 +427,7 @@ data class TrainingProgram(
 
     val title: String get() = name
     val difficulty: String get() = level
-    val authorUserId: String get() = authorId ?: ""
+    val authorUserId: String get() = userId ?: authorId ?: ""
 }
 
 @Serializable
