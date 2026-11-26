@@ -351,6 +351,29 @@ interface DudaStrings {
     val focusTestSoundBtn: String
     val focusStopAlarmBtn: String
     val focusAlarmRingingLabel: String
+    val weeklyPlanEyebrow: String
+    val weeklyPlanTitle: String
+    val weeklyPlanSubtitle: String
+    val weeklyPlanAddBtn: String
+    val weeklyPlanAutoFillBtn: String
+    val weeklyPlanSwapBtn: String
+    val weeklyPlanSwapPickSecond: String
+    val weeklyPlanToday: String
+    val weeklyPlanRestTitle: String
+    val weeklyPlanRestDesc: String
+    val weeklyPlanRoutineBadge: String
+    val weeklyPlanProgramBadge: String
+    val weeklyPlanDoneBadge: String
+    val weeklyPlanMoveToLabel: String
+    val weeklyPlanEditorDaysLabel: String
+    val weeklyPlanChooseDaysLabel: String
+    val weekdayMonShort: String
+    val weekdayTueShort: String
+    val weekdayWedShort: String
+    val weekdayThuShort: String
+    val weekdayFriShort: String
+    val weekdaySatShort: String
+    val weekdaySunShort: String
 }
 
 object RuDudaStrings : DudaStrings {
@@ -681,6 +704,29 @@ object RuDudaStrings : DudaStrings {
     override val focusTestSoundBtn = "Тест"
     override val focusStopAlarmBtn = "Остановить"
     override val focusAlarmRingingLabel = "Сигнал таймера звучит…"
+    override val weeklyPlanEyebrow = "НЕДЕЛЬНЫЙ ТРЕКЕР ПН–ВС"
+    override val weeklyPlanTitle = "Расписание по дням недели"
+    override val weeklyPlanSubtitle = "Несколько сплитов и программ в один день, порядок и перенос"
+    override val weeklyPlanAddBtn = "+ В день"
+    override val weeklyPlanAutoFillBtn = "Разложить программу"
+    override val weeklyPlanSwapBtn = "Поменять дни"
+    override val weeklyPlanSwapPickSecond = "Выберите 2-й день…"
+    override val weeklyPlanToday = "Сегодня"
+    override val weeklyPlanRestTitle = "День отдыха или план пуст"
+    override val weeklyPlanRestDesc = "Добавьте один или несколько сплитов и дней программ в нужном порядке."
+    override val weeklyPlanRoutineBadge = "Шаблон"
+    override val weeklyPlanProgramBadge = "Программа"
+    override val weeklyPlanDoneBadge = "Выполнено"
+    override val weeklyPlanMoveToLabel = "Перенести на:"
+    override val weeklyPlanEditorDaysLabel = "Дни недели для этого сплита"
+    override val weeklyPlanChooseDaysLabel = "Выберите дни недели"
+    override val weekdayMonShort = "Пн"
+    override val weekdayTueShort = "Вт"
+    override val weekdayWedShort = "Ср"
+    override val weekdayThuShort = "Чт"
+    override val weekdayFriShort = "Пт"
+    override val weekdaySatShort = "Сб"
+    override val weekdaySunShort = "Вс"
 }
 
 object UzDudaStrings : DudaStrings {
@@ -1011,6 +1057,29 @@ object UzDudaStrings : DudaStrings {
     override val focusTestSoundBtn = "Sinov"
     override val focusStopAlarmBtn = "To'xtatish"
     override val focusAlarmRingingLabel = "Taymer signali chalinmoqda…"
+    override val weeklyPlanEyebrow = "HAFTALIK REJA DU–YA"
+    override val weeklyPlanTitle = "Hafta kunlari jadvali"
+    override val weeklyPlanSubtitle = "Bir kunda bir nechta dastur va shablon, tartib va ko'chirish"
+    override val weeklyPlanAddBtn = "+ Kunga"
+    override val weeklyPlanAutoFillBtn = "Dasturni joylash"
+    override val weeklyPlanSwapBtn = "Kunlarni almashtirish"
+    override val weeklyPlanSwapPickSecond = "2-kunni tanlang…"
+    override val weeklyPlanToday = "Bugun"
+    override val weeklyPlanRestTitle = "Dam olish kuni yoki reja bo'sh"
+    override val weeklyPlanRestDesc = "Bir yoki bir nechta shablon va dastur kunlarini kerakli tartibda qo'shing."
+    override val weeklyPlanRoutineBadge = "Shablon"
+    override val weeklyPlanProgramBadge = "Dastur"
+    override val weeklyPlanDoneBadge = "Bajarildi"
+    override val weeklyPlanMoveToLabel = "Ko'chirish:"
+    override val weeklyPlanEditorDaysLabel = "Ushbu shablon uchun hafta kunlari"
+    override val weeklyPlanChooseDaysLabel = "Hafta kunlarini tanlang"
+    override val weekdayMonShort = "Du"
+    override val weekdayTueShort = "Se"
+    override val weekdayWedShort = "Ch"
+    override val weekdayThuShort = "Pa"
+    override val weekdayFriShort = "Ju"
+    override val weekdaySatShort = "Sh"
+    override val weekdaySunShort = "Ya"
 }
 
 object EnDudaStrings : DudaStrings {
@@ -1341,6 +1410,29 @@ object EnDudaStrings : DudaStrings {
     override val focusTestSoundBtn = "Test"
     override val focusStopAlarmBtn = "Stop Alarm"
     override val focusAlarmRingingLabel = "Timer alarm ringing…"
+    override val weeklyPlanEyebrow = "MON–SUN WEEKLY TRACKER"
+    override val weeklyPlanTitle = "Weekly Workout Schedule"
+    override val weeklyPlanSubtitle = "Stack multiple routines & programs per day, reorder & move"
+    override val weeklyPlanAddBtn = "+ Add"
+    override val weeklyPlanAutoFillBtn = "Auto-fill Program"
+    override val weeklyPlanSwapBtn = "Swap Days"
+    override val weeklyPlanSwapPickSecond = "Pick 2nd day…"
+    override val weeklyPlanToday = "Today"
+    override val weeklyPlanRestTitle = "Rest day or no workouts scheduled"
+    override val weeklyPlanRestDesc = "Add one or more routines and program days in your preferred order."
+    override val weeklyPlanRoutineBadge = "Routine"
+    override val weeklyPlanProgramBadge = "Program"
+    override val weeklyPlanDoneBadge = "Done"
+    override val weeklyPlanMoveToLabel = "Move to:"
+    override val weeklyPlanEditorDaysLabel = "Planned weekdays for this routine"
+    override val weeklyPlanChooseDaysLabel = "Select weekdays"
+    override val weekdayMonShort = "Mon"
+    override val weekdayTueShort = "Tue"
+    override val weekdayWedShort = "Wed"
+    override val weekdayThuShort = "Thu"
+    override val weekdayFriShort = "Fri"
+    override val weekdaySatShort = "Sat"
+    override val weekdaySunShort = "Sun"
 }
 
 fun getDudaStrings(languageCode: String): DudaStrings {

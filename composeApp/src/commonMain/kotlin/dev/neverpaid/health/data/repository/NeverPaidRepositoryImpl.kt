@@ -53,11 +53,14 @@ import dev.neverpaid.health.domain.model.SaveMealRequestDto
 import dev.neverpaid.health.domain.model.SaveProgramRequestDto
 import dev.neverpaid.health.domain.model.SaveRoutineRequestDto
 import dev.neverpaid.health.domain.model.SaveTodoRequestDto
+import dev.neverpaid.health.domain.model.SaveWeeklyPlanRequestDto
 import dev.neverpaid.health.domain.model.StartWorkoutRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
 import dev.neverpaid.health.domain.model.TrainingProgram
 import dev.neverpaid.health.domain.model.UpdateWorkoutRequestDto
 import dev.neverpaid.health.domain.model.UserProfileDto
+import dev.neverpaid.health.domain.model.WeeklyPlanItem
+import dev.neverpaid.health.domain.model.WeeklyPlanUpsertItemDto
 import dev.neverpaid.health.domain.model.Workout
 import dev.neverpaid.health.domain.model.WorkoutExercise
 import dev.neverpaid.health.domain.model.WorkoutSet
@@ -109,6 +112,7 @@ class NeverPaidRepositoryImpl(
     // --- Live API State Flows (Offline-first persistent storage guarantees zero data loss) ---
     private val exercisesFlow = MutableStateFlow<List<Exercise>>(StandardExerciseCatalog.standardExercises)
     private val userRoutinesFlow = MutableStateFlow<List<Routine>>(DudaLocalStorage.getUserRoutines())
+    private val weeklyPlanFlow = MutableStateFlow<List<WeeklyPlanItem>>(DudaLocalStorage.getWeeklyPlan())
     private val activeWorkoutFlow = MutableStateFlow<Workout?>(DudaLocalStorage.getActiveWorkoutDraft())
     private val isActiveWorkoutSheetOpenFlow = MutableStateFlow(false)
     private val lastFinishedWorkoutSummaryFlow = MutableStateFlow<Workout?>(null)
@@ -184,6 +188,7 @@ class NeverPaidRepositoryImpl(
         try { refreshRoutines() } catch (_: Throwable) {}
         try { refreshActiveProgram() } catch (_: Throwable) {}
         try { refreshInstalledPrograms() } catch (_: Throwable) {}
+        try { refreshWeeklyPlan() } catch (_: Throwable) {}
         try { refreshWorkoutHistory() } catch (_: Throwable) {}
         try { refreshActiveWorkout() } catch (_: Throwable) {}
         try { refreshProgressRecords() } catch (_: Throwable) {}
@@ -367,6 +372,7 @@ class NeverPaidRepositoryImpl(
         activeWorkoutFlow.value = null
         isActiveWorkoutSheetOpenFlow.value = false
         userRoutinesFlow.value = emptyList()
+        weeklyPlanFlow.value = emptyList()
         activeProgramBundleFlow.value = null
         installedProgramsFlow.value = emptyList()
         programsFlow.value = emptyList()
@@ -592,6 +598,109 @@ class NeverPaidRepositoryImpl(
         val filtered = userRoutinesFlow.value.filter { it.id != routineId }
         userRoutinesFlow.value = filtered
         DudaLocalStorage.setUserRoutines(filtered)
+        val filteredPlan = normalizeWeeklyPlanOrder(weeklyPlanFlow.value.filterNot { it.routineId == routineId })
+        weeklyPlanFlow.value = filteredPlan
+        DudaLocalStorage.setWeeklyPlan(filteredPlan)
+    }
+
+    private fun normalizeWeeklyPlanOrder(items: List<WeeklyPlanItem>): List<WeeklyPlanItem> {
+        val sorted = items
+            .filter { it.dayOfWeek in 1..7 }
+            .sortedWith(compareBy<WeeklyPlanItem> { it.dayOfWeek }.thenBy { it.orderIndex })
+        val counters = mutableMapOf<Int, Int>()
+        return sorted.map { item ->
+            val idx = counters[item.dayOfWeek] ?: 0
+            counters[item.dayOfWeek] = idx + 1
+            item.copy(orderIndex = idx)
+        }
+    }
+
+    override fun observeWeeklyPlan(): Flow<List<WeeklyPlanItem>> = weeklyPlanFlow.asStateFlow()
+
+    override suspend fun refreshWeeklyPlan(): List<WeeklyPlanItem> {
+        val client = apiClient
+        if (client != null && !isGuestUser()) {
+            val remote = normalizeWeeklyPlanOrder(client.getWeeklyPlan().items)
+            weeklyPlanFlow.value = remote
+            DudaLocalStorage.setWeeklyPlan(remote)
+            return remote
+        }
+        return weeklyPlanFlow.value
+    }
+
+    override suspend fun saveWeeklyPlan(items: List<WeeklyPlanItem>): List<WeeklyPlanItem> {
+        val normalized = normalizeWeeklyPlanOrder(items)
+        weeklyPlanFlow.value = normalized
+        DudaLocalStorage.setWeeklyPlan(normalized)
+        val client = apiClient
+        if (client != null && !isGuestUser()) {
+            val req = SaveWeeklyPlanRequestDto(
+                items = normalized.map { it ->
+                    WeeklyPlanUpsertItemDto(
+                        id = it.id.takeIf { id -> id.isNotBlank() && !id.startsWith("local-") },
+                        dayOfWeek = it.dayOfWeek,
+                        orderIndex = it.orderIndex,
+                        itemType = it.itemType,
+                        routineId = it.routineId?.takeIf { id -> !id.startsWith("prebuilt-") },
+                        programId = it.programId,
+                        programDayNumber = it.programDayNumber,
+                        title = it.title,
+                        notes = it.notes
+                    )
+                }
+            )
+            val saved = normalizeWeeklyPlanOrder(client.saveWeeklyPlan(req).items)
+            weeklyPlanFlow.value = saved
+            DudaLocalStorage.setWeeklyPlan(saved)
+            return saved
+        }
+        return normalized
+    }
+
+    override suspend fun setRoutineWeekdays(routineId: String, daysOfWeek: List<Int>): List<WeeklyPlanItem> {
+        val cleanDays = daysOfWeek.filter { it in 1..7 }.distinct().sorted()
+        val client = apiClient
+        if (client != null && !isGuestUser() && !routineId.startsWith("prebuilt-")) {
+            val saved = normalizeWeeklyPlanOrder(client.setRoutineWeekdays(routineId, cleanDays).items)
+            weeklyPlanFlow.value = saved
+            DudaLocalStorage.setWeeklyPlan(saved)
+            return saved
+        }
+        val routine = (userRoutinesFlow.value + StandardExerciseCatalog.prebuiltRoutines).find { it.id == routineId }
+        val kept = weeklyPlanFlow.value.filter { it.routineId != routineId || it.dayOfWeek in cleanDays }
+        val existingDays = kept.filter { it.routineId == routineId }.map { it.dayOfWeek }.toSet()
+        val added = cleanDays.filterNot { it in existingDays }.map { day ->
+            WeeklyPlanItem(
+                id = PlatformBridge.generateUuid(),
+                dayOfWeek = day,
+                orderIndex = 999,
+                itemType = "routine",
+                routineId = routineId,
+                title = routine?.name ?: "Тренировка",
+                subtitle = routine?.notes.orEmpty(),
+                exercises = routine?.exercises.orEmpty()
+            )
+        }
+        val next = normalizeWeeklyPlanOrder(kept + added)
+        weeklyPlanFlow.value = next
+        DudaLocalStorage.setWeeklyPlan(next)
+        return next
+    }
+
+    override suspend fun toggleWeeklyPlanItemComplete(itemId: String, completed: Boolean): List<WeeklyPlanItem> {
+        val optimistic = weeklyPlanFlow.value.map {
+            if (it.id == itemId) it.copy(isCompletedThisWeek = completed) else it
+        }
+        weeklyPlanFlow.value = optimistic
+        DudaLocalStorage.setWeeklyPlan(optimistic)
+        val client = apiClient
+        if (client != null && !isGuestUser()) {
+            val saved = normalizeWeeklyPlanOrder(client.toggleWeeklyPlanComplete(itemId, completed).items)
+            weeklyPlanFlow.value = saved
+            DudaLocalStorage.setWeeklyPlan(saved)
+            return saved
+        }
+        return optimistic
     }
 
     // ========================================================================

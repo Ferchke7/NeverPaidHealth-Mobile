@@ -66,6 +66,7 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     private val activeWorkoutFlow = MutableStateFlow<Workout?>(null)
     private val activeSheetOpenFlow = MutableStateFlow(false)
     private val focusAlarmRingingFlow = MutableStateFlow(false)
+    private val weeklyPlanFlow = MutableStateFlow<List<dev.neverpaid.health.domain.model.WeeklyPlanItem>>(emptyList())
     private val lastFinishedWorkoutFlow = MutableStateFlow<Workout?>(null)
     private val workoutHistoryFlow = MutableStateFlow(
         listOf(
@@ -300,6 +301,61 @@ class FakeNeverPaidRepository : NeverPaidRepository {
     override fun getUserRoutinesFlow(): Flow<List<Routine>> = routinesFlow.asStateFlow()
     override fun getPrebuiltRoutines(): List<Routine> = StandardExerciseCatalog.prebuiltRoutines
     override suspend fun refreshRoutines(): List<Routine> = routinesFlow.value
+
+    override fun observeWeeklyPlan(): Flow<List<dev.neverpaid.health.domain.model.WeeklyPlanItem>> =
+        weeklyPlanFlow.asStateFlow()
+
+    override suspend fun refreshWeeklyPlan(): List<dev.neverpaid.health.domain.model.WeeklyPlanItem> =
+        weeklyPlanFlow.value
+
+    override suspend fun saveWeeklyPlan(
+        items: List<dev.neverpaid.health.domain.model.WeeklyPlanItem>
+    ): List<dev.neverpaid.health.domain.model.WeeklyPlanItem> {
+        val counters = mutableMapOf<Int, Int>()
+        val normalized = items
+            .filter { it.dayOfWeek in 1..7 }
+            .sortedWith(compareBy({ it.dayOfWeek }, { it.orderIndex }))
+            .map {
+                val idx = counters[it.dayOfWeek] ?: 0
+                counters[it.dayOfWeek] = idx + 1
+                it.copy(orderIndex = idx)
+            }
+        weeklyPlanFlow.value = normalized
+        return normalized
+    }
+
+    override suspend fun setRoutineWeekdays(
+        routineId: String,
+        daysOfWeek: List<Int>
+    ): List<dev.neverpaid.health.domain.model.WeeklyPlanItem> {
+        val clean = daysOfWeek.filter { it in 1..7 }.distinct().sorted()
+        val rot = routinesFlow.value.find { it.id == routineId }
+        val kept = weeklyPlanFlow.value.filter { it.routineId != routineId || it.dayOfWeek in clean }
+        val present = kept.filter { it.routineId == routineId }.map { it.dayOfWeek }.toSet()
+        val added = clean.filterNot { it in present }.map { day ->
+            dev.neverpaid.health.domain.model.WeeklyPlanItem(
+                id = "wp-$routineId-$day",
+                dayOfWeek = day,
+                orderIndex = 999,
+                itemType = "routine",
+                routineId = routineId,
+                title = rot?.name ?: "Routine",
+                exercises = rot?.exercises.orEmpty()
+            )
+        }
+        return saveWeeklyPlan(kept + added)
+    }
+
+    override suspend fun toggleWeeklyPlanItemComplete(
+        itemId: String,
+        completed: Boolean
+    ): List<dev.neverpaid.health.domain.model.WeeklyPlanItem> {
+        val updated = weeklyPlanFlow.value.map {
+            if (it.id == itemId) it.copy(isCompletedThisWeek = completed) else it
+        }
+        weeklyPlanFlow.value = updated
+        return updated
+    }
 
     override suspend fun createRoutine(title: String, description: String, exercises: List<Exercise>): Routine {
         val routine = Routine(id = "r-${routinesFlow.value.size + 1}", name = title, notes = description)

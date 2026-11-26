@@ -1,6 +1,7 @@
 package dev.neverpaid.health.features.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -27,17 +27,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MonitorWeight
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -81,13 +80,11 @@ import dev.neverpaid.health.core.designsystem.ExerciseThumbnailSize
 import dev.neverpaid.health.core.designsystem.FloatingQuickDock
 import dev.neverpaid.health.core.designsystem.GymCard
 import dev.neverpaid.health.core.designsystem.GymEmptyCard
-import dev.neverpaid.health.core.designsystem.GymInkOnLight
 import dev.neverpaid.health.core.designsystem.GymInnerWell
 import dev.neverpaid.health.core.designsystem.GymKicker
 import dev.neverpaid.health.core.designsystem.GymLabeledField
 import dev.neverpaid.health.core.designsystem.GymLoadingCard
 import dev.neverpaid.health.core.designsystem.GymOutlineButton
-import dev.neverpaid.health.core.designsystem.GymPageHeader
 import dev.neverpaid.health.core.designsystem.GymPillTab
 import dev.neverpaid.health.core.designsystem.GymPrimaryButton
 import dev.neverpaid.health.core.designsystem.GymSectionTitle
@@ -96,17 +93,18 @@ import dev.neverpaid.health.core.designsystem.HeroMuted
 import dev.neverpaid.health.core.designsystem.InkWhite
 import dev.neverpaid.health.core.designsystem.PrimaryAthleticButton
 import dev.neverpaid.health.core.designsystem.RoyalHeroCard
-import dev.neverpaid.health.core.designsystem.SurfaceWhite
-import dev.neverpaid.health.core.designsystem.TextMuted
 import dev.neverpaid.health.core.designsystem.TextPrimary
 import dev.neverpaid.health.core.designsystem.TextSecondary
 import dev.neverpaid.health.core.designsystem.TextSoft
 import dev.neverpaid.health.core.designsystem.VioletPrimary
+import dev.neverpaid.health.core.i18n.DudaStrings
 import dev.neverpaid.health.core.i18n.LocalDudaStrings
 import dev.neverpaid.health.core.mvi.CollectEffect
 import dev.neverpaid.health.domain.model.ActiveProgramBundle
 import dev.neverpaid.health.domain.model.ProgramDay
 import dev.neverpaid.health.domain.model.Routine
+import dev.neverpaid.health.domain.model.TrainingProgram
+import dev.neverpaid.health.domain.model.WeeklyPlanItem
 import kotlinx.coroutines.launch
 
 @Composable
@@ -152,6 +150,14 @@ fun DashboardRoute(
         )
     }
 
+    if (state.isAddToPlanSheetOpen) {
+        AddWorkoutToPlanBottomSheet(
+            state = state,
+            onAction = viewModel::onAction,
+            onDismiss = { viewModel.onAction(DashboardUiAction.OnCloseAddToPlanSheet) }
+        )
+    }
+
     if (state.isExercisePickerOpen) {
         ExercisePickerBottomSheet(
             exercises = state.allExercises,
@@ -187,6 +193,16 @@ fun DashboardRoute(
     }
 }
 
+private fun weekdayShortLabel(day: Int, strings: DudaStrings): String = when (day) {
+    1 -> strings.weekdayMonShort
+    2 -> strings.weekdayTueShort
+    3 -> strings.weekdayWedShort
+    4 -> strings.weekdayThuShort
+    5 -> strings.weekdayFriShort
+    6 -> strings.weekdaySatShort
+    else -> strings.weekdaySunShort
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DashboardScreen(
@@ -203,7 +219,7 @@ fun DashboardScreen(
     }
 
     var searchQuery by remember { mutableStateOf("") }
-    var sortMode by remember { mutableStateOf("custom") } // "custom" | "prebuilt" | "alpha"
+    var sortMode by remember { mutableStateOf("custom") }
 
     LaunchedEffect(Unit) {
         onAction(DashboardUiAction.OnRefreshClick)
@@ -222,6 +238,19 @@ fun DashboardScreen(
             )
         }
         return
+    }
+
+    val routineDayLabels = remember(state.weeklyPlanItems, strings) {
+        val map = mutableMapOf<String, MutableList<String>>()
+        state.weeklyPlanItems.forEach { item ->
+            val rid = item.routineId
+            if (item.itemType == "routine" && !rid.isNullOrBlank()) {
+                val list = map.getOrPut(rid) { mutableListOf() }
+                val lbl = weekdayShortLabel(item.dayOfWeek, strings)
+                if (lbl !in list) list.add(lbl)
+            }
+        }
+        map
     }
 
     val combinedRoutines = remember(state.customRoutines, state.prebuiltRoutines, searchQuery, sortMode) {
@@ -281,6 +310,12 @@ fun DashboardScreen(
                                 letterSpacing = (-0.7).sp,
                                 color = InkWhite
                             )
+                            Text(
+                                text = "${state.currentStreakDays} ${strings.daysCount} · ${(state.totalVolumeKg / 1000.0).let { if (it >= 1.0) "${((it * 10).toInt() / 10.0)} ${strings.summaryTonsUnit}" else "${state.totalVolumeKg.toInt()} кг" }}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = HeroMuted
+                            )
                         }
                         Box(
                             modifier = Modifier
@@ -308,6 +343,7 @@ fun DashboardScreen(
             item(key = "active_workout_banner", contentType = "active_banner") {
                 ActiveWorkoutBannerCard(
                     title = state.activeWorkoutTitle,
+                    startedAtMs = state.activeWorkoutStartTimeMs,
                     exercisesCount = state.activeWorkoutExercisesCount,
                     completedSetsCount = state.activeWorkoutCompletedSets,
                     lang = lang,
@@ -343,6 +379,15 @@ fun DashboardScreen(
                     fillWidth = true
                 )
             }
+        }
+
+        // 3.5 Weekly Workout Schedule Board (Mon–Sun, multiple routines & programs per day)
+        item(key = "weekly_workout_schedule", contentType = "weekly_plan") {
+            WeeklyWorkoutScheduleSection(
+                state = state,
+                strings = strings,
+                onAction = onAction
+            )
         }
 
         // 4. Active Program Schedule Card
@@ -443,6 +488,7 @@ fun DashboardScreen(
             ) { _, (isCustom, routine) ->
                 RoutineCardItem(
                     routine = routine,
+                    scheduledWeekdays = routineDayLabels[routine.id].orEmpty(),
                     isCustom = isCustom,
                     lang = lang,
                     onStart = { onAction(DashboardUiAction.OnSelectRoutineClick(routine)) },
@@ -474,9 +520,583 @@ fun DashboardScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun WeeklyWorkoutScheduleSection(
+    state: DashboardUiState,
+    strings: DudaStrings,
+    onAction: (DashboardUiAction) -> Unit
+) {
+    val todayWeekday = remember { DashboardViewModel.currentIsoWeekday() }
+    val itemsByDay = remember(state.weeklyPlanItems) {
+        state.weeklyPlanItems.groupBy { it.dayOfWeek }.mapValues { (_, list) ->
+            list.sortedBy { it.orderIndex }
+        }
+    }
+    val selectedDayItems = itemsByDay[state.selectedPlanWeekday].orEmpty()
+    val completedCount = state.weeklyPlanItems.count { it.isCompletedThisWeek }
+
+    GymCard(
+        backgroundColor = DarkSurface,
+        borderColor = BorderHighlight
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            GymKicker(text = strings.weeklyPlanEyebrow)
+            if (state.weeklyPlanItems.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(EmeraldBg)
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "$completedCount/${state.weeklyPlanItems.size} ✓",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = EmeraldSuccess
+                    )
+                }
+            }
+        }
+
+        Text(
+            text = strings.weeklyPlanTitle,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Black,
+            color = TextPrimary
+        )
+
+        Text(
+            text = strings.weeklyPlanSubtitle,
+            fontSize = 13.sp,
+            color = TextSecondary
+        )
+
+        // Action Pills Row
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            GymPillTab(
+                text = strings.weeklyPlanAddBtn,
+                selected = true,
+                onClick = { onAction(DashboardUiAction.OnOpenAddToPlanSheet(state.selectedPlanWeekday)) }
+            )
+            GymPillTab(
+                text = if (state.swapSourceWeekday != null) strings.weeklyPlanSwapPickSecond else strings.weeklyPlanSwapBtn,
+                selected = state.swapSourceWeekday != null,
+                onClick = { onAction(DashboardUiAction.OnToggleSwapDaysMode) }
+            )
+            if (state.activeProgramBundle?.program != null) {
+                GymPillTab(
+                    text = strings.weeklyPlanAutoFillBtn,
+                    selected = false,
+                    onClick = { onAction(DashboardUiAction.OnAutoFillProgramToWeek) }
+                )
+            }
+        }
+
+        // 7-Weekday Selector Strip
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            (1..7).forEach { day ->
+                val dayItems = itemsByDay[day].orEmpty()
+                val isSelected = state.selectedPlanWeekday == day
+                val isSwapSource = state.swapSourceWeekday == day
+                val isToday = todayWeekday == day
+                val allDone = dayItems.isNotEmpty() && dayItems.all { it.isCompletedThisWeek }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(
+                            when {
+                                isSwapSource -> AccentLimeSubtle
+                                isSelected -> VioletPrimary
+                                else -> DarkSurfaceHigh
+                            }
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = when {
+                                isSwapSource -> AccentLime
+                                isSelected -> VioletPrimary
+                                isToday -> BorderHighlight
+                                else -> DarkSurfaceHigh
+                            },
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .clickable { onAction(DashboardUiAction.OnSelectPlanWeekday(day)) }
+                        .padding(vertical = 8.dp, horizontal = 2.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = weekdayShortLabel(day, strings),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (isSelected) InkWhite else TextPrimary
+                    )
+                    Text(
+                        text = when {
+                            dayItems.isEmpty() -> "—"
+                            allDone -> "✓${dayItems.size}"
+                            else -> "${dayItems.size}"
+                        },
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = when {
+                            allDone -> EmeraldSuccess
+                            isSelected -> InkWhite
+                            dayItems.isNotEmpty() -> AccentLime
+                            else -> TextSecondary
+                        }
+                    )
+                }
+            }
+        }
+
+        if (selectedDayItems.isEmpty()) {
+            GymInnerWell {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = strings.weeklyPlanRestTitle,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = strings.weeklyPlanRestDesc,
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        GymPrimaryButton(
+                            text = strings.weeklyPlanAddBtn,
+                            onClick = { onAction(DashboardUiAction.OnOpenAddToPlanSheet(state.selectedPlanWeekday)) },
+                            modifier = Modifier.weight(1f),
+                            fillWidth = true
+                        )
+                        GymOutlineButton(
+                            text = strings.dashboardNewTemplate,
+                            onClick = {
+                                onAction(
+                                    DashboardUiAction.OnOpenRoutineEditor(
+                                        routine = null,
+                                        defaultWeekday = state.selectedPlanWeekday
+                                    )
+                                )
+                            },
+                            modifier = Modifier.weight(1f),
+                            fillWidth = true
+                        )
+                    }
+                }
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                selectedDayItems.forEach { item ->
+                    val isMoving = state.movingPlanItemId == item.id
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (item.isCompletedThisWeek) EmeraldBg else DarkSurfaceHigh)
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(26.dp)
+                                        .clip(CircleShape)
+                                        .background(if (item.isCompletedThisWeek) EmeraldSuccess else DarkSurfaceElevated)
+                                        .clickable {
+                                            onAction(
+                                                DashboardUiAction.OnToggleWeeklyPlanItemDone(
+                                                    itemId = item.id,
+                                                    completed = !item.isCompletedThisWeek
+                                                )
+                                            )
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (item.isCompletedThisWeek) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = strings.weeklyPlanDoneBadge,
+                                            tint = InkWhite,
+                                            modifier = Modifier.size(15.dp)
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "${item.orderIndex + 1}",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = AccentLime
+                                        )
+                                    }
+                                }
+
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                ) {
+                                    Text(
+                                        text = if (item.itemType == "program_day") {
+                                            item.subtitle.ifBlank { strings.weeklyPlanProgramBadge }
+                                        } else {
+                                            strings.weeklyPlanRoutineBadge
+                                        },
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AccentLime,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = item.title,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = TextPrimary,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = "${item.exercises.size} ${strings.dashboardExercisesShort}",
+                                        fontSize = 12.sp,
+                                        color = TextSecondary
+                                    )
+                                }
+                            }
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (selectedDayItems.size > 1) {
+                                    IconButton(
+                                        onClick = {
+                                            onAction(
+                                                DashboardUiAction.OnMoveWeeklyPlanItemWithinDay(
+                                                    itemId = item.id,
+                                                    moveUp = true
+                                                )
+                                            )
+                                        },
+                                        enabled = item.orderIndex > 0,
+                                        modifier = Modifier.size(30.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.KeyboardArrowUp,
+                                            contentDescription = "Up",
+                                            tint = TextPrimary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            onAction(
+                                                DashboardUiAction.OnMoveWeeklyPlanItemWithinDay(
+                                                    itemId = item.id,
+                                                    moveUp = false
+                                                )
+                                            )
+                                        },
+                                        enabled = item.orderIndex < selectedDayItems.size - 1,
+                                        modifier = Modifier.size(30.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.KeyboardArrowDown,
+                                            contentDescription = "Down",
+                                            tint = TextPrimary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                                IconButton(
+                                    onClick = { onAction(DashboardUiAction.OnRemoveWeeklyPlanItem(item.id)) },
+                                    modifier = Modifier.size(30.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = strings.delete,
+                                        tint = CrimsonRed,
+                                        modifier = Modifier.size(17.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            GymPrimaryButton(
+                                text = strings.todoPomodoroStart,
+                                onClick = { onAction(DashboardUiAction.OnStartWeeklyPlanItem(item)) },
+                                modifier = Modifier.weight(1.3f),
+                                fillWidth = true
+                            )
+                            GymOutlineButton(
+                                text = weekdayShortLabel(item.dayOfWeek, strings) + " ⇄",
+                                onClick = { onAction(DashboardUiAction.OnToggleMovePlanItemDayPicker(item.id)) },
+                                modifier = Modifier.weight(0.9f),
+                                fillWidth = true
+                            )
+                        }
+
+                        if (isMoving) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(
+                                    text = strings.weeklyPlanMoveToLabel,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondary
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    (1..7).forEach { wd ->
+                                        val isCurrent = wd == item.dayOfWeek
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(if (isCurrent) VioletPrimary else DarkSurfaceElevated)
+                                                .clickable(enabled = !isCurrent) {
+                                                    onAction(
+                                                        DashboardUiAction.OnMoveWeeklyPlanItemToDay(
+                                                            itemId = item.id,
+                                                            targetDayOfWeek = wd
+                                                        )
+                                                    )
+                                                }
+                                                .padding(vertical = 6.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = weekdayShortLabel(wd, strings),
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isCurrent) InkWhite else TextPrimary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddWorkoutToPlanBottomSheet(
+    state: DashboardUiState,
+    onAction: (DashboardUiAction) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val strings = LocalDudaStrings.current
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var activeTab by remember { mutableStateOf("routines") }
+
+    val allPrograms = remember(state.activeProgramBundle, state.installedPrograms) {
+        val map = linkedMapOf<String, TrainingProgram>()
+        state.activeProgramBundle?.program?.let { map[it.id] = it }
+        state.installedPrograms.mapNotNull { it.program }.forEach { if (!map.containsKey(it.id)) map[it.id] = it }
+        map.values.toList()
+    }
+
+    val routinesList = remember(state.customRoutines, state.prebuiltRoutines) {
+        val custom = state.customRoutines
+        if (custom.isNotEmpty()) custom else state.prebuiltRoutines
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = DarkSurface,
+        contentColor = TextPrimary,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.88f)
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = strings.weeklyPlanTitle,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Black,
+                    color = TextPrimary
+                )
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = strings.commonClose, tint = TextSecondary)
+                }
+            }
+
+            Text(
+                text = strings.weeklyPlanChooseDaysLabel,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextSecondary
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                (1..7).forEach { wd ->
+                    val selected = wd in state.addToPlanWeekdays
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (selected) VioletPrimary else DarkSurfaceHigh)
+                            .clickable { onAction(DashboardUiAction.OnToggleAddToPlanWeekday(wd)) }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = weekdayShortLabel(wd, strings),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (selected) InkWhite else TextPrimary
+                        )
+                    }
+                }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                GymPillTab(
+                    text = "${strings.weeklyPlanRoutineBadge} (${routinesList.size})",
+                    selected = activeTab == "routines",
+                    onClick = { activeTab = "routines" }
+                )
+                GymPillTab(
+                    text = "${strings.navPrograms} (${allPrograms.size})",
+                    selected = activeTab == "programs",
+                    onClick = { activeTab = "programs" }
+                )
+            }
+
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (activeTab == "routines") {
+                    itemsIndexed(routinesList, key = { idx, r -> "${r.id}_$idx" }) { _, rot ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(DarkSurfaceHigh)
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = rot.title,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Text(
+                                    text = "${rot.exercises.size} ${strings.dashboardExercisesShort}",
+                                    fontSize = 12.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            GymPrimaryButton(
+                                text = strings.weeklyPlanAddBtn,
+                                onClick = { onAction(DashboardUiAction.OnAddRoutineToPlan(rot)) }
+                            )
+                        }
+                    }
+                } else {
+                    itemsIndexed(allPrograms, key = { idx, p -> "${p.id}_$idx" }) { _, prog ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(DarkSurfaceHigh)
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = prog.title,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = TextPrimary
+                            )
+                            prog.days.forEach { d ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(DarkSurfaceElevated)
+                                        .padding(10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = d.title,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextPrimary
+                                        )
+                                        Text(
+                                            text = "${d.exercises.size} ${strings.dashboardExercisesShort}",
+                                            fontSize = 12.sp,
+                                            color = TextSecondary
+                                        )
+                                    }
+                                    GymOutlineButton(
+                                        text = strings.weeklyPlanAddBtn,
+                                        onClick = { onAction(DashboardUiAction.OnAddProgramDayToPlan(prog, d)) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun ActiveWorkoutBannerCard(
     title: String,
+    startedAtMs: Long,
     exercisesCount: Int,
     completedSetsCount: Int,
     lang: String,
@@ -511,11 +1131,14 @@ private fun ActiveWorkoutBannerCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                val mins = if (startedAtMs > 0L) {
+                    ((dev.neverpaid.health.core.platform.PlatformBridge.currentTimeMillis() - startedAtMs) / 60_000L).coerceAtLeast(0L)
+                } else 0L
                 Text(
                     text = when (lang) {
-                        "uz" -> "$exercisesCount mashq · $completedSetsCount yondashuv"
-                        "en" -> "$exercisesCount exercises · $completedSetsCount sets done"
-                        else -> "$exercisesCount упр. · $completedSetsCount подходов выполнено"
+                        "uz" -> "$exercisesCount mashq · $completedSetsCount yondashuv · ${mins}m"
+                        "en" -> "$exercisesCount exercises · $completedSetsCount sets done · ${mins}m"
+                        else -> "$exercisesCount упр. · $completedSetsCount подходов · ${mins} мин"
                     },
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
@@ -766,6 +1389,7 @@ private fun ActiveProgramScheduleSection(
 @Composable
 private fun RoutineCardItem(
     routine: Routine,
+    scheduledWeekdays: List<String>,
     isCustom: Boolean,
     lang: String,
     onStart: () -> Unit,
@@ -793,6 +1417,25 @@ private fun RoutineCardItem(
                     fontWeight = FontWeight.ExtraBold,
                     color = TextPrimary
                 )
+                if (scheduledWeekdays.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        scheduledWeekdays.forEach { lbl ->
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(AccentLimeSubtle)
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = lbl,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AccentLime
+                                )
+                            }
+                        }
+                    }
+                }
                 if (routine.description.isNotBlank()) {
                     Text(
                         text = routine.description,
@@ -1056,6 +1699,7 @@ private fun RoutineEditorBottomSheet(
     onAction: (DashboardUiAction) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val strings = LocalDudaStrings.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
@@ -1077,7 +1721,7 @@ private fun RoutineEditorBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.9f)
+                .fillMaxHeight(0.92f)
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -1111,6 +1755,38 @@ private fun RoutineEditorBottomSheet(
                 singleLine = true
             )
 
+            Text(
+                text = strings.weeklyPlanEditorDaysLabel,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextSecondary
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                (1..7).forEach { wd ->
+                    val selected = wd in state.editorWeekdays
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (selected) VioletPrimary else DarkSurfaceHigh)
+                            .clickable { onAction(DashboardUiAction.OnToggleEditorWeekday(wd)) }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = weekdayShortLabel(wd, strings),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (selected) InkWhite else TextPrimary
+                        )
+                    }
+                }
+            }
+
             GymSectionTitle(
                 title = "Упражнения (${state.editorExercises.size})",
                 actionLabel = "+ Добавить",
@@ -1133,7 +1809,7 @@ private fun RoutineEditorBottomSheet(
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             ExerciseThumbnail(
@@ -1148,6 +1824,32 @@ private fun RoutineEditorBottomSheet(
                                 color = TextPrimary,
                                 modifier = Modifier.weight(1f)
                             )
+                            if (state.editorExercises.size > 1) {
+                                IconButton(
+                                    onClick = { onAction(DashboardUiAction.OnMoveEditorExercise(idx, moveUp = true)) },
+                                    enabled = idx > 0,
+                                    modifier = Modifier.size(30.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.KeyboardArrowUp,
+                                        contentDescription = "Up",
+                                        tint = TextPrimary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { onAction(DashboardUiAction.OnMoveEditorExercise(idx, moveUp = false)) },
+                                    enabled = idx < state.editorExercises.size - 1,
+                                    modifier = Modifier.size(30.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.KeyboardArrowDown,
+                                        contentDescription = "Down",
+                                        tint = TextPrimary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
                             IconButton(
                                 onClick = { onAction(DashboardUiAction.OnRemoveExerciseFromEditor(idx)) },
                                 modifier = Modifier.size(32.dp)
