@@ -1,9 +1,7 @@
 package dev.neverpaid.health.features.dashboard
 
 import dev.neverpaid.health.data.repository.FakeNeverPaidRepository
-import dev.neverpaid.health.domain.model.ProgramDay
-import dev.neverpaid.health.domain.model.Routine
-import dev.neverpaid.health.domain.model.TrainingProgram
+import dev.neverpaid.health.domain.model.Exercise
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -14,6 +12,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -37,70 +36,51 @@ class DashboardViewModelTest {
     }
 
     @Test
-    fun weeklyPlanSupportsMultipleProgramsAndRoutinesPerDay_reorder_swap_and_done() = runTest {
-        val coreRoutine = Routine(id = "r-core", name = "Morning Core")
-        val program = TrainingProgram(
-            id = "p-ppl",
-            name = "Jeff PPL",
-            difficulty = "intermediate",
-            days = listOf(ProgramDay(dayNumber = 1, name = "Push Focus"))
+    fun myRoutinesCustomOrderSupportsMoveUpDownAndMoveToTop() = runTest {
+        val sampleEx = Exercise(
+            id = "ex-1",
+            name = "Bench Press",
+            primaryMuscleGroup = "chest",
+            equipment = "barbell"
         )
-
-        viewModel.onAction(DashboardUiAction.OnOpenAddToPlanSheet(dayOfWeek = 1))
-        viewModel.onAction(DashboardUiAction.OnAddRoutineToPlan(coreRoutine))
+        val r1 = repository.createRoutine("Push 1", "", listOf(sampleEx))
+        val r2 = repository.createRoutine("Pull 1", "", listOf(sampleEx))
+        val r3 = repository.createRoutine("Legs 1", "", listOf(sampleEx))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onAction(DashboardUiAction.OnOpenAddToPlanSheet(dayOfWeek = 1))
-        viewModel.onAction(DashboardUiAction.OnAddProgramDayToPlan(program, program.days.first()))
+        viewModel.onAction(DashboardUiAction.OnToggleReorderRoutines)
+        assertTrue(viewModel.state.value.isReorderingRoutines)
+
+        // Move Legs 1 (index 2) directly to #1 ("top")
+        viewModel.onAction(DashboardUiAction.OnMoveRoutineOrder(r3.id, "top"))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        var monday = viewModel.state.value.weeklyPlanItems.filter { it.dayOfWeek == 1 }
-        assertEquals(2, monday.size)
-        assertEquals("Morning Core", monday[0].title)
-        assertEquals("Push Focus", monday[1].title)
+        var personalIds = viewModel.state.value.customRoutines
+            .filter { !it.id.startsWith("prebuilt-") }
+            .map { it.id }
+        assertEquals(listOf(r3.id, r1.id, r2.id), personalIds)
 
-        // Reorder Push Focus above Morning Core within Monday
-        viewModel.onAction(DashboardUiAction.OnMoveWeeklyPlanItemWithinDay(monday[1].id, moveUp = true))
-        testDispatcher.scheduler.advanceUntilIdle()
-        monday = viewModel.state.value.weeklyPlanItems.filter { it.dayOfWeek == 1 }
-        assertEquals("Push Focus", monday[0].title)
-        assertEquals("Morning Core", monday[1].title)
-
-        // Toggle weekly completion check
-        viewModel.onAction(DashboardUiAction.OnToggleWeeklyPlanItemDone(monday[0].id, completed = true))
-        testDispatcher.scheduler.advanceUntilIdle()
-        assertTrue(viewModel.state.value.weeklyPlanItems.first { it.id == monday[0].id }.isCompletedThisWeek)
-
-        // Swap Monday (1) with Thursday (4)
-        viewModel.onAction(DashboardUiAction.OnSelectPlanWeekday(1))
-        viewModel.onAction(DashboardUiAction.OnToggleSwapDaysMode)
-        viewModel.onAction(DashboardUiAction.OnSelectPlanWeekday(4))
+        // Move Push 1 down below Pull 1
+        viewModel.onAction(DashboardUiAction.OnMoveRoutineOrder(r1.id, "down"))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(0, viewModel.state.value.weeklyPlanItems.count { it.dayOfWeek == 1 })
-        assertEquals(2, viewModel.state.value.weeklyPlanItems.count { it.dayOfWeek == 4 })
+        personalIds = viewModel.state.value.customRoutines
+            .filter { !it.id.startsWith("prebuilt-") }
+            .map { it.id }
+        assertEquals(listOf(r3.id, r2.id, r1.id), personalIds)
+
+        viewModel.onAction(DashboardUiAction.OnToggleReorderRoutines)
+        assertFalse(viewModel.state.value.isReorderingRoutines)
     }
 
     @Test
-    fun routineEditorAssignsMultipleWeekdaysOnSave() = runTest {
-        val sampleEx = repository.getPrebuiltRoutines().first().exercises.first()
-        viewModel.onAction(DashboardUiAction.OnOpenRoutineEditor(routine = null, defaultWeekday = 2))
-        viewModel.onAction(DashboardUiAction.OnEditorTitleChanged("Arms & Delts"))
-        viewModel.onAction(DashboardUiAction.OnToggleEditorWeekday(5))
-        viewModel.onAction(
-            DashboardUiAction.OnAddExerciseToEditor(
-                dev.neverpaid.health.domain.model.Exercise(
-                    id = sampleEx.exerciseId,
-                    name = sampleEx.exerciseName,
-                    primaryMuscleGroup = "arms",
-                    equipment = "dumbbell"
-                )
-            )
-        )
-        viewModel.onAction(DashboardUiAction.OnSaveRoutineClick)
-        testDispatcher.scheduler.advanceUntilIdle()
+    fun routineEditorSupportsReorderingExercises() = runTest {
+        viewModel.onAction(DashboardUiAction.OnOpenRoutineEditor(null))
+        viewModel.onAction(DashboardUiAction.OnAddExerciseToEditor(Exercise(id = "e1", name = "Squat")))
+        viewModel.onAction(DashboardUiAction.OnAddExerciseToEditor(Exercise(id = "e2", name = "Leg Press")))
 
-        val scheduledDays = viewModel.state.value.weeklyPlanItems.map { it.dayOfWeek }.sorted()
-        assertEquals(listOf(2, 5), scheduledDays)
+        viewModel.onAction(DashboardUiAction.OnMoveEditorExercise(index = 1, moveUp = true))
+        val names = viewModel.state.value.editorExercises.map { it.exerciseName }
+        assertEquals(listOf("Leg Press", "Squat"), names)
     }
 }

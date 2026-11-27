@@ -11,7 +11,6 @@ import dev.neverpaid.health.domain.model.Routine
 import dev.neverpaid.health.domain.model.TodoTask
 import dev.neverpaid.health.domain.model.TrainingProgram
 import dev.neverpaid.health.domain.model.UserProfileDto
-import dev.neverpaid.health.domain.model.WeeklyPlanItem
 import dev.neverpaid.health.domain.model.Workout
 import dev.neverpaid.health.domain.repository.UserPreferencesData
 import kotlinx.serialization.encodeToString
@@ -42,7 +41,6 @@ object DudaLocalStorage {
     private const val KEY_BODY_MEASUREMENTS = "np_body_measurements_v2"
     private const val KEY_ACTIVE_PROGRAM_BUNDLE = "np_active_program_bundle_v2"
     private const val KEY_CUSTOM_PROGRAMS = "np_custom_programs_v2"
-    private const val KEY_WEEKLY_PLAN = "np_weekly_workout_plan_v1"
     private const val KEY_PROGRAM_COMMENTS_PREFIX = "np_prog_comments_v2_"
 
     fun getAccessToken(): String? {
@@ -279,19 +277,6 @@ object DudaLocalStorage {
         PlatformBridge.putString(KEY_PROGRAM_COMMENTS_PREFIX + programId, json.encodeToString(list))
     }
 
-    fun getWeeklyPlan(): List<WeeklyPlanItem> {
-        val str = PlatformBridge.getString(KEY_WEEKLY_PLAN) ?: return emptyList()
-        return try {
-            json.decodeFromString<List<WeeklyPlanItem>>(str)
-        } catch (_: Throwable) {
-            emptyList()
-        }
-    }
-
-    fun setWeeklyPlan(list: List<WeeklyPlanItem>) {
-        PlatformBridge.putString(KEY_WEEKLY_PLAN, json.encodeToString(list))
-    }
-
     fun clearAuthSession() {
         setAccessToken(null)
         setUserProfile(null)
@@ -301,7 +286,6 @@ object DudaLocalStorage {
         setActiveProgramBundle(null)
         PlatformBridge.remove(KEY_USER_ROUTINES)
         PlatformBridge.remove(KEY_CUSTOM_PROGRAMS)
-        PlatformBridge.remove(KEY_WEEKLY_PLAN)
         PlatformBridge.remove(KEY_WORKOUT_HISTORY)
     }
 }

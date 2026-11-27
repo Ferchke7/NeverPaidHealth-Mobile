@@ -43,18 +43,14 @@ import dev.neverpaid.health.domain.model.SaveMealRequestDto
 import dev.neverpaid.health.domain.model.SaveProgramRequestDto
 import dev.neverpaid.health.domain.model.SaveRoutineRequestDto
 import dev.neverpaid.health.domain.model.SaveTodoRequestDto
-import dev.neverpaid.health.domain.model.SaveWeeklyPlanRequestDto
 import dev.neverpaid.health.domain.model.SetActiveProgramRequestDto
-import dev.neverpaid.health.domain.model.SetRoutineWeekdaysRequestDto
 import dev.neverpaid.health.domain.model.StartWorkoutRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
-import dev.neverpaid.health.domain.model.ToggleWeeklyPlanCompleteRequestDto
 import dev.neverpaid.health.domain.model.TrainingProgram
 import dev.neverpaid.health.domain.model.UpdateUnitPreferenceRequestDto
 import dev.neverpaid.health.domain.model.UpdateWorkoutRequestDto
 import dev.neverpaid.health.domain.model.UserProfileDto
 import dev.neverpaid.health.domain.model.UserProgram
-import dev.neverpaid.health.domain.model.WeeklyPlanResponseDto
 import dev.neverpaid.health.domain.model.Workout
 import dev.neverpaid.health.domain.model.WorkoutsListResponseDto
 import io.ktor.client.HttpClient
@@ -308,40 +304,12 @@ class DudaApiClient(
         handleResponse<Unit>(response)
     }
 
-    suspend fun getWeeklyPlan(): WeeklyPlanResponseDto {
-        val response = client.get("${baseUrl()}/workouts/weekly-plan") {
-            header("Accept-Language", language())
-            token()?.let { header("Authorization", "Bearer $it") }
-        }
-        return handleResponse(response)
-    }
-
-    suspend fun saveWeeklyPlan(request: SaveWeeklyPlanRequestDto): WeeklyPlanResponseDto {
-        val response = client.put("${baseUrl()}/workouts/weekly-plan") {
+    suspend fun reorderRoutines(routineIds: List<String>): List<Routine> {
+        val response = client.put("${baseUrl()}/routines/reorder") {
             contentType(ContentType.Application.Json)
             header("Accept-Language", language())
             token()?.let { header("Authorization", "Bearer $it") }
-            setBody(request)
-        }
-        return handleResponse(response)
-    }
-
-    suspend fun setRoutineWeekdays(routineId: String, daysOfWeek: List<Int>): WeeklyPlanResponseDto {
-        val response = client.post("${baseUrl()}/workouts/weekly-plan/routine-days") {
-            contentType(ContentType.Application.Json)
-            header("Accept-Language", language())
-            token()?.let { header("Authorization", "Bearer $it") }
-            setBody(SetRoutineWeekdaysRequestDto(routineId = routineId, daysOfWeek = daysOfWeek))
-        }
-        return handleResponse(response)
-    }
-
-    suspend fun toggleWeeklyPlanComplete(itemId: String, completed: Boolean): WeeklyPlanResponseDto {
-        val response = client.post("${baseUrl()}/workouts/weekly-plan/$itemId/toggle-complete") {
-            contentType(ContentType.Application.Json)
-            header("Accept-Language", language())
-            token()?.let { header("Authorization", "Bearer $it") }
-            setBody(ToggleWeeklyPlanCompleteRequestDto(completed = completed))
+            setBody(dev.neverpaid.health.domain.model.ReorderRoutinesRequestDto(routineIds = routineIds))
         }
         return handleResponse(response)
     }

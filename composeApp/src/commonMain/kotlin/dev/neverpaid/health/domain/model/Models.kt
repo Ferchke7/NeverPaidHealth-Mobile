@@ -118,6 +118,7 @@ data class Routine(
     @SerialName("user_id") val userId: String? = null,
     @SerialName("name") val name: String,
     @SerialName("notes") val notes: String? = null,
+    @SerialName("sort_order") val sortOrder: Int = 0,
     @SerialName("exercises") val exercises: List<RoutineExercise> = emptyList(),
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("is_prebuilt") val isPrebuilt: Boolean = false,
@@ -126,6 +127,11 @@ data class Routine(
     val title: String get() = name
     val description: String get() = notes ?: ""
 }
+
+@Serializable
+data class ReorderRoutinesRequestDto(
+    @SerialName("routine_ids") val routineIds: List<String>
+)
 
 @Serializable
 data class SaveRoutineRequestDto(
@@ -517,57 +523,6 @@ data class ActiveProgramBundle(
     val currentDayNumber: Int
         get() = (userProgram?.currentDayIndex ?: 0) + 1
 }
-
-@Serializable
-data class WeeklyPlanItem(
-    @SerialName("id") val id: String,
-    @SerialName("day_of_week") val dayOfWeek: Int, // 1 = Mon .. 7 = Sun
-    @SerialName("order_index") val orderIndex: Int = 0,
-    @SerialName("item_type") val itemType: String = "routine", // "routine" | "program_day"
-    @SerialName("routine_id") val routineId: String? = null,
-    @SerialName("program_id") val programId: String? = null,
-    @SerialName("program_day_number") val programDayNumber: Int? = null,
-    @SerialName("title") val title: String = "",
-    @SerialName("subtitle") val subtitle: String = "",
-    @SerialName("notes") val notes: String = "",
-    @SerialName("exercises") val exercises: List<RoutineExercise> = emptyList(),
-    @SerialName("is_completed_this_week") val isCompletedThisWeek: Boolean = false
-)
-
-@Serializable
-data class WeeklyPlanResponseDto(
-    @SerialName("week_start") val weekStart: String = "",
-    @SerialName("items") val items: List<WeeklyPlanItem> = emptyList()
-)
-
-@Serializable
-data class WeeklyPlanUpsertItemDto(
-    @SerialName("id") val id: String? = null,
-    @SerialName("day_of_week") val dayOfWeek: Int,
-    @SerialName("order_index") val orderIndex: Int,
-    @SerialName("item_type") val itemType: String = "routine",
-    @SerialName("routine_id") val routineId: String? = null,
-    @SerialName("program_id") val programId: String? = null,
-    @SerialName("program_day_number") val programDayNumber: Int? = null,
-    @SerialName("title") val title: String = "",
-    @SerialName("notes") val notes: String = ""
-)
-
-@Serializable
-data class SaveWeeklyPlanRequestDto(
-    @SerialName("items") val items: List<WeeklyPlanUpsertItemDto>
-)
-
-@Serializable
-data class SetRoutineWeekdaysRequestDto(
-    @SerialName("routine_id") val routineId: String,
-    @SerialName("days_of_week") val daysOfWeek: List<Int>
-)
-
-@Serializable
-data class ToggleWeeklyPlanCompleteRequestDto(
-    @SerialName("completed") val completed: Boolean
-)
 
 @Serializable
 data class LikeStatusResponseDto(

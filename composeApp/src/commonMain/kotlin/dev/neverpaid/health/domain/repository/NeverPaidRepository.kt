@@ -32,7 +32,6 @@ import dev.neverpaid.health.domain.model.SaveTodoRequestDto
 import dev.neverpaid.health.domain.model.TodoTask
 import dev.neverpaid.health.domain.model.TrainingProgram
 import dev.neverpaid.health.domain.model.UserProfileDto
-import dev.neverpaid.health.domain.model.WeeklyPlanItem
 import dev.neverpaid.health.domain.model.Workout
 import dev.neverpaid.health.domain.model.WorkoutExercise
 import dev.neverpaid.health.domain.model.WorkoutSet
@@ -118,11 +117,7 @@ interface NeverPaidRepository {
         exercises: List<RoutineExercise>
     ): Routine
     suspend fun deleteRoutine(routineId: String)
-    fun observeWeeklyPlan(): Flow<List<WeeklyPlanItem>> = kotlinx.coroutines.flow.flowOf(emptyList())
-    suspend fun refreshWeeklyPlan(): List<WeeklyPlanItem> = emptyList()
-    suspend fun saveWeeklyPlan(items: List<WeeklyPlanItem>): List<WeeklyPlanItem> = items
-    suspend fun setRoutineWeekdays(routineId: String, daysOfWeek: List<Int>): List<WeeklyPlanItem> = emptyList()
-    suspend fun toggleWeeklyPlanItemComplete(itemId: String, completed: Boolean): List<WeeklyPlanItem> = emptyList()
+    suspend fun reorderRoutines(orderedRoutineIds: List<String>) {}
 
     // --- 4. ACTIVE WORKOUT & PREVIOUS SETS ---
     fun getActiveWorkout(): Flow<Workout?>
